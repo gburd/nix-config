@@ -17,11 +17,6 @@
         add_lsp("clangd", lspconfig.clangd, {})
         add_lsp("nil", lspconfig.nil_ls, {})
         add_lsp("pylsp", lspconfig.pylsp, {})
-        add_lsp("dart", lspconfig.dartls, {})
-        add_lsp("haskell-language-server", lspconfig.hls, {
-          cmd_args = { "--lsp" }
-        })
-        add_lsp("kotlin-language-server", lspconfig.kotlin_language_server, {})
         add_lsp("solargraph", lspconfig.solargraph, {})
         add_lsp("phpactor", lspconfig.phpactor, {})
         add_lsp("terraform-ls", lspconfig.terraformls, {

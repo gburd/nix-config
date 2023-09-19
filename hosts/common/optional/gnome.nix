@@ -14,7 +14,11 @@
     geoclue2.enable = true;
     gnome.games.enable = true;
   };
-  # Fix broken stuff
-  services.avahi.enable = false;
-  networking.networkmanager.enable = false;
+  services.avahi.enable = true;
+  # Enable CUPS to print documents.
+  services.printing.enable = true;
+  services.avahi.nssmdns = true;
+  # for a WiFi printer
+  services.avahi.openFirewall = true;
+  networking.networkmanager.enable = true;
 }
