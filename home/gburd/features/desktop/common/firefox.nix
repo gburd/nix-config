@@ -8,9 +8,9 @@
       extensions = with pkgs.inputs.firefox-addons; [
         ublock-origin
 	keybase
-	tampermonkey
-	proton-pass
-	onetab
+#	tampermonkey
+#	proton-pass
+#	onetab
       ];
       bookmarks = { };
       settings = {
