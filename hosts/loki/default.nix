@@ -10,7 +10,6 @@
     ../common/users/gburd
 
     ../common/optional/gnome.nix
-    ../common/optional/cups.nix
     ../common/optional/x11-keymap.nix
     ../common/optional/gamemode.nix
     ../common/optional/wireless.nix
