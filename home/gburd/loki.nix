@@ -3,7 +3,6 @@
   imports = [
     ./global
     ./features/desktop/gnome
-    ./features/desktop/wireless
     ./features/productivity
     ./features/pass
     ./features/games
