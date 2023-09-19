@@ -15,12 +15,12 @@ let
     exec '${vars} ${command} -l debug; ${pkgs.sway}/bin/swaymsg exit'
   ''}";
 
-  misterioCfg = homeCfgs.misterio;
+  gburdCfg = homeCfgs.gburd;
 in
 {
   users.extraUsers.greeter.packages = [
-    misterioCfg.gtk.theme.package
-    misterioCfg.gtk.iconTheme.package
+    gburdCfg.gtk.theme.package
+    gburdCfg.gtk.iconTheme.package
   ];
 
   programs.regreet = {
@@ -28,10 +28,10 @@ in
     settings = {
       GTK = {
         icon_theme_name = "ePapirus";
-        theme_name = misterioCfg.gtk.theme.name;
+        theme_name = gburdCfg.gtk.theme.name;
       };
       background = {
-        path = misterioCfg.wallpaper;
+        path = gburdCfg.wallpaper;
         fit = "Cover";
       };
     };

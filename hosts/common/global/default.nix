@@ -1,5 +1,7 @@
-# This file (and the global directory) holds config that i use on all hosts
+# This file (and the global directory) holds config used on all hosts
 { inputs, outputs, ... }: {
+  nixpkgs.config.allowUnfree = true;
+
   imports = [
     inputs.home-manager.nixosModules.home-manager
     ./acme.nix
@@ -11,7 +13,7 @@
     ./optin-persistence.nix
     ./podman.nix
     ./sops.nix
-    ./ssh-serve-store.nix
+#    ./ssh-serve-store.nix
     ./steam-hardware.nix
     ./systemd-initrd.nix
     ./tailscale.nix
@@ -35,7 +37,7 @@
   environment.enableAllTerminfo = true;
 
   hardware.enableRedistributableFirmware = true;
-  networking.domain = "m7.rs";
+  networking.domain = "burd.me";
 
   # Increase open file limit for sudoers
   security.pam.loginLimits = [

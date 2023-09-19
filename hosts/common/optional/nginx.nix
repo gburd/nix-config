@@ -11,7 +11,7 @@ in
       recommendedOptimisation = true;
       clientMaxBodySize = "300m";
 
-      virtualHosts."${hostName}.m7.rs" = {
+      virtualHosts."${hostName}.burd.me" = {
         default = true;
         forceSSL = true;
         enableACME = true;

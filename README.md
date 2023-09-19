@@ -4,19 +4,6 @@
 
 Here's my NixOS/home-manager config files. Requires [Nix flakes](https://nixos.wiki/wiki/Flakes).
 
-**Highlights**:
-
-- Multiple **NixOS configurations**, including **desktop**, **laptop**, **server**
-- **Opt-in persistence** through impermanence + blank snapshotting
-- **Encrypted** single **BTRFS** partition
-- Fully **declarative** **self-hosted** stuff
-- Deployment **secrets** using **sops-nix**
-- **Mesh networked** hosts with **tailscale** and **headscale**
-- Flexible **Home Manager** Configs through **feature flags**
-- Extensively configured wayland environments (**sway** and **hyprland**) and editor (**neovim**)
-- **Declarative** **themes** and **wallpapers** with **nix-colors**
-- **Hydra CI/CD server and binary cache** that uses the **desktops as remote builders**
-
 ## Structure
 
 - `flake.nix`: Entrypoint for hosts and home configurations. Also exposes a
@@ -41,10 +28,6 @@ Here's my NixOS/home-manager config files. Requires [Nix flakes](https://nixos.w
 
 
 ## About the installation
-
-All my computers use a single btrfs (encrypted on all except headless systems)
-partition, with subvolumes for `/nix`, a `/persist` directory (which I opt in
-using `impermanence`), swap file, and a root subvolume (cleared on every boot).
 
 Home-manager is used in a standalone way, and because of opt-in persistence is
 activated on every boot with `loginShellInit`.
@@ -87,8 +70,6 @@ signing, as well as for SSH'ing around.
 
 Most relevant user apps daily drivers:
 
-- hyprland + swayidle + swaylock
-- waybar
 - neovim
 - fish + starship
 - kitty

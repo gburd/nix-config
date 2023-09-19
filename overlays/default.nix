@@ -56,22 +56,19 @@ in
       patches = (oldAttrs.patches or [ ]) ++ [ ./pfetch.patch ];
     });
 
-    # Sane default values and crash avoidance (https://github.com/k-vernooy/trekscii/pull/1)
-    trekscii = addPatches prev.trekscii [ ./trekscii.patch ];
-
     qutebrowser = prev.qutebrowser.overrideAttrs (oldAttrs: {
       patches = (oldAttrs.patches or [ ]) ++ [ ./qutebrowser-tree-tabs.diff ];
     });
 
-    scgit = prev.cgit-pink.overrideAttrs (_: {
-      pname = "scgit";
-      version = "0.1";
-      src = final.fetchFromSourcehut {
-        owner = "~misterio";
-        repo = "scgit";
-        rev = "2cd05c95827fb94740e876733dc6f7fe88340de2";
-        sha256 = "sha256-95mRJ3ZCSkLHqehFQdwM2BY0h+YDhohwpnRiF6/lZtA=";
-      };
-    });
+    # scgit = prev.cgit-pink.overrideAttrs (_: {
+    #   pname = "scgit";
+    #   version = "0.1";
+    #   src = final.fetchFromSourcehut {
+    #     owner = "~misterio";
+    #     repo = "scgit";
+    #     rev = "2cd05c95827fb94740e876733dc6f7fe88340de2";
+    #     sha256 = "sha256-95mRJ3ZCSkLHqehFQdwM2BY0h+YDhohwpnRiF6/lZtA=";
+    #   };
+    # });
   };
 }

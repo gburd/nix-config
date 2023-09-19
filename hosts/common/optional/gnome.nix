@@ -1,12 +1,14 @@
 {
   services = {
     xserver = {
+      enable = true;
       desktopManager.gnome = {
         enable = true;
       };
       displayManager.gdm = {
         enable = true;
         autoSuspend = false;
+	wayland = true;
       };
     };
     geoclue2.enable = true;

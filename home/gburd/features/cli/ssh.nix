@@ -15,13 +15,13 @@ in
         }];
       };
       trusted = lib.hm.dag.entryBefore [ "net" ] {
-        host = "m7.rs *.m7.rs *.ts.m7.rs";
+        host = "burd.me *.burd.me *.ts.burd.me";
         forwardAgent = true;
       };
     };
   };
 
   home.persistence = {
-    "/persist/home/misterio".directories = [ ".ssh" ];
+    "/persist/home/gburd".directories = [ ".ssh" ];
   };
 }

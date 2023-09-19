@@ -1,9 +1,6 @@
 { pkgs, ... }: {
   imports = [
-    ./lutris.nix
-    ./steam.nix
-    ./prism-launcher.nix
-    ./runescape.nix
+#    ./steam.nix
   ];
   home.packages = with pkgs; [ gamescope ];
 }

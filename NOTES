@@ -1,0 +1,11 @@
+* Yubikeys are great, if you use them correctly
+  https://www.procustodibus.com/blog/2023/04/how-to-set-up-a-yubikey/
+* generate age public key from host's existing SSH keypair
+  nix-shell -p ssh-to-age --run 'cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-to-age'
+* trigger first encryption of a secrets file
+  EDITOR=vi sops --config .sops.yaml --encrypt --in-place hosts/common/secrets.yaml
+* edit secrets in that file later
+
+sudo nixos-rebuild switch --flake .#my-hostname
+-------
+  services.pcscd.enable = true;

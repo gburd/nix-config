@@ -21,6 +21,7 @@
       ssh-to-age
       gnupg
       age
+      yubikey-manager
     ];
   };
 }

@@ -27,31 +27,14 @@
       inputs.nixpkgs-22_11.follows = "nixpkgs";
       inputs.nixpkgs-23_05.follows = "nixpkgs";
     };
-#    nix-minecraft = {
-#      url = "github:misterio77/nix-minecraft";
-#      inputs.nixpkgs.follows = "nixpkgs";
-#    };
     firefly = {
       url = "github:timhae/firefly";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprland = {
-      url = "github:hyprwm/hyprland";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hyprwm-contrib = {
-      url = "github:hyprwm/contrib";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-#    disconic.url = "github:misterio77/disconic";
-#    website.url = "github:misterio77/website";
-#    paste-misterio-me.url = "github:misterio77/paste.misterio.me";
-#    yrmos.url = "github:misterio77/yrmos";
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs:
@@ -66,7 +49,6 @@
       inherit lib;
       nixosModules = import ./modules/nixos;
       homeManagerModules = import ./modules/home-manager;
-#      templates = import ./templates;
 
       overlays = import ./overlays { inherit inputs outputs; };
       hydraJobs = import ./hydra.nix { inherit inputs outputs; };
