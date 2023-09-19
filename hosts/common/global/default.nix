@@ -1,6 +1,5 @@
 # This file (and the global directory) holds config used on all hosts
 { inputs, outputs, ... }: {
-  nixpkgs.config.allowUnfree = true;
 
   imports = [
     inputs.home-manager.nixosModules.home-manager
