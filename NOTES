@@ -7,5 +7,7 @@
 * edit secrets in that file later
 
 sudo nixos-rebuild switch --flake .#my-hostname
+clear; sudo nixos-rebuild dry-activate --flake .#loki
+
 -------
   services.pcscd.enable = true;
