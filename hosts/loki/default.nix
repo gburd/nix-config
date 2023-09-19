@@ -12,7 +12,6 @@
     ../common/optional/gnome.nix
     ../common/optional/x11-keymap.nix
     ../common/optional/gamemode.nix
-    ../common/optional/wireless.nix
     ../common/optional/greetd.nix
     ../common/optional/pipewire.nix
     ../common/optional/quietboot.nix
@@ -24,7 +23,7 @@
   };
 
   # Enable networking
-  # networking.networkmanager.enable = true;
+  networking.networkmanager.enable = true;
 
   boot = {
     kernelPackages = pkgs.linuxKernel.packages.linux_zen;
