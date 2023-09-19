@@ -41,6 +41,6 @@
 
     tly # Tally counter
 
-    inputs.nh.default # nixos-rebuild and home-manager CLI wrapper
+#    inputs.nh.default # nixos-rebuild and home-manager CLI wrapper
   ];
 }

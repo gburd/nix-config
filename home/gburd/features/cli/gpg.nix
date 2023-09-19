@@ -10,7 +10,8 @@ let
     };
 in
 {
-  home.packages = pinentry.packages;
+#  home.packages = pinentry.packages;
+  home.packages = [ pkgs.pinentry-curses ];
 
   services.gpg-agent = { #TODO: gnupg vs gpg-agent ?
     enable = true;

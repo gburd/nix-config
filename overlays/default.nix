@@ -42,7 +42,8 @@ in
     # https://github.com/NixOS/nix/issues/5567#issuecomment-1193259926
     # nix = addPatches prev.nix [ ./nix-make-installables-expr-context.patch ];
 
-    xdg-utils-spawn-terminal = addPatches prev.xdg-utils [ ./xdg-open-spawn-terminal.diff ];
+    # xdg-utils-spawn-terminal = addPatches prev.xdg-utils [ ./xdg-open-spawn-terminal.diff ];
+    xdg-utils-spawn-terminal = prev.xdg-utils;
 
     pfetch = prev.pfetch.overrideAttrs (oldAttrs: {
       version = "unstable-2021-12-10";
