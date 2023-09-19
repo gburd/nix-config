@@ -8,7 +8,6 @@
   boot = {
     plymouth = {
       enable = true;
-      theme = "spinner-monochrome";
     };
     loader.timeout = 0;
     kernelParams = [
