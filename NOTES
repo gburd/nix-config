@@ -5,6 +5,9 @@
 * trigger first encryption of a secrets file
   EDITOR=vi sops --config .sops.yaml --encrypt --in-place hosts/common/secrets.yaml
 * edit secrets in that file later
+* When SOPS complains about your ~/.gnupg/secring.pgp file not being there try:
+  export GPG_TTY=$(tty)
+  gpgconf --reload gpg-agent
 
 sudo nixos-rebuild switch --flake .#my-hostname
 clear; sudo nixos-rebuild dry-activate --flake .#loki
