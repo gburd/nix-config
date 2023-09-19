@@ -2,12 +2,12 @@
 {
   nix = {
     settings = {
-      substituters = [
-        "https://cache.m7.rs"
-      ];
-      trusted-public-keys = [
-        "cache.m7.rs:kszZ/NSwE/TjhOcPPQ16IuUiuRSisdiIwhKZCxguaWg="
-      ];
+      # substituters = [
+      #   "https://cache.burd.me"
+      # ];
+      # trusted-public-keys = [
+      #   "cache.burd.me:kszZ/NSwE/TjhOcPPQ16IuUiuRSisdiIwhKZCxguaWg="
+      # ];
       trusted-users = [ "root" "@wheel" ];
       auto-optimise-store = lib.mkDefault true;
       experimental-features = [ "nix-command" "flakes" "repl-flake" ];

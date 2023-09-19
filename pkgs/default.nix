@@ -3,12 +3,8 @@
   # Packages with an actual source
   rgbdaemon = pkgs.callPackage ./rgbdaemon { };
   shellcolord = pkgs.callPackage ./shellcolord { };
-  trekscii = pkgs.callPackage ./trekscii { };
   speedtestpp = pkgs.callPackage ./speedtestpp { };
-  lando = pkgs.callPackage ./lando { };
-  tidal-dl = pkgs.python3Packages.callPackage ./tidal-dl { };
   qt6gtk2 = pkgs.qt6Packages.callPackage ./qt6gtk2 { };
-  hdos = pkgs.callPackage ./hdos { };
 
   # Personal scripts
   nix-inspect = pkgs.callPackage ./nix-inspect { };
@@ -19,8 +15,4 @@
   lyrics = pkgs.callPackage ./lyrics { };
   xpo = pkgs.callPackage ./xpo { };
   tly = pkgs.callPackage ./tly { };
-  hyprslurp = pkgs.callPackage ./hyprslurp { };
-
-  # My slightly customized plymouth theme, just makes the blue outline white
-  plymouth-spinner-monochrome = pkgs.callPackage ./plymouth-spinner-monochrome { };
 }

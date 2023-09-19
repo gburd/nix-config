@@ -12,5 +12,6 @@
     ./qt.nix
     ./slack.nix
     ./sublime-music.nix
+    ./protonmail-bridge.nix
   ];
 }

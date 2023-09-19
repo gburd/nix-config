@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, lib, config, ... }: {
   imports = [
     ./bash.nix
     ./bat.nix
@@ -24,13 +24,13 @@
     bc # Calculator
     bottom # System viewer
     ncdu # TUI disk usage
-    eza # Better ls
+    exa # Better ls
     ripgrep # Better grep
     fd # Better find
+    curl # cURL
     httpie # Better curl
     diffsitter # Better diff
     jq # JSON pretty printer and manipulator
-    trekscii # Cute startrek cli printer
     timer # To help with my ADHD paralysis
 
     nil # Nix LSP

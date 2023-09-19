@@ -41,6 +41,6 @@ in
   };
 
   home.persistence = {
-    "/persist/home/misterio".directories = [ ".config/kdeconnect" ];
+    "/persist/home/gburd".directories = [ ".config/kdeconnect" ];
   };
 }

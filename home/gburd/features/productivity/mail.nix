@@ -5,9 +5,9 @@ let
   pass = "${config.programs.password-store.package}/bin/pass";
 
   common = rec {
-    realName = "Gabriel Fontes";
+    realName = "Greg Burd";
     gpg = {
-      key = "7088 C742 1873 E0DB 97FF 17C2 245C AB70 B4C2 25E9";
+      key = "D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF";
       signByDefault = true;
     };
     signature = {
@@ -15,7 +15,7 @@ let
       text = ''
         ${realName}
 
-        https://gsfontes.com
+        https://burd.me
         PGP: ${gpg.key}
       '';
     };
@@ -23,7 +23,7 @@ let
 in
 {
   home.persistence = {
-    "/persist/home/misterio".directories = [ "Mail" ];
+    "/persist/home/gburd".directories = [ "Mail" ];
   };
 
   accounts.email = {
@@ -31,11 +31,11 @@ in
     accounts = {
       personal = rec {
         primary = true;
-        address = "hi@m7.rs";
-        aliases = ["gabriel@gsfontes.com" "eu@misterio.me"];
+        address = "greg@burd.me";
+        aliases = ["gregburd@gmail.com"];
         passwordCommand = "${pass} ${smtp.host}/${address}";
 
-        imap.host = "mail.m7.rs";
+        imap.host = "mail.burd.me";
         mbsync = {
           enable = true;
           create = "maildir";
@@ -53,25 +53,16 @@ in
         };
 
         msmtp.enable = true;
-        smtp.host = "mail.m7.rs";
+        smtp.host = "mail.burd.me";
         userName = address;
       } // common;
 
-      college = rec {
-        address = "g.fontes@usp.br";
-        passwordCommand = "${pass} ${smtp.host}/${address}";
-
-        msmtp.enable = true;
-        smtp.host = "smtp.gmail.com";
-        userName = address;
-      } // common;
-
-      zoocha = rec {
-        address = "gabriel@zoocha.com";
+      symas = rec {
+        address = "gburd@symas.com";
         passwordCommand = "${pass} ${smtp.host}/${address}";
 
         /* TODO: add imap (conditionally)
-        imap.host = "imap.gmail.com";
+        imap.host = "symas.zmailcloud.com";
         mbsync = {
           enable = true;
           create = "maildir";
@@ -87,7 +78,7 @@ in
         */
 
         msmtp.enable = true;
-        smtp.host = "smtp.gmail.com";
+        smtp.host = "symas.zmailcloud.com";
         userName = address;
       } // common;
     };

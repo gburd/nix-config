@@ -7,8 +7,10 @@
     ./hardware-configuration.nix
 
     ../common/global
-    ../common/users/misterio
+    ../common/users/gburd
 
+    ../common/optional/cups.nix
+    ../common/optional/x11-keymap.nix
     ../common/optional/gamemode.nix
     ../common/optional/wireless.nix
     ../common/optional/greetd.nix
@@ -20,6 +22,9 @@
   networking = {
     hostName = "loki";
   };
+
+  # Enable networking
+  # networking.networkmanager.enable = true;
 
   boot = {
     kernelPackages = pkgs.linuxKernel.packages.linux_zen;
@@ -52,5 +57,5 @@
     };
   };
 
-  system.stateVersion = "22.05";
+  system.stateVersion = "23.05";
 }

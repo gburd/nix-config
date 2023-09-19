@@ -6,7 +6,7 @@ in
   home.packages = with pkgs; [ vdirsyncer ];
 
   home.persistence = {
-    "/persist/home/misterio".directories =
+    "/persist/home/gburd".directories =
       [ "Calendars" "Contacts" ".local/share/vdirsyncer" ];
   };
 
@@ -27,9 +27,9 @@ in
 
     [storage contacts_remote]
     type = "carddav"
-    url = "https://dav.m7.rs"
-    username = "hi@m7.rs"
-    password.fetch = ["command", "${pass}", "mail.m7.rs/hi@m7.rs"]
+    url = "https://dav.burd.me"
+    username = "greg@burd.me"
+    password.fetch = ["command", "${pass}", "mail.burd.m/greg@burd.me"]
 
     [pair calendars]
     a = "calendars_local"
@@ -45,9 +45,9 @@ in
 
     [storage calendars_remote]
     type = "caldav"
-    url = "https://dav.m7.rs"
-    username = "hi@m7.rs"
-    password.fetch = ["command", "${pass}", "mail.m7.rs/hi@m7.rs"]
+    url = "https://dav.burd.me"
+    username = "greg@burd.me"
+    password.fetch = ["command", "${pass}", "mail.burd.me/greg@burd.me"]
   '';
 
   systemd.user.services.vdirsyncer = {
