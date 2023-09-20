@@ -3,33 +3,35 @@
   imports = [];
 
   home.packages = with pkgs; [
-    gtk3 # For gtk-launch
-    xdg-utils-spawn-terminal # Patched to open terminal
+    # Gnome3 apps
+    gnome3.eog    # image viewer
+    gnome3.evince # pdf reader
+
+    # Desktop look & feel
+    gnome3.gnome-tweak-tool
+
+    # Extensions
+    gnomeExtensions.appindicator
+    gnomeExtensions.dash-to-dock
   ];
 
-#   environment.gnome.excludePackages = (with pkgs; [
-#     gnome-photos
-#     gnome-tour
-#   ]) ++ (with pkgs.gnome; [
-#     cheese # webcam tool
-#     gnome-music
-#     gedit # text editor
-#     epiphany # web browser
-#     geary # email reader
-#     gnome-characters
-#     tali # poker game
-#     iagno # go game
-#     hitori # sudoku game
-#     atomix # puzzle game
-#     yelp # Help view
-#     gnome-contacts
-#     gnome-initial-setup
-#   ]);
-#   programs.dconf.enable = true;
-#   environment.systemPackages = with pkgs; [
-#     gnome.gnome-tweaks
-#   ]
-# };
+  # environment.gnome.excludePackages = (with pkgs; [
+  #   gnome-photos
+  #   gnome-tour
+  # ]) ++ (with pkgs.gnome; [
+  #   cheese # webcam tool
+  #   gnome-music
+  #   geary # email reader
+  #   gnome-characters
+  #   yelp # Help view
+  #   gnome-contacts
+  #   gnome-initial-setup
+  # ]);
+  # programs.dconf.enable = true;
+  # environment.systemPackages = with pkgs; [
+  #   gnome.gnome-tweaks
+  # ]
+  # };
 
   home.sessionVariables = {
   };
