@@ -26,7 +26,7 @@ in
       (builtins.readFile ../../../../home/gburd/ssh.pub)
       (builtins.readFile ../../../../home/gburd/symas-ssh.pub)
     ];
-    passwordFile = config.sops.secrets.gburd-password.path;
+    hashedPasswordFile = config.sops.secrets.gburd-password.path;
     packages = [ pkgs.home-manager ];
   };
 
