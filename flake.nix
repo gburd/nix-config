@@ -2,7 +2,7 @@
   description = "My (Greg Burd's) NixOS configuration";
 
    inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05"; #nixos-unstable
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     hardware.url = "github:nixos/nixos-hardware";
     impermanence.url = "github:nix-community/impermanence";
@@ -14,7 +14,7 @@
       inputs.nixpkgs-stable.follows = "nixpkgs";
     };
     home-manager = {
-      url = "github:nix-community/home-manager/release-23.05";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nh = {
@@ -49,6 +49,7 @@
       inherit lib;
       nixosModules = import ./modules/nixos;
       homeManagerModules = import ./modules/home-manager;
+      templates = import ./templates;
 
       overlays = import ./overlays { inherit inputs outputs; };
       hydraJobs = import ./hydra.nix { inherit inputs outputs; };
