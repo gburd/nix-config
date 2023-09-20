@@ -18,6 +18,7 @@
       git
 
       sops
+      pinentry-curses
       ssh-to-age
       gnupg
       age
