@@ -25,5 +25,11 @@
       pinentry-curses
     ];
   };
-  services.gpg-agent.enable = true;
+  services.dbus.packages = [ pkgs.gcr ];
+  services.pcscd.enable = true;
+  programs.gnupg.agent = {
+   enable = true;
+   pinentryFlavor = "curses";
+   enableSSHSupport = true;
+  };
 }
