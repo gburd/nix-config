@@ -7,10 +7,10 @@
       bookmarks = { };
       extensions = with pkgs.inputs.firefox-addons; [
         ublock-origin
-	keybase
-#	tampermonkey
-#	proton-pass
-#	onetab
+        keybase
+        # tampermonkey
+        # proton-pass
+        # onetab
       ];
       bookmarks = { };
       settings = {
@@ -32,8 +32,8 @@
 
   home = {
     persistence = {
-      # Not persisting is safer
-      # "/persist/home/gburd".directories = [ ".mozilla/firefox" ];
+      # Not persisting is safer, but... <shrug>
+      "/persist/home/gburd".directories = [ ".mozilla/firefox" ];
     };
   };
 

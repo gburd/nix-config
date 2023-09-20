@@ -11,11 +11,9 @@
 
     ../common/optional/gnome.nix
     ../common/optional/x11-keymap.nix
-    ../common/optional/gamemode.nix
-    ../common/optional/greetd.nix
+#    ../common/optional/gamemode.nix
     ../common/optional/pipewire.nix
     ../common/optional/quietboot.nix
-    ../common/optional/lol-acfix.nix
   ];
 
   networking = {
