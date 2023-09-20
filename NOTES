@@ -11,7 +11,17 @@
 * SOPS
   https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-common-operations-118g
 
+INSTALL:
+export NIX_CONFIG="experimental-features = nix-command flakes"
+git clone https://github.com/gburd/nix-config.git
+cd nix-config
+nix develop
+nixos-install --flake .#hostname
+reboot
+home-manager switch --flake .#username@hostname
 
+
+export GPG_TTY=$(tty)
 sudo nixos-rebuild switch --flake .#my-hostname
 clear; sudo nixos-rebuild dry-activate --flake .#loki
 
