@@ -4,11 +4,11 @@
 
   home.packages = with pkgs; [
     # Gnome3 apps
-    gnome3.eog    # image viewer
-    gnome3.evince # pdf reader
+#    gnome3.eog    # image viewer
+#    gnome3.evince # pdf reader
 
     # Desktop look & feel
-    gnome3.gnome-tweak-tool
+#    gnome.gnome-tweak-tool
 
     # Extensions
     gnomeExtensions.appindicator
