@@ -8,8 +8,8 @@
     };
   in
   import nixpkgs { overlays = [ ]; }
-, ...
-}: {
+, ... }:
+{
   default = pkgs.mkShell {
     NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake";
     nativeBuildInputs = with pkgs; [
@@ -18,11 +18,12 @@
       git
 
       sops
-      pinentry-curses
       ssh-to-age
       gnupg
       age
       yubikey-manager
+      pinentry-curses
     ];
   };
+  services.gpg-agent.enable = true;
 }
