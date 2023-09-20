@@ -13,14 +13,14 @@
 
 INSTALL:
 export NIX_CONFIG="experimental-features = nix-command flakes"
-nix-env -iA nixos.pinentry
+nix-env -iA nixos.pinentry nixos.git
 echo pinentry-program $(which pinentry) >> ~/.gnupg/gpg-agent.conf
-echo test | gpg --clearsign
-gpg --list-keys
-EDITOR=vi sops --config .sops.yaml hosts/common/secrets.yaml
 git clone https://github.com/gburd/nix-config.git
 cd nix-config
 nix develop
+echo test | gpg --clearsign
+gpg --list-keys
+EDITOR=vi sops --config .sops.yaml hosts/common/secrets.yaml
 sudo nixos-install --flake .#hostname
 reboot
 home-manager switch --flake .#username@hostname
