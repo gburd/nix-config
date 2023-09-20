@@ -1,7 +1,7 @@
 keys:
   # Users
   - &users:
-    - &gburd 6423C518273734713931CB331C4814F03CA7C161
+    - &gburd D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF
   # Hosts
   - &hosts:
     - &loki age1udt7tgf8pa0r278z6xwrzndg5w9jyvph8p0nycpqw3d39aal5u6skfv556
