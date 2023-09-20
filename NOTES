@@ -8,6 +8,9 @@
 * When SOPS complains about your ~/.gnupg/secring.pgp file not being there try:
   export GPG_TTY=$(tty)
   gpgconf --reload gpg-agent
+* SOPS
+  https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-common-operations-118g
+
 
 sudo nixos-rebuild switch --flake .#my-hostname
 clear; sudo nixos-rebuild dry-activate --flake .#loki
