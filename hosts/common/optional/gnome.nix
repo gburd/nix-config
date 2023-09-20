@@ -11,8 +11,6 @@
         enable = true;
       };
     };
-    dbus.packages = [ pkgs.gnome3.dconf ];
-    udev.packages = [ pkgs.gnome3.gnome-settings-daemon ];
     geoclue2.enable = true;
     gnome.games.enable = true;
   };
