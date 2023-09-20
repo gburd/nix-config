@@ -32,6 +32,8 @@
   #   gnome.gnome-tweaks
   # ]
   # };
+#  dbus.packages = [ pkgs.gnome.dconf ];
+#  udev.packages = [ pkgs.gnome.gnome-settings-daemon ];
 
   home.sessionVariables = {
   };
