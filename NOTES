@@ -12,6 +12,47 @@
   https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-common-operations-118g
 
 INSTALL:
+export device=/dev/nvme0n1
+printf "label: gpt\n,550M,U\n,,L\n" | sfdisk ${device}
+mkfs.fat -F 32 ${device}
+cryptsetup --verify-passphrase -v luksFormat "${device}p2"
+cryptsetup open "${device}p2"enc
+mkfs.btrfs /dev/mapper/enc
+mount /dev/mapper/enc /mnt
+btrfs subvolume create /mnt/root
+btrfs subvolume create /mnt/nix
+btrfs subvolume create /mnt/persist
+btrfs subvolume create /mnt/swap
+btrfs subvolume create /mnt/logs
+
+mount -o compress=zstd,subvol=root /dev/mapper/enc /mnt
+mkdir /mnt/{nix,persist,swap,logs}
+mount -o compress=zstd,noatime,subvol=nix /dev/mapper/enc /mnt/nix
+mount -o compress=zstd,subvol=persist /dev/mapper/enc /mnt/persist
+mount -o compress=zstd,noatime,subvol=logs /dev/mapper/enc /mnt/logs
+mount -o noatime,subvol=swap /dev/mapper/enc /mnt/swap
+
+mkdir /mnt/boot
+mount /dev/sda1 /mnt/boot
+
+nixos-generate-config --root /mnt
+nano /mnt/etc/nixos/configuration.nix # manually add mount options
+nixos-install
+
+nixos-generate-config --show-hardware-config
+
+fileSystems = {
+  "/".options = [ "compress=zstd" ];
+  "/nix".options = [ "compress=zstd" "noatime" ];
+  "/persist".options = [ "compress=zstd" "noatime" ];
+  "/logs".options = [ "compress=zstd" "noatime" ];
+  "/swap".options = [ "noatime" ];
+};
+
+btrfs filesystem mkswapfile --size 8g --uuid clear /swap/swapfile
+swapDevices = [ { device = "/swap/swapfile"; } ];
+nixos-rebulid switch
+
 export NIX_CONFIG="experimental-features = nix-command flakes"
 nix-env -iA nixos.pinentry nixos.git
 echo pinentry-program $(which pinentry) >> ~/.gnupg/gpg-agent.conf
@@ -32,3 +73,5 @@ clear; sudo nixos-rebuild dry-activate --flake .#loki
 
 -------
   services.pcscd.enable = true;
+
+https://mt-caret.github.io/blog/posts/2020-06-29-optin-state.html

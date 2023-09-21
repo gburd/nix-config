@@ -66,6 +66,13 @@ in
       neededForBoot = true;
     };
 
+    "/logs" = {
+      device = "/dev/disk/by-label/${hostname}";
+      fsType = "btrfs";
+      options = [ "subvol=logs" "noatime" "compress=zstd" ];
+      neededForBoot = true;
+    };
+
     "/swap" = {
       device = "/dev/disk/by-label/${hostname}";
       fsType = "btrfs";
