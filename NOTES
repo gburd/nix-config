@@ -59,6 +59,8 @@ echo pinentry-program $(which pinentry) >> ~/.gnupg/gpg-agent.conf
 git clone https://github.com/gburd/nix-config.git
 cd nix-config
 nix develop
+export GPG_TTY=$(tty)
+gpg-connect-agent reloadagent /bye
 echo test | gpg --clearsign
 gpg --list-keys
 EDITOR=vi sops --config .sops.yaml hosts/common/secrets.yaml
@@ -67,7 +69,6 @@ reboot
 home-manager switch --flake .#username@hostname
 
 
-export GPG_TTY=$(tty)
 sudo nixos-rebuild switch --flake .#my-hostname
 clear; sudo nixos-rebuild dry-activate --flake .#loki
 
