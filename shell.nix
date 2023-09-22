@@ -19,6 +19,7 @@
       vim
       emacs
       tig
+      ripgrep
 
       sops
       ssh-to-age
