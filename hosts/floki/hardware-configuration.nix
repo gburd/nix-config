@@ -19,12 +19,23 @@
   
   boot.initrd.luks.devices."enc".device = "/dev/disk/by-uuid/470152b6-16cc-4dcf-b1e9-c684c1589e33";
 
-  fileSystems = {
-    "/boot" = {
-      device = "/dev/disk/by-label/ESP";
+  fileSystems."/swap" =
+    { device = "/dev/disk/by-uuid/bf75af76-49b0-41fa-a4e5-9a52a6a0a667";
+      fsType = "btrfs";
+      options = [ "subvol=swap" ];
+    };
+
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/3D04-3716";
       fsType = "vfat";
     };
-  };
+
+  # fileSystems = {
+  #   "/boot" = {
+  #     device = "/dev/disk/by-label/ESP";
+  #     fsType = "vfat";
+  #   };
+  # };
 
   swapDevices = [{
     device = "/swap/swapfile";
