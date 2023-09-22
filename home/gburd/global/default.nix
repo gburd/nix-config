@@ -32,6 +32,7 @@ in
   programs = {
     home-manager.enable = true;
     git.enable = true;
+    autorandr.enable = true;
   };
 
   home = {
