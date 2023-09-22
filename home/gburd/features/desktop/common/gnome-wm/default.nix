@@ -36,5 +36,6 @@
 #  udev.packages = [ pkgs.gnome.gnome-settings-daemon ];
 
   home.sessionVariables = {
+    MOZ_ENABLE_WAYLAND = 1;
   };
 }

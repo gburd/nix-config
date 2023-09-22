@@ -92,9 +92,12 @@ clear; sudo nixos-rebuild dry-activate --flake .#${hostname}
   services.pcscd.enable = true;
 
 https://mt-caret.github.io/blog/posts/2020-06-29-optin-state.html
+https://hoverbear.org/blog/declarative-gnome-configuration-in-nixos/
 
 
 ------------------------------------------
+------------------------------------------
+
 
 building the system configuration...
 warning: Git tree '/home/gburd/ws/nix-config' is dirty
