@@ -10,6 +10,8 @@
   gpgconf --reload gpg-agent
 * SOPS
   https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-common-operations-118g
+  export SOPS_PGP_FP="D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF"
+  sops -e /etc/ssh/ssh_host_id > hosts/floki/
 
 INSTALL:
 export device=/dev/nvme0n1

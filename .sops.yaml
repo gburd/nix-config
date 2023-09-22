@@ -4,19 +4,19 @@ keys:
     - &gburd D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF
   # Hosts
   - &hosts:
-    - &loki age1udt7tgf8pa0r278z6xwrzndg5w9jyvph8p0nycpqw3d39aal5u6skfv556
+    - &floki age1z2x0g05q2erpux006vwhul70d8akj9avrj67s9p27fm4ce32ly8qt8nllz
 
 creation_rules:
 
-  - path_regex: hosts/loki/secrets.ya?ml$
+  - path_regex: hosts/floki/secrets.ya?ml$
     key_groups:
     - age:
-      - *loki
+      - *floki
       pgp:
       - *gburd
   - path_regex: hosts/common/secrets.ya?ml$
     key_groups:
     - age:
-      - *loki
+      - *floki
       pgp:
       - *gburd
