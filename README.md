@@ -13,7 +13,7 @@ Here's my NixOS/home-manager config files. Requires [Nix flakes](https://nixos.w
   - `common`: Shared configurations consumed by the machine-specific ones.
     - `global`: Configurations that are globally applied to all my machines.
     - `optional`: Opt-in configurations my machines can use.
-  - `loki`: Lenovo ThinkPad X1 Carbon Extreme Gen 5
+  - `floki`: Lenovo ThinkPad X1 Carbon Extreme Gen 5
 - `home`: My Home-manager configuration, acessible via `home-manager --flake`
     - Each directory here is a "feature" each hm configuration can toggle, thus
       customizing my setup for each machine (be it a server, desktop, laptop,

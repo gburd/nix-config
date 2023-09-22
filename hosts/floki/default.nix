@@ -17,7 +17,7 @@
   ];
 
   networking = {
-    hostName = "loki";
+    hostName = "floki";
   };
 
   # Enable networking

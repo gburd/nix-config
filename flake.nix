@@ -62,8 +62,8 @@
 
       nixosConfigurations = {
         # Personal laptop - Lenovo Carbon X1 Extreme Gen 5 - x86_64
-        loki =  lib.nixosSystem {
-          modules = [ ./hosts/loki ];
+        floki =  lib.nixosSystem {
+          modules = [ ./hosts/floki ];
           specialArgs = { inherit inputs outputs; };
         };
 
@@ -94,8 +94,8 @@
 
       homeConfigurations = {
         # Desktops
-        "gburd@loki" = lib.homeManagerConfiguration {
-          modules = [ ./home/gburd/loki.nix ];
+        "gburd@floki" = lib.homeManagerConfiguration {
+          modules = [ ./home/gburd/floki.nix ];
           pkgs = pkgsFor.x86_64-linux;
           extraSpecialArgs = { inherit inputs outputs; };
         };
