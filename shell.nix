@@ -16,6 +16,8 @@
       nix
       home-manager
       git
+      vim
+      emacs
 
       sops
       ssh-to-age
