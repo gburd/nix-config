@@ -1,7 +1,6 @@
 {
   imports = [
-    ../common/optional/ephemeral-btrfs.nix
-    ../common/optional/encrypted-root.nix
+    ../common/optional/btrfs.nix
   ];
 
   boot = {
@@ -17,6 +16,8 @@
       efi.canTouchEfiVariables = true;
     };
   };
+  
+  boot.initrd.luks.devices."enc".device = "/dev/disk/by-uuid/470152b6-16cc-4dcf-b1e9-c684c1589e33";
 
   fileSystems = {
     "/boot" = {
