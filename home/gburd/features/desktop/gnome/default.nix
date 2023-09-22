@@ -1,4 +1,4 @@
-{ lib, config, pkgs, ... }: {
+{ config, pkgs, lib, ... }: {
   imports = [
     ../common
     ../common/gnome-wm

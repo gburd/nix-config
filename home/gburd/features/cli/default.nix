@@ -12,7 +12,7 @@
     ./pfetch.nix
     ./ranger.nix
     ./screen.nix
-    ./shellcolor.nix
+    #./shellcolor.nix
     ./ssh.nix
     ./starship.nix
     ./xpo.nix
