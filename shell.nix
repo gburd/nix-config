@@ -18,6 +18,7 @@
       git
       vim
       emacs
+      tig
 
       sops
       ssh-to-age
