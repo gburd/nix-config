@@ -26,7 +26,7 @@ export device=/dev/nvme0n1
 export hostname=floki
 wipefs/shread/scrub ${device}
 printf "label: gpt\n,550M,U\n,,L\n" | sfdisk ${device}
-mkfs.fat -L boot -F 32 ${device}
+mkfs.fat -L ESP -F 32 ${device}
 cryptsetup --verify-passphrase -v luksFormat --label "${hostname}_crypt" "${device}p2"
 cryptsetup open "${device}p2" "${hostname}_crypt"
 mkfs.btrfs -L ${hostname} /dev/mapper/"${hostname}_crypt"
@@ -92,3 +92,23 @@ clear; sudo nixos-rebuild dry-activate --flake .#${hostname}
   services.pcscd.enable = true;
 
 https://mt-caret.github.io/blog/posts/2020-06-29-optin-state.html
+
+
+------------------------------------------
+
+building the system configuration...
+warning: Git tree '/home/gburd/ws/nix-config' is dirty
+trace: warning: optionsDocBook is deprecated since 23.11 and will be removed in 24.05
+trace: warning: optionsDocBook is deprecated since 23.11 and will be removed in 24.05
+trace: warning: optionsDocBook is deprecated since 23.11 and will be removed in 24.05
+would stop the following units: ModemManager.service, NetworkManager-wait-online.service, NetworkManager.service, accounts-daemon.service, alsa-store.service, audit.service, avahi-daemon.service, avahi-daemon.socket, bluetooth.service, bolt.service, colord.service, cpufreq.service, kmod-static-nodes.service, logrotate-checkconf.service, mount-pstore.service, network-local-commands.service, network-setup.service, nscd.service, power-profiles-daemon.service, resolvconf.service, rtkit-daemon.service, systemd-machined.service, systemd-modules-load.service, systemd-oomd.service, systemd-oomd.socket, systemd-sysctl.service, systemd-timesyncd.service, systemd-udevd-control.socket, systemd-udevd-kernel.socket, systemd-udevd.service, systemd-update-done.service, udisks2.service, upower.service, wpa_supplicant.service
+would NOT stop the following changed units: display-manager.service, getty@tty1.service, systemd-backlight@backlight:intel_backlight.service, systemd-backlight@leds:tpacpi::kbd_backlight.service, systemd-fsck@dev-disk-by\x2duuid-3D04\x2d3716.service, systemd-journal-flush.service, systemd-logind.service, systemd-random-seed.service, systemd-remount-fs.service, systemd-update-utmp.service, systemd-user-sessions.service, user-runtime-dir@1000.service, user@1000.service
+would activate the configuration...
+sops-install-secrets: Imported /persist/etc/ssh/ssh_host_ed25519_key as age key with fingerprint age1z2x0g05q2erpux006vwhul70d8akj9avrj67s9p27fm4ce32ly8qt8nllz
+warning: password file ‘/run/secrets-for-users/gburd-password’ does not exist
+would restart systemd
+would reload the following units: dbus.service, firewall.service, persist.mount, reload-systemd-vconsole-setup.service
+would restart the following units: nix-daemon.service, polkit.service, sshd.service, systemd-journald.service
+would start the following units: ModemManager.service, NetworkManager-wait-online.service, NetworkManager.service, accounts-daemon.service, audit.service, avahi-daemon.socket, bluetooth.service, bolt.service, colord.service, cpufreq.service, kmod-static-nodes.service, logrotate-checkconf.service, mount-pstore.service, network-local-commands.service, network-setup.service, nscd.service, power-profiles-daemon.service, resolvconf.service, rtkit-daemon.service, systemd-machined.service, systemd-modules-load.service, systemd-oomd.socket, systemd-sysctl.service, systemd-timesyncd.service, systemd-udevd-control.socket, systemd-udevd-kernel.socket, systemd-update-done.service, udisks2.service, upower.service, wpa_supplicant.service
+
+[nix-shell:~/ws/nix-config]$ clear; sudo nixos-rebuild dry-activate --flake .#floki
