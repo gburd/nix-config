@@ -33,7 +33,7 @@
   # ]
   # };
 #  dbus.packages = [ pkgs.gnome.dconf ];
-#  udev.packages = [ pkgs.gnome.gnome-settings-daemon ];
+#  udev.packages = [ pkgs.gnome.gnome-settings-
 
   home.sessionVariables = {
     MOZ_ENABLE_WAYLAND = 1;
