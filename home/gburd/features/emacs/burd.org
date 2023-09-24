@@ -54,8 +54,8 @@
       ;                       nrepl
 			      ac-slime
 			      ag
-			      auto-complete
-			      autopair
+      ;                       auto-complete
+      ;                       autopair
 			      cc-guess
 			      cc-mode
 			      cmake-mode
@@ -64,7 +64,7 @@
 			      company-c-headers
 			      company-cmake
 			      deft
-			      dockerfile-mode
+      ;                       dockerfile-mode
 			      elixir-mix
 			      elixir-mode
 			      eredis
@@ -716,7 +716,7 @@
     This makes sure that brace structures =(), [], {}=, etc. are closed
     as soon as the opening character is typed.
     #+begin_src emacs-lisp
-      (require 'autopair)
+    ;  (require 'autopair)
     #+end_src
 *** Power lisp
     A bunch of tweaks for programming in LISP dialects. It defines the
@@ -753,8 +753,8 @@
 *** auto-complete
     Turn on auto complete.
     #+begin_src emacs-lisp
-      (require 'auto-complete-config)
-      (ac-config-default)
+    ;  (require 'auto-complete-config)
+    ;  (ac-config-default)
     #+end_src
 *** Indentation and buffer cleanup
     This re-indents, untabifies, and cleans up whitespace. It is stolen
@@ -909,8 +909,8 @@
     :END:
     Use =dockerfile-mode= for =Dockerfile= files.
     #+begin_src emacs-lisp
-    (require 'dockerfile-mode)
-    (add-to-list 'auto-mode-alist '("^Dockerflie$" . dockerfile-mode))
+    ;  (require 'dockerfile-mode)
+    ;  (add-to-list 'auto-mode-alist '("^Dockerflie$" . dockerfile-mode))
     #+end_src
 *** make
     :PROPERTIES:
