@@ -85,7 +85,7 @@ in
       # Use Emacs bindings and cursors
       # https://gist.githubusercontent.com/zuigon/8852793/raw/770d705897112a870adc2b27d056a61892aa3a9a/keybindings.fish
       ''
-        function fish_enable_emacs_key_bindings -d "Default (Emacs-like) key bindings for fish"
+        function fish_default_key_bindings -d "Default (Emacs-like) key bindings for fish"
 
         	# Clear earlier bindings, if any
         	bind --erase --all
@@ -214,7 +214,7 @@ in
         			bind \eOd backward-word
         	end
         end
-        fish_enable_emacs_key_bindings
+        fish_default_key_bindings
       '' +
       # Use vim bindings and cursors
       ''

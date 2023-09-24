@@ -7,11 +7,11 @@
   ];
 
   home.packages = with pkgs; [
-    firefox
     emacs
     ungoogled-chromium
     gnupg
     pinentry
+    alacritty
   ];
   # dconf
   # settings reset org.gnome.desktop.input-sources xkb-options

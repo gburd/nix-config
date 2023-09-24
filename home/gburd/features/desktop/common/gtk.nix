@@ -19,7 +19,6 @@ rec {
       package = pkgs.papirus-icon-theme;
     };
   };
-
   services.xsettingsd = {
     enable = true;
     settings = {
