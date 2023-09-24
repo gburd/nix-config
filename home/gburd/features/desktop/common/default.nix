@@ -3,6 +3,7 @@
     ./deluge.nix
     ./discord.nix
     ./firefox.nix
+    ./alacritty.nix
     ./font.nix
     ./gtk.nix
 #    ./kdeconnect.nix

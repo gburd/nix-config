@@ -4,13 +4,14 @@
       enable = true;
       displayManager.gdm = {
         enable = true;
+        wayland = true;
         autoSuspend = false;
-        wayland = false;
       };
       desktopManager.gnome = {
         enable = true;
       };
     };
+    excludePackages = [ pkgs.xterm ];
     geoclue2.enable = true;
     gnome.games.enable = true;
   };
