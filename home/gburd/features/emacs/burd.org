@@ -223,8 +223,8 @@
 	(setq frame-title-format '(buffer-file-name "%f" ("%b")))
 	(set-face-attribute 'default nil
 			    :family "Fira Code"
-			    :height 134
 			    :weight 'normal
+                            :size 14
 			    :width 'normal)
 
 	(when (functionp 'set-fontset-font)
