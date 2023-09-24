@@ -1,4 +1,4 @@
 { pkgs, ... }:
 {
-  home.packages = [ pkgs.alacrity ];
+  home.packages = [ pkgs.slack ];
 }
