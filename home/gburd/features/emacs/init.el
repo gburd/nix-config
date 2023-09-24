@@ -1,58 +1,24 @@
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(set-fringe-mode 10)
-(menu-bar-mode -1)
-(set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 120)
-(setq visible-bell t)
-(global-display-line-numbers-mode)
-(setq display-line-numbers-type 'relative)
 
-(setq base16-theme-256-color-source "base16-shell")
-(load-theme 'base16-${config.colorscheme.slug} t)
+;; Added by Package.el.  This must come before configurations of
+;; installed packages.  Don't delete this line.  If you don't want it,
+;; just comment it out by adding a semicolon to the start of the line.
+;; You may delete these explanatory comments.
+(package-initialize)
 
-(require 'nix-mode)
-(add-to-list 'auto-mode-alist '("\\.nix\\'" . nix-mode))
-
-(add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))
-(global-set-key "\C-cl" 'org-store-link)
-(global-set-key "\C-ca" 'org-agenda)
-(setq org-directory "~/Documents/Org")
-(setq org-agenda-files (directory-files-recursively org-directory "\\.org$"))
-
-(require 'lsp-mode)
-(add-hook 'nix-mode-hook #'lsp)
-
-(require 'which-key)
-(which-key-mode)
-
-(require 'mmm-mode)
-(setq mmm-global-mode 't)
-
-(mmm-add-classes
-'((nix-block
-    :front " \/\* \\([a-zA-Z0-9_-]+\\) \*\/ '''[^']"
-    :back "''';"
-    ;; :save-matches 1
-    ;; :delimiter-mode nil
-    ;; :match-submode identity
-    :submode org
-)))
-(mmm-add-mode-ext-class 'nix-mode nil 'nix-block)
-
-
-
-(setq evil-want-keybinding nil)
-(require 'evil)
-(evil-mode 1)
-(setq evil-jumps-across-buffers t)
-
-(require 'evil-org)
-(add-hook 'org-mode-hook 'evil-org-mode)
-(evil-org-set-key-theme '(navigation insert textobjects additional calendar))
-(require 'evil-org-agenda)
-(evil-org-agenda-set-keys)
-
-(evil-collection-init)
-
-(global-evil-surround-mode 1)
+(require 'org-install)
+(require 'ob-tangle)
+(org-babel-load-file (expand-file-name "burd.org" user-emacs-directory))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (yaml-mode ws-butler writegood-mode web-mode toml-mode terraform-mode solarized-theme sml-mode smex scala-mode rvm rust-mode restclient python-pep8 python-mode puppet-mode php-mode pastebin paredit o-blog nodejs-repl nixos-options nix-mode multi-web-mode marmalade markdown-mode magit lua-mode intellij-theme htmlize haskell-mode haml-mode hackernews graphviz-dot-mode google-this google-c-style go-mode gist flycheck-rust flycheck-pos-tip flycheck-ocaml flycheck-google-cpplint flycheck-cask flx-isearch flx-ido feature-mode erlang eredis elixir-mode elixir-mix deft csharp-mode company-cmake company-c-headers color-theme-sanityinc-tomorrow coffee-mode cmake-mode clojure-mode autopair ag ac-slime))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

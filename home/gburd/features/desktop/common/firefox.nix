@@ -1,18 +1,99 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, theme, ... }:
 {
   programs.browserpass.enable = true;
   programs.firefox = {
     enable = true;
+
+    package = pkgs.wrapFirefox pkgs.firefox-unwrapped {
+        extraPolicies = {
+            CaptivePortal = false;
+            DisableFirefoxStudies = true;
+            DisablePocket = true;
+            DisableTelemetry = true;
+            DisableFirefoxAccounts = false;
+            NoDefaultBookmarks = true;
+            OfferToSaveLogins = false;
+            OfferToSaveLoginsDefault = false;
+            PasswordManagerEnabled = false;
+            FirefoxHome = {
+                Search = true;
+                Pocket = false;
+                Snippets = false;
+                TopSites = false;
+                Highlights = false;
+            };
+            UserMessaging = {
+                ExtensionRecommendations = false;
+                SkipOnboarding = true;
+            };
+        };
+    };
+
     profiles.gburd = {
+      id = 0;
       bookmarks = { };
       extensions = with pkgs.inputs.firefox-addons; [
-        ublock-origin
+	autoplay-no-more
 	bypass-paywalls-clean
-        proton-pass
+	i-dont-care-about-cookies
+	kagi-search-for-firefox
+        clearurls
+        decentraleyes
+        disconnect
+        duckduckgo-privacy-essentials
+        floccus
+        ghostery
+        https-everywhere
+        languagetool
 #        onetab
+        privacy-badger
+        privacy-badger
+        privacy-redirect
+        proton-pass
+        react-devtools
+        ublock-origin
       ];
-      bookmarks = { };
+      search = {
+      force = true;
+      default = "Kagi";
+      engines = {
+          "Nix Packages" = {
+              urls = [{
+                  template = "https://search.nixos.org/packages";
+                  params = [
+                      { name = "type"; value = "packages"; }
+                      { name = "query"; value = "{searchTerms}"; }
+                  ];
+              }];
+              icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+              definedAliases = [ "@np" ];
+          };
+          "NixOS Wiki" = {
+              urls = [{ template = "https://nixos.wiki/index.php?search={searchTerms}"; }];
+              iconUpdateURL = "https://nixos.wiki/favicon.png";
+              updateInterval = 24 * 60 * 60 * 1000;
+              definedAliases = [ "@nw" ];
+          };
+          "Wikipedia (en)".metaData.alias = "@wiki";
+          "Google".metaData.hidden = true;
+          "Amazon.com".metaData.hidden = true;
+          "Bing".metaData.hidden = true;
+          "eBay".metaData.hidden = true;
+      };
+      extraConfig = ''
+          user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
+          user_pref("full-screen-api.ignore-widgets", true);
+          user_pref("media.ffmpeg.vaapi.enabled", true);
+          user_pref("media.rdd-vpx.enabled", true);
+      '';
+      userChrome = ''
+       # a css 
+      '';
+      userContent = ''
+         Here too
+      '';
       settings = {
+        "general.smoothScroll" = true;
         "browser.disableResetPrompt" = true;
         "browser.download.panel.shown" = true;
         "browser.download.useDownloadDir" = false;
