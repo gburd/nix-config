@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }: {
+{ inputs, lib, pkgs, ... }: {
   imports = [
     inputs.nixos-hardware.nixosModules.common-cpu-amd
     inputs.nixos-hardware.nixosModules.common-gpu-amd
@@ -14,8 +14,6 @@
     ../_mixins/global
     ../_mixins/users/gburd
   ];
-
-  boot.initrd.luks.devices."enc".device = "/dev/disk/by-uuid/470152b6-16cc-4dcf-b1e9-c684c1589e33";
 
   fileSystems."/swap" =
     {
@@ -43,17 +41,22 @@
   }];
 
   boot = {
-    initrd.availableKernelModules = [
-      "ahci"
-      "nvme"
-      "rtsx_pci_sdmmc"
-      "sd_mod"
-      "sdhci_pci"
-      "uas"
-      "usbhid"
-      "usb_storage"
-      "xhci_pci"
-    ];
+    initrd = {
+      availableKernelModules = [
+        "ahci"
+        "nvme"
+        "rtsx_pci_sdmmc"
+        "sd_mod"
+        "sdhci_pci"
+        "uas"
+        "usbhid"
+        "usb_storage"
+        "xhci_pci"
+      ];
+
+      luks.devices."enc".device = "/dev/disk/by-uuid/470152b6-16cc-4dcf-b1e9-c684c1589e33";
+    };
+
     kernelModules = [ "kvm-intel" ];
     kernelPackages = pkgs.linuxPackages_latest;
   };
