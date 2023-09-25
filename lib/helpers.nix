@@ -5,7 +5,7 @@
     extraSpecialArgs = {
       inherit inputs outputs desktop hostname platform username stateVersion;
     };
-    modules = [ "../home/${username}/${hostname}.nix" ];
+    modules = [ ../home/${username}/${hostname}.nix ];
   };
 
   # Helper function for generating host configs
@@ -14,7 +14,7 @@
       inherit inputs outputs desktop hostname username stateVersion;
     };
     modules = [
-      "../nixos/${hostname}"
+      ../nixos/${hostname}
       inputs.agenix.nixosModules.default
     ] ++ (inputs.nixpkgs.lib.optionals (installer != null) [ installer ]);
   };
