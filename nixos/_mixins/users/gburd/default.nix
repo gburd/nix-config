@@ -3,8 +3,9 @@ let
   ifTheyExist = groups: builtins.filter (group: builtins.hasAttr group config.users.groups) groups;
 in
 {
-  imports = [ ]
-    ++ lib.optionals (desktop != null) [
+  imports = [
+    inputs.vscode-server.nixosModules.default
+  ] ++ lib.optionals (desktop != null) [
     ../../desktop/chromium.nix
     ../../desktop/chromium-extensions.nix
     ../../desktop/obs-studio.nix
