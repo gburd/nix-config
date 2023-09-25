@@ -23,7 +23,10 @@
   nixpkgs = {
     overlays = builtins.attrValues outputs.overlays;
     config = {
+      # Disable if you don't want unfree packages
       allowUnfree = true;
+      # Accept the joypixels license
+      joypixels.acceptLicense = true;
     };
   };
 
@@ -53,4 +56,12 @@
       value = "1048576";
     }
   ];
+
+  # Only install the docs I use
+  documentation.enable = true;
+  documentation.nixos.enable = false;
+  documentation.man.enable = true;
+  documentation.info.enable = false;
+  documentation.doc.enable = false;
+
 }
