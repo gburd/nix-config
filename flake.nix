@@ -1,109 +1,120 @@
 {
-  description = "My (Greg Burd's) NixOS configuration";
+  description = "Greg Burd's NixOS and Home Manager Configuration";
 
-   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
+    # You can access packages and modules from different nixpkgs revs at the
+    # same time.  See 'unstable-packages' overlay in 'overlays/default.nix'.
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    hardware.url = "github:nixos/nixos-hardware";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
+
+    home-manager.url = "github:nix-community/home-manager/release-23.05";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
+    nixos-hardware.url = "github:nixos/nixos-hardware/master";
+
     impermanence.url = "github:nix-community/impermanence";
-    nix-colors.url = "github:misterio77/nix-colors";
 
-    sops-nix = {
-      url = "github:mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixpkgs-stable.follows = "nixpkgs";
-    };
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nh = {
-      url = "github:viperml/nh";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nixos-mailserver = {
-      url = "gitlab:simple-nixos-mailserver/nixos-mailserver";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixpkgs-22_11.follows = "nixpkgs";
-      inputs.nixpkgs-23_05.follows = "nixpkgs";
-    };
-    firefly = {
-      url = "github:timhae/firefly";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    firefox-addons = {
-      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nix-formatter-pack.url = "github:Gerschtli/nix-formatter-pack";
+    nix-formatter-pack.inputs.nixpkgs.follows = "nixpkgs";
+
+    vscode-server.url = "github:nix-community/nixos-vscode-server";
+    vscode-server.inputs.nixpkgs.follows = "nixpkgs";
+
+    sops-nix.url = "github:mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    sops-nix.inputs.nixpkgs-stable.follows = "nixpkgs";
+
+    nh.url = "github:viperml/nh";
+    nh.inputs.nixpkgs.follows = "nixpkgs";
+
+    firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+    firefox-addons.inputs.nixpkgs.follows = "nixpkgs";
+
   };
-
-  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+  outputs =
+    { self
+    , nixpkgs
+    , nix-formatter-pack
+    , ...
+    } @ inputs:
     let
       inherit (self) outputs;
-      lib = nixpkgs.lib // home-manager.lib;
-      systems = [ "x86_64-linux" "aarch64-linux" ];
-      forEachSystem = f: lib.genAttrs systems (sys: f pkgsFor.${sys});
-      pkgsFor = nixpkgs.legacyPackages;
+      # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
+      stateVersion = "23.05";
+      libx = import ./lib { inherit inputs outputs stateVersion; };
     in
     {
-      inherit lib;
+      # home-manager switch -b backup --flake $HOME/ws/nix-config
+      # nix build .#homeConfigurations."gburd@floki".activationPackage
+      homeConfigurations = {
+        # .iso images
+        # ---------------------------------------------------------------------
+
+        "gburd@iso-console" = libx.mkHome { hostname = "iso-console"; username = "nixos"; };
+        "gburd@iso-desktop" = libx.mkHome { hostname = "iso-desktop"; username = "nixos"; desktop = "pantheon"; };
+
+        # Workstations
+        # ---------------------------------------------------------------------
+
+        "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
+
+        # Servers
+        # ---------------------------------------------------------------------
+      };
+
+      nixosConfigurations = {
+        # .iso images
+        # ---------------------------------------------------------------------
+
+        #  - nix build .#nixosConfigurations.{iso-console|iso-desktop}.config.system.build.isoImage
+        iso-console = libx.mkHost { hostname = "iso-console"; username = "nixos"; installer = nixpkgs + "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"; };
+        iso-desktop = libx.mkHost { hostname = "iso-desktop"; username = "nixos"; installer = nixpkgs + "/nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares.nix"; desktop = "pantheon"; };
+
+        # Workstations
+        # ---------------------------------------------------------------------
+
+        # Lenovo Carbon X1 Extreme Gen 5 - x86_64
+        floki = libx.mkHost { hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
+
+        # Servers
+        # ---------------------------------------------------------------------
+      };
+
+      # Custom packages and modifications, exported as overlays
+      overlays = import ./overlays { inherit inputs outputs; };
+
+      hydraJobs = import ./hydra.nix { inherit inputs outputs; };
+
+      # Devshell for bootstrapping; acessible via 'nix develop' or 'nix-shell' (legacy)
+      devShells = libx.forAllSystems (system:
+        let pkgs = nixpkgs.legacyPackages.${system};
+        in import ./shell.nix { inherit pkgs; }
+      );
+
+      # nix fmt
+      formatter = libx.forAllSystems (system:
+        nix-formatter-pack.lib.mkFormatter {
+          pkgs = nixpkgs.legacyPackages.${system};
+          config.tools = {
+            alejandra.enable = false;
+            deadnix.enable = true;
+            nixpkgs-fmt.enable = true;
+            statix.enable = true;
+          };
+        }
+      );
+
+      # Custom packages; acessible via 'nix build', 'nix shell', etc
+      packages = libx.forAllSystems (system:
+        let pkgs = nixpkgs.legacyPackages.${system};
+        in import ./pkgs { inherit pkgs; }
+      );
+
       nixosModules = import ./modules/nixos;
       homeManagerModules = import ./modules/home-manager;
       templates = import ./templates;
-
-      overlays = import ./overlays { inherit inputs outputs; };
-      hydraJobs = import ./hydra.nix { inherit inputs outputs; };
-
-      packages = forEachSystem (pkgs: import ./pkgs { inherit pkgs; });
-      devShells = forEachSystem (pkgs: import ./shell.nix { inherit pkgs; });
-      formatter = forEachSystem (pkgs: pkgs.nixpkgs-fmt);
-
-      wallpapers = import ./home/gburd/wallpapers;
-
-      nixosConfigurations = {
-        # Personal laptop - Lenovo Carbon X1 Extreme Gen 5 - x86_64
-        floki =  lib.nixosSystem {
-          modules = [ ./hosts/floki ];
-          specialArgs = { inherit inputs outputs; };
-        };
-
-        # Work laptop - MacBook Air macOS/nix - aarch64
-        # ? =  lib.nixosSystem {
-        #   modules = [ ./hosts/? ];
-        #   specialArgs = { inherit inputs outputs; };
-        # };
-
-        # Main desktop - Intel NUC Skull Canyon - x86_64
-        # ? = lib.nixosSystem {
-        #   modules = [ ./hosts/? ];
-        #   specialArgs = { inherit inputs outputs; };
-        # };
-
-        # Core server (?)
-        # ? = lib.nixosSystem {
-        #   modules = [ ./hosts/? ];
-        #   specialArgs = { inherit inputs outputs; };
-        # };
-
-        # Build and game server (?)
-        # ? = lib.nixosSystem {
-        #   modules = [ ./hosts/? ];
-        #   specialArgs = { inherit inputs outputs; };
-        # };
-      };
-
-      homeConfigurations = {
-        # Desktops
-        "gburd@floki" = lib.homeManagerConfiguration {
-          modules = [ ./home/gburd/floki.nix ];
-          pkgs = pkgsFor.x86_64-linux;
-          extraSpecialArgs = { inherit inputs outputs; };
-        };
-        "gburd@generic" = lib.homeManagerConfiguration {
-          modules = [ ./home/gburd/generic.nix ];
-          pkgs = pkgsFor.x86_64-linux;
-          extraSpecialArgs = { inherit inputs outputs; };
-        };
-      };
     };
 }
