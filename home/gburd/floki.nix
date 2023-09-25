@@ -1,7 +1,7 @@
-{ config, pkgs, username, ... }:
+{ config, pkgs, username, desktop, ... }:
 {
   imports = [
-    ../services/keybase.nix
+    ../_mixins/services/keybase.nix
 
     # TODO remove/migrate away from user mixins
     ./_mixins
