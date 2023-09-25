@@ -1,15 +1,4 @@
-# Shell for bootstrapping flake-enabled nix and other tooling
-{ pkgs ? # If pkgs is not defined, instanciate nixpkgs from locked commit
-  let
-    lock = (builtins.fromJSON (builtins.readFile ./flake.lock)).nodes.nixpkgs.locked;
-    nixpkgs = fetchTarball {
-      url = "https://github.com/nixos/nixpkgs/archive/${lock.rev}.tar.gz";
-      sha256 = lock.narHash;
-    };
-  in
-  import nixpkgs { overlays = [ ]; }
-, ... }:
-{
+{ pkgs ? (import ./nixpkgs.nix) { overlays = [ ]; } }: {
   default = pkgs.mkShell {
     NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake";
     nativeBuildInputs = with pkgs; [
@@ -32,8 +21,8 @@
   services.dbus.packages = [ pkgs.gcr ];
   services.pcscd.enable = true;
   programs.gnupg.agent = {
-   enable = true;
-   pinentryFlavor = "curses";
-   enableSSHSupport = true;
+    enable = true;
+    pinentryFlavor = "curses";
+    enableSSHSupport = true;
   };
 }

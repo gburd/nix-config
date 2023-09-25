@@ -1,7 +1,5 @@
 { lib
-, pkgs
 , stdenv
-, fetchFromGitHub
 , makeWrapper
 , pass
 , jq

@@ -4,7 +4,8 @@ with lib;
 
 let
   cfg = config.services.pass-secret-service;
-in {
+in
+{
   disabledModules = [ "services/pass-secret-service.nix" ];
 
   meta.maintainers = with maintainers; [ cab404 cyntheticfox ];

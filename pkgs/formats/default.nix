@@ -1,6 +1,6 @@
 { pkgs }:
 {
-  gzipJson = {}: {
+  gzipJson = _: {
     generate = name: value: pkgs.callPackage
       ({ runCommand, gzip }: runCommand name
         {
@@ -12,6 +12,6 @@
       '')
       { };
 
-    type = (pkgs.formats.json { }).type;
+    inherit ((pkgs.formats.json { })) type;
   };
 }
