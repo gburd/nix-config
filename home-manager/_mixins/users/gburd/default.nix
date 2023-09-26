@@ -1,4 +1,4 @@
-{ config, pkgs, username, ... }: {
+{ inputs, config, pkgs, username, ... }: {
   imports = [
     inputs.impermanence.nixosModules.home-manager.impermanence
     ../../services/keybase.nix
