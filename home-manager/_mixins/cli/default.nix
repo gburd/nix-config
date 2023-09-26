@@ -13,7 +13,7 @@
     ./ranger.nix
     ./screen.nix
     ./ssh.nix
-    ./xpo.nix
+#    ./xpo.nix
   ];
 
   home.packages = with pkgs; [
