@@ -1,15 +1,4 @@
-{ config, lib, pkgs, ... }:
-let
-  pinentry =
-    if config.gtk.enable then {
-      packages = [ pkgs.pinentry-gnome pkgs.gcr ];
-      name = "gnome3";
-    } else {
-      packages = [ pkgs.pinentry-curses ];
-      name = "curses";
-    };
-in
-{
+{ config, lib, pkgs, ... }: {
   home = {
     file = {
       "${config.xdg.configHome}/neofetch/config.conf".text = builtins.readFile ./neofetch.conf;
@@ -176,7 +165,7 @@ in
     gpg-agent = {
       enable = true;
       enableSshSupport = true;
-      pinentryFlavor = pinentry.name;
+      pinentryFlavor = "curses";
     };
   };
 
