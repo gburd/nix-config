@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, config, username, ... }:
 let
   pinentry =
     if config.gtk.enable then {
@@ -42,7 +42,7 @@ in
           trust-model = "tofu+pgp";
         };
         publicKeys = [{
-          source = ../../pgp.asc;
+          source = ../users/${username}/pgp.asc;
           trust = 5;
         }];
       };

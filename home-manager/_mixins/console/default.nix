@@ -1,4 +1,15 @@
-{ config, lib, pkgs, ... }: {
+{ config, lib, pkgs, ... }:
+let
+  pinentry =
+    if config.gtk.enable then {
+      packages = [ pkgs.pinentry-gnome pkgs.gcr ];
+      name = "gnome3";
+    } else {
+      packages = [ pkgs.pinentry-curses ];
+      name = "curses";
+    };
+in
+{
   home = {
     file = {
       "${config.xdg.configHome}/neofetch/config.conf".text = builtins.readFile ./neofetch.conf;
@@ -7,10 +18,10 @@
       neofetch
     ];
     sessionVariables = {
-      EDITOR = "micro";
+      EDITOR = "vi";
       MANPAGER = "sh -c 'col --no-backspaces --spaces | bat --language man'";
-      SYSTEMD_EDITOR = "micro";
-      VISUAL = "micro";
+      SYSTEMD_EDITOR = "vi";
+      VISUAL = "vi";
     };
   };
 
@@ -114,7 +125,7 @@
         };
       };
       aliases = {
-        lg = "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
+        lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
       };
       extraConfig = {
         push = {
@@ -165,7 +176,7 @@
     gpg-agent = {
       enable = true;
       enableSshSupport = true;
-      pinentryFlavor = "curses";
+      pinentryFlavor = pinentry.name;
     };
   };
 
