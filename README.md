@@ -71,7 +71,7 @@ signing, as well as for SSH'ing around.
 Most relevant user apps daily drivers:
 
 - neovim
-- fish + starship
+- fish
 - kitty
 - qutebrowser
 - neomutt + mbsync

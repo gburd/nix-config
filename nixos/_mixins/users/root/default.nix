@@ -2,6 +2,6 @@ _:
 {
   users.users.root = {
     hashedPassword = null;
-    openssh.authorizedKeys.keys = [ (builtins.readFile ../../../home/gburd/ssh.pub) ];
+    openssh.authorizedKeys.keys = [ (builtins.readFile ../../../../home-manager/_mixins/users/gburd/ssh.pub) ];
   };
 }

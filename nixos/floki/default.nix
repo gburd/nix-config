@@ -1,18 +1,21 @@
 { inputs, lib, pkgs, ... }: {
   imports = [
-    inputs.nixos-hardware.nixosModules.common-cpu-amd
-    inputs.nixos-hardware.nixosModules.common-gpu-amd
+    inputs.nixos-hardware.nixosModules.common-cpu-intel
+    #inputs.nixos-hardware.nixosModules.common-gpu-nvidia
+    inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-ssd
     #(import ./disks.nix { })
 
     ../_mixins/hardware/systemd-boot.nix
+    ../_mixins/filesystems/encrypted-root.nix
+    ../_mixins/filesystems/btrfs.nix
     ../_mixins/services/bluetooth.nix
     ../_mixins/services/pipewire.nix
     #    ../_mixins/services/zerotier.nix
     ../_mixins/virt
 
-    ../_mixins/global
-    ../_mixins/users/gburd
+    #    ../_mixins/global
+    #    ../_mixins/users/gburd
   ];
 
   fileSystems."/swap" =
@@ -57,7 +60,7 @@
       luks.devices."enc".device = "/dev/disk/by-uuid/470152b6-16cc-4dcf-b1e9-c684c1589e33";
     };
 
-    kernelModules = [ "kvm-intel" ];
+    kernelModules = [ "kvm-intel" ]; # TODO: "nvidia" 
     kernelPackages = pkgs.linuxPackages_latest;
   };
 
