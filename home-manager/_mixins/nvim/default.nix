@@ -1,14 +1,10 @@
 { config, pkgs, ... }:
-let
-  color = pkgs.writeText "color.vim" (import ./theme.nix config.colorscheme);
-in
 {
   imports = [
     ./lsp.nix
     ./syntaxes.nix
     ./ui.nix
   ];
-  home.sessionVariables.EDITOR = "nvim";
 
   programs.neovim = {
     enable = true;
@@ -16,9 +12,6 @@ in
     extraConfig = /* vim */ ''
       "Use system clipboard
       set clipboard=unnamedplus
-      "Source colorscheme
-      source ${color}
-
       "Set fold level to highest in file
       "so everything starts out unfolded at just the right level
       augroup initial_fold

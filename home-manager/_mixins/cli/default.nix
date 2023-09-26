@@ -13,7 +13,7 @@
     ./ranger.nix
     ./screen.nix
     ./ssh.nix
-#    ./xpo.nix
+    #    ./xpo.nix
   ];
 
   home.packages = with pkgs; [
@@ -40,6 +40,6 @@
 
     tly # Tally counter
 
-    inputs.nh.default # nixos-rebuild and home-manager CLI wrapper
+    #    inputs.nh.default # nixos-rebuild and home-manager CLI wrapper
   ];
 }
