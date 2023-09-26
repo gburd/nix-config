@@ -74,12 +74,14 @@ in
       "wireshark"
     ];
 
-    hashedPasswordFile = config.sops.secrets.gburd-password.path;
     homeMode = "0755";
     isNormalUser = true;
+    # TODO
+    hashedPassword = "$6$RDOZHdTwt.BuOR4C$fYDkyb3yppbgX0ewPbsKabS2u9W.wyrRJONQPtugrO/gBJCzsWkfVIVYOAj07Qar1yqeYJBlBkYSFAgGe5ssw.";
+    #hashedPasswordFile = config.sops.secrets.gburd-password.path;
     openssh.authorizedKeys.keys = [
-      (builtins.readFile ../../../../home/gburd/ssh.pub)
-      (builtins.readFile ../../../../home/gburd/symas-ssh.pub)
+      (builtins.readFile ../../../../home-manager/_mixins/users/gburd/ssh.pub)
+      (builtins.readFile ../../../../home-manager/_mixins/users/gburd/symas-ssh.pub)
     ];
     packages = [ pkgs.home-manager ];
     shell = pkgs.fish;
@@ -89,8 +91,6 @@ in
     sopsFile = ../../secrets.yaml;
     neededForUsers = true;
   };
-
-  home-manager.users.gburd = import ../../../../home/gburd/${config.networking.hostName}.nix;
 
   services.geoclue2.enable = true;
 }

@@ -5,16 +5,30 @@ keys:
   # Hosts
   - &hosts:
     - &floki age1z2x0g05q2erpux006vwhul70d8akj9avrj67s9p27fm4ce32ly8qt8nllz
+    - &iso-console age1z2x0g05q2erpux006vwhul70d8akj9avrj67s9p27fm4ce32ly8qt8nllz
+    - &iso-desktop age1z2x0g05q2erpux006vwhul70d8akj9avrj67s9p27fm4ce32ly8qt8nllz
 
 creation_rules:
 
-  - path_regex: hosts/floki/secrets.ya?ml$
+  - path_regex: nixos/floki/secrets.ya?ml$
     key_groups:
     - age:
       - *floki
       pgp:
       - *gburd
-  - path_regex: hosts/common/secrets.ya?ml$
+  - path_regex: nixos/iso-console/secrets.ya?ml$
+    key_groups:
+    - age:
+      - *iso-console
+      pgp:
+      - *gburd
+  - path_regex: nixos/iso-desktop/secrets.ya?ml$
+    key_groups:
+    - age:
+      - *iso-desktop
+      pgp:
+      - *gburd
+  - path_regex: nixos/_mixins/secrets.ya?ml$
     key_groups:
     - age:
       - *floki

@@ -8,6 +8,7 @@
       vim
       emacs
       tig
+      tree
       ripgrep
 
       sops

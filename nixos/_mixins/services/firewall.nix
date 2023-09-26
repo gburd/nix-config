@@ -3,16 +3,7 @@ let
   # Firewall configuration variable for syncthing
   syncthing = {
     hosts = [
-      "designare"
-      "micropc"
-      "p1"
-      "p2-max"
-      "ripper"
-      "trooper"
-      "vm"
-      "win2"
-      "win-max"
-      "zed"
+      "floki"
     ];
     tcpPorts = [ 22000 ];
     udpPorts = [ 22000 21027 ];
