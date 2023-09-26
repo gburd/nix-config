@@ -10,15 +10,16 @@ let
     };
 in
 {
-  #  home.packages = pinentry.packages;
-  home.packages = [ pkgs.pinentry-curses ];
+  home.packages = pinentry.packages;
+  #  home.packages = [ pkgs.pinentry-curses ];
 
   services.gpg-agent = {
     #TODO: gnupg vs gpg-agent ?
     enable = true;
     enableSshSupport = true;
-    #    sshKeys = [ "149F16412997785363112F3DBD713BC91D51B831" ];
-    pinentryFlavor = pinentry.name;
+    # TODO: sshKeys = [ "149F16412997785363112F3DBD713BC91D51B831" ];
+    # TODO: pinentryFlavor = pinentry.name;
+    pinentryFlavor = "curses";
     enableExtraSocket = true;
   };
 
