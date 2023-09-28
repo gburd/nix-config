@@ -8,7 +8,6 @@
     (import ./disks.nix)
 
     ../_mixins/hardware/systemd-boot.nix
-    ../_mixins/filesystems/encrypted-root.nix
     ../_mixins/services/bluetooth.nix
     ../_mixins/services/pipewire.nix
     ../_mixins/virt
