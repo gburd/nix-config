@@ -126,6 +126,7 @@
     ];
     sessionVariables = {
       PAGER = "moar";
+      FLAKE = "/home/${username}/ws/nix-config";
     };
   };
   programs = {

@@ -1,4 +1,4 @@
-{ disks ? [ "/dev/nvme0n1" ], ... }:
+{ config, disk ? "/dev/nvme0n1", ... }:
 let
   hostname = config.networking.hostName;
 in
@@ -7,7 +7,7 @@ in
     disk = {
       nvme = {
         type = "disk";
-        device = "/dev/nvme0n1";
+        device = disk;
         content = {
           type = "gpt";
           partitions = {
@@ -63,5 +63,6 @@ in
       };
     };
   };
-}
 
+  fileSystems."/persist".neededForBoot = true;
+}
