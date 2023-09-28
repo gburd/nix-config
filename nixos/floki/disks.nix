@@ -1,44 +1,67 @@
 { disks ? [ "/dev/nvme0n1" ], ... }:
 let
-  defaultXfsOpts = [ "defaults" "relatime" "nodiratime" ];
+  hostname = config.networking.hostName;
 in
 {
   disko.devices = {
     disk = {
-      nvme0 = {
+      nvme = {
         type = "disk";
-        device = builtins.elemAt disks 0;
+        device = "/dev/nvme0n1";
         content = {
-          type = "table";
-          format = "gpt";
-          partitions = [{
-            name = "ESP";
-            start = "0%";
-            end = "550MiB";
-            bootable = true;
-            flags = [ "esp" ];
-            fs-type = "fat32";
-            content = {
-              type = "filesystem";
-              format = "vfat";
-              mountpoint = "/boot";
-            };
-          }
-            {
-              name = "root";
-              start = "550MiB";
-              end = "100%";
+          type = "gpt";
+          partitions = {
+            ESP = {
+              size = "512M";
+              type = "EF00";
               content = {
                 type = "filesystem";
-                # Overwirte the existing filesystem
-                extraArgs = [ "-f" ];
-                format = "xfs";
-                mountpoint = "/";
-                mountOptions = defaultXfsOpts;
+                format = "vfat";
+                mountpoint = "/boot";
+                mountOptions = [ "defaults" ];
               };
-            }];
+            };
+            luks = {
+              size = "100%";
+              content = {
+                type = "luks";
+                name = "${hostname}_crypt";
+                extraOpenArgs = [ "--allow-discards" ];
+                # This file contains the key for interactive login which must be
+                # the secret without a trailing newline.
+                passwordFile = config.sops.secrets.luks-password.path;
+                content = {
+                  type = "btrfs";
+                  extraArgs = [ "-f" ];
+                  subvolumes = {
+                    "/root" = {
+                      mountpoint = "/";
+                      mountOptions = [ "compress=zstd" ];
+                    };
+                    "/home" = {
+                      mountpoint = "/home";
+                      mountOptions = [ "compress=zstd" ];
+                    };
+                    "/nix" = {
+                      mountpoint = "/nix";
+                      mountOptions = [ "compress=zstd" "noatime" ];
+                    };
+                    "/persist" = {
+                      mountpoint = "/persist";
+                      mountOptions = [ "compress=zstd" ];
+                    };
+                    "/var/logs" = {
+                      mountpoint = "/var/logs";
+                      mountOptions = [ "compress=zstd" "noatime" ];
+                    };
+                  };
+                };
+              };
+            };
+          };
         };
       };
     };
   };
 }
+

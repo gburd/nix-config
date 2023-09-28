@@ -21,34 +21,40 @@
   * swap (see: https://discourse.nixos.org/t/how-do-i-set-up-a-swap-file/8323/7)
   * udevadm trigger
 
-nh os switch --ask
-
-
 INSTALL:
 export device=/dev/nvme0n1
 export hostname=floki
 wipefs/shread/scrub ${device}
+sgdisk --zap-all ${device}
 printf "label: gpt\n,550M,U\n,,L\n" | sfdisk ${device}
 mkfs.fat -L ESP -F 32 ${device}
 cryptsetup --verify-passphrase -v luksFormat --label "${hostname}_crypt" "${device}p2"
 cryptsetup open "${device}p2" "${hostname}_crypt"
 mkfs.btrfs -L ${hostname} /dev/mapper/"${hostname}_crypt"
-mount -t btrfs -o subvol=/ /dev/disk/by-label/${hostname} /mnt
+mount -t btrfs -o subvol=root /dev/disk/by-label/${hostname} /mnt
 btrfs subvolume create /mnt/root
 btrfs subvolume create /mnt/nix
 btrfs subvolume create /mnt/persist
 btrfs subvolume create /mnt/swap
 btrfs subvolume create /mnt/logs
 
-mount -o compress=zstd,subvol=root /dev/mapper/"${hostname}_crypt" /mnt
+mount -t btrfs -o compress=zstd,subvol=root /dev/disk/by-label/"${hostname}" /mnt
 mkdir /mnt/{nix,persist,swap,var/logs}
-mount -o compress=zstd,noatime,subvol=nix /dev/mapper/"${hostname}_crypt" /mnt/nix
-mount -o compress=zstd,subvol=persist /dev/mapper/"${hostname}_crypt" /mnt/persist
-mount -o compress=zstd,noatime,subvol=logs /dev/mapper/"${hostname}_crypt" /mnt/var/logs
-mount -o noatime,subvol=swap /dev/mapper/"${hostname}_crypt" /mnt/swap
+mount -t btrfs -o compress=zstd,noatime,subvol=nix /dev/disk/by-label/"${hostname}" /mnt/nix
+mount -t btrfs -o compress=zstd,subvol=persist /dev/disk/by-label/"${hostname}" /mnt/persist
+mount -t btrfs -o compress=zstd,noatime,subvol=logs /dev/disk/by-label/"${hostname}" /mnt/var/logs
+mount -t btrfs -o noatime,subvol=swap /dev/disk/by-label/"${hostname}" /mnt/swap
 
 mkdir /mnt/boot
-mount /dev/sda1 /mnt/boot
+mount /dev/nvme0n1p1 /mnt/boot
+
+mount -t proc /proc /mnt/proc
+mount -t sysfs /sys /mnt/sys
+mount --bind /dev /mnt/dev
+mount --bind /dev/pts /mnt/dev/pts
+
+or
+for i in proc sys dev; do mount -o bind $i /mnt/$i; done
 
 nixos-generate-config --root /mnt
 nano /mnt/etc/nixos/configuration.nix # manually add mount options or cp from USB
@@ -82,7 +88,7 @@ export GPG_TTY=$(tty)
 gpg-connect-agent reloadagent /bye
 echo test | gpg --clearsign
 gpg --list-keys
-EDITOR=vi sops --config .sops.yaml hosts/common/secrets.yaml
+EDITOR=vi sops --config .sops.yaml nixos/common/secrets.yaml
 sudo nixos-install --flake .#hostname
 reboot
 home-manager switch --flake .#username@hostname
@@ -90,9 +96,10 @@ home-manager switch --flake .#username@hostname
 
 sudo nixos-rebuild switch --flake .#my-hostname
 clear; sudo nixos-rebuild dry-activate --flake .#${hostname}
+sudo nix run github:nix-community/disko -- --mode disko /tmp/disko-config.nix --arg disks '[ "/dev/nvme0n1" ]'
 
 -------
-  services.pcscd.enable = true;
+services.pcscd.enable = true;
 
 https://mt-caret.github.io/blog/posts/2020-06-29-optin-state.html
 https://hoverbear.org/blog/declarative-gnome-configuration-in-nixos/
