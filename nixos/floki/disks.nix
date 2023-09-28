@@ -1,8 +1,4 @@
-{ config, disk ? "/dev/nvme0n1", ... }:
-let
-  hostname = config.networking.hostName;
-in
-{
+{ disk ? "/dev/nvme0n1", ... }: {
   disko.devices = {
     disk = {
       nvme = {
@@ -34,23 +30,23 @@ in
                   type = "btrfs";
                   extraArgs = [ "-f" ];
                   subvolumes = {
-                    "/root" = {
+                    "root" = {
                       mountpoint = "/";
                       mountOptions = [ "compress=zstd" ];
                     };
-                    "/home" = {
+                    "home" = {
                       mountpoint = "/home";
                       mountOptions = [ "compress=zstd" ];
                     };
-                    "/nix" = {
+                    "nix" = {
                       mountpoint = "/nix";
                       mountOptions = [ "compress=zstd" "noatime" ];
                     };
-                    "/persist" = {
+                    "persist" = {
                       mountpoint = "/persist";
                       mountOptions = [ "compress=zstd" ];
                     };
-                    "/var/logs" = {
+                    "logs" = {
                       mountpoint = "/var/logs";
                       mountOptions = [ "compress=zstd" "noatime" ];
                     };

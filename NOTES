@@ -80,7 +80,8 @@ swapDevices = [ { device = "/dev/disk/by-label/swap/swapfile"; } ];
 nixos-rebulid switch
 
 export NIX_CONFIG="experimental-features = nix-command flakes"
-nix-env -iA nixos.pinentry nixos.git
+nix-env -iA nixos.pinentry nixos.git nixos.direnv
+eval "$(direnv hook bash)"
 echo pinentry-program $(which pinentry) >> ~/.gnupg/gpg-agent.conf
 git clone https://github.com/gburd/nix-config.git
 cd nix-config
@@ -98,6 +99,7 @@ home-manager switch --flake .#username@hostname
 sudo nixos-rebuild switch --flake .#my-hostname
 clear; sudo nixos-rebuild dry-activate --flake .#${hostname}
 sudo nix --extra-experimental-features "flakes nix-command" run github:nix-community/disko -- --mode disko nixos/${hostname}/disks.nix --arg disks '[ "/dev/nvme0n1" ]' --arg config.networking.hostName ${hostname}
+sudo nix run github:nix-community/disko -- --mode disko nixos/${hostname}/disks.nix
 
 -------
 services.pcscd.enable = true;
