@@ -22,6 +22,7 @@
   * udevadm trigger
 
 INSTALL:
+nix-env -iA nixos.pkgs.gitAndTools.gitFull
 export device=/dev/nvme0n1
 export hostname=floki
 wipefs/shread/scrub ${device}
@@ -96,7 +97,7 @@ home-manager switch --flake .#username@hostname
 
 sudo nixos-rebuild switch --flake .#my-hostname
 clear; sudo nixos-rebuild dry-activate --flake .#${hostname}
-sudo nix run github:nix-community/disko -- --mode disko /tmp/disko-config.nix --arg disks '[ "/dev/nvme0n1" ]'
+sudo nix --extra-experimental-features "flakes nix-command" run github:nix-community/disko -- --mode disko nixos/${hostname}/disks.nix --arg disks '[ "/dev/nvme0n1" ]' --arg config.networking.hostName ${hostname}
 
 -------
 services.pcscd.enable = true;
@@ -123,4 +124,5 @@ TODO:
 EXAMPLE COMMANDS:
 
 * nh os switch --ask
+* nix run github:viperML/nh os switch --ask --nom .
 * clear; sudo nixos-rebuild dry-activate --flake .#floki
