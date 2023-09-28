@@ -1,4 +1,8 @@
-{ disk ? "/dev/nvme0n1", ... }: {
+{ config, disk ? "/dev/nvme0n1", ... }:
+let
+  hostname = config.networking.hostName;
+in
+{
   disko.devices = {
     disk = {
       nvme = {
@@ -46,7 +50,7 @@
                       mountpoint = "/persist";
                       mountOptions = [ "compress=zstd" ];
                     };
-                    "logs" = {
+                    "var/logs" = {
                       mountpoint = "/var/logs";
                       mountOptions = [ "compress=zstd" "noatime" ];
                     };
