@@ -8,8 +8,9 @@ with lib.hm.gvariant;
     ../../desktop/emote.nix
     ../../desktop/gitkraken.nix
     ../../desktop/gnome-sound-recorder.nix
-    ../../desktop/localsend.nix
     ../../desktop/meld.nix
+    ../../desktop/sublime.nix
+    ../../desktop/sublime-merge.nix
     ../../desktop/rhythmbox.nix
     ../../desktop/sakura.nix
     ../../desktop/tilix.nix
