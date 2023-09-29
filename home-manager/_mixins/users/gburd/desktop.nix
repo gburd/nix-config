@@ -2,18 +2,21 @@
 with lib.hm.gvariant;
 {
   imports = [
+    ../../cli/signal.nix
+    ../../desktop/alacritty.nix
     ../../desktop/audio-recorder.nix
     ../../desktop/celluloid.nix
     ../../desktop/dconf-editor.nix
-    ../../desktop/emote.nix
     ../../desktop/gitkraken.nix
     ../../desktop/gnome-sound-recorder.nix
+    ../../desktop/jetbrains-clion.nix
+    ../../desktop/jetbrains-idea-ultimate.nix
     ../../desktop/meld.nix
-    ../../desktop/sublime.nix
-    ../../desktop/sublime-merge.nix
+    ../../desktop/protonmail-bridge.nix
     ../../desktop/rhythmbox.nix
-    ../../desktop/sakura.nix
-    ../../desktop/tilix.nix
+    ../../desktop/sublime-merge.nix
+    ../../desktop/sublime.nix
+    ../../services/keybase.nix
   ];
 
   dconf.settings = {
