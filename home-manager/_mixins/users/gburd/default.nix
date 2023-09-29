@@ -3,8 +3,8 @@
     inputs.impermanence.nixosModules.home-manager.impermanence
     ../../services/keybase.nix
     ../../desktop/protonmail-bridge.nix
-    ../../desktop/jetbrains.idea-ultimate.nix
-    ../../desktop/jetbrains.clion.nix
+    ../../desktop/jetbrains-idea-ultimate.nix
+    ../../desktop/jetbrains-clion.nix
     ../../pass
     ../../cli
     ../../nvim
