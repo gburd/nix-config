@@ -8,6 +8,7 @@ _: {
         "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock for YouTube
         "gebbhagfogifgggkldgodflihgfeippi" # Return YouTube Dislike
         "edlifbnjlicfpckhgjhflgkeeibhhcii" # Screenshot Tool
+        "chphlpgkkbolifaimnlloiipkdnihall" # OneTab
       ];
     };
   };

@@ -35,10 +35,9 @@
     kernelPackages = pkgs.linuxPackages_latest;
   };
 
-  # My GPD MicroPC has a US keyboard layout
   console.keyMap = lib.mkForce "us";
   services.kmscon.extraConfig = lib.mkForce ''
-    font-size=14
+    font-size=12
     xkb-layout=us
   '';
   services.xserver.layout = lib.mkForce "us";

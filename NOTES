@@ -94,7 +94,8 @@ EDITOR=vi sops --config .sops.yaml nixos/common/secrets.yaml
 sudo nixos-install --flake .#hostname
 reboot
 home-manager switch --flake .#username@hostname
-
+gsettings reset org.gnome.desktop.input-sources xkb-options
+gsettings reset org.gnome.desktop.input-sources sources
 
 sudo nixos-rebuild switch --flake .#my-hostname
 clear; sudo nixos-rebuild dry-activate --flake .#${hostname}
