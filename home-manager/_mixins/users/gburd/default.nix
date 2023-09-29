@@ -2,6 +2,9 @@
   imports = [
     inputs.impermanence.nixosModules.home-manager.impermanence
     ../../services/keybase.nix
+    ../../desktop/protonmail-bridge.nix
+    ../../desktop/jetbrains.idea-ultimate.nix
+    ../../desktop/jetbrains.clion.nix
     ../../pass
     ../../cli
     ../../nvim
@@ -123,9 +126,11 @@
       vdpauinfo # Terminal VDPAU info
       wavemon # Terminal WiFi monitor
       yq-go # Terminal `jq` for YAML
+
+      emacs
     ];
     sessionVariables = {
-      PAGER = "moar";
+#      PAGER = "moar";
     };
   };
   programs = {
