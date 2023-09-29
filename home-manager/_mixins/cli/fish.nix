@@ -30,7 +30,8 @@ in
       snr = "sudo nixos-rebuild --flake .";
       snrs = "sudo nixos-rebuild --flake . switch";
       hm = "home-manager --flake .";
-      hms = "home-manager --flake . switch";
+      hms = "home-manager -b bkup --flake .gburd@$(hostmname) switch";
+      nh-ask = "nix run github:viperML/nh -- os switch --ask --nom ."
 
       ls = mkIf hasExa "eza";
       exa = mkIf hasExa "eza";
@@ -44,6 +45,8 @@ in
 
       mutt = mkIf hasNeomutt "neomutt";
       m = mutt;
+
+      locate = "plocate";
 
       cik = mkIf hasKitty "clone-in-kitty --type os-window";
       ck = cik;
