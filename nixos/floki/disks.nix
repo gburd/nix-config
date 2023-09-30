@@ -50,8 +50,8 @@ in
                       mountpoint = "/persist";
                       mountOptions = [ "compress=zstd" ];
                     };
-                    "var/logs" = {
-                      mountpoint = "/var/logs";
+                    "log" = {
+                      mountpoint = "/var/log";
                       mountOptions = [ "compress=zstd" "noatime" ];
                     };
                   };
@@ -65,4 +65,5 @@ in
   };
 
   fileSystems."/persist".neededForBoot = true;
+  fileSystems."/var/log".neededForBoot = true;
 }
