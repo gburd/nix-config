@@ -38,7 +38,7 @@
     wantedBy = [ "multi-user.target" ];
     path = [ pkgs.iw ];
     script = ''
-      iw dev wlan0 set power_save off
+      iw dev wlp0s20f3 set power_save off
     '';
   };
 
