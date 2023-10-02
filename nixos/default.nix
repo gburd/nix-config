@@ -39,9 +39,9 @@ in
 
   console = {
     packages = with pkgs; [ terminus_font ];
-    earlySetup = true;
     font = "${pkgs.terminus_font}/share/consolefonts/ter-132n.psf.gz";
-    useXkbConfig = true; # use xkbOptions in tty.
+    useXkbConfig = true; # use xkbOptions, in this case swap caps-lock and ctrl, in tty.
+    earlySetup = true;
   };
 
   i18n = {

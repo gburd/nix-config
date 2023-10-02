@@ -19,11 +19,6 @@
     initrd.verbose = false;
   };
 
-  console = {
-    useXkbConfig = true;
-    earlySetup = false;
-  };
-
   hardware = {
     opengl = {
       enable = true;
