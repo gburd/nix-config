@@ -13,8 +13,6 @@ in
           partitions = {
             ESP = {
               size = "512M";
-              bootable = true;
-              flags = [ "esp" ];
               type = "EF00";
               content = {
                 type = "filesystem";
