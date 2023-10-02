@@ -6,6 +6,7 @@
     inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-ssd
     (import ./disks.nix)
+    ../_mixins/hardware/gpu.nix
 
     ../_mixins/hardware/systemd-boot.nix
     ../_mixins/services/bluetooth.nix
@@ -23,9 +24,7 @@
         "nvme"
         "rtsx_pci_sdmmc"
         "sd_mod"
-        "sdhci_pci"
-        "uas"
-        "usbhid"
+        "thunderbolt"
         "usb_storage"
         "xhci_pci"
       ];

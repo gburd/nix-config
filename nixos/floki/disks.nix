@@ -1,4 +1,4 @@
-{ config, disk ? "/dev/nvme0n1", ... }:
+{ config, disks ? [ "/dev/nvme0n1" ], ... }:
 let
   hostname = config.networking.hostName;
 in
@@ -7,12 +7,14 @@ in
     disk = {
       nvme = {
         type = "disk";
-        device = disk;
+        device = builtins.elementAt disks 0;
         content = {
           type = "gpt";
           partitions = {
             ESP = {
               size = "512M";
+              bootable = true;
+              flags = [ "esp" ];
               type = "EF00";
               content = {
                 type = "filesystem";

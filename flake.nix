@@ -1,3 +1,4 @@
+
 {
   description = "Greg Burd's NixOS and Home Manager Configuration";
 
@@ -12,6 +13,8 @@
 
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
+
+    fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*.tar.gz";
 
     home-manager.url = "github:nix-community/home-manager/release-23.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -39,6 +42,7 @@
   };
   outputs =
     { self
+    , fh
     , nixpkgs
     , nix-formatter-pack
     , ...
