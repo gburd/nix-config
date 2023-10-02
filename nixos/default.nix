@@ -38,9 +38,10 @@ in
   };
 
   console = {
-    font = "${pkgs.tamzen}/share/consolefonts/TamzenForPowerline10x20.psf";
-    keyMap = "us";
-    packages = with pkgs; [ tamzen ];
+    packages = with pkgs; [ terminus_font ];
+    earlySetup = true;
+    font = "${pkgs.terminus_font}/share/consolefonts/ter-132n.psf.gz";
+    useXkbConfig = true; # use xkbOptions in tty.
   };
 
   i18n = {
