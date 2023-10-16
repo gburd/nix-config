@@ -223,7 +223,7 @@
 	(setq frame-title-format '(buffer-file-name "%f" ("%b")))
 	(set-face-attribute 'default nil
 			    :family "Fira Code"
-			    :size 12
+			    :height 134
 			    :weight 'normal
 			    :width 'normal)
 
@@ -693,8 +693,7 @@
       (global-set-key (kbd "M-X") 'smex-major-mode-commands)
     #+end_src
 *** Ido
-    =Ido= mode provides a nice way to navigate the filesystem. This is
-    mostly just turning it on.
+    =Ido= mode provides a nice way to navigate the filesystem.
     #+begin_src emacs-lisp
       (ido-mode t)
       (setq ido-enable-flex-matching t
@@ -910,7 +909,7 @@
     Use =dockerfile-mode= for =Dockerfile= files.
     #+begin_src emacs-lisp
     (require 'dockerfile-mode)
-    (add-to-list 'auto-mode-alist '("^Dockerfile" . dockerfile-mode))
+    (add-to-list 'auto-mode-alist '("^Dockerflie$" . dockerfile-mode))
     #+end_src
 *** make
     :PROPERTIES:

@@ -5,7 +5,7 @@
 ;; You may delete these explanatory comments.
 (package-initialize)
 
-(require 'org-install)
+(require 'org)
 (require 'ob-tangle)
 (org-babel-load-file (expand-file-name "burd.org" user-emacs-directory))
 (custom-set-variables
