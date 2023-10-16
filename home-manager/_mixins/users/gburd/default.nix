@@ -65,28 +65,21 @@
       iso="nixos-desktop/nixos.iso"
     '';
 
-    file.".local/share/applications/emacs.desktop".text = ''
-      [Desktop Entry]
-      Version=1.0
-      Categories=Utility;Development;TextEditor;
-      Comment=View and edit files
-      Exec=env XLIB_SKIP_ARGB_VISUALS=1 emacs -c -a "" %F
-      #Exec=/usr/bin/emacsclient -c -a "" %F
-      GenericName=Text Editor
-      Icon=/usr/share/icons/hicolor/scalable/apps/emacs.svg
-      MimeType=text/english;text/plain;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;
-      Name=Emacs (Client)
-      Name[en_US]=Emacs (Client)%
-      StartupWMClass=Emacs
-      Terminal=false
-      TryExec=emacs
-      Type=Application
-    '';
-
     file.".inputrc".text = ''
       "\C-v": ""
       set enable-bracketed-paste off
     '';
+
+    file.".config/direnv/direnv.toml".text = ''
+      [global]
+      load_dotenv = true
+    '';
+
+    # file.".config/sublime-text-2/Local/License.sublime_license".text =
+    #   config.sops.secrets.sublime-licenses.text.path;
+
+    # file.".config/sublime-merge/Local/License.sublime_license".text =
+    #   config.sops.secrets.sublime-licenses.merge.path;
 
     # A Modern Unix experience
     # https://jvns.ca/blog/2022/04/12/a-list-of-new-ish--command-line-tools/
@@ -148,6 +141,10 @@
       yq-go # Terminal `jq` for YAML
 
       emacs
+      nvi
+      file
+      tig
+      ripgrep
       plocate
     ];
     sessionVariables = {

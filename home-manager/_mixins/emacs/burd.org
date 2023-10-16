@@ -54,9 +54,9 @@
       ;                       nrepl
 			      ac-slime
 			      ag
-      ;                       auto-complete
-      ;                       autopair
-			      cc-guess
+			      ;; auto-complete
+			      ;; electric-pair-mode
+			      ;; cc-guess
 			      cc-mode
 			      cmake-mode
 			      coffee-mode
@@ -64,7 +64,7 @@
 			      company-c-headers
 			      company-cmake
 			      deft
-      ;                       dockerfile-mode
+			      dockerfile-mode
 			      elixir-mix
 			      elixir-mode
 			      eredis
@@ -223,8 +223,8 @@
 	(setq frame-title-format '(buffer-file-name "%f" ("%b")))
 	(set-face-attribute 'default nil
 			    :family "Fira Code"
+			    :size 12
 			    :weight 'normal
-                            :size 14
 			    :width 'normal)
 
 	(when (functionp 'set-fontset-font)
@@ -712,11 +712,11 @@
       (setq backup-directory-alist `((".*" . ,temporary-file-directory)))
       (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
     #+end_src
-*** autopair-mode
+*** electric-pair-mode
     This makes sure that brace structures =(), [], {}=, etc. are closed
     as soon as the opening character is typed.
     #+begin_src emacs-lisp
-    ;  (require 'autopair)
+      ;(require 'electric-pair-mode)
     #+end_src
 *** Power lisp
     A bunch of tweaks for programming in LISP dialects. It defines the
@@ -753,8 +753,8 @@
 *** auto-complete
     Turn on auto complete.
     #+begin_src emacs-lisp
-    ;  (require 'auto-complete-config)
-    ;  (ac-config-default)
+      ;(require 'auto-complete-config)
+      ;(ac-config-default)
     #+end_src
 *** Indentation and buffer cleanup
     This re-indents, untabifies, and cleans up whitespace. It is stolen
@@ -909,8 +909,8 @@
     :END:
     Use =dockerfile-mode= for =Dockerfile= files.
     #+begin_src emacs-lisp
-    ;  (require 'dockerfile-mode)
-    ;  (add-to-list 'auto-mode-alist '("^Dockerflie$" . dockerfile-mode))
+    (require 'dockerfile-mode)
+    (add-to-list 'auto-mode-alist '("^Dockerfile" . dockerfile-mode))
     #+end_src
 *** make
     :PROPERTIES:
