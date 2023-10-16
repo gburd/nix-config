@@ -12,9 +12,8 @@
     ../_mixins/services/bluetooth.nix
     ../_mixins/services/pipewire.nix
     ../_mixins/virt
-
-    #    ../_mixins/global
-    #    ../_mixins/users/gburd
+    ../_mixins/virt/docker.nix
+    ../_mixins/virt/podman.nix
   ];
 
   boot = {

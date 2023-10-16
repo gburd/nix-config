@@ -1,25 +1,24 @@
 { config, desktop, lib, pkgs, ... }: {
-  #https://nixos.wiki/wiki/Podman
   environment.systemPackages = with pkgs; [
-    unstable.distrobox
     fuse-overlayfs
-    podman-compose
-    podman-tui
   ] ++ lib.optionals (desktop != null) [
-    unstable.pods
     unstable.quickemu
+    unstable.quickgui
     xorg.xhost
   ];
 
   virtualisation = {
-    podman = {
-      defaultNetwork.settings = {
-        dns_enabled = true;
+    containers.enable = true;
+    containers.storage.settings = {
+      storage = {
+        driver = "overlay";
+        runroot = "/run/containers/storage";
+        graphroot = "/var/lib/containers/storage";
+        rootless_storage_path = "/tmp/containers-$USER";
+        options.overlay.mountopt = "nodev,metacopy=on,acltype=posixacl";
       };
-      dockerCompat = true;
-      dockerSocket.enable = true;
-      enable = true;
-      enableNvidia = lib.elem "nvidia" config.services.xserver.videoDrivers;
     };
+    docker.storageDriver = "btrfs";
   };
+
 }

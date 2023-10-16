@@ -1,3 +1,3 @@
-{ desktop, lib, pkgs, ... }: {
+{ pkgs, ... }: {
   home.packages = [ pkgs.signal-desktop ];
 }
