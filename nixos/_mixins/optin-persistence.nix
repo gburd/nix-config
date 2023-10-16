@@ -1,3 +1,9 @@
+# https://nixos.wiki/wiki/Impermanence
+#
+# https://nixos.wiki/wiki/Impermanence
+# https://grahamc.com/blog/erase-your-darlings/
+# https://lantian.pub/en/article/modify-computer/nixos-impermanence.lantian/
+#
 # This file defines the "non-hardware dependent" part of opt-in persistence
 # It imports impermanence, defines the basic persisted dirs, and ensures each
 # users' home persist dir exists and has the right permissions
@@ -11,9 +17,10 @@
   environment.persistence = {
     "/persist" = {
       directories = [
+        "/var/lib/containers"
         "/var/lib/systemd"
         "/var/lib/nixos"
-#        "/var/log"
+        # "/var/log"
         "/srv"
       ];
     };

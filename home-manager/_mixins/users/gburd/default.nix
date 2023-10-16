@@ -148,7 +148,7 @@
       plocate
     ];
     sessionVariables = {
-#      PAGER = "moar";
+      #      PAGER = "moar";
     };
   };
   programs = {

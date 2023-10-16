@@ -1,4 +1,3 @@
-
 {
   description = "Greg Burd's NixOS and Home Manager Configuration";
 
@@ -42,7 +41,6 @@
   };
   outputs =
     { self
-    , fh
     , nixpkgs
     , nix-formatter-pack
     , ...

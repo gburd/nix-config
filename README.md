@@ -70,7 +70,7 @@ signing, as well as for SSH'ing around.
 
 Most relevant user apps daily drivers:
 
-- neovim
+- emacs
 - fish
 - kitty
 - qutebrowser
