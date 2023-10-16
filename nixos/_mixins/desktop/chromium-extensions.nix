@@ -9,6 +9,7 @@ _: {
         "gebbhagfogifgggkldgodflihgfeippi" # Return YouTube Dislike
         "edlifbnjlicfpckhgjhflgkeeibhhcii" # Screenshot Tool
         "chphlpgkkbolifaimnlloiipkdnihall" # OneTab
+        "aeblfdkhhhdcdjpifhhbdiojplfjncoa" # 1Password
       ];
     };
   };

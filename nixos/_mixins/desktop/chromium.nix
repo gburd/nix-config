@@ -9,6 +9,7 @@
       extensions = [
         "cdglnehniifkbagbbombnjghhcihifij" # kagi-search-for-chrome
         "ghmbeldphafepmbegfdlkpapadhbakde" # proton-pass-free-password
+        "aeblfdkhhhdcdjpifhhbdiojplfjncoa" # 1Password
       ];
       extraOpts = {
         "AutofillAddressEnabled" = false;
