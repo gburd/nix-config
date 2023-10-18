@@ -146,6 +146,10 @@
       tig
       ripgrep
       plocate
+      dig
+      tree
+      htop
+      unstable.flyctl
     ];
     sessionVariables = {
       #      PAGER = "moar";

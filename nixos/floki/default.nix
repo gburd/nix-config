@@ -55,6 +55,9 @@
     lidSwitchExternalPower = "lock";
   };
 
+  virtualisation.docker.storageDriver = "btrfs";
+#  virtualisation.podman.storageDriver = "btrfs";
+
   nixpkgs.hostPlatform = lib.mkDefault "${platform}";
 
 }

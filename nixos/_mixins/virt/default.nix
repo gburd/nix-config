@@ -18,7 +18,6 @@
         options.overlay.mountopt = "nodev,metacopy=on,acltype=posixacl";
       };
     };
-    docker.storageDriver = "btrfs";
   };
 
 }

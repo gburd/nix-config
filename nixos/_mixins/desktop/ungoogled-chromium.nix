@@ -8,7 +8,7 @@
       enable = true;
       extensions = [
         "cdglnehniifkbagbbombnjghhcihifij" # kagi-search-for-chrome
-        "ghmbeldphafepmbegfdlkpapadhbakde" # proton-pass-free-password
+        #"ghmbeldphafepmbegfdlkpapadhbakde" # proton-pass-free-password
         "chphlpgkkbolifaimnlloiipkdnihall" # OneTab
       ];
       extraOpts = {
