@@ -140,16 +140,23 @@
       wavemon # Terminal WiFi monitor
       yq-go # Terminal `jq` for YAML
 
-      emacs
-      nvi
-      file
-      tig
-      ripgrep
-      plocate
+      _1password
+      _1password-gui
+      cfssl
       dig
-      tree
+      emacs
+      file
+      git-credential-1password
       htop
+      nvi
+      openssl
+      plocate
+      python311Packages.rbtools
+      ripgrep
+      tig
+      tree
       unstable.flyctl
+      unstable.minio-client
     ];
     sessionVariables = {
       #      PAGER = "moar";
