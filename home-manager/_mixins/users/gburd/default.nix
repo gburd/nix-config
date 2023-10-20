@@ -161,6 +161,10 @@
     sessionVariables = {
       #      PAGER = "moar";
     };
+
+    # http://rski.github.io/2021/09/05/nix-debugging.html
+    # https://github.com/nix-community/home-manager/commit/0056a5aea1a7b68bdacb7b829c325a1d4a3c4259
+    enableDebugInfo = true;
   };
   programs = {
     fish = {
