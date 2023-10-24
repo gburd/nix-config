@@ -10,7 +10,7 @@
       tig
       tree
       ripgrep
-
+      shasum
       sops
       ssh-to-age
       gnupg
