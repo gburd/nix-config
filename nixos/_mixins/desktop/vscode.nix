@@ -79,6 +79,12 @@
           version = "0.0.3";
           sha256 = "sha256-t+iRBVN/Cw/eeakRzATCsV8noC2Wb6rnbZj7tcZJ/ew=";
         }
+        # {
+        #   name = "nix-extension-pack";
+        #   publisher = "pinage404";
+        #   version = "3.0.0";
+        #   sha256 = "sha256-";
+        # }
         {
           name = "pubspec-assist";
           publisher = "jeroen-meijer";

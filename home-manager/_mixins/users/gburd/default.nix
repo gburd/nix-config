@@ -151,12 +151,12 @@
       nvi
       openssl
       plocate
-      python311Packages.rbtools
       ripgrep
       tig
       tree
       unstable.flyctl
       unstable.minio-client
+      unstable.element-desktop
     ];
     sessionVariables = {
       #      PAGER = "moar";
