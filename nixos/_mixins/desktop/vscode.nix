@@ -1,3 +1,5 @@
+# https://github.com/NixOS/nixpkgs/blob/nixos-22.11/pkgs/applications/editors/vscode/extensions/update_installed_exts.sh#L34
+# SHA=$(nix-hash --flat --base32 --type sha256 "$EXTTMP/$N.zip")
 { pkgs, ... }: {
   environment.systemPackages = with pkgs; [
     (vscode-with-extensions.override {
