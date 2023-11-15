@@ -19,7 +19,8 @@
         unstable.vscode-extensions.ms-python.python
         unstable.vscode-extensions.ms-python.vscode-pylance
         unstable.vscode-extensions.ms-vscode.cpptools
-        unstable.vscode-extensions.cpptools-extension-pack
+        unstable.vscode-extensions.scalameta.metals
+        unstable.vscode-extensions.scala-lang.scala
         unstable.vscode-extensions.ms-vsliveshare.vsliveshare
         unstable.vscode-extensions.redhat.vscode-yaml
         unstable.vscode-extensions.ryu1kn.partial-diff
