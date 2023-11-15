@@ -65,6 +65,7 @@
 			      company-cmake
 			      deft
 			      dockerfile-mode
+			      editorconfig
 			      elixir-mix
 			      elixir-mode
 			      eredis
@@ -784,6 +785,14 @@
       (global-set-key (kbd "C-c n") 'cleanup-buffer)
 
       (setq-default show-trailing-whitespace t)
+    #+end_src
+*** editorconfig
+    EditorConfig helps maintain consistent coding styles for multiple developers
+    working on the same project across various editors and IDEs.
+    https://editorconfig.org/
+    #+begin_src emacs-lisp
+      (require 'editorconfig)
+      (editorconfig-mode 1)
     #+end_src
 *** flyspell
     The built-in Emacs spell checker. Turn off the welcome flag because
