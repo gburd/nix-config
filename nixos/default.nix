@@ -100,7 +100,7 @@ in
       unzip
       usbutils
       wget
-      inputs.fh.packages.${platform}.default
+#      inputs.fh.packages.${platform}.default
     ];
     variables = {
       EDITOR = "vi";
