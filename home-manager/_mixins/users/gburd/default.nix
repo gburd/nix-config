@@ -154,6 +154,7 @@
       ripgrep
       tig
       tree
+      lsof
       unstable.flyctl
       unstable.minio-client
       unstable.element-desktop

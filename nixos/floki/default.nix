@@ -43,11 +43,19 @@
 
   environment.systemPackages = with pkgs; [
     nvtop-amd
+    man-pages
+    man-pages-posix
   ];
 
   networking.hostName = "floki";
   powerManagement.powertop.enable = true;
   powerManagement.cpuFreqGovernor = "powersave";
+
+  documentation.nixos.enable = true;
+  documentation.doc.enable = false;
+  documentation.info.enable = true;
+  documentation.dev.enable = true;
+  documentation.man.generateCaches = true;
 
   # Lid settings
   services.logind = {
