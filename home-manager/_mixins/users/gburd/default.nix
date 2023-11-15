@@ -158,6 +158,9 @@
       unstable.flyctl
       unstable.minio-client
       unstable.element-desktop
+      erlang
+      rebar3
+      elixir
     ];
     sessionVariables = {
       #      PAGER = "moar";
