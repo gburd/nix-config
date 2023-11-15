@@ -11,7 +11,6 @@ with lib.hm.gvariant;
     ../../desktop/gnome-sound-recorder.nix
     ../../desktop/jetbrains-clion.nix
     ../../desktop/jetbrains-idea-ultimate.nix
-#    ../../desktop/jetbrains-fleet.nix
     ../../desktop/meld.nix
     ../../desktop/protonmail-bridge.nix
     ../../desktop/rhythmbox.nix

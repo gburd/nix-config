@@ -148,7 +148,7 @@
       file
       git-credential-1password
       htop
-      nvi
+      vim
       openssl
       plocate
       ripgrep
