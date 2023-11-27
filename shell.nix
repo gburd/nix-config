@@ -16,6 +16,7 @@
       age
       yubikey-manager
       pinentry-curses
+      kubectl
     ];
   };
   services.dbus.packages = [ pkgs.gcr ];
