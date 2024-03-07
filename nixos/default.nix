@@ -112,7 +112,7 @@ in
 
   fonts = {
     fontDir.enable = true;
-    fonts = with pkgs; [
+    packages = with pkgs; [
       (nerdfonts.override { fonts = [ "FiraCode" "SourceCodePro" "UbuntuMono" ]; })
       fira
       fira-go
@@ -125,7 +125,7 @@ in
     ];
 
     # Enable a basic set of fonts providing several font styles and families and reasonable coverage of Unicode.
-    enableDefaultFonts = false;
+    enableDefaultPackages = false;
 
     fontconfig = {
       antialias = true;
@@ -139,7 +139,7 @@ in
       hinting = {
         autohint = false;
         enable = true;
-        style = "hintslight";
+        style = "slight";
       };
       subpixel = {
         rgba = "rgb";

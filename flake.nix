@@ -2,7 +2,7 @@
   description = "Greg Burd's NixOS and Home Manager Configuration";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
     # You can access packages and modules from different nixpkgs revs at the
     # same time.  See 'unstable-packages' overlay in 'overlays/default.nix'.
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -15,7 +15,7 @@
 
     #fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*.tar.gz";
 
-    home-manager.url = "github:nix-community/home-manager/release-23.05";
+    home-manager.url = "github:nix-community/home-manager/release-23.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixos-hardware.url = "github:nixos/nixos-hardware/master";
@@ -48,7 +48,7 @@
     let
       inherit (self) outputs;
       # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-      stateVersion = "23.05";
+      stateVersion = "23.11";
       libx = import ./lib { inherit inputs outputs stateVersion; };
     in
     {

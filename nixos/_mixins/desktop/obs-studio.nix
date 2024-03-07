@@ -19,7 +19,7 @@
         obs-rgb-levels-filter
         obs-text-pthread
         obs-scale-to-sound
-        advanced-scene-switcher
+        # TODO: advanced-scene-switcher https://github.com/NixOS/nixpkgs/issues/287254
         obs-shaderfilter
         obs-source-clone
         obs-source-record
