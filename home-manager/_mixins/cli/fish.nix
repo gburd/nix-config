@@ -3,7 +3,7 @@ let
   inherit (lib) mkIf;
   hasPackage = pname: lib.any (p: p ? pname && p.pname == pname) config.home.packages;
   hasRipgrep = hasPackage "ripgrep";
-  hasExa = hasPackage "eza";
+  hasEza = hasPackage "eza";
   hasNeovim = config.programs.neovim.enable;
   hasEmacs = config.programs.emacs.enable;
   hasNeomutt = config.programs.neomutt.enable;
@@ -30,11 +30,11 @@ in
       snr = "sudo nixos-rebuild --flake .";
       snrs = "sudo nixos-rebuild --flake . switch";
       hm = "home-manager --flake .";
-      hms = "home-manager -b bkup --flake .gburd@$(hostmname) switch";
+      hms = "home-manager -b bkup --flake .gburd@$(hostname) switch";
       nh-ask = "nix run github:viperML/nh -- os switch --ask --nom .";
 
-      ls = mkIf hasExa "eza";
-      exa = mkIf hasExa "eza";
+      ls = mkIf hasEza "eza";
+      exa = mkIf hasEza "eza";
 
       e = mkIf hasEmacs "emacsclient -t";
 

@@ -18,14 +18,17 @@
         unstable.vscode-extensions.ms-azuretools.vscode-docker
         unstable.vscode-extensions.ms-python.python
         unstable.vscode-extensions.ms-python.vscode-pylance
+        unstable.vscode-extensions.ms-vscode.cmake-tools
         unstable.vscode-extensions.ms-vscode.cpptools
-        unstable.vscode-extensions.scalameta.metals
-        unstable.vscode-extensions.scala-lang.scala
+        unstable.vscode-extensions.ms-vscode.cpptools-extension-pack
         unstable.vscode-extensions.ms-vsliveshare.vsliveshare
         unstable.vscode-extensions.redhat.vscode-yaml
         unstable.vscode-extensions.ryu1kn.partial-diff
+        unstable.vscode-extensions.scala-lang.scala
+        unstable.vscode-extensions.scalameta.metals
         unstable.vscode-extensions.streetsidesoftware.code-spell-checker
         unstable.vscode-extensions.timonwong.shellcheck
+        unstable.vscode-extensions.tuttieee.emacs-mcx
         unstable.vscode-extensions.vscode-icons-team.vscode-icons
         unstable.vscode-extensions.yzhang.markdown-all-in-one
       ] ++ pkgs.unstable.vscode-utils.extensionsFromVscodeMarketplace [
