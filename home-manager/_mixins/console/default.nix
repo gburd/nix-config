@@ -77,7 +77,7 @@
         enable = true;
       };
     };
-    exa = {
+    eza = {
       enable = true;
       enableAliases = true;
       icons = true;

@@ -75,6 +75,98 @@
       load_dotenv = true
     '';
 
+    file.".config/Code/User/settings.json".text = ''
+      {
+          "editor.inlineSuggest.enabled": true,
+          "editor.fontFamily": "'FiraCode Nerd Font Mono', 'Droid Sans Mono', 'monospace', monospace",
+          "editor.fontLigatures": true,
+      }
+    '';
+
+    file.".config/Code/User/keybindings.json".text = ''
+      // Place your key bindings in this file to override the defaults
+      [
+        // allow arrow keys to work in the find widget
+        {
+          "key": "right",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        {
+          "key": "left",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        {
+          "key": "up",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        {
+          "key": "down",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        // allow ctrl+f to find next in the find widget
+        {
+          "key": "ctrl+f",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        // allow other stuff to functional normally in the find widget
+        {
+          "key": "ctrl+b",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "ctrl+p",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "ctrl+n",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "ctrl+a",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "ctrl+e",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "enter",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        // allow curly quotes and ellipses characters on mac
+        {
+          "key": "alt+shift+[",
+          "command": "-emacs-mcx.backwardParagraph"
+        },
+        {
+          "key": "alt+shift+]",
+          "command": "-emacs-mcx.forwardParagraph"
+        },
+        {
+          "key": "alt+;",
+          "command": "-editor.action.blockComment",
+          "when": "editorTextFocus && !config.emacs-mcx.useMetaPrefixMacCmd && !editorReadonly"
+        },
+        {
+          "key": "alt+;",
+          "command": "-emacs-mcx.executeCommands",
+          "when": "editorFocus && findWidgetVisible && !config.emacs-mcx.useMetaPrefixMacCmd"
+        },
+        // stop backward kill word from adding to clipboard
+        {
+          "key": "alt+backspace",
+          "command": "-emacs-mcx.backwardKillWord",
+          "when": "editorTextFocus && !config.emacs-mcx.useMetaPrefixMacCmd && !editorReadonly"
+        }
+      ]
+    '';
+
     # file.".config/sublime-text-2/Local/License.sublime_license".text =
     #   config.sops.secrets.sublime-licenses.text.path;
 
@@ -117,7 +209,7 @@
       libva-utils # Terminal VAAPI info
       lurk # Modern Unix `strace`
       mdp # Terminal Markdown presenter
-      moar # Modern Unix `less`
+      #moar # Modern Unix `less`
       mtr # Modern Unix `traceroute`
       netdiscover # Modern Unix `arp`
       nethogs # Modern Unix `iftop`
