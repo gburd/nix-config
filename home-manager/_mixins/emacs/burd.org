@@ -223,7 +223,7 @@
       (when window-system
 	(setq frame-title-format '(buffer-file-name "%f" ("%b")))
 	(set-face-attribute 'default nil
-			    :family "Fira Code"
+			    :family "Fira Code Nerd Font Mono"
 			    :height 134
 			    :weight 'normal
 			    :width 'normal)
