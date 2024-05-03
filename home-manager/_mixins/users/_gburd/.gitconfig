@@ -1,0 +1,55 @@
+[format]
+	pretty=format:%C(yellow)%h%Creset | %C(green)%ad (%ar)%Creset | %C(blue)%an%Creset | %s
+
+[push]
+	default = simple
+
+[branch]
+	autosetuprebase = always
+
+[receive]
+	denyCurrentBranch = warn
+
+[filter "media"]
+	clean = git media clean %f
+	smudge = git media smudge %f
+	required = true
+
+# http://nicercode.github.io/blog/2013-04-30-excel-and-line-endings/
+[filter "cr"]
+      clean = LC_CTYPE=C awk '{printf(\"%s\\n\", $0)}' | LC_CTYPE=C tr '\\r' '\\n'
+      smudge = tr '\\n' '\\r'
+
+[diff]
+    tool = meld
+[difftool]
+    prompt = false
+[difftool "meld"]
+    cmd = meld "$LOCAL" "$REMOTE"
+
+[merge]
+    tool = meld
+[mergetool "meld"]
+    # Choose one of these 2 lines (not both!) explained below.
+    cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
+    cmd = meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"
+
+[core]
+    editor = vim
+#    editor = emacs -nw -q
+    excludesfile = ~/.gitignore_global
+    pager = less -FMRiX
+    quotepath = false
+
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+
+[init]
+	templateDir = "$HOME/.git-template"
+	defaultBranch = main
+
+[commit]
+	gpgsign = true

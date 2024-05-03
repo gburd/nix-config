@@ -10,8 +10,8 @@ with lib.hm.gvariant;
       cursor-theme = "Yaru";
       document-font-name = "Work Sans 12";
       font-name = "Work Sans 12";
-      gtk-theme = "Yaru-magenta-dark";
-      icon-theme = "Yaru-magenta-dark";
+      gtk-theme = lib.mkForce "Yaru-magenta-dark";
+      icon-theme = lib.mkForce "Yaru-magenta-dark";
       monospace-font-name = "FiraCode Nerd Font Medium 13";
     };
 

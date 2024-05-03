@@ -23,7 +23,7 @@ let
 in
 {
   home.persistence = {
-    "/persist/home/gburd".directories = [ "Mail" ];
+    "/persist/home/${username}".directories = [ "Mail" ];
   };
 
   accounts.email = {

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, username, ... }:
 {
   programs.gh = {
     enable = true;
@@ -9,6 +9,6 @@
     };
   };
   home.persistence = {
-    "/persist/home/gburd".directories = [ ".config/gh" ];
+    "/persist/home/${username}".directories = [ ".config/gh" ];
   };
 }

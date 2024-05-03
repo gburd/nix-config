@@ -52,7 +52,13 @@ nix develop
 
 `nix build` (or shell or run) To build and use packages
 
-`sops` To manage secrets
+`sops` To manage secrets, example:
+
+```
+export GPG_TTY=$(tty)
+gpgconf --reload gpg-agent
+EDITOR=vi sops --config .sops.yaml nixos/_mixins/secrets.yaml
+```
 
 
 ## Secrets

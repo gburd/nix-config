@@ -1,4 +1,4 @@
 { pkgs, ... }:
 {
-  home.packages = [ pkgs.jetbrains.clion ];
+  home.packages = [ pkgs.unstable.jetbrains.clion ];
 }
