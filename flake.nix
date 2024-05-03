@@ -57,9 +57,13 @@
       homeConfigurations = {
         # .iso images
         # "gburd@iso-console" = libx.mkHome { hostname = "iso-console"; username = "nixos"; };
-        # "gburd@iso-desktop" = libx.mkHome { hostname = "iso-desktop"; username = "nixos"; desktop = "pantheon"; };
+        # "gburd@iso-desktop" = libx.mkHome { hostname = "iso-desktop"; username
+        # = "nixos"; desktop = "pantheon"; };
+
         # Workstations
         "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
+        #"gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "mate"; };
+
         # Servers
       };
 
@@ -68,6 +72,7 @@
         #  - nix build .#nixosConfigurations.{iso-console|iso-desktop}.config.system.build.isoImage
         # iso-console = libx.mkHost { hostname = "iso-console"; username = "nixos"; installer = nixpkgs + "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"; };
         # iso-desktop = libx.mkHost { hostname = "iso-desktop"; username = "nixos"; installer = nixpkgs + "/nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares.nix"; desktop = "pantheon"; };
+
         # Workstations
         # Lenovo Carbon X1 Extreme Gen 5 - x86_64
         floki = libx.mkHost { hostname = "floki"; username = "gburd"; desktop = "pantheon"; };

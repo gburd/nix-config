@@ -240,7 +240,6 @@
       file
       git-credential-1password
       htop
-      vim
       openssl
       plocate
       ripgrep
@@ -265,11 +264,13 @@
   programs = {
     fish = {
       shellAliases = {
-        diff = "diffr";
-        fast = "fast -u";
-        glow = "glow --pager";
+        #diff = "diffr";
+        #fast = "fast -u";
+        #glow = "glow --pager";
         pubip = "curl -s ifconfig.me/ip"; # "curl -s https://api.ipify.org";
         speedtest = "speedtest-go";
+        vi = "nvim";
+        vim = "nvim";
       };
     };
   };

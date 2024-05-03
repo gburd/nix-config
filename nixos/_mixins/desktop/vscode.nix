@@ -5,6 +5,7 @@
     (vscode-with-extensions.override {
       inherit (unstable) vscode;
       vscodeExtensions = [
+        unstable.vscode-extensions.asvetliakov.vscode-neovim
         unstable.vscode-extensions.coolbear.systemd-unit-file
         unstable.vscode-extensions.dotjoshjohnson.xml
         unstable.vscode-extensions.eamodio.gitlens
@@ -21,6 +22,7 @@
         unstable.vscode-extensions.ms-vscode.cmake-tools
         unstable.vscode-extensions.ms-vscode.cpptools
         unstable.vscode-extensions.ms-vscode.cpptools-extension-pack
+        unstable.vscode-extensions.ms-vscode.makefile-tools
         unstable.vscode-extensions.ms-vsliveshare.vsliveshare
         unstable.vscode-extensions.redhat.vscode-yaml
         unstable.vscode-extensions.ryu1kn.partial-diff

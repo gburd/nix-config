@@ -1,4 +1,4 @@
-{ pkgs, config, ... }: {
+{ pkgs, config, username, ... }: {
   programs.password-store = {
     enable = true;
     settings = { PASSWORD_STORE_DIR = "$HOME/.password-store"; };
@@ -12,6 +12,6 @@
   };
 
   home.persistence = {
-    "/persist/home/gburd".directories = [ ".password-store" ];
+    "/persist/home/${username}".directories = [ ".password-store" ];
   };
 }

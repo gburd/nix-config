@@ -34,6 +34,8 @@ in
     kernel.sysctl = {
       "net.ipv4.ip_forward" = 1;
       "net.ipv6.conf.all.forwarding" = 1;
+      "/proc/sys/fs/aio-max-nr" = 220520;
+      "/proc/sys/kernel/perf_event_paranoid" = 1;
     };
   };
 

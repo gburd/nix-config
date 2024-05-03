@@ -2,6 +2,7 @@ keys:
   # Users
   - &users:
     - &gburd D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF
+    - &greg D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF
   # Hosts
   - &hosts:
     - &floki age1z2x0g05q2erpux006vwhul70d8akj9avrj67s9p27fm4ce32ly8qt8nllz
@@ -16,21 +17,25 @@ creation_rules:
       - *floki
       pgp:
       - *gburd
+      - *greg
   - path_regex: nixos/iso-console/secrets.ya?ml$
     key_groups:
     - age:
       - *iso-console
       pgp:
       - *gburd
+      - *greg
   - path_regex: nixos/iso-desktop/secrets.ya?ml$
     key_groups:
     - age:
       - *iso-desktop
       pgp:
       - *gburd
+      - *greg
   - path_regex: nixos/_mixins/secrets.ya?ml$
     key_groups:
     - age:
       - *floki
       pgp:
       - *gburd
+      - *greg

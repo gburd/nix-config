@@ -6,7 +6,7 @@ in
   home.packages = with pkgs; [ vdirsyncer ];
 
   home.persistence = {
-    "/persist/home/gburd".directories =
+    "/persist/home/${username}".directories =
       [ "Calendars" "Contacts" ".local/share/vdirsyncer" ];
   };
 
@@ -29,7 +29,7 @@ in
     type = "carddav"
     url = "https://dav.burd.me"
     username = "greg@burd.me"
-    password.fetch = ["command", "${pass}", "mail.burd.m/greg@burd.me"]
+    password.fetch = ["command", "${pass}", "mail.burd.me/greg@burd.me"]
 
     [pair calendars]
     a = "calendars_local"

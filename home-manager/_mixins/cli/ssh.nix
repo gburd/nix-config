@@ -1,4 +1,4 @@
-{ outputs, lib, ... }:
+{ outputs, lib, username, ... }:
 let
   hostnames = builtins.attrNames outputs.nixosConfigurations;
 in
@@ -22,6 +22,6 @@ in
   };
 
   home.persistence = {
-    "/persist/home/gburd".directories = [ ".ssh" ];
+    "/persist/home/${username}".directories = [ ".ssh" ];
   };
 }
