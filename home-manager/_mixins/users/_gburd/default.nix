@@ -84,7 +84,7 @@
     file.".config/Code/User/keybindings.json".text = ''
     '';
 
-    file.".config/nvim/init.nvim".source = ./init.nvim
+    file.".config/nvim/init.nvim".source = ./init.nvim;
 
     # file.".config/sublime-text-2/Local/License.sublime_license".text =
     #   config.sops.secrets.sublime-licenses.text.path;
