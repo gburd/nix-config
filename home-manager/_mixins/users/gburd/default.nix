@@ -75,11 +75,131 @@
       load_dotenv = true
     '';
 
+    file.".gitconfig".text = ''
+      [user]
+        name = Greg Burd
+        email = greg@burd.me
+
+      [color]
+        ui = auto
+        diff = auto
+        status = auto
+        branch = auto
+
+      [alias]
+        st = status --short
+        ci = commit
+        co = checkout
+        di = diff
+        dc = diff --cached
+        amend = commit --amend
+        aa = add --all
+        head = !git l -1
+        h = !git head
+        r = !git --no-pager l -20
+        ra = !git r --all
+        ff = merge --ff-only
+        pullff = pull --ff-only
+        l = log --graph --abbrev-commit --date=relative
+        la = !git l --all
+        div = divergence
+        gn = goodness
+        gnc = goodness --cached
+        fa = fetch --all
+        pom = push origin master
+        files = show --oneline
+        graph = log --graph --decorate --all
+        lol = log --graph --decorate --pretty=oneline --abbrev-commit
+        lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+        lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+        sync = pull --rebase
+        update = merge --ff-only origin/master
+        mend = commit --amend --no-edit
+        unadd = reset --
+        unedit = checkout --
+        unstage = reset HEAD
+        unrm = checkout --
+        unstash = stash pop
+        lastchange = log -n 1 -p
+          dag = log --graph --format='format:%C(yellow)%h%C(reset) %C(blue)\"%an\" <%ae>%C(reset) %C(magenta)%cr%C(reset)%C(auto)%d%C(reset)%n%s' --date-order
+          subdate = submodule update --init --recursive
+
+      [format]
+        pretty=format:%C(yellow)%h%Creset | %C(green)%ad (%ar)%Creset | %C(blue)%an%Creset | %s
+
+      [push]
+        default = simple
+        autoSetupRemote = true
+
+      [branch]
+        autosetuprebase = always
+
+      [receive]
+        denyCurrentBranch = warn
+
+      [filter "media"]
+        clean = git media clean %f
+        smudge = git media smudge %f
+        required = true
+
+      # http://nicercode.github.io/blog/2013-04-30-excel-and-line-endings/
+      [filter "cr"]
+            clean = LC_CTYPE=C awk '{printf(\"%s\\n\", $0)}' | LC_CTYPE=C tr '\\r' '\\n'
+            smudge = tr '\\n' '\\r'
+
+      [diff]
+          tool = meld
+      [difftool]
+          prompt = false
+      [difftool "meld"]
+          cmd = meld "$LOCAL" "$REMOTE"
+
+      [merge]
+          tool = meld
+      [mergetool "meld"]
+          # Choose one of these 2 lines (not both!) explained below.
+          cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
+          cmd = meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"
+
+      [core]
+          editor = nvim
+      #    editor = emacs -nw -q
+          excludesfile = ~/.gitignore_global
+          pager = less -FMRiX
+          quotepath = false
+
+      [filter "lfs"]
+        process = git-lfs filter-process
+        required = true
+        clean = git-lfs clean -- %f
+        smudge = git-lfs smudge -- %f
+
+      [init]
+        templateDir = /home/gregburd/.git-template
+        defaultBranch = main
+      [commit]
+      #	gpgsign = true
+    '';
+
     file.".config/Code/User/settings.json".text = ''
       {
           "editor.inlineSuggest.enabled": true,
           "editor.fontFamily": "'FiraCode Nerd Font Mono', 'Droid Sans Mono', 'monospace', monospace",
           "editor.fontLigatures": true,
+          "cSpell.userWords": [
+              "Burd",
+              "Wpedantic",
+              "Wvariadic"
+          ],
+          "files.watcherExclude": {
+              "**/.bloop": true,
+              "**/.metals": true,
+              "**/.ammonite": true
+          },
+          "extensions.experimental.affinity": {
+              "asvetliakov.vscode-neovim": 1
+          },
+          "vscode-neovim.neovimExecutablePaths.linux": "/home/gburd/.nix-profile/bin/nvim",
       }
     '';
 
@@ -167,6 +287,8 @@
       ]
     '';
 
+    file.".config/nvim/init.nvim".source = ./init.nvim;
+
     # file.".config/sublime-text-2/Local/License.sublime_license".text =
     #   config.sops.secrets.sublime-licenses.text.path;
 
@@ -235,6 +357,16 @@
       _1password
       _1password-gui
       cfssl
+      gnumake
+      cmake
+      autoconf
+      libtool
+      m4
+      perl
+      pkg-config
+      python3
+      gcc
+      gdb
       dig
       emacs
       file
@@ -262,6 +394,14 @@
     enableDebugInfo = true;
   };
   programs = {
+    bash = {
+      shellAliases = {
+        pubip = "curl -s ifconfig.me/ip"; # "curl -s https://api.ipify.org";
+        speedtest = "speedtest-go";
+        vi = "nvim";
+        vim = "nvim";
+      };
+    };
     fish = {
       shellAliases = {
         #diff = "diffr";
