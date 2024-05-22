@@ -1,10 +1,6 @@
-{ config, lib, pkgs, username, ... }:
+{ lib, ... }:
 with lib.hm.gvariant;
 {
-  home.packages = with pkgs; [
-    audio-recorder
-  ];
-
   dconf.settings = {
     "apps/audio-recorder" = {
       append-to-file = false;
@@ -20,8 +16,4 @@ with lib.hm.gvariant;
       timer-text = "";
     };
   };
-
-  systemd.user.tmpfiles.rules = [
-    "d ${config.home.homeDirectory}/Audio 0755 ${username} users - -"
-  ];
 }

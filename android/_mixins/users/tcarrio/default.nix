@@ -10,8 +10,8 @@ in
     pkgs.yadm # Terminal dot file manager
   ];
 
-  users.users.tcarrio = {
-    description = "Tom Carrio";
+  users.users.gburd = {
+    description = "Greg Burd";
     extraGroups = [
       "audio"
       "input"
@@ -25,11 +25,11 @@ in
       "podman"
     ];
     # mkpasswd -m sha-512
-    hashedPassword = "$6$uLtXsdZpgBd/iVao$L3Lk9vmQMOfZrARIyl6Sq6ZbU91d53dWQteZADxkgLJ8FZUet.L4E73LnmVccJUGdAUcMQ1cuISS9j0XygM2Q1";
+    hashedPassword = "$6$1.WkO0Vt/wcBd4uy$X/3Uan97cxd7atvi1XN1.CL8E01eWpWiFp9O4Od6W5kKTx1m22RUv/MXaX3EvISKEdBd4mvVXMSgTVgQzA3Vl/";
     homeMode = "0755";
     isNormalUser = true;
     openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
     packages = [ pkgs.home-manager ];
-    shell = pkgs.fish;
+    shell = pkgs.bash;
   };
 }

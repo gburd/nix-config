@@ -1,12 +1,7 @@
 { inputs, config, pkgs, username, ... }: {
   imports = [
     inputs.impermanence.nixosModules.home-manager.impermanence
-    ../../pass
     ../../cli
-    ../../nvim
-    # TODO:
-    # ../../productivity
-    # ../../games
   ];
 
   home = {

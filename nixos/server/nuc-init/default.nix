@@ -44,7 +44,7 @@ let
     fi
 
     if [ ! -d "$HOME/ws/nix-config/.git" ]; then
-      git clone https://github.com/tcarrio/nix-config.git "$HOME/ws/nix-config"
+      git clone https://github.com/gburd/nix-config.git "$HOME/ws/nix-config"
     fi
 
     cd "$HOME/ws/nix-config"

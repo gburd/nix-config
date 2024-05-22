@@ -3,15 +3,15 @@ with lib.hm.gvariant;
 {
   dconf.settings = {
     "org/gnome/charmap" = {
-      font = "Work Sans 22";
+      font = "Work Sans 18";
     };
 
     "org/gnome/desktop/interface" = {
       cursor-theme = "Yaru";
       document-font-name = "Work Sans 12";
       font-name = "Work Sans 12";
-      gtk-theme = lib.mkForce "Yaru-magenta-dark";
-      icon-theme = lib.mkForce "Yaru-magenta-dark";
+      gtk-theme = "Yaru-magenta-dark";
+      icon-theme = "Yaru-magenta-dark";
       monospace-font-name = "FiraCode Nerd Font Medium 13";
     };
 
@@ -107,7 +107,7 @@ with lib.hm.gvariant;
     };
 
     "org/mate/desktop/peripherals/mouse" = {
-      cursor-size = 32;
+      cursor-size = 24;
       cursor-theme = "Yaru";
     };
 
@@ -315,7 +315,7 @@ with lib.hm.gvariant;
     cursorTheme = {
       name = "Yaru";
       package = pkgs.yaru-theme;
-      size = 32;
+      size = 24;
     };
 
     font = {
@@ -356,7 +356,7 @@ with lib.hm.gvariant;
   home.pointerCursor = {
     name = "Yaru";
     package = pkgs.yaru-theme;
-    size = 32;
+    size = 24;
     gtk.enable = true;
     x11.enable = true;
   };

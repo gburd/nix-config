@@ -5,4 +5,6 @@
   auth0 = pkgs.callPackage ./auth0.nix { };
   ente-photos-desktop = pkgs.callPackage ./ente.nix { };
   charm-freeze = pkgs.callPackage ./charm-freeze.nix { };
+  nix-inspect = pkgs.callPackage ./nix-inspect { } ;
+  tly = pkgs.callPackage ./tly { };
 }

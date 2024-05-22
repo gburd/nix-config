@@ -3,7 +3,7 @@
 set -euo pipefail
 
 TARGET_HOST="''${1:-}"
-TARGET_USER="''${2:-tcarrio}"
+TARGET_USER="''${2:-gburd}"
 TARGET_TYPE="''${3:-}"
 
 if [ "$(id -u)" -eq 0 ]; then
@@ -12,7 +12,7 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 if [ ! -d "$HOME/ws/nix-config/.git" ]; then
-  git clone https://github.com/tcarrio/nix-config.git "$HOME/ws/nix-config"
+  git clone https://github.com/gburd/nix-config.git "$HOME/ws/nix-config"
 fi
 
 pushd "$HOME/ws/nix-config"
@@ -70,7 +70,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   # Rsync nix-config to the target install and set the remote origin to SSH.
   rsync -a --delete "$HOME/ws/" "/mnt/home/$TARGET_USER/ws/"
   pushd "/mnt/home/$TARGET_USER/ws/nix-config"
-  git remote set-url origin git@github.com:tcarrio/nix-config.git
+  git remote set-url origin git@github.com:gburd/nix-config.git
   popd
 
   # If there is a keyfile for a data disk, put copy it to the root partition and

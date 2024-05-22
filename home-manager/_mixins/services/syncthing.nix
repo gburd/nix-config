@@ -1,16 +1,16 @@
-{ config, desktop, hostname, lib, ... }: {
-  imports = lib.optionals (desktop != null) [
-    ./syncthing-tray.nix
-  ];
-
+{ hostname, pkgs, username, ... }: {
   services.syncthing = {
     enable = true;
     extraOptions = [
-      "--config=${config.home.homeDirectory}/Syncthing/Devices/${hostname}"
-      "--data=${config.home.homeDirectory}/Syncthing/DB/${hostname}"
+      "--config=/home/${username}/Syncthing/Devices/${hostname}"
+      "--data=/home/${username}/Syncthing/DB/${hostname}"
       "--gui-address=0.0.0.0:8384"
       "--no-default-folder"
       "--no-browser"
     ];
+    tray = {
+      enable = true;
+      package = pkgs.unstable.syncthingtray;
+    };
   };
 }

@@ -1,11 +1,9 @@
 # Generated via dconf2nix: https://github.com/gvolpe/dconf2nix
-{ lib, pkgs, ... }:
-with lib.hm.gvariant;
-{
-  home.packages = with pkgs; [
-    tilix
-  ];
+{ lib, ... }:
 
+with lib.hm.gvariant;
+
+{
   dconf.settings = {
     "com/gexperts/Tilix" = {
       app-title = "\${appName}: \${directory}";
@@ -48,7 +46,7 @@ with lib.hm.gvariant;
       default-size-columns = 132;
       default-size-rows = 50;
       draw-margin = 80;
-      font = "FiraCode Nerd Font Medium 12";
+      font = "FiraCode Nerd Font Medium 10";
       foreground-color = "#C8C8C8C8C8C8";
       highlight-background-color = "#1E1E1E1E2020";
       highlight-colors-set = false;
@@ -56,7 +54,7 @@ with lib.hm.gvariant;
       palette = [ "#121212121414" "#D6D62B2B2B2B" "#4141DDDD7575" "#FFFFB6B63838" "#2828A9A9FFFF" "#E6E66D6DFFFF" "#1414E5E5D3D3" "#C8C8C8C8C8C8" "#434343434545" "#DEDE56565656" "#A1A1EEEEBBBB" "#FFFFC5C56060" "#9494D4D4FFFF" "#F2F2B6B6FFFF" "#A0A0F5F5EDED" "#E9E9E9E9E9E9" ];
       scrollback-unlimited = true;
       terminal-title = "";
-      use-system-font = true;
+      use-system-font = false;
       use-theme-colors = false;
       visible-name = "Bearded Dark Vivid";
     };

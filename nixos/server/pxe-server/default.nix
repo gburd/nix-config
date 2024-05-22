@@ -1,6 +1,6 @@
 { inputs, lib, pkgs, ... }:
 let
-  dnsHostName = "carrio.dev";
+  dnsHostName = "ossus.net";
   internalDnsHostName = "int.${dnsHostName}";
   virtNetIface = "enu1u1";
 in
@@ -8,12 +8,12 @@ in
   imports = [
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-gpu-intel
-    inputs.nixos-hardware.nixosModules.common-pc
+    inputs.nixos-hardware.nixosModules.common-pcfish
     inputs.nixos-hardware.nixosModules.common-pc-ssd
     (import ./disks.nix { })
     ../_mixins/hardware/systemd-boot.nix
     ../_mixins/services/bluetooth.nix
-    ../_mixins/users/tcarrio
+    ../_mixins/users/gburd
     ../_mixins/users/pxe
     ../_mixins/virt
   ];

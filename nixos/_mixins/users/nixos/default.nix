@@ -83,7 +83,7 @@ let
       mkdir -p "$TARGET_USER_HOME"
       rsync -a --delete "$HOME/ws/" "$TARGET_USER_HOME/ws/"
       pushd "$TARGET_USER_HOME/ws/nix-config"
-      git remote set-url origin git@github.com:tcarrio/nix-config.git
+      git remote set-url origin git@github.com:gburd/nix-config.git
       popd
 
       # If there is a keyfile for a data disk, put copy it to the root partition and
