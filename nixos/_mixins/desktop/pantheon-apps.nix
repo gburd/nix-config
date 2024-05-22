@@ -7,6 +7,7 @@
   # Add additional apps and include Yaru for syntax highlighting
   environment.systemPackages = with pkgs; [
     appeditor
+    celluloid
     gthumb
     formatter
     usbimager

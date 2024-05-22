@@ -1,5 +1,5 @@
 { config, desktop, hostname, lib, ... }: {
-  imports = [ ] ++ lib.optionals (desktop != null) [
+  imports = lib.optionals (desktop != null) [
     ./syncthing-tray.nix
   ];
 

@@ -1,37 +1,12 @@
-[![built with nix](https://img.shields.io/static/v1?logo=nixos&logoColor=white&label=&message=Built%20with%20Nix&color=41439a)](https://builtwithnix.org)
-
 # My NixOS configurations
 
-Here's my NixOS/home-manager config files. Requires [Nix flakes](https://nixos.wiki/wiki/Flakes).
+Here's my NixOS/home-manager config files. Requires [Nix
+flakes](https://nixos.wiki/wiki/Flakes).
 
-## Structure
-
-- `flake.nix`: Entrypoint for hosts and home configurations. Also exposes a
-  devshell for boostrapping (`nix develop` or `nix-shell`).
-- `lib`: A few lib functions for making my flake cleaner
-- `hosts`: NixOS Configurations, accessible via `nixos-rebuild --flake`.
-  - `common`: Shared configurations consumed by the machine-specific ones.
-    - `global`: Configurations that are globally applied to all my machines.
-    - `optional`: Opt-in configurations my machines can use.
-  - `floki`: Lenovo ThinkPad X1 Carbon Extreme Gen 5
-- `home`: My Home-manager configuration, acessible via `home-manager --flake`
-    - Each directory here is a "feature" each hm configuration can toggle, thus
-      customizing my setup for each machine (be it a server, desktop, laptop,
-      anything really).
-- `modules`: A few actual modules (with options) I haven't upstreamed yet.
-- `overlay`: Patches and version overrides for some packages. Accessible via
-  `nix build`.
-- `pkgs`: My custom packages. Also accessible via `nix build`. You can compose
-  these into your own configuration by using my flake's overlay, or consume them through NUR.
-- `templates`: A couple project templates for different languages. Accessible
-  via `nix init`.
-
-
-## About the installation
-
-Home-manager is used in a standalone way, and because of opt-in persistence is
-activated on every boot with `loginShellInit`.
-
+This work is really a 90% copy/paste from [Tom
+Carrio(https://github.com/tcarrio/nix-config) so you'd be much better off
+looking at his work than mine while I'm off studying [Nix
+Pills](https://nixos.org/guides/nix-pills/) and trying to keep up.
 
 ## How to bootstrap
 
@@ -64,49 +39,12 @@ EDITOR=vi sops --config .sops.yaml nixos/_mixins/secrets.yaml
 ## Secrets
 
 For deployment secrets (such as user passwords and server service secrets), I'm
-using the awesome [`sops-nix`](https://github.com/Mic92/sops-nix). All secrets
-are encrypted with my personal PGP key (stored on a YubiKey), as well as the
-relevant systems's SSH host keys.
+using the awesome [`sops-nix`](https://github.com/Mic92/sops-nix). This keeps
+all secrets encrypted with my personal PGP key (stored *only* within a YubiKey I
+keep in my safe at home), as well as the relevant systems's SSH host keys and
+any other sensitive materials.
 
-On my desktop and laptop, I use `pass` for managing passwords, which are
-encrypted using (you bet) my PGP key. This same key is also used for mail
-signing, as well as for SSH'ing around.
-
-## Tooling and applications I use
-
-Most relevant user apps daily drivers:
-
-- emacs
-- fish
-- kitty
-- qutebrowser
-- neomutt + mbsync
-- khal + khard + todoman + vdirsyncer
-- gpg + pass
-- tailscale
-- podman
-- zathura
-- wofi
-- bat + fd + rg
-- kdeconnect
-- sublime-music
-
-Some of the services I host:
-
-- hydra
-- navidrome
-- deluge
-- prometheus
-- websites (such as https://burd.me ...)
-- headscale
-
-Nixy stuff:
-
-- nix-colors
-- sops-nix
-- impermanence
-- home-manager
-- deploy-rs
-- and NixOS and nix itself, of course :)
-
-Let me know if you have any questions about them :)
+On my desktop and laptop, I use `pass` for managing passwords, also encrypted
+using (you bet) my PGP key. This same key is also used for mail signing, as well
+as for SSH'ing around.  You can find my pub key on
+[Keybase.io](https://keybase.io/gregburd) or other information on [my site](https://greg.burd.me).

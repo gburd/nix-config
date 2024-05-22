@@ -1,4 +1,4 @@
-{ config, desktop, hostname, inputs, lib, pkgs, ... }:
+{ config, desktop, inputs, lib, pkgs, ... }:
 let
   ifTheyExist = groups: builtins.filter (group: builtins.hasAttr group config.users.groups) groups;
 in
@@ -27,8 +27,7 @@ in
     #unstable.google-chrome
   ];
 
-  services = {
-  };
+  services = { };
 
   users.users.gburd = {
     extraGroups = [

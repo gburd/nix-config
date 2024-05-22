@@ -1,4 +1,4 @@
-{ config, desktop, lib, pkgs, username, ... }:
+{ config, desktop, lib, pkgs, sshMatrix, username, ... }:
 let
   ifExists = groups: builtins.filter (group: builtins.hasAttr group config.users.groups) groups;
   install-system = pkgs.writeScriptBin "install-system" ''
@@ -8,6 +8,7 @@ let
 
     TARGET_HOST="''${1:-}"
     TARGET_USER="''${2:-gburd}"
+    TARGET_TYPE="''${3:-}"
 
     if [ "$(id -u)" -eq 0 ]; then
       echo "ERROR! $(basename "$0") should be run as a regular user"
@@ -34,14 +35,23 @@ let
       exit 1
     fi
 
-    if [ ! -e "nixos/$TARGET_HOST/disks.nix" ]; then
-      echo "ERROR! $(basename "$0") could not find the required nixos/$TARGET_HOST/disks.nix"
+    if [[ -z "$TARGET_TYPE" ]]; then
+      echo "ERROR! $(basename "$0") requires a type as the third argument"
+      echo "       The following types are available"
+      ls -1 nixos/ | grep -v -E "nixos|root|_mixins"
+      exit 1
+    fi
+
+    TARGET_HOST_ROOT="nixos/$TARGET_TYPE/$TARGET_HOST"
+
+    if [ ! -e "$TARGET_HOST_ROOT/disks.nix" ]; then
+      echo "ERROR! $(basename "$0") could not find the required $TARGET_HOST_ROOT/disks.nix"
       exit 1
     fi
 
     # Check if the machine we're provisioning expects a keyfile to unlock a disk.
     # If it does, generate a new key, and write to a known location.
-    if grep -q "data.keyfile" "nixos/$TARGET_HOST/disks.nix"; then
+    if grep -q "data.keyfile" "$TARGET_HOST_ROOT/disks.nix"; then
       echo -n "$(head -c32 /dev/random | base64)" > /tmp/data.keyfile
     fi
 
@@ -59,14 +69,21 @@ let
         --no-write-lock-file \
         -- \
         --mode zap_create_mount \
-        "nixos/$TARGET_HOST/disks.nix"
+        "$TARGET_HOST_ROOT/disks.nix"
 
       sudo nixos-install --no-root-password --flake ".#$TARGET_HOST"
 
+      if [[ "$TARGET_USER" == "root" ]]; then
+        TARGET_USER_HOME="/mnt/root"
+      else
+        TARGET_USER_HOME="/mnt/home/$TARGET_USER"
+      fi
+
       # Rsync nix-config to the target install and set the remote origin to SSH.
-      rsync -a --delete "$HOME/ws/" "/mnt/home/$TARGET_USER/gburd/"
-      pushd "/mnt/home/$TARGET_USER/gburd/nix-config"
-      git remote set-url origin git@github.com:gburd/nix-config.git
+      mkdir -p "$TARGET_USER_HOME"
+      rsync -a --delete "$HOME/ws/" "$TARGET_USER_HOME/ws/"
+      pushd "$TARGET_USER_HOME/ws/nix-config"
+      git remote set-url origin git@github.com:tcarrio/nix-config.git
       popd
 
       # If there is a keyfile for a data disk, put copy it to the root partition and
@@ -80,7 +97,10 @@ let
 in
 {
   # Only include desktop components if one is supplied.
-  imports = [ ] ++ lib.optional (desktop != null) ./desktop.nix;
+  imports = lib.optional (builtins.isString desktop) ./desktop.nix;
+
+  # TODO: Determine cause of error in
+  # nix.registry.nixpkgs.to.path
 
   config.users.users.nixos = {
     description = "NixOS";
@@ -95,11 +115,18 @@ in
       "docker"
       "podman"
     ];
+    group = "nixos";
+    isNormalUser = true;
     homeMode = "0755";
-    openssh.authorizedKeys.keys = [ (builtins.readFile ../../../home/gburd/ssh.pub) ];
+
+    # mkpasswd -m sha-512
+    hashedPassword = "$6$Dq4WmzyLjQUTyXT1$0Ll5rZ0R33qfGnEmAOZQuh.6udRN19luImYAmqsCKxfV14yHQ8vt9B/pf945..r1jTmlu7wfAXSe7kfoBm9jK0";
+    openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
+
     packages = [ pkgs.home-manager ];
     shell = pkgs.fish;
   };
+  config.users.groups.nixos = { };
 
   config.system.stateVersion = lib.mkForce lib.trivial.release;
   config.environment.systemPackages = [ install-system ];
