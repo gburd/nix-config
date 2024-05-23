@@ -11,15 +11,17 @@
     #./hardware-configuration.nix
 
     inputs.nixos-hardware.nixosModules.common-cpu-intel
-    inputs.nixos-hardware.nixosModules.common-gpu-nvidia-nonprime
+    inputs.nixos-hardware.nixosModules.common-gpu-nvidia
     inputs.nixos-hardware.nixosModules.common-pc
-    inputs.nixos-hardware.nixosModules.common-pc-ssd
+    inputs.nixos-hardware.nixosModules.common-pc-laptop-ssd
+    inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x1-extreme-gen4
 
     ../../_mixins/desktop/daw.nix
     ../../_mixins/desktop/ente.nix
     ../../_mixins/desktop/logseq.nix
     ../../_mixins/hardware/systemd-boot.nix
     ../../_mixins/hardware/disable-nm-wait.nix
+#    ../../_mixins/hardware/intel.accelerated-video-playback.nix
     ../../_mixins/hardware/rtx-3080ti.nix
     ../../_mixins/hardware/roccat.nix
     ../../_mixins/services/bluetooth.nix
@@ -43,6 +45,15 @@
     kernelModules = [ "kvm-intel" "nvidia" ];
     kernelPackages = pkgs.linuxPackages_latest;
   };
+
+  # https://nixos.wiki/wiki/Nvidia
+  hardware.nvidia.prime = {
+    offload.enable = false;
+    sync.enable = true;
+    # nix-shell -p lshw.out --run 'sudo lshw -c display'
+		intelBusId = "PCI:0:2:0";  # pci@0000:00:02.0
+		nvidiaBusId = "PCI:1:0:0"; # pci@0000:01:00.0
+	};
 
   console.keyMap = lib.mkForce "us";
   services.kmscon.extraConfig = lib.mkForce ''
