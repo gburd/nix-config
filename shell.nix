@@ -1,6 +1,10 @@
+# Shell for bootstrapping flake-enabled nix and home-manager
+# Enter it through 'nix develop' or (legacy) 'nix-shell'
+
 { pkgs ? (import ./nixpkgs.nix) { overlays = [ ]; } }: {
   default = pkgs.mkShell {
-    NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake";
+    # Enable experimental features without having to specify the argument
+    NIX_CONFIG = "experimental-features = nix-command flakes repl-flake";
     nativeBuildInputs = with pkgs; [
       nix
       home-manager
@@ -19,9 +23,9 @@
       kubectl
     ];
   };
-  services.dbus.packages = [ pkgs.gcr ];
-  services.pcscd.enable = true;
-  programs.gnupg.agent = {
+  #services.dbus.packages = [ pkgs.gcr ];
+  #services.pcscd.enable = true;
+  services.gnupg.agent = {
     enable = true;
     pinentryFlavor = "curses";
     enableSSHSupport = true;

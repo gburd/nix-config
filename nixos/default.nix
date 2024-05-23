@@ -1,24 +1,19 @@
-{ config, desktop, hostname, inputs, lib, modulesPath, outputs, pkgs, platform, stateVersion, username, ... }:
-let
-  # Only enable auto upgrade if current config came from a clean tree
-  # This avoids accidental auto-upgrades when working locally.
-  isClean = inputs.self ? rev;
-in
-{
+{ config, desktop, hostname, inputs, lib, modulesPath, outputs, pkgs, stateVersion, systemType, username, ... }: {
   imports = [
     inputs.disko.nixosModules.disko
     (modulesPath + "/installer/scan/not-detected.nix")
-    ./${hostname}
+    ./${systemType}/${hostname}
     ./_mixins/sops.nix
     ./_mixins/optin-persistence.nix
     ./_mixins/services/firewall.nix
+    ./_mixins/services/fwupd.nix
     ./_mixins/services/kmscon.nix
     ./_mixins/services/openssh.nix
     ./_mixins/services/smartmon.nix
     ./_mixins/users/root
   ]
-  ++ lib.optional (builtins.pathExists (./. + "/_mixins/users/${username}")) ./_mixins/users/${username}
-  ++ lib.optional (desktop != null) ./_mixins/desktop;
+  ++ lib.optional (builtins.isString username) ./_mixins/users/${username}
+  ++ lib.optional (builtins.isString desktop) ./_mixins/desktop;
 
   boot = {
     consoleLogLevel = 0;
@@ -40,10 +35,11 @@ in
   };
 
   console = {
-    packages = with pkgs; [ terminus_font ];
     font = "${pkgs.terminus_font}/share/consolefonts/ter-132n.psf.gz";
     useXkbConfig = true; # use xkbOptions, in this case swap caps-lock and ctrl, in tty.
     earlySetup = true;
+    keyMap = "us";
+    packages = with pkgs; [ terminus_font ];
   };
 
   i18n = {
@@ -85,15 +81,18 @@ in
   ];
 
   documentation.enable = true;
+  documentation.nixos.enable = false;
   documentation.man.enable = true;
+  documentation.info.enable = false;
+  documentation.doc.enable = false;
 
   environment = {
     # Eject nano and perl from the system
     defaultPackages = with pkgs; lib.mkForce [
       gitMinimal
       home-manager
-      micro
       rsync
+      vim
     ];
     systemPackages = with pkgs; [
       agenix
@@ -102,12 +101,11 @@ in
       unzip
       usbutils
       wget
-#      inputs.fh.packages.${platform}.default
     ];
     variables = {
-      EDITOR = "vi";
-      SYSTEMD_EDITOR = "vi";
-      VISUAL = "vi";
+      EDITOR = "vim";
+      SYSTEMD_EDITOR = "vim";
+      VISUAL = "vim";
     };
     enableAllTerminfo = true;
   };
@@ -118,9 +116,9 @@ in
       (nerdfonts.override { fonts = [ "FiraCode" "SourceCodePro" "UbuntuMono" ]; })
       fira
       fira-go
-      joypixels
+      joypixels # Emojis
       liberation_ttf
-      noto-fonts-emoji
+      noto-fonts-emoji # Emojis
       source-serif
       ubuntu_font_family
       work-sans
@@ -152,11 +150,7 @@ in
 
   # Use passed hostname to configure basic networking
   networking = {
-    extraHosts = ''
-      192.168.7.1      router eero
-    '';
     hostName = hostname;
-    domain = "burd.me";
     useDHCP = lib.mkDefault true;
   };
 
@@ -169,8 +163,10 @@ in
       outputs.overlays.additions
       outputs.overlays.modifications
       outputs.overlays.unstable-packages
+      outputs.overlays.trunk-packages
 
       # You can also add overlays exported from other flakes:
+      # neovim-nightly-overlay.overlays.default
       inputs.agenix.overlays.default
 
       # Or define it inline, for example:
@@ -206,7 +202,6 @@ in
     optimise.automatic = true;
     package = pkgs.unstable.nix;
     settings = {
-      trusted-users = [ "root" "@wheel" ];
       auto-optimise-store = true;
       experimental-features = [ "nix-command" "flakes" ];
       system-features = [ "kvm" "big-parallel" "nixos-test" ];
@@ -214,6 +209,8 @@ in
       # Avoid unwanted garbage collection when using nix-direnv
       keep-outputs = true;
       keep-derivations = true;
+
+      trusted-users = [ username "root" "@wheel" ];
 
       warn-dirty = false;
     };
@@ -256,18 +253,32 @@ in
         set -U fish_pager_color_progress brwhite '--background=cyan'
       '';
       shellAbbrs = {
-        nix-gc = "sudo nix-collect-garbage --delete-older-than 10d && nix-collect-garbage --delete-older-than 10d";
-        rebuild-all = "sudo nixos-rebuild switch --flake $HOME/ws/nix-config && home-manager switch -b backup --flake $HOME/ws/nix-config";
+        nix-gc = "sudo nix-collect-garbage --delete-older-than 28d";
+
+        rebuild-all = "sudo nix-collect-garbage --delete-older-than 28d && sudo nixos-rebuild switch --flake $HOME/ws/nix-config && home-manager switch -b backup --flake $HOME/ws/nix-config";
         rebuild-home = "home-manager switch -b backup --flake $HOME/ws/nix-config";
         rebuild-host = "sudo nixos-rebuild switch --flake $HOME/ws/nix-config";
-        rebuild-lock = "pushd $HOME/ws/nix-config && nix flake update && popd";
+        rebuild-lock = "pushd $HOME/ws/nix-config && nix flake lock --recreate-lock-file && popd";
+
+        modify-secret = "agenix -i ~/.ssh/id_rsa -e"; # the path relative to /secrets must be passed without `./`
+
         rebuild-iso-console = "sudo true && pushd $HOME/ws/nix-config && nix build .#nixosConfigurations.iso-console.config.system.build.isoImage && set ISO (head -n1 result/nix-support/hydra-build-products | cut -d'/' -f6) && sudo cp result/iso/$ISO ~/Quickemu/nixos-console/nixos.iso && popd";
+        test-iso-console = "pushd ~/Quickemu/ && quickemu --vm nixos-console.conf --ssh-port 54321 && popd";
+
         rebuild-iso-desktop = "sudo true && pushd $HOME/ws/nix-config && nix build .#nixosConfigurations.iso-desktop.config.system.build.isoImage && set ISO (head -n1 result/nix-support/hydra-build-products | cut -d'/' -f6) && sudo cp result/iso/$ISO ~/Quickemu/nixos-desktop/nixos.iso && popd";
-        rebuild-iso-gpd-edp = "sudo true && pushd $HOME/ws/nix-config && nix build .#nixosConfigurations.iso-gpd-edp.config.system.build.isoImage && set ISO (head -n1 result/nix-support/hydra-build-products | cut -d'/' -f6) && sudo cp result/iso/$ISO ~/Quickemu/nixos-gpd-edp.iso && popd";
-        rebuild-iso-gpd-dsi = "sudo true && pushd $HOME/ws/nix-config && nix build .#nixosConfigurations.iso-gpd-dsi.config.system.build.isoImage && set ISO (head -n1 result/nix-support/hydra-build-products | cut -d'/' -f6) && sudo cp result/iso/$ISO ~/Quickemu/nixos-gpd-dsi.iso && popd";
+        test-iso-desktop = "pushd ~/Quickemu/ && quickemu --vm nixos-desktop.conf --ssh-port 54321 && popd";
+
+        rebuild-iso-nuc = "sudo true && pushd $HOME/ws/nix-config && nix build .#nixosConfigurations.iso-nuc.config.system.build.isoImage     && set ISO (head -n1 result/nix-support/hydra-build-products | cut -d'/' -f6) && sudo cp result/iso/$ISO ~/Quickemu/nixos-nuc/nixos.iso     && popd";
+        test-iso-nuc = "pushd ~/Quickemu/ && quickemu --vm nixos-nuc.conf     --ssh-port 54321 && popd";
       };
       shellAliases = {
-        nano = "micro";
+        moon = "curl -s wttr.in/Moon";
+        nano = "vim";
+        open = "xdg-open";
+        pubip = "curl -s ifconfig.me/ip";
+        #pubip = "curl -s https://api.ipify.org";
+        wttr = "curl -s wttr.in && curl -s v2.wttr.in";
+        wttr-bas = "curl -s wttr.in/Cambridge,%20MA && curl -s v2.wttr.in/Cambridge,%20MA";
       };
     };
   };
@@ -285,27 +296,5 @@ in
       ${pkgs.nvd}/bin/nvd --nix-bin-dir=${pkgs.nix}/bin diff /run/current-system "$systemConfig"
     '';
   };
-
-  system.autoUpgrade = {
-    enable = isClean;
-    dates = "hourly";
-    flags = [
-      "--refresh"
-    ];
-    flake = "git://github.com/gburd/nix-config?ref=release-${hostname}";
-  };
-
-  # Only run if current config (self) is older than the new one.
-  systemd.services.nixos-upgrade = lib.mkIf config.system.autoUpgrade.enable {
-    serviceConfig.ExecCondition = lib.getExe (
-      pkgs.writeShellScriptBin "check-date" ''
-        lastModified() {
-          nix flake metadata "$1" --refresh --json | ${lib.getExe pkgs.jq} '.lastModified'
-        }
-        test "$(lastModified "${config.system.autoUpgrade.flake}")"  -gt "$(lastModified "self")"
-      ''
-    );
-  };
-
   system.stateVersion = stateVersion;
 }

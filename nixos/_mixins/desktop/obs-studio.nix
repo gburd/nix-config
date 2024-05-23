@@ -6,6 +6,9 @@
   '';
 
   environment.systemPackages = [
+    pkgs.bc
+    pkgs.google-fonts
+    pkgs.libnotify
     (pkgs.unstable.wrapOBS {
       plugins = with pkgs.unstable.obs-studio-plugins; [
         obs-3d-effect
@@ -19,7 +22,7 @@
         obs-rgb-levels-filter
         obs-text-pthread
         obs-scale-to-sound
-        # TODO: advanced-scene-switcher https://github.com/NixOS/nixpkgs/issues/287254
+        advanced-scene-switcher
         obs-shaderfilter
         obs-source-clone
         obs-source-record

@@ -1,3 +1,8 @@
+# Major differences:
+  * sops/age for secrets
+  * persistence/impermanence
+
+
 * Yubikeys are great, if you use them correctly
   https://www.procustodibus.com/blog/2023/04/how-to-set-up-a-yubikey/
 * generate age public key from host's existing SSH keypair

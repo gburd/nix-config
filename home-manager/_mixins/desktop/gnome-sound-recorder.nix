@@ -1,10 +1,6 @@
-{ config, lib, pkgs, username, ... }:
+{ lib, username, ... }:
 with lib.hm.gvariant;
 {
-  home.packages = with pkgs; [
-    gnome.gnome-sound-recorder
-  ];
-
   dconf.settings = {
     "org/gnome/SoundRecorder" = {
       audio-channel = "mono";
@@ -13,7 +9,6 @@ with lib.hm.gvariant;
   };
 
   systemd.user.tmpfiles.rules = [
-    "d ${config.home.homeDirectory}/Audio 0755 ${username} users - -"
-    "L+ ${config.home.homeDirectory}/.local/share/org.gnome.SoundRecorder/ - - - - ${config.home.homeDirectory}/Audio/"
+    "L+ /home/${username}/.local/share/org.gnome.SoundRecorder/ - - - - /home/${username}/Audio/"
   ];
 }

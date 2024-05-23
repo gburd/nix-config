@@ -1,9 +1,5 @@
-{ pkgs, ... }:
+_:
 {
-  home.packages = with pkgs; [
-    unstable.gitkraken
-  ];
-
   home.file = {
     ".gitkraken/themes/bearded-vivid-black.jsonc".text = ''
       {

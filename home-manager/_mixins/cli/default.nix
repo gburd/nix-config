@@ -13,7 +13,6 @@
     ./ranger.nix
     ./screen.nix
     ./ssh.nix
-    #    ./xpo.nix
   ];
 
   home.packages = with pkgs; [
@@ -23,7 +22,7 @@
     bc # Calculator
     bottom # System viewer
     ncdu # TUI disk usage
-    #    eza # Better ls
+    eza # Better ls
     ripgrep # Better grep
     fd # Better find
     curl # cURL

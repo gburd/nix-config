@@ -77,7 +77,7 @@
           },
           "vscode-neovim.neovimExecutablePaths.linux": "/home/gburd/.nix-profile/bin/nvim",
       }
-   '';
+    '';
 
     file.".config/alacritty/alacritty.yml".source = ./alacritty.yml;
 
@@ -133,8 +133,7 @@
     enableDebugInfo = true;
   };
 
-  programs = {
-  };
+  programs = { };
 
   systemd.user.tmpfiles.rules = [
     "d ${config.home.homeDirectory}/ws 0755 ${username} users - -"
