@@ -63,6 +63,7 @@
     { self
     , nix-formatter-pack
     , nixpkgs
+    , devshells
     , ...
     } @ inputs:
     let
@@ -79,7 +80,7 @@
         # .iso images
 
         # Workstations
-        "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
+        "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
 
         # Servers
       };
@@ -99,7 +100,7 @@
 
         # Workstations
         # Lenovo Carbon X1 Extreme Gen 5 - x86_64
-        floki = libx.mkHost { systemType = "workstation"; hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
+        floki = libx.mkHost { systemType = "workstation"; hostname = "floki"; username = "gburd"; desktop = "gnome"; };
 
         # Servers
         # Can be executed locally:
