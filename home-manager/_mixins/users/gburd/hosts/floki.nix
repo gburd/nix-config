@@ -3,6 +3,8 @@ with lib.hm.gvariant;
 {
   imports = [
     ../../../desktop/vorta.nix
+    ../../../desktop/sublime.nix
+    ../../../desktop/sublime-merge.nix
   ];
   dconf.settings = { };
 
@@ -66,6 +68,7 @@ with lib.hm.gvariant;
     #   config.sops.secrets.sublime-licenses.merge.path;
 
     packages = with pkgs; [
+      # TODO: Move some of these into ../../../desktop/<app>.nix files
       _1password
       _1password-gui
       cfssl

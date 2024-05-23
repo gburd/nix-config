@@ -21,7 +21,7 @@
     ../../_mixins/desktop/logseq.nix
     ../../_mixins/hardware/systemd-boot.nix
     ../../_mixins/hardware/disable-nm-wait.nix
-#    ../../_mixins/hardware/intel.accelerated-video-playback.nix
+    #    ../../_mixins/hardware/intel.accelerated-video-playback.nix
     ../../_mixins/hardware/rtx-3080ti.nix
     ../../_mixins/hardware/roccat.nix
     ../../_mixins/services/bluetooth.nix
@@ -51,9 +51,9 @@
     offload.enable = false;
     sync.enable = true;
     # nix-shell -p lshw.out --run 'sudo lshw -c display'
-		intelBusId = "PCI:0:2:0";  # pci@0000:00:02.0
-		nvidiaBusId = "PCI:1:0:0"; # pci@0000:01:00.0
-	};
+    intelBusId = "PCI:0:2:0"; # pci@0000:00:02.0
+    nvidiaBusId = "PCI:1:0:0"; # pci@0000:01:00.0
+  };
 
   console.keyMap = lib.mkForce "us";
   services.kmscon.extraConfig = lib.mkForce ''
@@ -99,4 +99,9 @@
 
   # support for cross-platform NixOS builds
   boot.binfmt.emulatedSystems = [ "armv7l-linux" "aarch64-linux" ];
+
+  # setup and use the fingerprint reader (setup with fprintd-enroll)
+  services.fprintd.enable = true;
+  services.fprintd.tod.enable = true;
+  services.fprintd.tod.driver = pkgs.libfprint-2-tod1-goodix;
 }
