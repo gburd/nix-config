@@ -8,6 +8,7 @@
     ../../desktop/spotify.nix
     ../../desktop/tilix.nix
     ../../desktop/vscode.nix
+    ../../desktop/jetbrains-toolbox.nix
   ]
   ++ lib.optional (builtins.pathExists (../.. + "/desktop/${desktop}.nix")) ../../desktop/${desktop}.nix
   ++ lib.optional (builtins.pathExists (../.. + "/desktop/${desktop}-apps.nix")) ../../desktop/${desktop}-apps.nix;
