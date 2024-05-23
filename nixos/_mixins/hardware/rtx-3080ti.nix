@@ -18,7 +18,7 @@ in
 
   hardware = {
     nvidia = {
-      package = config.boot.kernelPackages.nvidiaPackages.production; #vulkan_beta;
+      package = config.boot.kernelPackages.nvidiaPackages.vulkan_beta;
 
       modesetting.enable = true;
 

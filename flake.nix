@@ -80,7 +80,7 @@
         # .iso images
 
         # Workstations
-        "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
+        "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
 
         # Servers
       };
@@ -100,7 +100,7 @@
 
         # Workstations
         # Lenovo Carbon X1 Extreme Gen 5 - x86_64
-        floki = libx.mkHost { systemType = "workstation"; hostname = "floki"; username = "gburd"; desktop = "gnome"; };
+        floki = libx.mkHost { systemType = "workstation"; hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
 
         # Servers
         # Can be executed locally:
