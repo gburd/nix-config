@@ -72,17 +72,38 @@ in
       shellAliases =
         let
           # determines directory path of symbolic link
-          sh = target: "nix develop $(readlink -f ~/ws/devshells)#${target} --command \$SHELL";
+          devsh = target: "nix develop $(readlink -f ~/ws/devshells)#${target} --command \$SHELL";
         in
         {
-          "sh:c" = sh "c";
-          "sh:python" = sh "python";
+          "devsh:c" = devsh "c";
+          "devh:python" = devsh "python";
         };
     };
 
     git = {
       userEmail = lib.mkDefault "greg@burd.me";
       userName = lib.mkDefault "Greg Burd";
+    };
+  };
+
+  # To declaratively enable and configure, use of modules like home-manager you
+  # are required to configure dconf settings. (HINT: use `dconf watch /` to
+  # discover what to put here)
+  dconf = {
+    enable = true;
+    settings = {
+      "org/gnome/shell" = {
+        disabled-user-extensions = false; # enables user extensions (disabled by default)
+        enabled-extensions = [
+          "blur-my-shell@aunetx"
+        ];
+      };
+
+      # Configure individual extensions
+      "org/gnome/shell/extensions/blur-my-shell" = {
+        brightness = 0.75;
+        noise-amount = 0;
+      };
     };
   };
 

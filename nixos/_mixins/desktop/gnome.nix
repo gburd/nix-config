@@ -21,6 +21,21 @@
 
   environment.systemPackages = with pkgs.unstable; [
     gnomeExtensions.appindicator
+    gnomeExtensions.blur-my-shell
+    gnomeExtensions.pop-shell
     gnome3.gnome-tweaks
   ];
+
+  # Exclude packages
+  environment.gnome.excludePackages = (with pkgs; [
+    # for packages that are pkgs.***
+    gnome-tour
+    gnome-connections
+  ]) ++ (with pkgs.gnome; [
+    # for packages that are pkgs.gnome.***
+    epiphany # web browser
+    geary # email reader
+    evince # document viewer
+  ]);
+
 }
