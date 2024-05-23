@@ -222,13 +222,13 @@
       "locked": {
         "lastModified": 1696826274,
         "narHash": "sha256-wSgiH11yRQZf4JfcnIlSekr1jHaE/y1OBXn1diukIY8=",
-        "owner": "tcarrio",
+        "owner": "gburd",
         "repo": "devshells",
         "rev": "9e8da77202d216b2a21de1cba773a1706a8445f5",
         "type": "github"
       },
       "original": {
-        "owner": "tcarrio",
+        "owner": "gburd",
         "repo": "devshells",
         "type": "github"
       }

@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, config, username, ... }:
 with lib.hm.gvariant;
 {
   dconf.settings = {

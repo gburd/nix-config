@@ -31,7 +31,7 @@
     vscode-server.url = "github:msteen/nixos-vscode-server";
     vscode-server.inputs.nixpkgs.follows = "nixpkgs";
 
-    devshells.url = "github:tcarrio/devshells";
+    devshells.url = "github:gburd/devshells";
     devshells.inputs.nixpkgs.follows = "nixpkgs";
 
     # Android support with nix-on-droid. Currently not updated for 23.11
@@ -79,7 +79,7 @@
         # .iso images
 
         # Workstations
-        "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
+        "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
 
         # Servers
       };
@@ -99,7 +99,7 @@
 
         # Workstations
         # Lenovo Carbon X1 Extreme Gen 5 - x86_64
-        floki = libx.mkHost { systemType = "workstation"; hostname = "floki"; username = "gburd"; desktop = "gnome"; };
+        floki = libx.mkHost { systemType = "workstation"; hostname = "floki"; username = "gburd"; desktop = "pantheon"; };
 
         # Servers
         # Can be executed locally:
