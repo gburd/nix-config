@@ -83,4 +83,5 @@
       };
     };
   };
+  xdg.portal.extraPortals = [ xdg-desktop-portal-gtk ];
 }

@@ -1,9 +1,10 @@
 # NOTE: This is the minimum Pantheon, included in the live .iso image
-# For actuall installs pantheon-apps.nix is also included
+# For actual installs pantheon-apps.nix is also included
 { pkgs, ... }: {
   imports = [
     ./qt-style.nix
-    #    ../services/networkmanager.nix
+    ../services/networkmanager.nix
+    ../services/xdg-portal.nix
   ];
 
   # Exclude the elementary apps I don't use

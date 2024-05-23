@@ -1,10 +1,6 @@
-{ lib, pkgs, ... }:
+{ lib, ... }:
 with lib.hm.gvariant;
 {
-  home.packages = with pkgs; [
-    rhythmbox
-  ];
-
   dconf.settings = {
     "org/gnome/rhythmbox/plugins" = {
       active-plugins = [ "rb" "power-manager" "mpris" "iradio" "generic-player" "audiocd" "android" ];
@@ -12,6 +8,11 @@ with lib.hm.gvariant;
 
     "org/gnome/rhythmbox/podcast" = {
       download-interval = "manual";
+    };
+
+    "org/gnome/rhythmbox/rhythmdb" = {
+      locations = [ "file:///home/${username}/Studio/Music" ];
+      monitor-library = true;
     };
 
     "org/gnome/rhythmbox/sources" = {

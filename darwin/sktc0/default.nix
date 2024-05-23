@@ -1,0 +1,29 @@
+# Device:      Apple M1 Pro
+# CPU:         Apple M1 Pro
+# RAM:         16GB DDR4
+# SATA:        500GB SSD
+
+_: {
+  imports = [
+    ../_mixins/console/homebrew.nix
+    ./brews.nix
+  ];
+
+  networking.hostName = "sktc0";
+
+  system = {
+    defaults = {
+      dock = {
+        autohide = true;
+        orientation = "bottom";
+        tilesize = 80;
+      };
+      finder = { };
+      trackpad = {
+        Clicking = true;
+        TrackpadRightClick = true;
+      };
+    };
+    keyboard = { enableKeyMapping = true; };
+  };
+}

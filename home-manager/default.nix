@@ -1,4 +1,4 @@
-{ config, desktop, hostname, inputs, lib, outputs, pkgs, stateVersion, username, ... }:
+{ config, desktop, lib, inputs, outputs, pkgs, stateVersion, username, ... }:
 let
   inherit (pkgs.stdenv) isDarwin;
 in
@@ -7,7 +7,7 @@ in
   # Only import user specific configuration if they have bespoke settings
   imports = [
     # If you want to use modules your own flake exports (from modules/home-manager):
-    outputs.homeManagerModules.pass-secret-service
+    # outputs.homeManagerModules.example
 
     # Or modules exported from other flakes (such as nix-colors):
     # inputs.nix-colors.homeManagerModules.default
@@ -15,19 +15,15 @@ in
     # You can also split up your configuration and import pieces of it here:
     ./_mixins/console
   ]
-  ++ lib.optional (builtins.isPath (./. + "/_mixins/users/${username}")) ./_mixins/users/${username}
-  ++ lib.optional (builtins.pathExists (./. + "/_mixins/users/${username}/hosts/${hostname}.nix")) ./_mixins/users/${username}/hosts/${hostname}.nix
-  ++ lib.optional (desktop != null) ./_mixins/desktop;
+  ++ lib.optional (builtins.isString desktop) ./_mixins/desktop
+  ++ lib.optional (builtins.isPath (./. + "/_mixins/users/${username}")) ./_mixins/users/${username};
 
   home = {
-    activation.report-changes = config.lib.dag.entryAnywhere ''
-      ${pkgs.nvd}/bin/nvd diff $oldGenPath $newGenPath
-    '';
+    # activation.report-changes = if isDarwin then "" else config.lib.dag.entryAnywhere ''
+    #   ${pkgs.nvd}/bin/nvd diff $oldGenPath $newGenPath
+    # '';
     homeDirectory = if isDarwin then "/Users/${username}" else "/home/${username}";
     sessionPath = [ "$HOME/.local/bin" ];
-    sessionVariables = {
-      FLAKE = "$HOME/ws/nix-config";
-    };
     inherit stateVersion;
     inherit username;
   };
@@ -41,6 +37,7 @@ in
       outputs.overlays.unstable-packages
 
       # You can also add overlays exported from other flakes:
+      # neovim-nightly-overlay.overlays.default
       inputs.agenix.overlays.default
 
       # Or define it inline, for example:
@@ -60,11 +57,7 @@ in
   };
 
   nix = {
-    # This will add each flake input as a registry
-    # To make nix3 commands consistent with your flake
-    registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
-
-    package = pkgs.unstable.nix;
+    package = lib.mkDefault pkgs.unstable.nix;
     settings = {
       auto-optimise-store = true;
       experimental-features = [ "nix-command" "flakes" ];
@@ -75,4 +68,3 @@ in
     };
   };
 }
-

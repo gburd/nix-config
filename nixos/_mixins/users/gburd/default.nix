@@ -1,61 +1,18 @@
-{ config, desktop, hostname, inputs, lib, pkgs, ... }:
+{ config, desktop, lib, pkgs, sshMatrix, ... }:
 let
-  ifTheyExist = groups: builtins.filter (group: builtins.hasAttr group config.users.groups) groups;
+  ifExists = groups: builtins.filter (group: builtins.hasAttr group config.users.groups) groups;
 in
 {
-  imports = [
-    inputs.vscode-server.nixosModules.default
-  ] ++ lib.optionals (desktop != null) [
-    ../../desktop/chromium.nix
-    ../../desktop/chromium-extensions.nix
-    ../../desktop/obs-studio.nix
-    ../../desktop/vscode.nix
-    ../../desktop/${desktop}-apps.nix
-  ];
+  # Only include desktop components if one is supplied.
+  imports = lib.optional (builtins.isString desktop) ./desktop.nix;
 
   environment.systemPackages = with pkgs; [
-    aria2
-    croc
-    rclone
-    curl
-    #yadm # Terminal dot file manager
-    zsync
-  ] ++ lib.optionals (desktop != null) [
-    appimage-run
-    authy
-    chatterino2
-    gimp-with-plugins
-    gnome.gnome-clocks
-    irccloud
-    inkscape
-    #libreoffice
-    pick-colour-picker
-    wmctrl
-    xdotool
-    ydotool
-    zoom-us
-
-    # Fast moving apps use the unstable branch
-    unstable.discord
-    unstable.google-chrome
-    unstable.vivaldi
-    unstable.vivaldi-ffmpeg-codecs
+    yadm # Terminal dot file manager
+    neovim
   ];
 
-  services = {
-    aria2 = {
-      enable = true;
-      openPorts = true;
-      rpcSecret = "${hostname}";
-    };
-    croc = {
-      enable = true;
-      pass = "${hostname}";
-      openFirewall = true;
-    };
-  };
-
   users.users.gburd = {
+    description = "Greg Burd";
     extraGroups = [
       "audio"
       "input"
@@ -63,25 +20,18 @@ in
       "users"
       "video"
       "wheel"
-    ] ++ ifTheyExist [
-      "deluge"
+    ]
+    ++ ifExists [
       "docker"
-      "git"
-      "i2c"
-      "libvirtd"
-      "network"
       "podman"
-      "wireshark"
     ];
 
+    # mkpasswd -m sha-512
+    # TODO: hashedPasswordFile = config.sops.secrets.gburd-password.path;
+    hashedPassword = "$6$RDOZHdTwt.BuOR4C$fYDkyb3yppbgX0ewPbsKabS2u9W.wyrRJONQPtugrO/gBJCzsWkfVIVYOAj07Qar1yqeYJBlBkYSFAgGe5ssw.";
     homeMode = "0755";
     isNormalUser = true;
-    hashedPassword = "$6$RDOZHdTwt.BuOR4C$fYDkyb3yppbgX0ewPbsKabS2u9W.wyrRJONQPtugrO/gBJCzsWkfVIVYOAj07Qar1yqeYJBlBkYSFAgGe5ssw.";
-    # TODO: hashedPasswordFile = config.sops.secrets.gburd-password.path;
-    openssh.authorizedKeys.keys = [
-      (builtins.readFile ../../../../home-manager/_mixins/users/gburd/ssh.pub)
-      (builtins.readFile ../../../../home-manager/_mixins/users/gburd/symas-ssh.pub)
-    ];
+    openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
     packages = [ pkgs.home-manager ];
     shell = pkgs.fish;
   };
