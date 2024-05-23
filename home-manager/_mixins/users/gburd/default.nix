@@ -73,12 +73,11 @@ in
         let
           # determines directory path of symbolic link
           sh = target: "nix develop $(readlink -f ~/ws/devshells)#${target} --command \$SHELL";
-          git = "git";
         in
-          {
-            "sh:c" = sh "c";
-            "sh:python" = sh "python";
-          };
+        {
+          "sh:c" = sh "c";
+          "sh:python" = sh "python";
+        };
     };
 
     git = {

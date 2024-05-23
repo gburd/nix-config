@@ -322,11 +322,18 @@ in
         # see: https://t.ly/Akd1I
         ++ (pkgs.unstable.vscode-utils.extensionsFromVscodeMarketplace
           # globally enabled extensions
-          [ ext.non-breaking-space-highlighter ext.vscode-neovim
+          [
+            ext.non-breaking-space-highlighter
+            ext.vscode-neovim
             # TODO: the following is a work-around for the option-based
             # method below which doesn't seem to work at the moment.
-            ext.bash-debug ext.gitlens ext.copilot ext.vscode-github-actions
-            ext.bash-ide-vscode ext.shellcheck ext.grammarly
+            ext.bash-debug
+            ext.gitlens
+            ext.copilot
+            ext.vscode-github-actions
+            ext.bash-ide-vscode
+            ext.shellcheck
+            ext.grammarly
           ]
         ++ getListIf g.ai [ ext.copilot ]
         ++ getListIf g.cpp [ ]
