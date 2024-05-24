@@ -1,3 +1,10 @@
+nix flake lock --update-input nixpkgs
+sudo nixos-rebuild dry-activate --flake .#floki
+sudo nixos-rebuild switch --flake .#floki
+home-manager build --debug --flake .#gburd@floki
+home-manager switch -b bkup --flake .#gburd@floki
+nix-build '<nixpkgs/nixos>' -A config.system.build.sdImage -I nixos-config=./sdcard/rpi2.nix
+
 # Major differences:
   * sops/age for secrets
   * persistence/impermanence
@@ -8,7 +15,7 @@
 * generate age public key from host's existing SSH keypair
   nix-shell -p ssh-to-age --run 'cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-to-age'
 * trigger first encryption of a secrets file
-  EDITOR=vi sops --config .sops.yaml --encrypt --in-place hosts/common/secrets.yaml
+  EDITOR=vi sops --config .sops.yaml --encrypt --in-place nixos/_mixins/secrets.yaml
 * edit secrets in that file later
 * When SOPS complains about your ~/.gnupg/secring.pgp file not being there try:
   export GPG_TTY=$(tty)
@@ -95,7 +102,7 @@ export GPG_TTY=$(tty)
 gpg-connect-agent reloadagent /bye
 echo test | gpg --clearsign
 gpg --list-keys
-EDITOR=vi sops --config .sops.yaml nixos/common/secrets.yaml
+EDITOR=vi sops --config .sops.yaml nixos/_mixins/secrets.yaml
 sudo nixos-install --flake .#hostname
 reboot
 home-manager switch --flake .#username@hostname

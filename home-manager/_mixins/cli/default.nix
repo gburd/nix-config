@@ -16,7 +16,7 @@
   ];
 
   home.packages = with pkgs; [
-    comma # Install and run programs by sticking a , before them
+    comma # Install and run programs by sticking a "," (comma) before them
     distrobox # Nice escape hatch, integrates docker images with my environment
 
     bc # Calculator
