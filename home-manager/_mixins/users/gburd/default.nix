@@ -7,7 +7,7 @@ in
   imports = [
     inputs.impermanence.nixosModules.home-manager.impermanence
     ../../cli
-    #../../console/charm-freeze.nix
+    ../../console
   ]
   ++ lib.optional (builtins.pathExists (./. + "/hosts/${hostname}.nix")) ./hosts/${hostname}.nix
   ++ lib.optional (builtins.pathExists (./. + "/hosts/${hostname}/default.nix")) ./hosts/${hostname}/default.nix
@@ -16,14 +16,17 @@ in
   home = {
 
     file."ws/devshells".source = inputs.devshells;
+
     file.".ssh/config".text = "
       Host github.com
         HostName github.com
         User git
     ";
+
     sessionVariables = {
       # ...
     };
+
     file.".config/nixpkgs/config.nix".text = ''
       {
         allowUnfree = true;

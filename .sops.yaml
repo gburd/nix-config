@@ -11,7 +11,7 @@ keys:
 
 creation_rules:
 
-  - path_regex: nixos/floki/secrets.ya?ml$
+  - path_regex: nixos/workstation/floki/secrets.ya?ml$
     key_groups:
     - age:
       - *floki
