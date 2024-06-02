@@ -32,7 +32,7 @@
   # Otherwise the hdmi disconnects during the boot and reconnect at the end
   # looks like it is still not enough...
   # Don't enable it with qemu
-  boot.initrd.kernelModules = lib.mkIf (!(config ? virtualisation.qemu)) [ "vc4" "bcm2835_dma" "i2c_bcm2835" "ahci"];
+  boot.initrd.kernelModules = lib.mkIf (!(config ? virtualisation.qemu)) [ "vc4" "bcm2835_dma" "i2c_bcm2835" "ahci" ];
 
   # K900 said that I should always try to stay as much as possible on mainline… which makes sense.
   # K900 also recommended to use kernel 6.0.2 (default is 5.*),
@@ -42,7 +42,7 @@
 
   # https://github.com/NixOS/nixpkgs/issues/154163#issuecomment-1008362877
   nixpkgs.overlays = [
-    (final: super: {
+    (_final: super: {
       makeModulesClosure = x:
         super.makeModulesClosure (x // { allowMissing = true; });
     })
