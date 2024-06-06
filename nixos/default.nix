@@ -62,7 +62,7 @@
     ];
   };
   time.timeZone = lib.mkDefault "America/New_York";
-  services.xserver.layout = "us";
+  services.xserver.xkb.layout = "us";
 
   # Increase open file limit for sudoers
   security.pam.loginLimits = [

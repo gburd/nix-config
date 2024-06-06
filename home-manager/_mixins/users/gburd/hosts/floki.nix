@@ -85,7 +85,6 @@ with lib.hm.gvariant;
       dig
       emacs
       file
-      git-credential-1password
       htop
       openssl
       plocate
