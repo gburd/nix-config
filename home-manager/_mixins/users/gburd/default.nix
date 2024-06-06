@@ -15,6 +15,8 @@ in
 
   home = {
 
+    file.".config/alacritty/alacritty.yml".source = ./alacritty.yml;
+
     file."ws/devshells".source = inputs.devshells;
 
     file.".ssh/config".text = "
