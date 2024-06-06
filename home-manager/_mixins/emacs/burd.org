@@ -113,7 +113,6 @@
 			      toml-mode
 			      web-mode
 			      writegood-mode
-			      ws-butler
 			      yaml-mode))
     #+end_src
 ** Package Management

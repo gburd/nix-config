@@ -23,11 +23,11 @@
       kubectl
     ];
   };
-  #services.dbus.packages = [ pkgs.gcr ];
+  services.dbus.packages = [ pkgs.gcr ];
   #services.pcscd.enable = true;
   services.gnupg.agent = {
     enable = true;
-    pinentryFlavor = "curses";
+    pinentryPackage = pkgs.pinentry-curses;
     enableSSHSupport = true;
   };
 }

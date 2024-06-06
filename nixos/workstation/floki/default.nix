@@ -60,11 +60,11 @@
     font-size=12
     xkb-layout=us
   '';
-  services.xserver.layout = lib.mkForce "us";
-  services.xserver.xkbOptions = "ctrl:swapcaps";
+  services.xserver.xkb.layout = lib.mkForce "us";
+  services.xserver.xkb.options = "ctrl:swapcaps";
 
   environment.systemPackages = with pkgs; [
-    nvtop-amd
+    nvtopPackages.full
     man-pages
     man-pages-posix
   ];

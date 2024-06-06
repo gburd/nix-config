@@ -36,5 +36,5 @@ in
   networking.firewall.allowedTCPPorts = [ 22 ];
 
   # Passwordless sudo when SSH'ing with keys
-  security.pam.enableSSHAgentAuth = true;
+  security.pam.sshAgentAuth.enable = true;
 }
