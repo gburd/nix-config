@@ -8,6 +8,7 @@ with lib.hm.gvariant;
     ../../desktop/celluloid.nix
     ../../desktop/dconf-editor.nix
     ../../desktop/gitkraken.nix
+    ../../desktop/gnome-shell.nix
     ../../desktop/gnome-sound-recorder.nix
     ../../desktop/jetbrains-clion.nix
     ../../desktop/jetbrains-idea-ultimate.nix
