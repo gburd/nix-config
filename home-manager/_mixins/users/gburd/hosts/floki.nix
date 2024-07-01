@@ -71,33 +71,36 @@ with lib.hm.gvariant;
       # TODO: Move some of these into ../../../desktop/<app>.nix files
       _1password
       _1password-gui
-      cfssl
-      gnumake
-      cmake
       autoconf
-      libtool
-      m4
-      perl
-      pkg-config
-      python3
+      cfssl
+      cmake
+      dig
+      elixir
+      emacs
+      erlang
+      file
       gcc
       gdb
-      dig
-      emacs
-      file
+      gnumake
       htop
+      libtool
+      lsof
+      luajitPackages.luarocks
+      m4
       openssl
+      perl
+      pkg-config
       plocate
+      python3
+      rebar3
       ripgrep
       tig
       tree
-      lsof
+      tree-sitter
+      unstable.element-desktop
       unstable.flyctl
       unstable.minio-client
-      unstable.element-desktop
-      erlang
-      rebar3
-      elixir
+      xclip
     ];
 
     # http://rski.github.io/2021/09/05/nix-debugging.html
