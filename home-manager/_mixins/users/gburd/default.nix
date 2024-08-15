@@ -1,4 +1,4 @@
-{ lib, hostname, inputs, platform, pkgs, ... }:
+{ lib, hostname, inputs, platform, config, pkgs, ... }:
 let
   systemInfo = lib.splitString "-" platform;
   systemType = builtins.elemAt systemInfo 1;
@@ -13,27 +13,49 @@ in
   ++ lib.optional (builtins.pathExists (./. + "/hosts/${hostname}/default.nix")) ./hosts/${hostname}/default.nix
   ++ lib.optional (builtins.pathExists (./. + "/systems/${systemType}.nix")) ./systems/${systemType}.nix;
 
-  home = {
+  home.file = {
 
-    file.".config/alacritty/alacritty.yml".source = ./alacritty.yml;
+    "ws/devshells".source = inputs.devshells;
 
-    file."ws/devshells".source = inputs.devshells;
+    "${config.xdg.configHome}/alacritty/alacritty.yml".source = ./alacritty.yml;
 
-    file.".ssh/config".text = "
+    ".ssh/config".text = "
+      Host *
+           IdentityAgent ~/.1password/agent.sock
+           Compression yes
+           ConnectTimeout 5
+           ControlMaster auto
+           ControlPath /tmp/ssh_mux_%h_%p_%r
+           ControlPersist 10m
+           ControlPersist yes
+           ForwardAgent yes
+           ForwardX11 yes
+           GSSAPIAuthentication no
+           LogLevel QUIET
+           ServerAliveInterval 60
+           ServerAliveCountMax 2
+           StrictHostKeyChecking no
+           TCPKeepAlive yes
+           UserKnownHostsFile /dev/null
+
       Host github.com
         HostName github.com
         User git
     ";
 
-    sessionVariables = {
-      # ...
-    };
-
-    file.".config/nixpkgs/config.nix".text = ''
+    "${config.xdg.configHome}/nixpkgs/config.nix".text = ''
       {
         allowUnfree = true;
       }
     '';
+
+  };
+
+  home = {
+
+    sessionVariables = {
+      # ...
+    };
 
     packages = with pkgs; [ ];
   };

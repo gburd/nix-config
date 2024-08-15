@@ -24,6 +24,7 @@ in
     ++ ifExists [
       "docker"
       "podman"
+      config.services.kubo.group
     ];
 
     # mkpasswd -m sha-512
@@ -41,5 +42,10 @@ in
     neededForUsers = true;
   };
 
+  # https://github.com/Mic92/envfs
+  services.envfs.enable = true;
+  # https://wiki.nixos.org/wiki/IPFS
+  #kubo.enable = true;
+  # a location service `where-am-i`
   services.geoclue2.enable = true;
 }

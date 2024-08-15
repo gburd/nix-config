@@ -5,6 +5,7 @@
   #https://nixos.wiki/wiki/Docker
   environment.systemPackages = with pkgs; [
     docker-compose
+    docker-buildx
   ];
 
   virtualisation = {

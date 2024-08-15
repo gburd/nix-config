@@ -8,8 +8,10 @@ with lib.hm.gvariant;
     ../../desktop/jetbrains-toolbox.nix
     ../../desktop/meld.nix
     ../../desktop/protonmail-bridge.nix
+    ../../desktop/protonmail-desktop.nix
     ../../desktop/sublime-merge.nix
     ../../desktop/sublime.nix
+    ../../desktop/zed-editor.nix
     ../../services/keybase.nix
   ];
 

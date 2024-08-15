@@ -1,5 +1,6 @@
 { desktop, ... }: {
   imports = [
+    ./alacritty.nix
     ./neovide.nix
     ./emote.nix
     ./tilix.nix

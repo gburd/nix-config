@@ -45,5 +45,5 @@ in
     pulseaudio.support32Bit = true;
   };
 
-  virtualisation.docker.enableNvidia = true;
+  hardware.nvidia-container-toolkit.enable = true;
 }
