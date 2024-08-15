@@ -38,5 +38,13 @@
     ltex-ls # Spell checking LSP
 
     tly # Tally counter
+
+    kubectl
+    k9s
+    kubernetes-helm
+    kind
+    terraform
+    terraform-ls
+    nerdctl
   ];
 }

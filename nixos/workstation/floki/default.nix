@@ -43,7 +43,8 @@
     };
 
     kernelModules = [ "kvm-intel" "nvidia" ];
-    kernelPackages = pkgs.linuxPackages_latest;
+    #kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages;
   };
 
   # https://nixos.wiki/wiki/Nvidia

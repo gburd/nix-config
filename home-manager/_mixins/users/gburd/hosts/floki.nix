@@ -33,6 +33,10 @@ with lib.hm.gvariant;
       load_dotenv = true
     '';
 
+    file.".envrc".text = ''
+      ENVFS_RESOLVE_ALWAYS=1
+    '';
+
     file.".config/Code/User/settings.json".text = ''
       {
           "editor.inlineSuggest.enabled": true,
@@ -72,6 +76,7 @@ with lib.hm.gvariant;
       _1password
       _1password-gui
       autoconf
+      bash
       cfssl
       cmake
       dig

@@ -1,0 +1,209 @@
+    file.".ssh/config".text = ''
+      Host burd.me *.burd.me *.ts.burd.me
+      ForwardAgent yes
+      Host floki
+        ForwardAgent yes
+        RemoteForward /%d/.gnupg-sockets/S.gpg-agent /%d/.gnupg-sockets/S.gpg-agent.extra
+
+      Host *
+        ForwardAgent no
+        Compression no
+        ServerAliveInterval 0
+        ServerAliveCountMax 3
+        HashKnownHosts no
+        UserKnownHostsFile ~/.ssh/known_hosts
+        ControlMaster no
+        ControlPath ~/.ssh/master-%r@%n:%p
+        ControlPersist no
+
+      Host github.com
+        HostName github.com
+        User git
+    '';
+
+    file.".gitconfig".text = ''
+      [user]
+        name = Greg Burd
+        email = greg@burd.me
+
+      [color]
+        ui = auto
+        diff = auto
+        status = auto
+        branch = auto
+
+      [format]
+        pretty=format:%C(yellow)%h%Creset | %C(green)%ad (%ar)%Creset | %C(blue)%an%Creset | %s
+
+      [push]
+        default = simple
+        autoSetupRemote = true
+
+      [branch]
+        autosetuprebase = always
+
+      [receive]
+        denyCurrentBranch = warn
+
+      [filter "media"]
+        clean = git media clean %f
+        smudge = git media smudge %f
+        required = true
+
+      # http://nicercode.github.io/blog/2013-04-30-excel-and-line-endings/
+      [filter "cr"]
+            clean = LC_CTYPE=C awk '{printf(\"%s\\n\", $0)}' | LC_CTYPE=C tr '\\r' '\\n'
+            smudge = tr '\\n' '\\r'
+
+      [diff]
+          tool = meld
+      [difftool]
+          prompt = false
+      [difftool "meld"]
+          cmd = meld "$LOCAL" "$REMOTE"
+
+      [merge]
+          tool = meld
+      [mergetool "meld"]
+          # Choose one of these 2 lines (not both!) explained below.
+          cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
+          cmd = meld "$LOCAL" "$BASE" "$REMOTE" --output "$MERGED"
+
+      [core]
+          editor = nvim
+      #    editor = emacs -nw -q
+          excludesfile = ~/.gitignore_global
+          pager = less -FMRiX
+          quotepath = false
+
+      [filter "lfs"]
+        process = git-lfs filter-process
+        required = true
+        clean = git-lfs clean -- %f
+        smudge = git-lfs smudge -- %f
+
+      [init]
+        templateDir = /home/gregburd/.git-template
+        defaultBranch = main
+      [commit]
+      #	gpgsign = true
+    '';
+
+    file.".config/Code/User/keybindings.json".text = ''
+      // Place your key bindings in this file to override the defaults
+      [
+        // allow arrow keys to work in the find widget
+        {
+          "key": "right",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        {
+          "key": "left",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        {
+          "key": "up",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        {
+          "key": "down",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        // allow ctrl+f to find next in the find widget
+        {
+          "key": "ctrl+f",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        // allow other stuff to functional normally in the find widget
+        {
+          "key": "ctrl+b",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "ctrl+p",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "ctrl+n",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "ctrl+a",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "ctrl+e",
+          "command": "-emacs-mcx.isearchExit",
+          "when": "editorFocus && findWidgetVisible"
+        },
+        {
+          "key": "enter",
+          "command": "-emacs-mcx.isearchExit"
+        },
+        // allow curly quotes and ellipses characters on mac
+        {
+          "key": "alt+shift+[",
+          "command": "-emacs-mcx.backwardParagraph"
+        },
+        {
+          "key": "alt+shift+]",
+          "command": "-emacs-mcx.forwardParagraph"
+        },
+        {
+          "key": "alt+;",
+          "command": "-editor.action.blockComment",
+          "when": "editorTextFocus && !config.emacs-mcx.useMetaPrefixMacCmd && !editorReadonly"
+        },
+        {
+          "key": "alt+;",
+          "command": "-emacs-mcx.executeCommands",
+          "when": "editorFocus && findWidgetVisible && !config.emacs-mcx.useMetaPrefixMacCmd"
+        },
+        // stop backward kill word from adding to clipboard
+        {
+          "key": "alt+backspace",
+          "command": "-emacs-mcx.backwardKillWord",
+          "when": "editorTextFocus && !config.emacs-mcx.useMetaPrefixMacCmd && !editorReadonly"
+        }
+      ]
+    '';
+
+
+    bash = {
+      shellAliases = {
+        pubip = "curl -s ifconfig.me/ip"; # "curl -s https://api.ipify.org";
+        speedtest = "speedtest-go";
+        vi = "nvim";
+        vim = "nvim";
+      };
+    };
+    fish = {
+      shellAliases = {
+        #diff = "diffr";
+        #fast = "fast -u";
+        #glow = "glow --pager";
+        pubip = "curl -s ifconfig.me/ip"; # "curl -s https://api.ipify.org";
+        speedtest = "speedtest-go";
+        vi = "nvim";
+        vim = "nvim";
+      };
+    };
+
+
+
+  systemd.user.tmpfiles.rules = [
+    "d ${config.home.homeDirectory}/ws 0755 ${username} users - -"
+    "d ${config.home.homeDirectory}/Dropbox 0755 ${username} users - -"
+    #    "d ${config.home.homeDirectory}/Quickemu/nixos-console 0755 ${username} users - -"
+    #    "d ${config.home.homeDirectory}/Quickemu/nixos-desktop 0755 ${username} users - -"
+    "d ${config.home.homeDirectory}/bin 0755 ${username} users - -"
+    "d ${config.home.homeDirectory}/Studio/OBS/config/obs-studio/ 0755 ${username} users - -"
+    #    "d ${config.home.homeDirectory}/Syncthing 0755 ${username} users - -"
+    "d ${config.home.homeDirectory}/Websites 0755 ${username} users - -"
+    "L+ ${config.home.homeDirectory}/.config/obs-studio/ - - - - ${config.home.homeDirectory}/Studio/OBS/config/obs-studio/"
+  ];

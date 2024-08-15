@@ -1,0 +1,14 @@
+* new user "greg"
+  * switch to bash
+  * switch to gnome/wayland
+* remove or integrate _/*
+* fix macOS portion
+* rpi
+  * nixops? or ...?
+  * k8s/k3c cluster
+* use s3 from freenas + k8s to deploy video site
+
+https://askubuntu.com/questions/1396132/when-i-paste-in-the-terminal-sometimes-the-contents-are-prefixed-with-the-charac
+https://stackoverflow.com/questions/60736446/strange-characters-when-pasting-into-terminal-fish-shell-200-and-201?rq=3
+https://kagi.com/search?q=__fish_disable_bracketed_paste
+https://nixos.wiki/wiki/Cheatsheet
