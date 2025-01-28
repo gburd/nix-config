@@ -16,9 +16,9 @@
   environment.systemPackages = with pkgs; [
     audio-recorder
     gimp-with-plugins
-    gnome.gnome-clocks
-    gnome.dconf-editor
-    gnome.gnome-sound-recorder
+    gnome-clocks
+    dconf-editor
+    gnome-sound-recorder
     inkscape
     libreoffice
     meld

@@ -7,7 +7,6 @@ in
     inputs.vscode-server.nixosModules.default
   ] ++ lib.optionals (desktop != null) [
     ../../desktop/chromium.nix
-    ../../desktop/chromium-extensions.nix
     ../../desktop/vscode.nix
     ../../desktop/${desktop}-apps.nix
   ];
@@ -19,7 +18,7 @@ in
     authy
     chatterino2
     gimp-with-plugins
-    gnome.gnome-clocks
+    gnome-clocks
     zoom-us
 
     # Fast moving apps use the unstable branch

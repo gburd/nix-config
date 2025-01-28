@@ -1,7 +1,7 @@
 {
   description = "Greg Burd's NixOS and Home Manager Configuration";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
     # You can access packages and modules from different nixpkgs revs at the
     # same time. See 'unstable-packages' overlay in 'overlays/default.nix'.
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -13,7 +13,7 @@
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
-    home-manager.url = "github:nix-community/home-manager/release-24.05";
+    home-manager.url = "github:nix-community/home-manager/release-24.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     # Chaotic's Nyx provides many additional packages like NordVPN
@@ -34,8 +34,8 @@
     devshells.url = "github:gburd/devshells";
     devshells.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Android support with nix-on-droid. Currently not updated for 24.05
-    nix-on-droid.url = "github:nix-community/nix-on-droid/release-23.05";
+    # Android support with nix-on-droid. Currently not updated for 24.11
+    nix-on-droid.url = "github:nix-community/nix-on-droid/release-23.11";
     nix-on-droid.inputs.nixpkgs.follows = "nixpkgs";
 
     # Darwin support with nix-darwin
@@ -67,7 +67,7 @@
     } @ inputs:
     let
       # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-      stateVersion = "24.05";
+      stateVersion = "24.11";
 
       inherit (self) outputs;
       libx = import ./lib { inherit self inputs outputs stateVersion; };
