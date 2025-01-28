@@ -1,6 +1,5 @@
 { desktop, pkgs, lib, ... }: {
   imports = [
-    ../../desktop/chromium-extensions.nix
     ../../desktop/chromium.nix
     ../../desktop/firefox.nix
     ../../desktop/google-chrome.nix
@@ -18,9 +17,9 @@
   environment.systemPackages = with pkgs; [
     audio-recorder
     gimp-with-plugins
-    gnome.gnome-clocks
-    gnome.dconf-editor
-    gnome.gnome-sound-recorder
+    gnome-clocks
+    dconf-editor
+    gnome-sound-recorder
     inkscape
     irccloud
     libreoffice
