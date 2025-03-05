@@ -16,6 +16,6 @@
 
   environment.systemPackages = with pkgs.unstable; [
     gnomeExtensions.appindicator
-    gnome3.gnome-tweaks
+    gnome-tweaks
   ];
 }

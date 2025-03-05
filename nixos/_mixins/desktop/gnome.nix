@@ -17,13 +17,13 @@
   services.xserver.displayManager.gdm.wayland = false;
 
   # Enable udev rules
-  services.udev.packages = with pkgs.unstable; [ gnome.gnome-settings-daemon ];
+  services.udev.packages = with pkgs.unstable; [ gnome-settings-daemon ];
 
   environment.systemPackages = with pkgs.unstable; [
     gnomeExtensions.appindicator
     gnomeExtensions.blur-my-shell
     gnomeExtensions.pop-shell
-    gnome3.gnome-tweaks
+    gnome-tweaks
   ];
 
   # Exclude packages
