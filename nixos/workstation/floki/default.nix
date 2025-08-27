@@ -4,7 +4,7 @@
 # RAM:         32GB DDR5
 # SATA:        WD_BLACK SN850X 4TB (624331WD) SSD
 
-{ inputs, config, lib, pkgs, ... }:
+{ inputs, lib, pkgs, ... }:
 {
   imports = [
     (import ./disks.nix)
