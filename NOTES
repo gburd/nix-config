@@ -141,3 +141,8 @@ EXAMPLE COMMANDS:
 * nh os switch --ask
 * nix run github:viperML/nh -- os switch --ask --nom .
 * clear; sudo nixos-rebuild dry-activate --flake .#floki
+
+sudo env NIXPKGS_ALLOW_INSECURE=1 nixos-rebuild build --impure --flake .#floki
+nix flake lock --update-input nixpkgs
+sudo nix-collect-garbage -d
+
