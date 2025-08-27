@@ -18,11 +18,7 @@
     fonts = with pkgs; [
       iosevka
       font-awesome
-      (nerdfonts.override {
-        fonts = [
-          "FiraCode"
-        ];
-      })
+      nerd-fonts.fira-code
     ];
   };
 

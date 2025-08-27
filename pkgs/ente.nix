@@ -1,26 +1,27 @@
 { appimageTools, lib, fetchurl }:
 let
   pname = "ente-photos-desktop";
-  version = "1.6.63";
+  version = "1.7.14";
   shortName = "ente";
   name = "${shortName}-${version}";
 
-  # https://github.com/ente-io/photos-desktop/releases/download/v1.6.63/ente-1.6.63-arm64.AppImage
-  # https://github.com/ente-io/photos-desktop/releases/download/v1.6.63/ente-1.6.63-x86_64.AppImage
+  # https://github.com/ente-io/photos-desktop/releases/download/v1.6.63/ente-1.7.14-arm64.AppImage
+  # https://github.com/ente-io/photos-desktop/releases/download/v1.6.63/ente-1.7.14-x86_64.AppImage
   mirror = "https://github.com/ente-io/photos-desktop/releases/download";
   src = fetchurl {
     url = "${mirror}/v${version}/${name}-x86_64.AppImage";
-    hash = "sha256-K2rNLHtzyh9/y54dz0l58XYnzsjP+qGl6OH9CExR2jU=";
+    hash = "sha256-QWcjDSCF8UgaUh1yuWB48n85nTb2sKw6zCA1u4Yovl0=";
   };
 
-  appimageContents = appimageTools.extractType2 { inherit name src; };
+
+  appimageContents = appimageTools.extractType2 { 
+    inherit pname version src; 
+  };
 in
 appimageTools.wrapType2 {
-  inherit name src;
+  inherit pname version src;
 
   extraInstallCommands = ''
-    mv $out/bin/${name} $out/bin/${pname}
-
     install -m 444 -D ${appimageContents}/${shortName}.desktop $out/share/applications/${pname}.desktop
     substituteInPlace $out/share/applications/${pname}.desktop \
       --replace 'Exec=AppRun' "Exec=$out/bin/${pname}"

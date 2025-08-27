@@ -7,7 +7,7 @@
   ] ++ lib.optionals (desktop != null) [
     pavucontrol
   ];
-  hardware = {
+  services = {
     pulseaudio.enable = lib.mkForce false;
   };
   security.rtkit.enable = true;

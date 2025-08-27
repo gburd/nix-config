@@ -106,7 +106,7 @@
       ripgrep # Modern Unix `grep`
       shellcheck # Code lint Shell
 
-      _1password
+      _1password-cli
       _1password-gui
       cfssl
       dig

@@ -15,6 +15,7 @@ in
   };
 
   services.xserver.videoDrivers = [ "nvidia" ];
+  services.pulseaudio.support32Bit = true;
 
   hardware = {
     nvidia = {
@@ -40,7 +41,6 @@ in
       inherit (config.hardware.nvidia) package;
     };
 
-    pulseaudio.support32Bit = true;
   };
 
   hardware.nvidia-container-toolkit.enable = true;

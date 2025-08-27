@@ -16,7 +16,6 @@ with lib.hm.gvariant;
     "desktop/ibus/panel" = {
       show-icon-on-systray = false;
       use-custom-font = true;
-      custom-font = "Work Sans 10";
     };
 
     "desktop/ibus/panel/emoji" = {
@@ -45,8 +44,6 @@ with lib.hm.gvariant;
       color-scheme = "prefer-dark";
       cursor-size = 24;
       cursor-theme = "adwaita";
-      document-font-name = "Work Sans 12";
-      font-name = "Work Sans 12";
       gtk-theme = "org.gnome.theme";
       gtk-enable-primary-paste = true;
       icon-theme = "adwaita";
@@ -125,7 +122,7 @@ with lib.hm.gvariant;
     enable = true;
     cursorTheme = {
       name = "adwaita";
-      package = pkgs.gnome.adwaita-icon-theme;
+      package = pkgs.adwaita-icon-theme;
       size = 24;
     };
 
@@ -155,7 +152,7 @@ with lib.hm.gvariant;
 
     iconTheme = {
       name = "adwaita";
-      package = pkgs.gnome.adwaita-icon-theme;
+      package = pkgs.adwaita-icon-theme;
     };
 
     theme = {
@@ -165,7 +162,7 @@ with lib.hm.gvariant;
   };
 
   home.pointerCursor = {
-    package = pkgs.gnome.adwaita-icon-theme;
+    package = pkgs.adwaita-icon-theme;
     name = "adwaita";
     size = 24;
     gtk.enable = true;

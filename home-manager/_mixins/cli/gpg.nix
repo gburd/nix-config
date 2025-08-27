@@ -2,7 +2,7 @@
 let
   pinentry =
     if config.gtk.enable then {
-      packages = [ pkgs.pinentry-gnome pkgs.gcr ];
+      packages = [ pkgs.pinentry-gnome3 pkgs.gcr ];
       name = "gnome";
     } else {
       packages = [ pkgs.pinentry-curses ];
