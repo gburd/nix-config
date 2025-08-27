@@ -73,7 +73,7 @@ with lib.hm.gvariant;
 
     packages = with pkgs; [
       # TODO: Move some of these into ../../../desktop/<app>.nix files
-      _1password
+      _1password-cli
       _1password-gui
       autoconf
       bash

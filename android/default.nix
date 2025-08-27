@@ -17,11 +17,7 @@
   #     fontDir.enable = true;
   #     fonts = with pkgs; [
   #         font-awesome
-  #         (nerdfonts.override {
-  #             fonts = [
-  #               "FiraCode"
-  #             ];
-  #         })
+  #         nerd-fonts.fira-code
   #     ];
   # };
 

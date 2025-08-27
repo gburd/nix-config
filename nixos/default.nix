@@ -42,6 +42,8 @@
     packages = with pkgs; [ terminus_font ];
   };
 
+  nix.settings.download-buffer-size = 524288000;
+
   i18n = {
     defaultLocale = lib.mkDefault "en_US.UTF-8";
     extraLocaleSettings = {
@@ -113,7 +115,9 @@
   fonts = {
     fontDir.enable = true;
     packages = with pkgs; [
-      (nerdfonts.override { fonts = [ "FiraCode" "SourceCodePro" "UbuntuMono" ]; })
+      nerd-fonts.fira-code
+      nerd-fonts.ubuntu-mono
+      source-code-pro
       fira
       fira-go
       joypixels # Emojis
