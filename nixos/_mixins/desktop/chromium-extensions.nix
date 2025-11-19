@@ -3,7 +3,6 @@ _: {
     chromium = {
       extensions = [
         "cdglnehniifkbagbbombnjghhcihifij" # Kagi Search
-        "kbfnbcaeplbcioakkpcpgfkobkghlhen" # Grammarly
         "cjpalhdlnbpafiamejdnhcphjbkeiagm" # uBlock Origin
         "mdjildafknihdffpkfmmpnpoiajfjnjd" # Consent-O-Matic
         "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock for YouTube

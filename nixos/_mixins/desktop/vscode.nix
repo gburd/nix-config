@@ -82,12 +82,6 @@ let
       version = "2024.8.1511";
       sha256 = "0cl7d3flm30yqhn122ncw25dq2rylhkhrkj8b8nwpxskf092vkgb";
     };
-    grammarly = {
-      name = "grammarly";
-      publisher = "znck";
-      version = "0.25.0";
-      sha256 = "048bahfaha3i6sz1b5jkyhfd2aiwgpkmyy2i7hlzc45g1289827z";
-    };
     language-hugo-vscode = {
       name = "language-hugo-vscode";
       publisher = "budparr";
@@ -344,7 +338,6 @@ in
             ext.vscode-github-actions
             ext.bash-ide-vscode
             ext.shellcheck
-            ext.grammarly
           ]
         ++ getListIf g.ai [ ext.copilot ]
         ++ getListIf g.cpp [ ]
