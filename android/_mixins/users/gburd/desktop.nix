@@ -30,7 +30,6 @@
   # programs = {
   #   chromium = {
   #     extensions = [
-  #       "kbfnbcaeplbcioakkpcpgfkobkghlhen" # Grammarly
   #       "cjpalhdlnbpafiamejdnhcphjbkeiagm" # uBlock Origin
   #       "mdjildafknihdffpkfmmpnpoiajfjnjd" # Consent-O-Matic
   #       "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock for YouTube
