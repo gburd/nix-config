@@ -80,6 +80,7 @@
 
         # Workstations
         "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
+        "gburd@arnold" = libx.mkHome { hostname = "arnold"; username = "gburd"; };
 
         # Servers
       };
