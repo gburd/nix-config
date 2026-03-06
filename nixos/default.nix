@@ -120,7 +120,7 @@
       fira-go
       joypixels # Emojis
       liberation_ttf
-      noto-fonts-emoji # Emojis
+      noto-fonts-color-emoji # Emojis
       source-serif
       ubuntu_font_family
       work-sans
