@@ -1,0 +1,50 @@
+version: '3'
+
+tasks:
+  rebuild-all:
+    desc: Rebuild both NixOS and home-manager
+    cmds:
+      - sudo nixos-rebuild switch --flake .
+      - home-manager switch -b backup --flake .
+
+  rebuild-host:
+    desc: Rebuild NixOS configuration
+    cmds:
+      - sudo nixos-rebuild switch --flake .
+
+  rebuild-home:
+    desc: Rebuild home-manager configuration
+    cmds:
+      - home-manager switch -b backup --flake .
+
+  test-build:
+    desc: Test build configurations without activation
+    cmds:
+      - nixos-rebuild dry-build --flake .
+      - home-manager build --flake .
+
+  check:
+    desc: Run nix flake check
+    cmds:
+      - nix flake check
+
+  gc:
+    desc: Garbage collect old generations
+    cmds:
+      - sudo nix-collect-garbage --delete-older-than 28d
+      - nix-collect-garbage --delete-older-than 28d
+
+  fmt:
+    desc: Format Nix code
+    cmds:
+      - nix fmt
+
+  update:
+    desc: Update flake inputs
+    cmds:
+      - nix flake update
+
+  switch:
+    desc: Alias for rebuild-all
+    cmds:
+      - task: rebuild-all
