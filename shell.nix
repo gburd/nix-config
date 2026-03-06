@@ -22,10 +22,6 @@
       pinentry-curses
       kubectl
       go-task
-
-      claude-code
-      bubblewrap
-      socat
     ];
   };
   services.dbus.packages = [ pkgs.gcr ];

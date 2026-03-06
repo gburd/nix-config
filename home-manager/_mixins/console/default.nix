@@ -2,6 +2,7 @@
   imports = [
     ./neovim
     ./tmux.nix
+    ./claude-code
   ];
 
   home = {
