@@ -14,11 +14,11 @@ let
   };
 
   appimageContents = appimageTools.extractType2 {
-    inherit name src version;
+    inherit pname version src;
   };
 in
 appimageTools.wrapType2 {
-  inherit name src version;
+  inherit pname version src;
 
   extraInstallCommands = ''
     mv $out/bin/${name} $out/bin/${pname}
