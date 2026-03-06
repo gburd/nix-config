@@ -116,15 +116,15 @@
     fontDir.enable = true;
     packages = with pkgs; [
       nerd-fonts.fira-code
+      nerd-fonts.sauce-code-pro
       nerd-fonts.ubuntu-mono
-      source-code-pro
       fira
       fira-go
       joypixels # Emojis
       liberation_ttf
-      noto-fonts-emoji # Emojis
+      noto-fonts-color-emoji # Emojis
       source-serif
-      ubuntu_font_family
+      ubuntu-classic
       work-sans
     ];
 

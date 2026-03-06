@@ -1,0 +1,204 @@
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+index 2997cfd..efe7a7c 100644
+--- a/.vscode/settings.json
++++ b/.vscode/settings.json
+@@ -1,3 +1,7 @@
+ {
+-    "git-blame.gitWebUrl": ""
+-}
+\ No newline at end of file
++    "git-blame.gitWebUrl": "",
++    "cSpell.words": [
++        "nixos"
++    ],
++    "nixEnvSelector.nixFile": "${workspaceFolder}/shell.nix"
++}
+diff --git a/flake.lock b/flake.lock
+index cd8ab62..2fcd2b4 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -414,7 +414,7 @@
+       },
+       "original": {
+         "owner": "nix-community",
+-        "ref": "release-25.05",
++        "ref": "release-25.11",
+         "repo": "home-manager",
+         "type": "github"
+       }
+@@ -805,16 +805,16 @@
+     },
+     "nixpkgs_2": {
+       "locked": {
+-        "lastModified": 1763334038,
+-        "narHash": "sha256-LBVOyaH6NFzQ3X/c6vfMZ9k4SV2ofhpxeL9YnhHNJQQ=",
++        "lastModified": 1764522689,
++        "narHash": "sha256-SqUuBFjhl/kpDiVaKLQBoD8TLD+/cTUzzgVFoaHrkqY=",
+         "owner": "nixos",
+         "repo": "nixpkgs",
+-        "rev": "4c8cdd5b1a630e8f72c9dd9bf582b1afb3127d2c",
++        "rev": "8bb5646e0bed5dbd3ab08c7a7cc15b75ab4e1d0f",
+         "type": "github"
+       },
+       "original": {
+         "owner": "nixos",
+-        "ref": "nixos-25.05",
++        "ref": "nixos-25.11",
+         "repo": "nixpkgs",
+         "type": "github"
+       }
+diff --git a/flake.nix b/flake.nix
+index 5d9620f..a023ca7 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -1,7 +1,7 @@
+ {
+   description = "Greg Burd's NixOS and Home Manager Configuration";
+   inputs = {
+-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
++    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+     # You can access packages and modules from different nixpkgs revs at the
+     # same time. See 'unstable-packages' overlay in 'overlays/default.nix'.
+     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+@@ -13,7 +13,7 @@
+     disko.url = "github:nix-community/disko";
+     disko.inputs.nixpkgs.follows = "nixpkgs";
+ 
+-    home-manager.url = "github:nix-community/home-manager/release-25.05";
++    home-manager.url = "github:nix-community/home-manager/release-25.11";
+     home-manager.inputs.nixpkgs.follows = "nixpkgs-unstable";
+ 
+     # Chaotic's Nyx provides many additional packages like NordVPN
+@@ -34,7 +34,7 @@
+     devshells.url = "github:gburd/devshells";
+     devshells.inputs.nixpkgs.follows = "nixpkgs";
+ 
+-    # Android support with nix-on-droid. Currently not updated for 25.05
++    # Android support with nix-on-droid. Currently not updated for 25.11
+     nix-on-droid.url = "github:nix-community/nix-on-droid/release-23.11";
+     nix-on-droid.inputs.nixpkgs.follows = "nixpkgs";
+ 
+@@ -66,7 +66,7 @@
+     } @ inputs:
+     let
+       # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
+-      stateVersion = "25.05";
++      stateVersion = "25.11";
+ 
+       inherit (self) outputs;
+       libx = import ./lib { inherit self inputs outputs stateVersion; };
+diff --git a/nixos/_mixins/desktop/gnome.nix b/nixos/_mixins/desktop/gnome.nix
+index 9af558a..f74a0fe 100644
+--- a/nixos/_mixins/desktop/gnome.nix
++++ b/nixos/_mixins/desktop/gnome.nix
+@@ -9,7 +9,7 @@
+   services.xserver.enable = true;
+ 
+   # Enable the GNOME Desktop Environment.
+-  services.xserver.desktopManager.gnome.enable = true;
++  services.desktopManager.gnome.enable = true;
+ 
+   services.xserver.displayManager.gdm.enable = true;
+ 
+diff --git a/nixos/sd-card/default.nix b/nixos/sd-card/default.nix
+index aeb9687..d01a55e 100644
+--- a/nixos/sd-card/default.nix
++++ b/nixos/sd-card/default.nix
+@@ -13,5 +13,5 @@
+     ];
+   };
+ 
+-  system.stateVersion = "25.05";
++  system.stateVersion = "25.11";
+ }
+diff --git a/nixos/server/pxe-server/default.nix b/nixos/server/pxe-server/default.nix
+index a52fbd0..09c9b57 100644
+--- a/nixos/server/pxe-server/default.nix
++++ b/nixos/server/pxe-server/default.nix
+@@ -136,5 +136,5 @@ in
+   # this value at the release version of the first install of this system.
+   # Before changing this value read the documentation for this option
+   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
+-  system.stateVersion = "25.05"; # Did you read the comment?
++  system.stateVersion = "25.11"; # Did you read the comment?
+ }
+diff --git a/nixos/workstation/floki/default.nix b/nixos/workstation/floki/default.nix
+index 592a202..4a6f859 100644
+--- a/nixos/workstation/floki/default.nix
++++ b/nixos/workstation/floki/default.nix
+@@ -87,9 +87,9 @@
+       package = pkgs.openrgb-with-all-plugins;
+     };
+     # Lid settings
+-    logind = {
+-      lidSwitch = "suspend";
+-      lidSwitchExternalPower = "lock";
++    settings.Login = {
++      HandleLidSwitch = "suspend";
++      HandleLidSwitchExternalPower = "lock";
+     };
+   };
+ 
+diff --git a/sdcard/rpi2.nix b/sdcard/rpi2.nix
+index 7db67e3..ea23b5b 100644
+--- a/sdcard/rpi2.nix
++++ b/sdcard/rpi2.nix
+@@ -13,5 +13,5 @@
+     ];
+   };
+ 
+-  system.stateVersion = "25.05";
++  system.stateVersion = "25.11";
+ }
+diff --git a/shells/code-format/flake.nix b/shells/code-format/flake.nix
+index ee643c8..5f22db5 100644
+--- a/shells/code-format/flake.nix
++++ b/shells/code-format/flake.nix
+@@ -2,7 +2,7 @@
+   description = "Nix shell for code-format tools";
+ 
+   inputs = {
+-    nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
++    nixpkgs.url = "github:NixOS/nixpkgs/release-25.11";
+     flake-utils.url = "github:numtide/flake-utils";
+   };
+ 
+diff --git a/shells/file-sync/flake.nix b/shells/file-sync/flake.nix
+index 9130372..8db05a1 100644
+--- a/shells/file-sync/flake.nix
++++ b/shells/file-sync/flake.nix
+@@ -2,7 +2,7 @@
+   description = "Nix shell for file sync tools";
+ 
+   inputs = {
+-    nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
++    nixpkgs.url = "github:NixOS/nixpkgs/release-25.11";
+     flake-utils.url = "github:numtide/flake-utils";
+   };
+ 
+diff --git a/shells/gpu/flake.nix b/shells/gpu/flake.nix
+index c97a018..4afed55 100644
+--- a/shells/gpu/flake.nix
++++ b/shells/gpu/flake.nix
+@@ -2,7 +2,7 @@
+   description = "Nix shell for GPU tools";
+ 
+   inputs = {
+-    nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
++    nixpkgs.url = "github:NixOS/nixpkgs/release-25.11";
+     flake-utils.url = "github:numtide/flake-utils";
+   };
+ 
+diff --git a/shells/network/flake.nix b/shells/network/flake.nix
+index a019a58..1a50a9d 100644
+--- a/shells/network/flake.nix
++++ b/shells/network/flake.nix
+@@ -2,7 +2,7 @@
+   description = "Nix shell for network tools";
+ 
+   inputs = {
+-    nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
++    nixpkgs.url = "github:NixOS/nixpkgs/release-25.11";
+     flake-utils.url = "github:numtide/flake-utils";
+   };
+ 

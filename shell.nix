@@ -21,6 +21,7 @@
       yubikey-manager
       pinentry-curses
       kubectl
+      go-task
     ];
   };
   services.dbus.packages = [ pkgs.gcr ];

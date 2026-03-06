@@ -18,3 +18,8 @@ result*
 .zprofile
 .zshrc
 .claude/
+
+# User-specific directories
+arnold-config/
+arnold-nix-setup
+arnold-nvim

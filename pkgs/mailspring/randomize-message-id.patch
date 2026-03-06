@@ -1,0 +1,9 @@
+--- a/app/src/flux/stores/draft-factory.ts
++++ b/app/src/flux/stores/draft-factory.ts
+@@ -64,7 +64,7 @@ class DraftFactory {
+       version: 0,
+       unread: false,
+       starred: false,
+-      headerMessageId: `${uuidv4().toUpperCase()}@getmailspring.com`,
++      headerMessageId: `${uuidv4().toUpperCase()}@${uuidv4().split('-')[0]}.local`,
+       from: [account.defaultMe()],

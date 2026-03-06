@@ -87,9 +87,9 @@
       package = pkgs.openrgb-with-all-plugins;
     };
     # Lid settings
-    logind = {
-      lidSwitch = "suspend";
-      lidSwitchExternalPower = "lock";
+    logind.settings.Login = {
+      HandleLidSwitch = "suspend";
+      HandleLidSwitchExternalPower = "lock";
     };
   };
 
