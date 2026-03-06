@@ -5,3 +5,16 @@ result*
 *~
 .#*
 \#*#
+
+# Local config files
+.bash_profile
+.bashrc
+.gitconfig
+.gitmodules
+.idea
+.mcp.json
+.profile
+.ripgreprc
+.zprofile
+.zshrc
+.claude/
