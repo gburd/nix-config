@@ -113,7 +113,7 @@
   fonts = {
     fontDir.enable = true;
     packages = with pkgs; [
-      (nerdfonts.override { fonts = [ "FiraCode" "SourceCodePro" "UbuntuMono" ]; })
+      (nerd-fonts.override { fonts = [ "fira-code" "sauce-code-pro" "ubuntu-mono" ]; })
       fira
       fira-go
       joypixels # Emojis
