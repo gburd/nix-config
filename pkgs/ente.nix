@@ -21,8 +21,7 @@ appimageTools.wrapType2 {
   inherit pname version src;
 
   extraInstallCommands = ''
-    mv $out/bin/${name} $out/bin/${pname}
-
+    # Binary is already named correctly by wrapType2
     install -m 444 -D ${appimageContents}/${shortName}.desktop $out/share/applications/${pname}.desktop
     substituteInPlace $out/share/applications/${pname}.desktop \
       --replace 'Exec=AppRun' "Exec=$out/bin/${pname}"
