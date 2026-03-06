@@ -7,4 +7,5 @@
   charm-freeze = pkgs.callPackage ./charm-freeze.nix { };
   nix-inspect = pkgs.callPackage ./nix-inspect { };
   tly = pkgs.callPackage ./tly { };
+  mailspring = pkgs.callPackage ./mailspring { };
 }
