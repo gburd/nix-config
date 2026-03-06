@@ -13,7 +13,7 @@
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
-    home-manager.url = "github:nix-community/home-manager/release-24.11";
+    home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     # Chaotic's Nyx provides many additional packages like NordVPN
@@ -67,7 +67,7 @@
     } @ inputs:
     let
       # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-      stateVersion = "24.11";
+      stateVersion = "25.11";
 
       inherit (self) outputs;
       libx = import ./lib { inherit self inputs outputs stateVersion; };
