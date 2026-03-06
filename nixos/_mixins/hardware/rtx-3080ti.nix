@@ -39,9 +39,9 @@ in
       enable = true;
       inherit (config.hardware.nvidia) package;
     };
-
-    pulseaudio.support32Bit = true;
   };
+
+  services.pulseaudio.support32Bit = true;
 
   hardware.nvidia-container-toolkit.enable = true;
 }

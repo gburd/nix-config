@@ -13,10 +13,12 @@ let
     hash = "sha256-K2rNLHtzyh9/y54dz0l58XYnzsjP+qGl6OH9CExR2jU=";
   };
 
-  appimageContents = appimageTools.extractType2 { inherit name src; };
+  appimageContents = appimageTools.extractType2 {
+    inherit name src version;
+  };
 in
 appimageTools.wrapType2 {
-  inherit name src;
+  inherit name src version;
 
   extraInstallCommands = ''
     mv $out/bin/${name} $out/bin/${pname}
