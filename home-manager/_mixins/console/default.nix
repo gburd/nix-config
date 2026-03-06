@@ -1,6 +1,6 @@
 { config, pkgs, ... }: {
   imports = [
-    ./neovim.nix
+    ./neovim
     ./tmux.nix
   ];
 
