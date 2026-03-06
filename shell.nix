@@ -21,6 +21,10 @@
       yubikey-manager
       pinentry-curses
       kubectl
+
+      claude-code
+      bubblewrap
+      socat
     ];
   };
   services.dbus.packages = [ pkgs.gcr ];
