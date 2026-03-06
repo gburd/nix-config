@@ -122,7 +122,7 @@
       liberation_ttf
       noto-fonts-color-emoji # Emojis
       source-serif
-      ubuntu_font_family
+      ubuntu-classic
       work-sans
     ];
 
