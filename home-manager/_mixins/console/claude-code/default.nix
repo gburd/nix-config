@@ -11,14 +11,13 @@
     cargo
     rust-analyzer
     gcc
-    clang
-    clang-tools
-    python311
-    python311Packages.pylint
+    clang-tools # Provides clangd LSP, no full clang needed
+    python3
+    python3Packages.pylint
     shellcheck
     shfmt
     perl
-    git
+    # git provided by programs.git (gitFull with SVN support)
     gh
   ];
 

@@ -50,9 +50,9 @@
   };
 
   # GitHub dashboard
+  # NOTE: Using built-in gh-dash module (no custom presets support)
   programs.gh-dash = {
     enable = true;
-    presets = [ "personal" ];
   };
 
   # Ensure necessary packages are installed
