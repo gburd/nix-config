@@ -30,7 +30,6 @@
 
   # Disable xterm
   services.xserver.excludePackages = [ pkgs.xterm ];
-  services.xserver.desktopManager.xterm.enable = false;
 
   #  systemd.services.disable-wifi-powersave = {
   #    wantedBy = [ "multi-user.target" ];

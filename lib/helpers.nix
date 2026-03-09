@@ -47,14 +47,11 @@ in
       inherit self inputs outputs hostname username platform stateVersion sshMatrix;
     };
 
-    system = platform;
+    pkgs = inputs.nixpkgs.legacyPackages.${platform};
     format =
       if platform == "armv7l-linux"
       then "sd-armv7l-installer"
       else "sd-aarch64-installer";
-
-    # pkgs = inputs.nixpkgs.legacyPackages."${platform}";
-    # lib = inputs.nixpkgs.legacyPackages."${platform}".lib;
 
     modules = [
       ../nixos
@@ -67,14 +64,11 @@ in
       inherit self inputs outputs desktop hostname username stateVersion systemType sshMatrix;
     };
 
-    system = platform;
+    pkgs = inputs.nixpkgs.legacyPackages.${platform};
     format =
       if platform == "x86_64-linux"
       then "raw-efi"
       else "raw";
-
-    # pkgs = inputs.nixpkgs.legacyPackages."${platform}";
-    # lib = inputs.nixpkgs.legacyPackages."${platform}".lib;
 
     modules = [
       ../nixos

@@ -25,22 +25,19 @@
   services = {
     gnome.gnome-keyring.enable = true;
     gvfs.enable = true;
-    xserver = {
-      enable = true;
-      displayManager = {
-        lightdm.enable = true;
-        lightdm.greeters.pantheon.enable = true;
-      };
+    xserver.enable = true;
 
-      desktopManager = {
-        pantheon = {
-          enable = true;
-          extraWingpanelIndicators = with pkgs; [
-            monitor
-            wingpanel-indicator-ayatana
-          ];
-        };
-      };
+    displayManager.lightdm = {
+      enable = true;
+      greeters.pantheon.enable = true;
+    };
+
+    desktopManager.pantheon = {
+      enable = true;
+      extraWingpanelIndicators = with pkgs; [
+        monitor
+        wingpanel-indicator-ayatana
+      ];
     };
   };
 

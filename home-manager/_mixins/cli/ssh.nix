@@ -1,4 +1,4 @@
-{ outputs, lib, username, ... }:
+{ outputs, lib, ... }:
 let
   hostnames = builtins.attrNames outputs.nixosConfigurations;
 in
@@ -19,9 +19,5 @@ in
         forwardAgent = true;
       };
     };
-  };
-
-  home.persistence = {
-    "/persist/home/${username}".directories = [ ".ssh" ];
   };
 }

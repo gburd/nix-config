@@ -9,6 +9,7 @@ in
   environment.systemPackages = with pkgs; [
     yadm # Terminal dot file manager
     neovim
+    bubblewrap # Sandboxing for Claude Code
   ];
 
   users.users.gburd = {
