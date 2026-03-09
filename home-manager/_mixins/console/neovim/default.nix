@@ -9,7 +9,7 @@
       lua-language-server
       nil
       rust-analyzer
-      clangd
+      clang-tools # provides clangd
       pyright
       nodePackages.bash-language-server
       stylua nixpkgs-fmt rustfmt black shfmt

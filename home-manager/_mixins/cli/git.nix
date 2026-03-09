@@ -30,7 +30,7 @@ in
   home.packages = [ git-gburd ];
   programs.git = {
     enable = true;
-    package = pkgs.gitAndTools.gitFull;
+    package = pkgs.gitFull; # gitAndTools namespace removed
     userName = "Greg Burd";
     userEmail = "greg@burd.me";
     signing = {
