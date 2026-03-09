@@ -16,5 +16,6 @@
     };
   };
 
-  home.packages = [ pkgs.alacritty-theme pkgs.gnomeExtensions.toggle-alacritty ];
+  home.packages = [ pkgs.alacritty-theme ];
+  # NOTE: gnomeExtensions.toggle-alacritty not available in current nixpkgs
 }

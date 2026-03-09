@@ -5,7 +5,8 @@ let
 in
 {
   imports = [
-    inputs.impermanence.homeManagerModules.default
+    # NOTE: impermanence removed - not compatible with standalone home-manager
+    # inputs.impermanence.homeManagerModules.default
     ../../cli
     ../../console
   ]

@@ -14,6 +14,11 @@ with lib.hm.gvariant;
   # Sops secrets configuration
   sops = {
     defaultSopsFile = ../../../../nixos/workstation/floki/secrets.yaml;
+    # Use GPG for decryption (key is already in GPG keyring)
+    gnupg = {
+      home = "${config.home.homeDirectory}/.gnupg";
+      sshKeyPaths = [ ];
+    };
     secrets = {
       "aws/credentials" = {
         path = "${config.home.homeDirectory}/.aws/credentials";

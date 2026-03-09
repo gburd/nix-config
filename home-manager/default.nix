@@ -10,7 +10,8 @@ in
     # outputs.homeManagerModules.example
     inputs.sops-nix.homeManagerModules.sops
     ../modules/home-manager/ai
-    ../modules/home-manager/gh-dash
+    # NOTE: gh-dash module removed - home-manager now has built-in gh-dash support
+    # ../modules/home-manager/gh-dash
 
     # Or modules exported from other flakes (such as nix-colors):
     # inputs.nix-colors.homeManagerModules.default
