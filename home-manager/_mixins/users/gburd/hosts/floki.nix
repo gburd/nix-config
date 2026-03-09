@@ -2,7 +2,9 @@
 with lib.hm.gvariant;
 {
   imports = [
-    inputs.impermanence.nixosModules.home-manager.impermanence
+    # NOTE: impermanence only works with home-manager as NixOS module
+    # Not compatible with standalone home-manager switch command
+    # inputs.impermanence.nixosModules.home-manager.impermanence
     ../../../desktop/vorta.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
@@ -23,19 +25,21 @@ with lib.hm.gvariant;
   };
 
   home = {
-    persistence = {
-      "/persist/home/gburd" = {
-        directories = [
-          "Documents"
-          "Downloads"
-          "Pictures"
-          "Videos"
-          ".local/bin"
-          ".config"
-        ];
-        allowOther = true;
-      };
-    };
+    # NOTE: persistence disabled for standalone home-manager
+    # Enable in NixOS configuration if using home-manager as NixOS module
+    # persistence = {
+    #   "/persist/home/gburd" = {
+    #     directories = [
+    #       "Documents"
+    #       "Downloads"
+    #       "Pictures"
+    #       "Videos"
+    #       ".local/bin"
+    #       ".config"
+    #     ];
+    #     allowOther = true;
+    #   };
+    # };
 
     file.".inputrc".text = ''
       "\C-v": ""
