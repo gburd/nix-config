@@ -7,6 +7,8 @@
     profile = "default";
     # credentialsFile will be set via sops-nix secret
     credentialsFile = config.sops.secrets."aws/credentials".path or null;
+    # bearerTokenFile will be set via sops-nix secret
+    bearerTokenFile = config.sops.secrets."aws/bearer_token_bedrock".path or null;
   };
 
   # MCP Server configuration

@@ -8,6 +8,7 @@ in
   imports = [
     # If you want to use modules your own flake exports (from modules/home-manager):
     # outputs.homeManagerModules.example
+    inputs.sops-nix.homeManagerModules.sops
     ../modules/home-manager/ai
     ../modules/home-manager/gh-dash
 

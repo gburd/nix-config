@@ -1,13 +1,26 @@
-{ inputs, lib, pkgs, ... }:
+{ inputs, lib, pkgs, config, ... }:
 with lib.hm.gvariant;
 {
   imports = [
-    inputs.impermanence.homeManagerModules.impermanence
+    inputs.impermanence.nixosModules.home-manager.impermanence
     ../../../desktop/vorta.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
   ];
   dconf.settings = { };
+
+  # Sops secrets configuration
+  sops = {
+    defaultSopsFile = ../../../../nixos/workstation/floki/secrets.yaml;
+    secrets = {
+      "aws/credentials" = {
+        path = "${config.home.homeDirectory}/.aws/credentials";
+      };
+      "aws/bearer_token_bedrock" = {
+        path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
+      };
+    };
+  };
 
   home = {
     persistence = {
