@@ -1,6 +1,6 @@
 # Motherboard: LENOVO 21DE001EUS ver: SDK0T76528 WIN ssn: W1CG27P023B
 # CPU:         12th Gen Intel(R) Core(TM) i9-12900H
-# GPU:         NVIDIA GeForce RTX 3080 Ti
+# GPU:         NVIDIA GeForce GTX 1050 Ti Mobile with Max-Q Design
 # RAM:         32GB DDR5
 # SATA:        WD_BLACK SN850X 4TB (624331WD) SSD
 
@@ -22,7 +22,7 @@
     ../../_mixins/hardware/systemd-boot.nix
     ../../_mixins/hardware/disable-nm-wait.nix
     #    ../../_mixins/hardware/intel.accelerated-video-playback.nix
-    ../../_mixins/hardware/rtx-3080ti.nix
+    ../../_mixins/hardware/gtx-1050ti.nix
     ../../_mixins/hardware/roccat.nix
     ../../_mixins/services/bluetooth.nix
     ../../_mixins/services/pipewire.nix
@@ -33,6 +33,7 @@
     initrd = {
       availableKernelModules = [
         "ahci"
+        "i915"
         "nvme"
         "rtsx_pci_sdmmc"
         "sd_mod"
@@ -42,21 +43,25 @@
       ];
     };
 
-    kernelModules = [ "kvm-intel" "nvidia" ];
+    kernelModules = [ "kvm-intel" "nvidia" "i915" ];
     #kernelPackages = pkgs.linuxPackages_latest;
     kernelPackages = pkgs.linuxPackages;
   };
 
   # https://nixos.wiki/wiki/Nvidia
+  # Use offload mode for better battery life and Wayland compatibility
+  # Apps can request NVIDIA with: __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia app
   hardware.nvidia.prime = {
-    offload.enable = false;
-    sync.enable = true;
+    offload.enable = true;
+    offload.enableOffloadCmd = true; # provides nvidia-offload command
+    sync.enable = false;
     # nix-shell -p lshw.out --run 'sudo lshw -c display'
     intelBusId = "PCI:0:2:0"; # pci@0000:00:02.0
     nvidiaBusId = "PCI:1:0:0"; # pci@0000:01:00.0
   };
 
   console.keyMap = lib.mkForce "us";
+  console.font = lib.mkForce "${pkgs.terminus_font}/share/consolefonts/ter-232n.psf.gz";
   services.kmscon.extraConfig = lib.mkForce ''
     font-size=12
     xkb-layout=us
@@ -87,9 +92,9 @@
       package = pkgs.openrgb-with-all-plugins;
     };
     # Lid settings
-    logind = {
-      lidSwitch = "suspend";
-      lidSwitchExternalPower = "lock";
+    logind.settings.Login = {
+      HandleLidSwitch = "suspend";
+      HandleLidSwitchExternalPower = "lock";
     };
   };
 

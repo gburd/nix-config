@@ -1,7 +1,8 @@
-{ lib, pkgs, ... }:
+{ inputs, lib, pkgs, ... }:
 with lib.hm.gvariant;
 {
   imports = [
+    inputs.impermanence.homeManagerModules.impermanence
     ../../../desktop/vorta.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix

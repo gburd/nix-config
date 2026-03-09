@@ -9,12 +9,12 @@
   services.xserver.enable = true;
 
   # Enable the GNOME Desktop Environment.
-  services.xserver.desktopManager.gnome.enable = true;
+  services.gnome.core-apps.enable = true;
+  services.desktopManager.gnome.enable = true;
+  services.displayManager.gdm.enable = true;
 
-  services.xserver.displayManager.gdm.enable = true;
-
-  # TODO: Disable Wayland (issues with Electron app rendering)?
-  services.xserver.displayManager.gdm.wayland = false;
+  # Enable Wayland (NixOS 25.11 GNOME 49+ is Wayland-first)
+  services.displayManager.gdm.wayland = true;
 
   # Enable udev rules
   services.udev.packages = with pkgs.unstable; [ gnome-settings-daemon ];

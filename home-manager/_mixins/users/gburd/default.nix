@@ -5,7 +5,8 @@ let
 in
 {
   imports = [
-    inputs.impermanence.nixosModules.home-manager.impermanence
+    inputs.impermanence.homeManagerModules.default
+    ./ai-config.nix
     ../../cli
     ../../console
   ]

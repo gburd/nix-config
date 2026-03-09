@@ -4,6 +4,7 @@
     ./neovide.nix
     ./emote.nix
     ./tilix.nix
+    ./browsers.nix
     (./. + "/${desktop}.nix")
   ];
 

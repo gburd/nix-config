@@ -1,4 +1,4 @@
-{ pkgs, username, ... }:
+{ pkgs, ... }:
 {
   programs.gh = {
     enable = true;
@@ -7,8 +7,5 @@
       git_protocol = "ssh";
       prompt = "enabled";
     };
-  };
-  home.persistence = {
-    "/persist/home/${username}".directories = [ ".config/gh" ];
   };
 }
