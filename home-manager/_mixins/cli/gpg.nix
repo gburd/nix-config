@@ -27,14 +27,22 @@ in
       fixGpg = ''
         gpgconf --launch gpg-agent
       '';
+      # Update GPG TTY for proper pinentry support (especially for sops)
+      updateGpgTty = ''
+        export GPG_TTY=$(tty)
+        gpg-connect-agent updatestartuptty /bye >/dev/null 2>&1
+      '';
     in
     {
       # Start gpg-agent if it's not running or tunneled in
       # SSH does not start it automatically, so this is needed to avoid having to use a gpg command at startup
       # https://www.gnupg.org/faq/whats-new-in-2.1.html#autostart
       bash.profileExtra = fixGpg;
+      bash.initExtra = updateGpgTty;
       fish.loginShellInit = fixGpg;
+      fish.interactiveShellInit = updateGpgTty;
       zsh.loginExtra = fixGpg;
+      zsh.initExtra = updateGpgTty;
 
       gpg = {
         enable = true;
