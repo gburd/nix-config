@@ -167,19 +167,20 @@
         prompt = "enabled";
       };
     };
+    delta = {
+      enable = true;
+      enableGitIntegration = true;
+      options = {
+        features = "decorations";
+        navigate = true;
+        line-numbers = true;
+        side-by-side = true;
+        syntax-theme = "GitHub";
+      };
+    };
     git = {
       enable = true;
-      delta = {
-        enable = true;
-        options = {
-          features = "decorations";
-          navigate = true;
-          line-numbers = true;
-          side-by-side = true;
-          syntax-theme = "GitHub";
-        };
-      };
-      aliases = {
+      settings.alias = {
         a = "add";
         aa = "add --all";
         aaa = "!git a $(git rd)";
@@ -257,17 +258,13 @@
         unstash = "stash pop";
         update = "merge --ff-only origin/master";
       };
-      extraConfig = {
-        push = {
-          default = "matching";
-        };
+      settings = {
+        push.default = "matching";
         pull = {
           rebase = true;
           ff = "only";
         };
-        init = {
-          defaultBranch = "main";
-        };
+        init.defaultBranch = "main";
       };
       ignores = [
         "*.log"

@@ -31,13 +31,15 @@ in
   programs.git = {
     enable = true;
     package = pkgs.gitFull; # gitAndTools namespace removed
-    userName = "Greg Burd";
-    userEmail = "greg@burd.me";
     signing = {
       key = "D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF";
       signByDefault = true;
     };
-    extraConfig = {
+    settings = {
+      user = {
+        name = "Greg Burd";
+        email = "greg@burd.me";
+      };
       init.defaultBranch = "main";
       gpg.program = "${config.programs.gpg.package}/bin/gpg2";
     };

@@ -62,6 +62,10 @@ in
   };
 
   programs = {
+    ssh = {
+      enable = true;
+      enableDefaultConfig = false;
+    };
     fish = {
       enable = true;
       interactiveShellInit = ''
@@ -109,8 +113,10 @@ in
     };
 
     git = {
-      userEmail = lib.mkDefault "greg@burd.me";
-      userName = lib.mkDefault "Greg Burd";
+      settings.user = {
+        email = lib.mkDefault "greg@burd.me";
+        name = lib.mkDefault "Greg Burd";
+      };
     };
   };
 

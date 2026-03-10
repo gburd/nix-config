@@ -52,10 +52,11 @@
       };
 
       # Enable memelord persistent memory
-      memelord = {
-        enable = true;
-        pkg = pkgs.memelord;
-      };
+      # Disabled until package is available in nixpkgs
+      # memelord = {
+      #   enable = true;
+      #   pkg = pkgs.memelord;
+      # };
     };
   };
 
@@ -68,7 +69,7 @@
   # Ensure necessary packages are installed
   home.packages = with pkgs; [
     gh # GitHub CLI for MCP server auth
-    nodejs # Required for memelord
+    nodejs # Required for MCP servers
     uv # Required for llms.txt wrappers
   ];
 
