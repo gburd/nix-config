@@ -3,7 +3,6 @@
     ./neovim
     ./tmux.nix
     ./claude-code
-    ./ai
   ];
 
   home = {
