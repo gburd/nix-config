@@ -31,7 +31,6 @@ in
            ControlPersist yes
            ForwardAgent yes
            ForwardX11 yes
-           GSSAPIAuthentication no
            LogLevel QUIET
            ServerAliveInterval 60
            ServerAliveCountMax 2
