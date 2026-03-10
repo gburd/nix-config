@@ -95,7 +95,7 @@ with lib.hm.gvariant;
     };
 
     "org/gnome/desktop/input-sources" = {
-      xkb-options = [ "grp:alt_shift_toggle" "caps:none" ];
+      xkb-options = [ "grp:alt_shift_toggle" "ctrl:swapcaps" ];
     };
 
     "org/gnome/desktop/interface" = {

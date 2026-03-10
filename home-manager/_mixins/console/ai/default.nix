@@ -52,11 +52,17 @@
       };
 
       # Enable memelord persistent memory via npx
+      # Note: Using npx since package not in nixpkgs
+      # MCP server will run: npx -y @modelcontextprotocol/server-memory
       memelord = {
         enable = true;
-        # Use npx to run memelord from npm registry
-        command = "${pkgs.nodejs}/bin/npx";
-        args = [ "-y" "@modelcontextprotocol/server-memory" ];
+        pkg = pkgs.writeShellApplication {
+          name = "memelord";
+          runtimeInputs = [ pkgs.nodejs ];
+          text = ''
+            exec npx -y @modelcontextprotocol/server-memory "$@"
+          '';
+        };
       };
     };
   };

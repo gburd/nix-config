@@ -103,7 +103,7 @@ with lib.hm.gvariant;
     };
 
     "org/mate/desktop/peripherals/keyboard/kbd" = {
-      options = [ "terminate\tterminate:ctrl_alt_bksp" "caps\tcaps:none" ];
+      options = [ "terminate\tterminate:ctrl_alt_bksp" "ctrl\tctrl:swapcaps" ];
     };
 
     "org/mate/desktop/peripherals/mouse" = {
