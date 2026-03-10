@@ -2,7 +2,7 @@
   imports = [
     ./alacritty.nix
     ./neovide.nix
-    ./emote.nix
+    # ./emote.nix  # Disabled - user doesn't want emoticons
     ./tilix.nix
     ./browsers.nix
     (./. + "/${desktop}.nix")

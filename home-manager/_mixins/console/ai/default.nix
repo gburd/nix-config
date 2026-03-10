@@ -51,12 +51,13 @@
         pkg = pkgs.github-mcp-server or pkgs.unstable.github-mcp-server;
       };
 
-      # Enable memelord persistent memory
-      # Disabled until package is available in nixpkgs
-      # memelord = {
-      #   enable = true;
-      #   pkg = pkgs.memelord;
-      # };
+      # Enable memelord persistent memory via npx
+      memelord = {
+        enable = true;
+        # Use npx to run memelord from npm registry
+        command = "${pkgs.nodejs}/bin/npx";
+        args = [ "-y" "@modelcontextprotocol/server-memory" ];
+      };
     };
   };
 

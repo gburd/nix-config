@@ -163,7 +163,7 @@ with lib.hm.gvariant;
 
   home.pointerCursor = {
     package = pkgs.adwaita-icon-theme;
-    name = "adwaita";
+    name = "Adwaita";  # Case-sensitive cursor theme name
     size = 24;
     gtk.enable = true;
     x11.enable = true;

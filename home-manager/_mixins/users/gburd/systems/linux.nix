@@ -5,7 +5,7 @@
     ../../../desktop/dconf-editor.nix
     ../../../desktop/gnome-sound-recorder.nix
     ../../../desktop/tilix.nix
-    ../../../desktop/emote.nix
+    # ../../../desktop/emote.nix  # Disabled - user doesn't want emoticons
   ];
 
   home = {
