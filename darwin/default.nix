@@ -14,16 +14,14 @@
   ];
 
   fonts = {
-    fontDir.enable = true;
-    fonts = with pkgs; [
+    packages = with pkgs; [
       iosevka
       font-awesome
       nerd-fonts.fira-code
     ];
   };
 
-  # Auto upgrade nix package and the daemon service.
-  services.nix-daemon.enable = true;
+  # Nix daemon is auto-managed when nix.enable is on
   nix.package = pkgs.nix;
 
   # Necessary for using flakes on this system.

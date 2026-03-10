@@ -99,13 +99,13 @@
       };
 
       # Support for nix-darwin workstations
-      # - darwin-rebuild build --flake .#sktc0
-      # darwinConfigurations = {
-      #   "antanes" = libx.mkDarwin { username = "gburd"; hostname = "antanes"; stateVersion = 4; };
-      # };
+      # - darwin-rebuild build --flake .#80a99738d7e2
+      darwinConfigurations = {
+        "80a99738d7e2" = libx.mkDarwin { username = "gregburd"; hostname = "80a99738d7e2"; stateVersion = 4; };
+      };
 
       # Expose the package set, including overlays, for convenience.
-      # darwinPackages = self.darwinConfigurations."antanes".pkgs;
+      darwinPackages = self.darwinConfigurations."80a99738d7e2".pkgs;
 
       nixosConfigurations = {
         # .iso images
