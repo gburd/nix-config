@@ -24,8 +24,61 @@ with lib.hm.gvariant;
       "aws/bearer_token_bedrock" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
       };
+      "jetbrains/clion-key" = {
+        path = "${config.home.homeDirectory}/.config/JetBrains/clion.key";
+      };
+      "sublime/merge-license" = {
+        path = "${config.home.homeDirectory}/.config/sublime-merge-license.bin";
+      };
     };
   };
+
+  # Activation script to link CLion license to all version directories
+  home.activation.linkClionLicense = lib.mkIf (config.sops.secrets ? "jetbrains/clion-key") (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      CLION_LICENSE="${config.sops.secrets."jetbrains/clion-key".path}"
+
+      if [ -f "$CLION_LICENSE" ]; then
+        # Find all CLion version directories and create symlinks
+        for clion_dir in ${config.home.homeDirectory}/.config/JetBrains/CLion*; do
+          if [ -d "$clion_dir" ]; then
+            TARGET="$clion_dir/clion.key"
+            # Remove existing file/symlink if it exists
+            if [ -e "$TARGET" ] || [ -L "$TARGET" ]; then
+              rm -f "$TARGET"
+            fi
+            # Create symlink
+            ln -sf "$CLION_LICENSE" "$TARGET"
+            echo "Linked CLion license to $TARGET"
+          fi
+        done
+      else
+        echo "Warning: CLion license not found at $CLION_LICENSE"
+      fi
+    ''
+  );
+
+  # Activation script to link Sublime Merge license
+  home.activation.linkSublimeMergeLicense = lib.mkIf (config.sops.secrets ? "sublime/merge-license") (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      MERGE_LICENSE="${config.sops.secrets."sublime/merge-license".path}"
+      MERGE_TARGET="${config.home.homeDirectory}/.config/sublime-merge/Local/License.sublime_license"
+
+      if [ -f "$MERGE_LICENSE" ]; then
+        # Create Local directory if it doesn't exist
+        mkdir -p "$(dirname "$MERGE_TARGET")"
+        # Remove existing file/symlink if it exists
+        if [ -e "$MERGE_TARGET" ] || [ -L "$MERGE_TARGET" ]; then
+          rm -f "$MERGE_TARGET"
+        fi
+        # Create symlink
+        ln -sf "$MERGE_LICENSE" "$MERGE_TARGET"
+        echo "Linked Sublime Merge license to $MERGE_TARGET"
+      else
+        echo "Warning: Sublime Merge license not found at $MERGE_LICENSE"
+      fi
+    ''
+  );
 
   home = {
     # NOTE: persistence disabled for standalone home-manager
@@ -86,11 +139,6 @@ with lib.hm.gvariant;
     #   ]
     # '';
 
-    # file.".config/sublime-text-2/Local/License.sublime_license".text =
-    #   config.sops.secrets.sublime-licenses.text.path;
-
-    # file.".config/sublime-merge/Local/License.sublime_license".text =
-    #   config.sops.secrets.sublime-licenses.merge.path;
 
     packages = with pkgs; [
       # TODO: Move some of these into ../../../desktop/<app>.nix files
