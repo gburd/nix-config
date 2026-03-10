@@ -7,7 +7,6 @@ in
   imports = [
     # NOTE: impermanence removed - not compatible with standalone home-manager
     # inputs.impermanence.homeManagerModules.default
-    ./ai-config.nix
     ../../cli
     ../../console
   ]
