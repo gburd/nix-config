@@ -16,11 +16,8 @@ with lib.hm.gvariant;
   sops = {
     # Use flake root to reference secrets file cleanly
     defaultSopsFile = "${inputs.self}/nixos/workstation/floki/secrets.yaml";
-    # Use GPG for decryption (key is already in GPG keyring)
-    gnupg = {
-      home = "${config.home.homeDirectory}/.gnupg";
-      sshKeyPaths = [ ];
-    };
+    # Use age key derived from SSH key for decryption
+    age.sshKeyPaths = [ "${config.home.homeDirectory}/.ssh/id_ed25519" ];
     secrets = {
       "aws/bearer_token_bedrock" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
