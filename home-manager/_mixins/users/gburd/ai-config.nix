@@ -32,6 +32,16 @@
             url = "https://nix-community.github.io/home-manager/llms.txt";
             title = "Home Manager Documentation";
           };
+          rust = {
+            url = "https://doc.rust-lang.org/llms.txt";
+            title = "Rust Documentation";
+          };
+          python = {
+            url = "https://docs.python.org/3/llms.txt";
+            title = "Python Documentation";
+          };
+          # Note: Add more as llms.txt becomes available for other languages
+          # bash, tcl, perl, C docs may need manual MCP server configuration
         };
       };
 
@@ -61,4 +71,29 @@
     nodejs # Required for memelord
     uv # Required for llms.txt wrappers
   ];
+
+  # Additional MCP servers you may want to configure manually:
+  #
+  # 1. filesystem - Direct file system access for Claude
+  #    https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+  #
+  # 2. brave-search - Web search capabilities
+  #    https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search
+  #
+  # 3. postgres/sqlite - Database access
+  #    https://github.com/modelcontextprotocol/servers/tree/main/src/postgres
+  #
+  # 4. sequential-thinking - Enhanced reasoning for complex problems
+  #    https://github.com/modelcontextprotocol/servers/tree/main/src/sequential-thinking
+  #
+  # 5. puppeteer - Browser automation for testing
+  #    https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer
+  #
+  # 6. git - Git repository operations (alternative to github MCP)
+  #    https://github.com/modelcontextprotocol/servers/tree/main/src/git
+  #
+  # To add custom MCP servers, extend programs.ai.mcps.servers with:
+  # - command: path to executable
+  # - args: list of arguments (optional)
+  # - env: environment variables (optional)
 }
