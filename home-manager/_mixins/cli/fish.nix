@@ -106,16 +106,15 @@ in
 
         	bind \e\[A up-or-search
         	bind \e\[B down-or-search
-        	bind -k down down-or-search
-        	bind -k up up-or-search
+        	bind \eOA up-or-search
+        	bind \eOB down-or-search
 
         	bind \e\[C forward-char
         	bind \e\[D backward-char
-        	bind -k right forward-char
-        	bind -k left backward-char
+        	bind \eOC forward-char
+        	bind \eOD backward-char
 
-        	bind -k dc delete-char
-        	bind -k backspace backward-delete-char
+        	bind \e\[3~ delete-char
         	bind \x7f backward-delete-char
 
         	bind \e\[H beginning-of-line
@@ -127,9 +126,6 @@ in
         	bind \e\[3~ delete-char
         	bind \e\[4~ end-of-line
 
-        	# OS X SnowLeopard doesn't have these keys. Don't show an annoying error message.
-        	bind -k home beginning-of-line 2> /dev/null
-        	bind -k end end-of-line 2> /dev/null
         	bind \e\[3\;2~ backward-delete-char # Mavericks Terminal.app shift-delete
 
         	bind \e\eOC nextd-or-forward-word
@@ -182,8 +178,8 @@ in
         	# https://github.com/fish-shell/fish-shell/issues/89
         	bind \e. history-token-search-backward
         	bind \ed forward-kill-word
-        	bind -k ppage beginning-of-history
-        	bind -k npage end-of-history
+        	bind \e\[5~ beginning-of-history
+        	bind \e\[6~ end-of-history
         	bind \e\< beginning-of-buffer
         	bind \e\> end-of-buffer
 
@@ -198,13 +194,13 @@ in
         	bind \cd delete-or-exit
 
         	# Allow reading manpages by pressing F1
-        	bind -k f1 'man (basename (commandline -po; echo))[1] ^/dev/null; or echo -n \a'
+        	bind \eOP 'man (basename (commandline -po; echo))[1] ^/dev/null; or echo -n \a'
 
         	# This will make sure the output of the current command is paged using the less pager when you press Meta-p
         	bind \ep '__fish_paginate'
 
         	# shift-tab does a tab complete followed by a search
-        	bind --key btab complete-and-search
+        	bind \e\[Z complete-and-search
 
         	# escape cancels stuff
         	bind \e cancel

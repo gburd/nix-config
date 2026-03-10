@@ -11,10 +11,10 @@
   # Enable the GNOME Desktop Environment.
   services.desktopManager.gnome.enable = true;
 
-  services.displayManager.gdm.enable = true;
-
-  # TODO: Disable Wayland (issues with Electron app rendering)?
-  services.displayManager.gdm.wayland = false;
+  services.displayManager.gdm = {
+    enable = true;
+    wayland = true;
+  };
 
   # Enable udev rules
   services.udev.packages = with pkgs.unstable; [ gnome-settings-daemon ];
