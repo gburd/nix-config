@@ -27,6 +27,10 @@
     ../../_mixins/services/bluetooth.nix
     ../../_mixins/services/pipewire.nix
     ../../_mixins/virt
+
+    # Optional: Enable comprehensive documentation and debug support
+    ../../_mixins/features/documentation.nix
+    ../../_mixins/features/debug-symbols.nix
   ];
 
   boot = {
@@ -71,19 +75,11 @@
 
   environment.systemPackages = with pkgs; [
     nvtopPackages.full
-    man-pages
-    man-pages-posix
   ];
 
   networking.hostName = "floki";
   powerManagement.powertop.enable = true;
   powerManagement.cpuFreqGovernor = "powersave";
-
-  documentation.nixos.enable = lib.mkForce true;
-  documentation.doc.enable = false;
-  documentation.info.enable = false;
-  documentation.dev.enable = true;
-  documentation.man.generateCaches = true;
 
   services = {
     hardware.openrgb = {

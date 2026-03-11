@@ -24,11 +24,4 @@
       go-task
     ];
   };
-  services.dbus.packages = [ pkgs.gcr ];
-  #services.pcscd.enable = true;
-  services.gnupg.agent = {
-    enable = true;
-    pinentry.package = pkgs.pinentry-curses;
-    enableSSHSupport = true;
-  };
 }
