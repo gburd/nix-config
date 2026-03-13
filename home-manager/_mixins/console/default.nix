@@ -1,6 +1,6 @@
 { config, pkgs, ... }: {
   imports = [
-    ../cli  # CLI tools (git, gh, gpg, fish, etc.)
+    ../cli # CLI tools (git, gh, gpg, fish, etc.)
     ./neovim
     ./tmux.nix
     ./claude-code

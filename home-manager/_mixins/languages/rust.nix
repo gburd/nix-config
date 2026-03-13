@@ -11,8 +11,8 @@
     rustup
 
     # Code coverage tools
-    cargo-llvm-cov    # LLVM-based coverage (works with stable Rust)
-    cargo-tarpaulin   # Coverage tool with detailed reports
+    cargo-llvm-cov # LLVM-based coverage (works with stable Rust)
+    cargo-tarpaulin # Coverage tool with detailed reports
 
     # Additional Rust development tools
     # Uncomment as needed:

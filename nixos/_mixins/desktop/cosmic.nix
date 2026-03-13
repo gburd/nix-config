@@ -4,15 +4,17 @@
     ../services/xdg-portal.nix
   ];
 
-  # Enable the X11 windowing system.
-  services.xserver.enable = false;
+  services = {
+    # Enable the X11 windowing system.
+    xserver.enable = false;
 
-  # Enable the GNOME Desktop Environment.
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
+    # Enable the GNOME Desktop Environment.
+    displayManager.gdm.enable = true;
+    desktopManager.gnome.enable = true;
 
-  # Enable udev rules
-  services.udev.packages = with pkgs.unstable; [ gnome.cosmic-settings-daemon ];
+    # Enable udev rules
+    udev.packages = with pkgs.unstable; [ gnome.cosmic-settings-daemon ];
+  };
 
   environment.systemPackages = with pkgs.unstable; [
     gnomeExtensions.appindicator
