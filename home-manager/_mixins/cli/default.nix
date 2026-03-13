@@ -13,6 +13,7 @@
     ./ranger.nix
     ./screen.nix
     ./ssh.nix
+    ./tea.nix
   ];
 
   home.packages = with pkgs; [
