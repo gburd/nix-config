@@ -1,0 +1,51 @@
+name: Lint 🧹 Nix Code
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  nixpkgs-fmt:
+    name: nixpkgs-fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a  # v21
+
+      - uses: DeterminateSystems/magic-nix-cache-action@565684385bcd71bad329742eefe8d12f2e765b39  # v13
+
+      - name: Check formatting
+        run: |
+          nix fmt -- --check .
+
+  statix:
+    name: statix (anti-patterns)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a  # v21
+
+      - uses: DeterminateSystems/magic-nix-cache-action@565684385bcd71bad329742eefe8d12f2e765b39  # v13
+
+      - name: Run statix
+        run: |
+          nix run nixpkgs#statix -- check .
+
+  deadnix:
+    name: deadnix (dead code)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a  # v21
+
+      - uses: DeterminateSystems/magic-nix-cache-action@565684385bcd71bad329742eefe8d12f2e765b39  # v13
+
+      - uses: astro/deadnix-action@7318ac45eea03ff5785a809e13e6f2c2f2e0cf67  # v1

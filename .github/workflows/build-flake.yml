@@ -1,0 +1,54 @@
+name: Build 🏗️ Flake Configuration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-nixos:
+    name: Build NixOS Configuration
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [floki, arnold]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          fetch-depth: 0
+
+      - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a  # v21
+
+      - uses: DeterminateSystems/magic-nix-cache-action@565684385bcd71bad329742eefe8d12f2e765b39  # v13
+
+      - name: Build NixOS configuration for ${{ matrix.host }}
+        run: |
+          nix build .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
+
+      - name: Check evaluation
+        run: |
+          nix flake check --no-build
+
+  build-home-manager:
+    name: Build Home Manager Configuration
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        user: ["gburd@floki", "gburd@arnold"]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+
+      - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a  # v21
+
+      - uses: DeterminateSystems/magic-nix-cache-action@565684385bcd71bad329742eefe8d12f2e765b39  # v13
+
+      - name: Build home-manager configuration for ${{ matrix.user }}
+        run: |
+          nix build .#homeConfigurations."${{ matrix.user }}".activationPackage
