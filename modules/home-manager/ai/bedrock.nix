@@ -33,46 +33,48 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Claude Code configuration for Bedrock
-    home.file.".config/claude-code/config.json" = {
-      text = builtins.toJSON {
-        apiProvider = "bedrock";
-        bedrockRegion = cfg.region;
-        bedrockProfile = if cfg.profile != null then cfg.profile else "default";
+    home = {
+      # Claude Code configuration for Bedrock
+      file.".config/claude-code/config.json" = {
+        text = builtins.toJSON {
+          apiProvider = "bedrock";
+          bedrockRegion = cfg.region;
+          bedrockProfile = if cfg.profile != null then cfg.profile else "default";
+        };
       };
+
+      # Set up AWS credentials symlink if provided
+      file.".aws/credentials" = lib.mkIf (cfg.credentialsFile != null) {
+        source = cfg.credentialsFile;
+      };
+
+      # Activation script to inject AWS bearer token into settings.json
+      activation.injectAwsBearerToken = lib.mkIf (cfg.bearerTokenFile != null) (
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          SETTINGS_FILE="${config.home.homeDirectory}/.claude/settings.json"
+          BEARER_TOKEN_FILE="${cfg.bearerTokenFile}"
+
+          if [ -f "$SETTINGS_FILE" ] && [ -f "$BEARER_TOKEN_FILE" ]; then
+            BEARER_TOKEN=$(cat "$BEARER_TOKEN_FILE")
+
+            # Use jq to update the env.AWS_BEARER_TOKEN_BEDROCK field
+            TMP_FILE=$(${pkgs.coreutils}/bin/mktemp)
+            ${pkgs.jq}/bin/jq --arg token "$BEARER_TOKEN" \
+              '.env.AWS_BEARER_TOKEN_BEDROCK = $token' \
+              "$SETTINGS_FILE" > "$TMP_FILE"
+
+            ${pkgs.coreutils}/bin/mv "$TMP_FILE" "$SETTINGS_FILE"
+            echo "Updated AWS_BEARER_TOKEN_BEDROCK in $SETTINGS_FILE"
+          elif [ ! -f "$BEARER_TOKEN_FILE" ]; then
+            echo "Warning: Bearer token file not found at $BEARER_TOKEN_FILE"
+          fi
+        ''
+      );
+
+      # Ensure AWS CLI is available
+      packages = with pkgs; [
+        awscli2
+      ];
     };
-
-    # Set up AWS credentials symlink if provided
-    home.file.".aws/credentials" = lib.mkIf (cfg.credentialsFile != null) {
-      source = cfg.credentialsFile;
-    };
-
-    # Activation script to inject AWS bearer token into settings.json
-    home.activation.injectAwsBearerToken = lib.mkIf (cfg.bearerTokenFile != null) (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        SETTINGS_FILE="${config.home.homeDirectory}/.claude/settings.json"
-        BEARER_TOKEN_FILE="${cfg.bearerTokenFile}"
-
-        if [ -f "$SETTINGS_FILE" ] && [ -f "$BEARER_TOKEN_FILE" ]; then
-          BEARER_TOKEN=$(cat "$BEARER_TOKEN_FILE")
-
-          # Use jq to update the env.AWS_BEARER_TOKEN_BEDROCK field
-          TMP_FILE=$(${pkgs.coreutils}/bin/mktemp)
-          ${pkgs.jq}/bin/jq --arg token "$BEARER_TOKEN" \
-            '.env.AWS_BEARER_TOKEN_BEDROCK = $token' \
-            "$SETTINGS_FILE" > "$TMP_FILE"
-
-          ${pkgs.coreutils}/bin/mv "$TMP_FILE" "$SETTINGS_FILE"
-          echo "Updated AWS_BEARER_TOKEN_BEDROCK in $SETTINGS_FILE"
-        elif [ ! -f "$BEARER_TOKEN_FILE" ]; then
-          echo "Warning: Bearer token file not found at $BEARER_TOKEN_FILE"
-        fi
-      ''
-    );
-
-    # Ensure AWS CLI is available
-    home.packages = with pkgs; [
-      awscli2
-    ];
   };
 }
