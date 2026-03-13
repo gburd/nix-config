@@ -9,12 +9,15 @@ Complete Rust development setup with toolchain management and code coverage tool
 - **rustup** - Rust toolchain manager
   - Manages multiple Rust versions (stable, beta, nightly)
   - Handles cross-compilation targets
-  - Manages components (clippy, rustfmt, rust-src, etc.)
-  - Provides `cargo` and `rustc` wrappers that use the active toolchain
+  - Manages components (clippy, rustfmt, rust-src, rust-analyzer, etc.)
+  - Provides wrappers for `cargo`, `rustc`, `rust-analyzer`, `clippy`, `rustfmt`, etc.
 
-- **rust-analyzer** - Language Server Protocol (LSP) for IDEs
-
-**Note:** This configuration uses `rustup` to manage Rust toolchains. The `cargo` and `rustc` commands are provided by rustup after you run `rustup default stable`.
+**Note:** This configuration uses `rustup` exclusively to manage all Rust tools. After running `rustup default stable` and installing components, all tools become available:
+- `cargo` - Package manager
+- `rustc` - Compiler
+- `rust-analyzer` - LSP for IDEs
+- `clippy` - Linter
+- `rustfmt` - Formatter
 
 ### Code Coverage Tools
 
@@ -41,8 +44,8 @@ rustup default stable
 # Update all toolchains
 rustup update
 
-# Install additional components
-rustup component add clippy rustfmt rust-src
+# Install essential components
+rustup component add clippy rustfmt rust-src rust-analyzer llvm-tools-preview
 ```
 
 ### Verify Installation

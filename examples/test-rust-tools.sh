@@ -15,14 +15,7 @@ else
     echo "  ✗ rustup NOT FOUND"
 fi
 
-if command -v rust-analyzer >/dev/null 2>&1; then
-    echo "  ✓ rust-analyzer"
-    echo "    $(rust-analyzer --version 2>&1 | head -1)"
-else
-    echo "  ✗ rust-analyzer NOT FOUND"
-fi
-
-# cargo and rustc are provided by rustup after initialization
+# All these tools are provided by rustup after initialization
 if command -v cargo >/dev/null 2>&1; then
     echo "  ✓ cargo (via rustup)"
     echo "    $(cargo --version 2>&1 | head -1)"
@@ -35,6 +28,25 @@ if command -v rustc >/dev/null 2>&1; then
     echo "    $(rustc --version 2>&1 | head -1)"
 else
     echo "  ℹ rustc (provided by rustup after 'rustup default stable')"
+fi
+
+if command -v rust-analyzer >/dev/null 2>&1; then
+    echo "  ✓ rust-analyzer (via rustup)"
+    echo "    $(rust-analyzer --version 2>&1 | head -1)"
+else
+    echo "  ℹ rust-analyzer (install with 'rustup component add rust-analyzer')"
+fi
+
+if command -v clippy-driver >/dev/null 2>&1; then
+    echo "  ✓ clippy (via rustup)"
+else
+    echo "  ℹ clippy (install with 'rustup component add clippy')"
+fi
+
+if command -v rustfmt >/dev/null 2>&1; then
+    echo "  ✓ rustfmt (via rustup)"
+else
+    echo "  ℹ rustfmt (install with 'rustup component add rustfmt')"
 fi
 
 echo ""
@@ -94,8 +106,8 @@ echo "💡 Quick Start:"
 echo "  # Initialize rustup with stable toolchain:"
 echo "    rustup default stable"
 echo ""
-echo "  # Install additional components:"
-echo "    rustup component add clippy rustfmt rust-src"
+echo "  # Install essential components:"
+echo "    rustup component add clippy rustfmt rust-src rust-analyzer llvm-tools-preview"
 echo ""
 echo "  # Create a new project:"
 echo "    cargo new my-project && cd my-project"

@@ -6,12 +6,9 @@
 {
   home.packages = with pkgs; [
     # Rust toolchain manager
-    # Note: rustup provides cargo, rustc, and other tools via wrappers
-    # Don't install cargo/rustc separately to avoid path conflicts
+    # Note: rustup provides cargo, rustc, rust-analyzer, clippy, rustfmt, etc.
+    # Don't install these tools separately to avoid path conflicts
     rustup
-
-    # Language Server Protocol for Rust
-    rust-analyzer
 
     # Code coverage tools
     cargo-llvm-cov    # LLVM-based coverage (works with stable Rust)
