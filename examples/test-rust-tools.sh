@@ -8,16 +8,34 @@ echo ""
 
 # Core toolchain
 echo "📦 Core Toolchain:"
-tools=(rustup rustc cargo rust-analyzer)
-for tool in "${tools[@]}"; do
-    if command -v "$tool" >/dev/null 2>&1; then
-        version=$("$tool" --version 2>&1 | head -1)
-        echo "  ✓ $tool"
-        echo "    $version"
-    else
-        echo "  ✗ $tool NOT FOUND"
-    fi
-done
+if command -v rustup >/dev/null 2>&1; then
+    echo "  ✓ rustup"
+    echo "    $(rustup --version 2>&1 | head -1)"
+else
+    echo "  ✗ rustup NOT FOUND"
+fi
+
+if command -v rust-analyzer >/dev/null 2>&1; then
+    echo "  ✓ rust-analyzer"
+    echo "    $(rust-analyzer --version 2>&1 | head -1)"
+else
+    echo "  ✗ rust-analyzer NOT FOUND"
+fi
+
+# cargo and rustc are provided by rustup after initialization
+if command -v cargo >/dev/null 2>&1; then
+    echo "  ✓ cargo (via rustup)"
+    echo "    $(cargo --version 2>&1 | head -1)"
+else
+    echo "  ℹ cargo (provided by rustup after 'rustup default stable')"
+fi
+
+if command -v rustc >/dev/null 2>&1; then
+    echo "  ✓ rustc (via rustup)"
+    echo "    $(rustc --version 2>&1 | head -1)"
+else
+    echo "  ℹ rustc (provided by rustup after 'rustup default stable')"
+fi
 
 echo ""
 

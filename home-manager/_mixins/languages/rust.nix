@@ -5,14 +5,10 @@
 
 {
   home.packages = with pkgs; [
-    # Rust toolchain manager (alternative to direct rustc/cargo)
+    # Rust toolchain manager
+    # Note: rustup provides cargo, rustc, and other tools via wrappers
+    # Don't install cargo/rustc separately to avoid path conflicts
     rustup
-
-    # Rust compiler and package manager
-    # Note: When using rustup, you typically manage toolchains via rustup
-    # These are provided as fallbacks or for system-level tools
-    rustc
-    cargo
 
     # Language Server Protocol for Rust
     rust-analyzer

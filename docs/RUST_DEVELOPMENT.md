@@ -10,10 +10,11 @@ Complete Rust development setup with toolchain management and code coverage tool
   - Manages multiple Rust versions (stable, beta, nightly)
   - Handles cross-compilation targets
   - Manages components (clippy, rustfmt, rust-src, etc.)
+  - Provides `cargo` and `rustc` wrappers that use the active toolchain
 
-- **rustc** - Rust compiler (system-level)
-- **cargo** - Rust package manager and build tool
 - **rust-analyzer** - Language Server Protocol (LSP) for IDEs
+
+**Note:** This configuration uses `rustup` to manage Rust toolchains. The `cargo` and `rustc` commands are provided by rustup after you run `rustup default stable`.
 
 ### Code Coverage Tools
 
