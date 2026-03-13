@@ -51,3 +51,6 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@565684385bcd71bad329742eefe8d12f2e765b39  # v13
 
       - uses: astro/deadnix-action@7318ac45eea03ff5785a809e13e6f2c2f2e0cf67  # v1
+        with:
+          create_pr: false
+          flags: --check

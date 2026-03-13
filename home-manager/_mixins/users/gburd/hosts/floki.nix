@@ -9,7 +9,11 @@ with lib.hm.gvariant;
     ../../../desktop/vorta.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
+    ../../../services/onepassword.nix
   ];
+
+  # Enable 1Password SSH and GPG integration
+  services.onepassword-agent.enable = true;
   dconf.settings = { };
 
   # Sops secrets configuration
