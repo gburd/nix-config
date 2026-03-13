@@ -4,13 +4,8 @@
     lurk # Modern Unix `strace`
   ];
 
-  services = {
-    gpg-agent = {
-      enable = true;
-      enableSshSupport = true;
-      pinentry.package = pkgs.pinentry-curses;
-    };
-  };
+  # gpg-agent is configured in cli/gpg.nix with smart pinentry auto-detection
+  # No need to override here - it will automatically use curses in console environments
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";

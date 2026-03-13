@@ -1,24 +1,39 @@
 { pkgs, config, username, ... }:
 let
-  pinentry =
-    if config.gtk.enable then {
-      packages = [ pkgs.pinentry-gnome3 pkgs.gcr ];
-      name = "gnome";
-    } else {
-      packages = [ pkgs.pinentry-curses ];
-      name = "curses";
-    };
+  # Smart pinentry wrapper that auto-detects GUI availability
+  pinentry-auto = pkgs.writeShellScriptBin "pinentry-auto" ''
+    # Try GUI pinentry if we have a display
+    if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
+      # Try GNOME pinentry first (works with GTK and GNOME)
+      if command -v ${pkgs.pinentry-gnome3}/bin/pinentry-gnome3 >/dev/null 2>&1; then
+        exec ${pkgs.pinentry-gnome3}/bin/pinentry-gnome3 "$@"
+      # Try GTK2 pinentry as fallback
+      elif command -v ${pkgs.pinentry-gtk2}/bin/pinentry-gtk2 >/dev/null 2>&1; then
+        exec ${pkgs.pinentry-gtk2}/bin/pinentry-gtk2 "$@"
+      fi
+    fi
+
+    # Fall back to curses for terminal/SSH use
+    exec ${pkgs.pinentry-curses}/bin/pinentry-curses "$@"
+  '';
+
 in
 {
-  home.packages = pinentry.packages;
-  #  home.packages = [ pkgs.pinentry-curses ];
+  # Install all pinentry variants for the wrapper to use
+  home.packages = with pkgs; [
+    pinentry-gnome3  # GUI version
+    gcr              # GNOME crypto library
+    pinentry-gtk2    # GTK fallback
+    pinentry-curses  # Terminal fallback
+    pinentry-auto    # Our smart wrapper
+  ];
 
   services.gpg-agent = {
     #TODO: gnupg vs gpg-agent ?
     enable = true;
     enableSshSupport = true;
     # TODO: sshKeys = [ "149F16412997785363112F3DBD713BC91D51B831" ];
-    pinentry.package = pkgs.pinentry-curses;
+    pinentryPackage = pinentry-auto;  # Use smart wrapper
     enableExtraSocket = true;
   };
 
