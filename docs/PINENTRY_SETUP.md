@@ -131,16 +131,21 @@ echo "pinentry-program $(which pinentry-curses)" > ~/.gnupg/gpg-agent.conf
 gpgconf --reload gpg-agent
 ```
 
-## Installed Pinentry Variants
+## How It's Installed
 
-The configuration installs these pinentry versions:
+The configuration installs:
 
-| Package | Use Case | Size |
-|---------|----------|------|
-| `pinentry-gnome3` | GNOME/GTK GUI | ~200KB |
-| `pinentry-gtk2` | Generic GTK2 GUI | ~100KB |
-| `pinentry-curses` | Terminal/Console | ~50KB |
-| `pinentry-auto` | Smart wrapper | ~1KB |
+| Package | Purpose |
+|---------|---------|
+| `pinentry-auto` | Smart wrapper script (added to PATH) |
+| `gcr` | GNOME crypto library (required by pinentry-gnome3) |
+
+The wrapper uses **absolute paths** to reference pinentry variants, so they don't need to be in your PATH:
+- `pinentry-gnome3` - Referenced from Nix store
+- `pinentry-gtk2` - Referenced from Nix store
+- `pinentry-curses` - Referenced from Nix store
+
+This avoids path conflicts while keeping all functionality.
 
 ## Related Files
 
