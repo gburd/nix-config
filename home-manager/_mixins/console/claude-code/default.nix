@@ -1,5 +1,10 @@
 { config, pkgs, ... }:
 {
+  # Import language-specific development tools
+  imports = [
+    ../../languages/rust.nix
+  ];
+
   home.packages = with pkgs; [
     claude-code
     bubblewrap
@@ -7,9 +12,8 @@
     nodejs
 
     # Development tools for Claude Code
-    rustc
-    cargo
-    rust-analyzer
+    # Note: Rust tools (rustc, cargo, rust-analyzer, rustup, coverage tools)
+    # are provided by languages/rust.nix
     gcc
     clang-tools # Provides clangd LSP, no full clang needed
     python3
