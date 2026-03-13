@@ -1,10 +1,10 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 {
   # Arnold is a Fedora system running home-manager via Nix
   # Import shared mixins for CLI and console tools
   imports = [
-    ../../cli      # Shared CLI tools
-    ../../console  # Shared console (neovim, tmux, etc.)
+    ../../cli # Shared CLI tools
+    ../../console # Shared console (neovim, tmux, etc.)
   ];
 
   home.file.".inputrc".text = ''

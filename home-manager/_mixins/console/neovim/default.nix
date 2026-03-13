@@ -13,10 +13,16 @@
       clang-tools # provides clangd
       pyright
       nodePackages.bash-language-server
-      stylua nixpkgs-fmt black shfmt
+      stylua
+      nixpkgs-fmt
+      black
+      shfmt
       # rustfmt is provided by rustup (via languages/rust.nix)
-      meson gnumake cmake
-      ripgrep fd
+      meson
+      gnumake
+      cmake
+      ripgrep
+      fd
       gcc
       nnn
       zig

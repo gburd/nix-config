@@ -5,7 +5,7 @@ with lib.hm.gvariant;
     # NOTE: impermanence only works with home-manager as NixOS module
     # Not compatible with standalone home-manager switch command
     # inputs.impermanence.nixosModules.home-manager.impermanence
-    ../../../console/ai  # Opt-in AI configuration for this host
+    ../../../console/ai # Opt-in AI configuration for this host
     ../../../desktop/vorta.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix

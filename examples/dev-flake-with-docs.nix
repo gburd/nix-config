@@ -13,24 +13,18 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
         # Helper to enable debug info for a package
-        withDebug = pkg: pkg.overrideAttrs (old: {
-          # Keep debug symbols
-          dontStrip = true;
-          # Add debug flags
-          NIX_CFLAGS_COMPILE = (old.NIX_CFLAGS_COMPILE or "") + " -g -O0";
-        });
 
         # Documentation packages for different languages
         docPackages = with pkgs; [
           # C/C++ documentation
-          man-pages           # Linux programmer's manual
-          man-pages-posix     # POSIX standards
+          man-pages # Linux programmer's manual
+          man-pages-posix # POSIX standards
           # glibc.doc         # GNU libc documentation (large!)
 
           # Python documentation
@@ -42,11 +36,11 @@
 
         # Debugging tools
         debugTools = with pkgs; [
-          gdb                 # GNU Debugger
-          lldb                # LLVM Debugger
-          valgrind            # Memory debugger
-          strace              # System call tracer
-          rr                  # Time-travel debugger
+          gdb # GNU Debugger
+          lldb # LLVM Debugger
+          valgrind # Memory debugger
+          strace # System call tracer
+          rr # Time-travel debugger
         ];
 
         # Common development tools
@@ -118,7 +112,7 @@
 
             # Debugging
             gdb
-            python3Packages.pudb  # Python debugger
+            python3Packages.pudb # Python debugger
           ] ++ docPackages;
 
           shellHook = ''

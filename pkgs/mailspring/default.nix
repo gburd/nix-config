@@ -9,5 +9,5 @@
 # 3. Building from source or patching the existing package
 #
 # For now, use the standard mailspring package from nixpkgs
-{ lib, pkgs }:
+{ pkgs }:
 pkgs.mailspring

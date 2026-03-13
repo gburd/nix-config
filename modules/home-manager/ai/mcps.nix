@@ -47,32 +47,34 @@ let
         "$@"
     '';
 
-  llmWrappers = lib.mapAttrs' (name: { url, title }:
-    lib.nameValuePair name {
-      command = mcpdoc-wrapper-of name {
-        "${title}" = url;
-      };
-    }) cfg.servers.llms-docs.sources;
+  llmWrappers = lib.mapAttrs'
+    (name: { url, title }:
+      lib.nameValuePair name {
+        command = mcpdoc-wrapper-of name {
+          "${title}" = url;
+        };
+      })
+    cfg.servers.llms-docs.sources;
 
   ### MCP Server configuration file ###
   mcpJsonText = builtins.toJSON {
     inherit mcpServers;
   };
 
-  mcpServers = {}
+  mcpServers = { }
     // (optionalAttrs cfg.servers.llms-docs.enable llmWrappers)
     // (optionalAttrs cfg.servers.github.enable {
-      github = {
-        command = "${githubMcpServer}";
-      };
-    })
+    github = {
+      command = "${githubMcpServer}";
+    };
+  })
     // (optionalAttrs cfg.servers.memelord.enable {
-      memelord = {
-        command = "${cfg.servers.memelord.pkg}/bin/memelord";
-      };
-    });
+    memelord = {
+      command = "${cfg.servers.memelord.pkg}/bin/memelord";
+    };
+  });
 
-  packages = [];
+  packages = [ ];
 in
 {
   options.programs.ai.mcps = {
@@ -107,7 +109,7 @@ in
               };
             };
           });
-          default = {};
+          default = { };
           description = "Map of llms.txt sites. Keys are used for mcp.json keys.";
           example = {
             nix = {
