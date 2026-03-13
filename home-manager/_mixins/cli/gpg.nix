@@ -19,12 +19,10 @@ let
 
 in
 {
-  # Install all pinentry variants for the wrapper to use
+  # Only install the wrapper and required library
+  # The wrapper uses absolute paths to pinentry variants, so we don't need them in PATH
   home.packages = with pkgs; [
-    pinentry-gnome3  # GUI version
-    gcr              # GNOME crypto library
-    pinentry-gtk2    # GTK fallback
-    pinentry-curses  # Terminal fallback
+    gcr              # GNOME crypto library (required by pinentry-gnome3)
     pinentry-auto    # Our smart wrapper
   ];
 
@@ -33,7 +31,7 @@ in
     enable = true;
     enableSshSupport = true;
     # TODO: sshKeys = [ "149F16412997785363112F3DBD713BC91D51B831" ];
-    pinentryPackage = pinentry-auto;  # Use smart wrapper
+    pinentry.package = pinentry-auto;  # Use smart wrapper
     enableExtraSocket = true;
   };
 
