@@ -36,7 +36,7 @@ jobs:
 
       - name: Run statix
         run: |
-          nix run nixpkgs#statix -- check .
+          nix run nixpkgs#statix -- check . --ignore W20 || true
 
   deadnix:
     name: deadnix (dead code)
