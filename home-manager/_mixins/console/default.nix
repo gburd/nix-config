@@ -78,7 +78,7 @@
       strace # System call tracer
       valgrind # Memory debugger and profiler
       heaptrack # Heap memory profiler
-      linuxPackages.perf # Performance analysis tools
+      perf # Performance analysis tools
     ];
 
     sessionVariables = {

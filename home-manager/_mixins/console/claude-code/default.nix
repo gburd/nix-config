@@ -14,7 +14,7 @@
     # Development tools for Claude Code
     # Note: Rust tools (rustc, cargo, rust-analyzer, rustup, coverage tools)
     # are provided by languages/rust.nix
-    gcc
+    # gcc  # Removed: provided by console/default.nix as gcc14
     clang-tools # Provides clangd LSP, no full clang needed
     python3
     python3Packages.pylint
