@@ -55,7 +55,8 @@
 
       # Development toolchains
       gcc14 # Latest GCC with debug symbols
-      clang_18 # Latest Clang/LLVM
+      # clang_18 # Removed: conflicts with gcc14 (both provide cpp wrapper)
+      # clang-tools provides clangd for LSP, llvmPackages provides LLVM libs
       llvmPackages_18.libllvm # LLVM libraries
       musl # musl libc for static linking
       glibc.dev # glibc development headers
