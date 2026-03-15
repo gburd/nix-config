@@ -4,6 +4,11 @@
     ./neovim
     ./tmux.nix
     ./claude-code
+    ./gdb
+    ./lldb
+    ./zed
+    # ./sublime  # Removed: conflicts with desktop/sublime.nix
+    ./neomutt
   ];
 
   home = {
@@ -13,6 +18,7 @@
     # A Modern Unix experience
     # https://jvns.ca/blog/2022/04/12/a-list-of-new-ish--command-line-tools/
     packages = with pkgs; [
+      # Modern CLI tools
       asciinema # Terminal recorder
       breezy # Terminal bzr client
       chafa # Terminal image viewer
@@ -46,6 +52,33 @@
       tokei # Modern Unix `wc` for code
       wget # Terminal downloader
       yq-go # Terminal `jq` for YAML
+
+      # Development toolchains
+      gcc14 # Latest GCC with debug symbols
+      clang_18 # Latest Clang/LLVM
+      llvmPackages_18.libllvm # LLVM libraries
+      musl # musl libc for static linking
+      glibc.dev # glibc development headers
+      binutils # Binary utilities (ld, as, etc.)
+      pkg-config # Build configuration tool
+      autoconf # GNU Autoconf
+      automake # GNU Automake
+      libtool # Generic library support script
+
+      # Virtualization tools
+      qemu # Full system emulator (includes KVM support)
+      firecracker # Lightweight microVM manager
+      libvirt # Virtualization API and management
+      virt-manager # Virtualization GUI
+
+      # Build and analysis tools
+      ccache # Compiler cache
+      distcc # Distributed compilation
+      ltrace # Library call tracer
+      strace # System call tracer
+      valgrind # Memory debugger and profiler
+      heaptrack # Heap memory profiler
+      linuxPackages.perf # Performance analysis tools
     ];
 
     sessionVariables = {

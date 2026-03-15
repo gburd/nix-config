@@ -6,6 +6,7 @@
     viAlias = true;
     vimAlias = true;
     extraPackages = with pkgs; [
+      # Language servers
       lua-language-server
       nil
       # rust-analyzer is provided by rustup (via languages/rust.nix)
@@ -13,10 +14,39 @@
       clang-tools # provides clangd
       pyright
       nodePackages.bash-language-server
-      stylua nixpkgs-fmt black shfmt
+
+      # Formatters
+      stylua
+      nixpkgs-fmt
+      black
+      shfmt
+      pgformatter # PostgreSQL formatter
+      sqlfluff # SQL linter and formatter
       # rustfmt is provided by rustup (via languages/rust.nix)
-      meson gnumake cmake
-      ripgrep fd
+
+      # Linters
+      shellcheck
+      python3Packages.ruff
+      python3Packages.mypy
+      markdownlint-cli
+
+      # Debuggers
+      lldb # LLDB debugger for Rust/C/C++ (provides lldb-vscode)
+      python3Packages.debugpy # Python debugger
+      delve # Go debugger
+
+      # Testing tools
+      python3Packages.pytest
+
+      # Build tools
+      meson
+      gnumake
+      cmake
+      cargo-nextest # Better Rust test runner
+
+      # Utilities
+      ripgrep
+      fd
       gcc
       nnn
       zig

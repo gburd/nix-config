@@ -1,0 +1,196 @@
+{
+  // Sublime Text Settings
+  // Mirroring Neovim/Zed configuration
+
+  // Theme and appearance
+  "theme": "Adaptive.sublime-theme",
+  "color_scheme": "Mariana.sublime-color-scheme",
+  "font_face": "JetBrains Mono",
+  "font_size": 14,
+  "font_options": [
+    "gray_antialias",
+    "subpixel_antialias"
+  ],
+
+  // Editor behavior
+  "tab_size": 2,
+  "translate_tabs_to_spaces": true,
+  "detect_indentation": true,
+  "auto_indent": true,
+  "smart_indent": true,
+  "trim_trailing_white_space_on_save": true,
+  "ensure_newline_at_eof_on_save": true,
+  "save_on_focus_lost": false,
+  "atomic_save": false,
+
+  // Line display
+  "line_numbers": true,
+  "gutter": true,
+  "margin": 0,
+  "fold_buttons": true,
+  "fade_fold_buttons": true,
+  "rulers": [80, 100, 120],
+  "draw_white_space": "selection",
+  "draw_minimap_border": true,
+  "always_show_minimap_viewport": true,
+
+  // Cursor
+  "caret_style": "solid",
+  "caret_extra_width": 1,
+  "highlight_line": true,
+  "highlight_modified_tabs": true,
+
+  // Scrolling
+  "scroll_past_end": true,
+  "scroll_speed": 1.0,
+
+  // Search
+  "show_full_path": true,
+  "preview_on_click": true,
+  "highlight_modified_tabs": true,
+
+  // Files and folders
+  "hot_exit": false,
+  "remember_open_files": true,
+  "open_files_in_new_window": false,
+  "close_windows_when_empty": false,
+  "show_encoding": true,
+  "show_line_endings": true,
+
+  // Ignored packages (disable vintage mode, we'll use custom vim)
+  "ignored_packages": [
+    "Vintage"
+  ],
+
+  // File exclusions
+  "folder_exclude_patterns": [
+    ".git",
+    ".svn",
+    ".hg",
+    "CVS",
+    ".Trash",
+    ".Trash-*",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "target",
+    "build",
+    "dist",
+    "*.egg-info"
+  ],
+  "file_exclude_patterns": [
+    "*.pyc",
+    "*.pyo",
+    "*.exe",
+    "*.dll",
+    "*.obj",
+    "*.o",
+    "*.a",
+    "*.lib",
+    "*.so",
+    "*.dylib",
+    "*.ncb",
+    "*.sdf",
+    "*.suo",
+    "*.pdb",
+    "*.idb",
+    ".DS_Store",
+    "*.class",
+    "*.psd",
+    "*.sublime-workspace"
+  ],
+  "binary_file_patterns": [
+    "*.jpg",
+    "*.jpeg",
+    "*.png",
+    "*.gif",
+    "*.ttf",
+    "*.tga",
+    "*.dds",
+    "*.ico",
+    "*.eot",
+    "*.pdf",
+    "*.swf",
+    "*.jar",
+    "*.zip"
+  ],
+
+  // Indexing
+  "index_files": true,
+  "index_exclude_patterns": [
+    "*.log",
+    "*.cache"
+  ],
+
+  // Word wrap
+  "word_wrap": false,
+  "wrap_width": 0,
+
+  // Auto complete
+  "auto_complete": true,
+  "auto_complete_delay": 50,
+  "auto_complete_selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+  "auto_complete_triggers": [
+    {
+      "selector": "text.html",
+      "characters": "<"
+    },
+    {
+      "selector": "source.rust",
+      "characters": ":.>"
+    },
+    {
+      "selector": "source.c, source.c++",
+      "characters": ".>:"
+    },
+    {
+      "selector": "source.python",
+      "characters": "."
+    }
+  ],
+  "auto_complete_commit_on_tab": true,
+  "auto_complete_with_fields": true,
+
+  // LSP settings (requires LSP package)
+  "lsp_format_on_save": true,
+  "lsp_code_actions_on_save": {
+    "source.organizeImports": true
+  },
+
+  // Rust specific
+  "rust_syntax_checking": true,
+  "rust_syntax_checking_method": "clippy",
+
+  // Python specific
+  "python_interpreter": "python3",
+
+  // Git integration
+  "show_git_status": true,
+
+  // Multiple cursors
+  "block_caret": false,
+  "match_brackets": true,
+  "match_brackets_angle": true,
+  "match_brackets_braces": true,
+  "match_brackets_content": true,
+  "match_brackets_square": true,
+  "match_tags": true,
+
+  // Spell check
+  "spell_check": false,
+  "added_words": [],
+  "ignored_words": [],
+
+  // Various
+  "default_line_ending": "unix",
+  "fallback_encoding": "UTF-8",
+  "show_definitions": true,
+  "auto_find_in_selection": true,
+  "drag_text": false,
+  "draw_centered": false,
+  "auto_match_enabled": true,
+  "dictionary": "Packages/Language - English/en_US.dic",
+  "move_to_limit_on_up_down": false
+}

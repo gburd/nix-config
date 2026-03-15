@@ -1,0 +1,48 @@
+# Mailcap file for Neomutt
+# Defines how to handle different MIME types
+
+# HTML emails - prefer text, but can view in browser
+text/html; w3m -I %{charset} -T text/html -dump %s; nametemplate=%s.html; copiousoutput
+text/html; firefox %s; test=test -n "$DISPLAY"
+
+# Plain text
+text/plain; nvim %s
+
+# Images
+image/*; feh %s; test=test -n "$DISPLAY"
+image/*; chafa %s; copiousoutput
+
+# PDFs
+application/pdf; zathura %s; test=test -n "$DISPLAY"
+application/pdf; pdftotext %s -; copiousoutput
+
+# Office documents
+application/vnd.openxmlformats-officedocument.wordprocessingml.document; libreoffice %s; test=test -n "$DISPLAY"
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; libreoffice %s; test=test -n "$DISPLAY"
+application/vnd.openxmlformats-officedocument.presentationml.presentation; libreoffice %s; test=test -n "$DISPLAY"
+application/msword; libreoffice %s; test=test -n "$DISPLAY"
+application/vnd.ms-excel; libreoffice %s; test=test -n "$DISPLAY"
+
+# Patches (very important for PostgreSQL development)
+text/x-diff; nvim %s
+text/x-patch; nvim %s
+application/x-patch; nvim %s
+
+# Archives
+application/zip; unzip -l %s; copiousoutput
+application/x-tar; tar -tf %s; copiousoutput
+application/x-gzip; tar -tzf %s; copiousoutput
+application/x-bzip2; tar -tjf %s; copiousoutput
+
+# Source code
+text/x-csrc; nvim %s
+text/x-chdr; nvim %s
+text/x-c++src; nvim %s
+text/x-c++hdr; nvim %s
+text/x-python; nvim %s
+text/x-shellscript; nvim %s
+text/x-makefile; nvim %s
+
+# Fallback
+text/*; nvim %s
+application/octet-stream; nvim %s

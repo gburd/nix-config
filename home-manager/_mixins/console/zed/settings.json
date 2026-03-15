@@ -1,0 +1,251 @@
+{
+  // Zed Editor Configuration
+  // Mirroring Neovim setup for consistency
+
+  // Theme and appearance
+  "theme": "Gruvbox Dark Hard",
+  "ui_font_size": 14,
+  "buffer_font_size": 14,
+  "buffer_font_family": "JetBrainsMono Nerd Font",
+  "buffer_font_features": {
+    "calt": true
+  },
+  "buffer_line_height": "comfortable",
+
+  // Editor behavior
+  "tab_size": 2,
+  "hard_tabs": false,
+  "soft_wrap": "editor_width",
+  "show_whitespaces": "selection",
+  "remove_trailing_whitespace_on_save": true,
+  "ensure_final_newline_on_save": true,
+  "format_on_save": "on",
+  "autosave": "off",
+
+  // Line numbers and gutter
+  "relative_line_numbers": false,
+  "gutter": {
+    "line_numbers": true,
+    "code_actions": true,
+    "folds": true
+  },
+
+  // Scrolling
+  "scroll_beyond_last_line": "one_page",
+  "scrollbar": {
+    "show": "always",
+    "git_diff": true,
+    "selected_symbol": true,
+    "diagnostics": true
+  },
+
+  // Cursor
+  "cursor_blink": false,
+  "show_cursor_names": true,
+
+  // Selections
+  "show_selections": true,
+
+  // Terminal
+  "terminal": {
+    "shell": {
+      "program": "fish"
+    },
+    "font_family": "JetBrainsMono Nerd Font",
+    "font_size": 14,
+    "line_height": "comfortable"
+  },
+
+  // Git integration
+  "git": {
+    "enabled": true,
+    "auto_fetch": true,
+    "git_gutter": "tracked_files"
+  },
+
+  // Collaboration
+  "collaboration_panel": {
+    "button": false
+  },
+
+  // Project panel
+  "project_panel": {
+    "button": true,
+    "default_width": 300,
+    "dock": "left",
+    "file_icons": true,
+    "folder_icons": true,
+    "git_status": true,
+    "indent_size": 20
+  },
+
+  // Outline panel
+  "outline_panel": {
+    "button": true,
+    "default_width": 300,
+    "dock": "right"
+  },
+
+  // Inlay hints
+  "inlay_hints": {
+    "enabled": true,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true
+  },
+
+  // Diagnostics
+  "diagnostics": {
+    "include_warnings": true
+  },
+
+  // LSP configuration
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": {
+          "command": "clippy"
+        },
+        "cargo": {
+          "features": "all"
+        }
+      }
+    },
+    "clangd": {
+      "binary": {
+        "path": "clangd"
+      }
+    },
+    "pyright": {
+      "settings": {
+        "python": {
+          "analysis": {
+            "typeCheckingMode": "basic"
+          }
+        }
+      }
+    }
+  },
+
+  // Language-specific settings
+  "languages": {
+    "Rust": {
+      "tab_size": 4,
+      "format_on_save": "on",
+      "formatter": "language_server",
+      "hard_tabs": false
+    },
+    "C": {
+      "tab_size": 4,
+      "format_on_save": "on",
+      "formatter": "language_server",
+      "hard_tabs": false
+    },
+    "C++": {
+      "tab_size": 4,
+      "format_on_save": "on",
+      "formatter": "language_server",
+      "hard_tabs": false
+    },
+    "Python": {
+      "tab_size": 4,
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "black",
+          "arguments": ["-"]
+        }
+      },
+      "hard_tabs": false
+    },
+    "JavaScript": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "hard_tabs": false
+    },
+    "TypeScript": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "hard_tabs": false
+    },
+    "JSON": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "hard_tabs": false
+    },
+    "Markdown": {
+      "tab_size": 2,
+      "format_on_save": "off",
+      "hard_tabs": false,
+      "soft_wrap": "preferred_line_length",
+      "preferred_line_length": 80
+    },
+    "Shell Script": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "shfmt",
+          "arguments": ["-i", "2", "-"]
+        }
+      },
+      "hard_tabs": false
+    },
+    "SQL": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "pgformatter",
+          "arguments": []
+        }
+      },
+      "hard_tabs": false
+    },
+    "Nix": {
+      "tab_size": 2,
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "nixpkgs-fmt",
+          "arguments": []
+        }
+      },
+      "hard_tabs": false
+    }
+  },
+
+  // File associations
+  "file_types": {
+    "Dockerfile": ["Dockerfile*"],
+    "JSON": ["*.json", "*.jsonc"],
+    "Shell Script": ["*.sh", "*.bash", "*.zsh"]
+  },
+
+  // Features
+  "assistant": {
+    "enabled": false
+  },
+  "chat_panel": {
+    "enabled": false
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+
+  // Vim mode
+  "vim_mode": true,
+  "vim": {
+    "use_system_clipboard": "always",
+    "use_multiline_find": true
+  },
+
+  // Preview tabs
+  "preview_tabs": {
+    "enabled": true
+  },
+
+  // Auto-update
+  "auto_update": false
+}

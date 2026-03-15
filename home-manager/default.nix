@@ -57,6 +57,10 @@ in
       allowUnfree = true;
       # Workaround for https://github.com/nix-community/home-manager/issues/2942
       allowUnfreePredicate = _: true;
+      # Allow insecure packages for development tools
+      permittedInsecurePackages = [
+        "openssl-1.1.1w"
+      ];
     };
   };
 

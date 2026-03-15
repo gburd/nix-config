@@ -151,9 +151,9 @@ with lib.hm.gvariant;
       emacs
       erlang
       file
-      gcc
-      gdb
-      gnumake
+      # gcc  # Removed: conflicts with gcc14 from console/default.nix
+      # gdb  # Removed: provided by console/gdb
+      # gnumake  # Removed: provided by console/default.nix
       htop
       libtool
       lsof
@@ -161,13 +161,13 @@ with lib.hm.gvariant;
       m4
       openssl
       perl
-      pkg-config
+      # pkg-config  # Removed: provided by console/default.nix
       plocate
       python3
       rebar3
-      ripgrep
-      tig
-      tree
+      # ripgrep  # Removed: provided by console/default.nix
+      # tig  # Removed: provided by cli mixin
+      # tree  # Removed: provided by cli mixin
       tree-sitter
       unstable.element-desktop
       unstable.flyctl

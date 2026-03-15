@@ -1,0 +1,228 @@
+# GDB initialization file for PostgreSQL development
+# Place in ~/.gdbinit or source from project-specific .gdbinit
+
+# Enable pretty printing
+set print pretty on
+set print object on
+set print static-members on
+set print vtbl on
+set print demangle on
+set demangle-style gnu-v3
+set print sevenbit-strings off
+
+# History
+set history save on
+set history size 10000
+set history filename ~/.gdb_history
+
+# Pagination
+set pagination off
+
+# Follow forks (useful for PostgreSQL backend processes)
+set follow-fork-mode child
+set detach-on-fork on
+
+# Show line numbers
+set listsize 20
+
+# Thread naming
+set print thread-events off
+
+# Disable confirmation prompts
+set confirm off
+
+# Enable TUI mode by default (can toggle with Ctrl-X A)
+# tui enable
+
+# Python pretty printers for PostgreSQL structures
+python
+import sys
+import os
+
+# Add PostgreSQL-specific pretty printers directory if it exists
+# Adjust this path to your PostgreSQL source directory
+pg_source = os.path.expanduser("~/src/postgresql")
+gdb_pp_path = os.path.join(pg_source, "src/tools/gdb")
+
+if os.path.exists(gdb_pp_path):
+    sys.path.insert(0, gdb_pp_path)
+    try:
+        import pg_printers
+        pg_printers.register_printers()
+        print("PostgreSQL pretty printers loaded")
+    except ImportError:
+        print("PostgreSQL pretty printers not found")
+
+end
+
+# Common PostgreSQL debugging helpers
+
+define pbacktrace
+    # Print backtrace with local variables
+    backtrace full
+end
+
+document pbacktrace
+Print a full backtrace with local variables
+end
+
+define pstack
+    # Print just the stack trace
+    where
+end
+
+document pstack
+Print stack trace without local variables
+end
+
+define pnode
+    # Print a PostgreSQL Node
+    if $argc == 0
+        help pnode
+    else
+        print *($arg0)
+    end
+end
+
+document pnode
+Print a PostgreSQL Node structure
+Usage: pnode <node_pointer>
+end
+
+define plist
+    # Print PostgreSQL List structure
+    if $argc == 0
+        help plist
+    else
+        print *($arg0)
+        set $list = (List *)$arg0
+        set $cell = $list->head
+        set $i = 0
+        while $cell
+            printf "Element %d: ", $i
+            print *$cell
+            set $cell = $cell->next
+            set $i = $i + 1
+        end
+    end
+end
+
+document plist
+Print a PostgreSQL List structure
+Usage: plist <list_pointer>
+end
+
+define pquery
+    # Print a Query structure
+    if $argc == 0
+        help pquery
+    else
+        print *($arg0)
+    end
+end
+
+document pquery
+Print a PostgreSQL Query structure
+Usage: pquery <query_pointer>
+end
+
+define pplan
+    # Print a Plan structure
+    if $argc == 0
+        help pplan
+    else
+        print *($arg0)
+    end
+end
+
+document pplan
+Print a PostgreSQL Plan structure
+Usage: pplan <plan_pointer>
+end
+
+define pbackend
+    # Attach to a PostgreSQL backend process
+    if $argc == 0
+        help pbackend
+    else
+        attach $arg0
+    end
+end
+
+document pbackend
+Attach to a PostgreSQL backend process
+Usage: pbackend <pid>
+end
+
+# Breakpoint shortcuts for common PostgreSQL functions
+define bexec
+    break exec_simple_query
+end
+
+document bexec
+Set breakpoint at exec_simple_query
+end
+
+define bplan
+    break standard_planner
+end
+
+document bplan
+Set breakpoint at standard_planner
+end
+
+define bparse
+    break raw_parser
+end
+
+document bparse
+Set breakpoint at raw_parser
+end
+
+define berror
+    break errfinish
+end
+
+document berror
+Set breakpoint at errfinish (error handler)
+end
+
+define belog
+    break elog_finish
+end
+
+document belog
+Set breakpoint at elog_finish
+end
+
+# Convenience commands for examining PostgreSQL memory contexts
+define pmemctx
+    if $argc == 0
+        help pmemctx
+    else
+        print *((MemoryContext)$arg0)
+    end
+end
+
+document pmemctx
+Print a PostgreSQL MemoryContext
+Usage: pmemctx <context_pointer>
+end
+
+# Print current memory context
+define pcurctx
+    print *CurrentMemoryContext
+end
+
+document pcurctx
+Print the current PostgreSQL MemoryContext
+end
+
+# Source project-specific gdbinit if it exists
+shell if [ -f ./.gdbinit ]; then echo "source ./.gdbinit" >> /tmp/gdb_source_local; fi
+source /tmp/gdb_source_local
+shell rm -f /tmp/gdb_source_local
+
+print "PostgreSQL GDB configuration loaded"
+print "Common commands: pbacktrace, pnode, plist, pquery, pplan"
+print "Breakpoint shortcuts: bexec, bplan, bparse, berror"

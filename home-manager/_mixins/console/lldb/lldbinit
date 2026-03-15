@@ -1,0 +1,175 @@
+# LLDB initialization file for PostgreSQL development
+# Place in ~/.lldbinit or source from project-specific .lldbinit
+
+# Settings
+settings set target.process.follow-fork-mode child
+settings set target.process.detach-on-fork true
+settings set target.disable-aslr false
+settings set stop-line-count-before 3
+settings set stop-line-count-after 3
+
+# History
+settings set target.preload-symbols true
+settings set interpreter.save-session-on-quit true
+
+# Display settings
+settings set frame-format frame #${frame.index}: ${frame.pc}{ ${module.file.basename}{`${function.name-with-args}${function.pc-offset}}}{ at ${line.file.basename}:${line.number}}\n
+settings set thread-format thread #${thread.index}: tid = ${thread.id}{, ${frame.pc}}{, name = ${thread.name}}{, queue = ${thread.queue}}{, stop reason = ${thread.stop-reason}}\n
+
+# Source-level debugging
+settings set stop-disassembly-display never
+settings set target.prefer-dynamic-value no-dynamic-values
+
+# PostgreSQL-specific type summaries and synthetic children
+# These help visualize PostgreSQL data structures
+
+# Command aliases for common PostgreSQL debugging tasks
+command alias pbt thread backtrace all
+command alias pf frame select
+command alias pv frame variable
+command alias pl process list
+
+# Custom commands for PostgreSQL structures
+
+command script import lldb
+
+# Python scripts for PostgreSQL pretty printing
+script
+import lldb
+import os
+import sys
+
+def __lldb_init_module(debugger, internal_dict):
+    # Add PostgreSQL source directory to path if it exists
+    pg_source = os.path.expanduser("~/src/postgresql")
+    lldb_pp_path = os.path.join(pg_source, "src/tools/lldb")
+
+    if os.path.exists(lldb_pp_path):
+        sys.path.insert(0, lldb_pp_path)
+        try:
+            import pg_lldb_printers
+            pg_lldb_printers.register_printers(debugger)
+            print("PostgreSQL LLDB pretty printers loaded")
+        except ImportError:
+            print("PostgreSQL LLDB pretty printers not found")
+
+    print("PostgreSQL LLDB configuration loaded")
+
+# Helper function to print PostgreSQL Node structures
+def print_node(debugger, command, result, internal_dict):
+    """Print a PostgreSQL Node structure"""
+    target = debugger.GetSelectedTarget()
+    process = target.GetProcess()
+    thread = process.GetSelectedThread()
+    frame = thread.GetSelectedFrame()
+
+    if not command:
+        result.AppendMessage("Usage: pnode <variable_name>")
+        return
+
+    var = frame.FindVariable(command)
+    if var.IsValid():
+        result.AppendMessage(str(var))
+    else:
+        result.AppendMessage(f"Variable '{command}' not found")
+
+# Helper function to print PostgreSQL List structures
+def print_list(debugger, command, result, internal_dict):
+    """Print a PostgreSQL List structure"""
+    target = debugger.GetSelectedTarget()
+    process = target.GetProcess()
+    thread = process.GetSelectedThread()
+    frame = thread.GetSelectedFrame()
+
+    if not command:
+        result.AppendMessage("Usage: plist <variable_name>")
+        return
+
+    var = frame.FindVariable(command)
+    if var.IsValid():
+        result.AppendMessage(str(var))
+        # TODO: Iterate through list elements
+    else:
+        result.AppendMessage(f"Variable '{command}' not found")
+
+# Helper function to print PostgreSQL Query structures
+def print_query(debugger, command, result, internal_dict):
+    """Print a PostgreSQL Query structure"""
+    target = debugger.GetSelectedTarget()
+    process = target.GetProcess()
+    thread = process.GetSelectedThread()
+    frame = thread.GetSelectedFrame()
+
+    if not command:
+        result.AppendMessage("Usage: pquery <variable_name>")
+        return
+
+    var = frame.FindVariable(command)
+    if var.IsValid():
+        result.AppendMessage(str(var))
+    else:
+        result.AppendMessage(f"Variable '{command}' not found")
+
+# Helper function to attach to PostgreSQL backend
+def attach_backend(debugger, command, result, internal_dict):
+    """Attach to a PostgreSQL backend process"""
+    if not command:
+        result.AppendMessage("Usage: pbackend <pid>")
+        return
+
+    try:
+        pid = int(command)
+        target = debugger.CreateTarget("")
+        error = lldb.SBError()
+        process = target.AttachToProcessWithID(debugger.GetListener(), pid, error)
+        if error.Success():
+            result.AppendMessage(f"Attached to PostgreSQL backend {pid}")
+        else:
+            result.AppendMessage(f"Failed to attach: {error.GetCString()}")
+    except ValueError:
+        result.AppendMessage("Invalid PID")
+
+# Register custom commands
+lldb.debugger.HandleCommand('command script add -f lldbinit.print_node pnode')
+lldb.debugger.HandleCommand('command script add -f lldbinit.print_list plist')
+lldb.debugger.HandleCommand('command script add -f lldbinit.print_query pquery')
+lldb.debugger.HandleCommand('command script add -f lldbinit.attach_backend pbackend')
+
+# Common breakpoint shortcuts
+def break_exec(debugger, command, result, internal_dict):
+    """Set breakpoint at exec_simple_query"""
+    debugger.HandleCommand('breakpoint set --name exec_simple_query')
+
+def break_plan(debugger, command, result, internal_dict):
+    """Set breakpoint at standard_planner"""
+    debugger.HandleCommand('breakpoint set --name standard_planner')
+
+def break_parse(debugger, command, result, internal_dict):
+    """Set breakpoint at raw_parser"""
+    debugger.HandleCommand('breakpoint set --name raw_parser')
+
+def break_error(debugger, command, result, internal_dict):
+    """Set breakpoint at errfinish"""
+    debugger.HandleCommand('breakpoint set --name errfinish')
+
+def break_elog(debugger, command, result, internal_dict):
+    """Set breakpoint at elog_finish"""
+    debugger.HandleCommand('breakpoint set --name elog_finish')
+
+# Register breakpoint shortcuts
+lldb.debugger.HandleCommand('command script add -f lldbinit.break_exec bexec')
+lldb.debugger.HandleCommand('command script add -f lldbinit.break_plan bplan')
+lldb.debugger.HandleCommand('command script add -f lldbinit.break_parse bparse')
+lldb.debugger.HandleCommand('command script add -f lldbinit.break_error berror')
+lldb.debugger.HandleCommand('command script add -f lldbinit.break_elog belog')
+
+print("Custom PostgreSQL commands loaded:")
+print("  pnode <var> - Print PostgreSQL Node")
+print("  plist <var> - Print PostgreSQL List")
+print("  pquery <var> - Print PostgreSQL Query")
+print("  pbackend <pid> - Attach to backend process")
+print("  bexec, bplan, bparse, berror, belog - Common breakpoints")
+script
+
+# Source project-specific lldbinit if it exists
+command source -s true .lldbinit

@@ -1,0 +1,135 @@
+[
+  // Zed Editor Keybindings
+  // Designed to complement Vim mode and match Neovim setup
+
+  // General
+  {
+    "context": "Editor",
+    "bindings": {
+      // Save
+      "ctrl-s": "workspace::Save",
+
+      // Find
+      "ctrl-p": "file_finder::Toggle",
+      "ctrl-shift-f": "workspace::NewSearch",
+
+      // Panels
+      "ctrl-b": "workspace::ToggleLeftDock",
+      "ctrl-j": "workspace::ToggleBottomDock",
+
+      // Terminal
+      "ctrl-`": "terminal_panel::ToggleFocus"
+    }
+  },
+
+  // Vim mode extensions
+  {
+    "context": "vim_mode == normal",
+    "bindings": {
+      // Leader key mappings (space as leader)
+      // File operations
+      "space f f": "file_finder::Toggle",
+      "space f r": "pane::OpenRecent",
+      "space f s": "workspace::Save",
+
+      // Search
+      "space s f": "file_finder::Toggle",
+      "space s g": "workspace::NewSearch",
+      "space s r": "search::SelectNextMatch",
+
+      // Git
+      "space g s": "editor::ToggleGitBlame",
+      "space g d": "editor::ToggleHunkDiff",
+
+      // LSP
+      "space l r": "editor::Rename",
+      "space l a": "editor::ToggleCodeActions",
+      "space l d": "editor::GoToDefinition",
+      "space l D": "editor::GoToDeclaration",
+      "space l i": "editor::GoToImplementation",
+      "space l t": "editor::GoToTypeDefinition",
+      "space l f": "editor::Format",
+
+      // Diagnostics
+      "space d d": "diagnostics::Deploy",
+      "space d n": "editor::GoToDiagnostic",
+      "space d p": "editor::GoToPrevDiagnostic",
+
+      // Buffer/Pane management
+      "space b d": "pane::CloseActiveItem",
+      "space b n": "pane::ActivateNextItem",
+      "space b p": "pane::ActivatePrevItem",
+
+      // Window navigation (matching nvim's Ctrl-hjkl)
+      "ctrl-h": "workspace::ActivatePaneInDirection(Left)",
+      "ctrl-j": "workspace::ActivatePaneInDirection(Down)",
+      "ctrl-k": "workspace::ActivatePaneInDirection(Up)",
+      "ctrl-l": "workspace::ActivatePaneInDirection(Right)",
+
+      // Terminal
+      "space t t": "terminal_panel::ToggleFocus",
+
+      // Project tree
+      "space e": "workspace::ToggleLeftDock",
+
+      // Comment
+      "g c c": "editor::ToggleComments",
+
+      // Go to references (matching nvim grr)
+      "g r r": "editor::FindAllReferences",
+      "g r n": "editor::Rename",
+      "g r a": "editor::ToggleCodeActions",
+      "g r d": "editor::GoToDefinition",
+      "g r D": "editor::GoToDeclaration",
+      "g r i": "editor::GoToImplementation",
+      "g r t": "editor::GoToTypeDefinition",
+
+      // Hover info
+      "K": "editor::Hover"
+    }
+  },
+
+  // Visual mode
+  {
+    "context": "vim_mode == visual",
+    "bindings": {
+      // Comment selection
+      "g c": "editor::ToggleComments",
+
+      // Code actions on selection
+      "space l a": "editor::ToggleCodeActions"
+    }
+  },
+
+  // Terminal specific
+  {
+    "context": "Terminal",
+    "bindings": {
+      "ctrl-`": "workspace::ToggleBottomDock",
+      "esc esc": "workspace::ToggleBottomDock"
+    }
+  },
+
+  // Project panel
+  {
+    "context": "ProjectPanel",
+    "bindings": {
+      "a": "project_panel::NewFile",
+      "shift-a": "project_panel::NewDirectory",
+      "d": "project_panel::Delete",
+      "r": "project_panel::Rename",
+      "x": "project_panel::Cut",
+      "c": "project_panel::Copy",
+      "p": "project_panel::Paste",
+      "esc": "workspace::ToggleLeftDock"
+    }
+  },
+
+  // Outline panel
+  {
+    "context": "OutlinePanel",
+    "bindings": {
+      "esc": "workspace::ToggleRightDock"
+    }
+  }
+]
