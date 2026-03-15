@@ -47,7 +47,7 @@
       # Utilities
       ripgrep
       fd
-      gcc
+      # gcc  # Removed: provided by console/default.nix as gcc14
       nnn
       zig
     ];
