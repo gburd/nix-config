@@ -48,8 +48,8 @@ in
 
     homeMode = "0755";
     isNormalUser = true;
-    hashedPassword = "$6$RDOZHdTwt.BuOR4C$fYDkyb3yppbgX0ewPbsKabS2u9W.wyrRJONQPtugrO/gBJCzsWkfVIVYOAj07Qar1yqeYJBlBkYSFAgGe5ssw.";
-    # TODO: hashedPasswordFile = config.sops.secrets.gburd-password.path;
+    # Password managed via SOPS secrets (generate with: mkpasswd -m sha-512)
+    hashedPasswordFile = config.sops.secrets.gburd-password.path;
     openssh.authorizedKeys.keys = [
       (builtins.readFile ../../../../home-manager/_mixins/users/gburd/ssh.pub)
     ];

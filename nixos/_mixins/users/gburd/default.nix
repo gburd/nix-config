@@ -28,9 +28,8 @@ in
       config.services.kubo.group
     ];
 
-    # mkpasswd -m sha-512
-    # TODO: hashedPasswordFile = config.sops.secrets.gburd-password.path;
-    hashedPassword = "$6$RDOZHdTwt.BuOR4C$fYDkyb3yppbgX0ewPbsKabS2u9W.wyrRJONQPtugrO/gBJCzsWkfVIVYOAj07Qar1yqeYJBlBkYSFAgGe5ssw.";
+    # Password managed via SOPS secrets (generate with: mkpasswd -m sha-512)
+    hashedPasswordFile = config.sops.secrets.gburd-password.path;
     homeMode = "0755";
     isNormalUser = true;
     openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;

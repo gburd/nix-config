@@ -9,7 +9,8 @@
   systemd.services.sshd.wantedBy = pkgs.lib.mkForce [ "multi-user.target" ];
   users.users.root = {
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPvS6pE5Y8Yc3YnKpKinjVKyziqnb7JZJGonDKnZi3I Greg Burd <gburd@symas.com> - 2023-08-03"
+      # Use personal key only, not work keys
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGSNy/vMr2Zk9pvfjQnxiU9F8CGQJ wCiXDxPecKG9/q+ Greg Burd <greg@burd.me> - 2023-01-23"
     ];
   };
 

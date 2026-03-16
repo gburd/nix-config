@@ -10,11 +10,6 @@ rec {
       JwCiXDxPecKG9/q+ Greg Burd <greg@burd.me> - 2023-01-23
     '';
 
-    symas.gburd = parseFriendlyKey ''
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPvS6pE5Y8Yc3YnKpKinjVKyziq
-      nb7JZJGonDKnZi3I Greg Burd <gburd@symas.com> - 2023-08-03
-    '';
-
     floki = {
       host = parseFriendlyKey ''
         ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKG7dVoHbOjQ/i45ATeli7mYLl1b
@@ -49,7 +44,6 @@ rec {
   groups = {
     privileged_users = with systems; [
       floki.gburd
-      symas.gburd
       floki.host
       floki.root
       #      pixel6a.nix-on-droid
