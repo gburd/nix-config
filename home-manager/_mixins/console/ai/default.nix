@@ -66,7 +66,7 @@
           };
         };
       };
-    }};
+    };
 
     # GitHub dashboard
     # NOTE: Using built-in gh-dash module (no custom presets support)
