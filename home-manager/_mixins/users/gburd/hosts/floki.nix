@@ -10,6 +10,8 @@ with lib.hm.gvariant;
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
   ];
+  # GNOME Terminal/Console paste warnings cannot be disabled via dconf
+  # Use Alacritty instead (already configured) to avoid paste confirmation dialogs
   dconf.settings = { };
 
   # Sops secrets configuration

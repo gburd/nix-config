@@ -54,13 +54,13 @@
       yq-go # Terminal `jq` for YAML
 
       # Development toolchains
-      gcc14 # Latest GCC with debug symbols
+      gcc14 # Latest GCC with debug symbols (includes binutils wrapper)
       # clang_18 # Removed: conflicts with gcc14 (both provide cpp wrapper)
       # clang-tools provides clangd for LSP, llvmPackages provides LLVM libs
       llvmPackages_18.libllvm # LLVM libraries
       # musl # musl libc for static linking (conflicts with glibc, both provide iconv)
       glibc.dev # glibc development headers
-      binutils # Binary utilities (ld, as, etc.)
+      # binutils # Removed: conflicts with gcc14 wrapper (both provide ld, as, etc.)
       pkg-config # Build configuration tool
       autoconf # GNU Autoconf
       automake # GNU Automake
