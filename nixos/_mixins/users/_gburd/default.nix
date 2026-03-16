@@ -52,7 +52,6 @@ in
     # TODO: hashedPasswordFile = config.sops.secrets.gburd-password.path;
     openssh.authorizedKeys.keys = [
       (builtins.readFile ../../../../home-manager/_mixins/users/gburd/ssh.pub)
-      (builtins.readFile ../../../../home-manager/_mixins/users/gburd/symas-ssh.pub)
     ];
     packages = [ pkgs.home-manager ];
     shell = pkgs.fish;
