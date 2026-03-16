@@ -67,12 +67,13 @@
         };
       };
     };
+  };
 
-    # GitHub dashboard
-    # NOTE: Using built-in gh-dash module (no custom presets support)
-    programs.gh-dash = {
-      enable = true;
-    };
+  # GitHub dashboard
+  # NOTE: Using built-in gh-dash module (no custom presets support)
+  programs.gh-dash = {
+    enable = true;
+  };
 
     # Ensure necessary packages are installed
     home.packages = with pkgs; [
