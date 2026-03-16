@@ -20,29 +20,6 @@ in
 
     "${config.xdg.configHome}/alacritty/alacritty.yml".source = ./alacritty.yml;
 
-    ".ssh/config".text = "
-      Host *
-           IdentityAgent ~/.1password/agent.sock
-           Compression yes
-           ConnectTimeout 5
-           ControlMaster auto
-           ControlPath /tmp/ssh_mux_%h_%p_%r
-           ControlPersist 10m
-           ControlPersist yes
-           ForwardAgent yes
-           ForwardX11 yes
-           LogLevel QUIET
-           ServerAliveInterval 60
-           ServerAliveCountMax 2
-           StrictHostKeyChecking no
-           TCPKeepAlive yes
-           UserKnownHostsFile /dev/null
-
-      Host github.com
-        HostName github.com
-        User git
-    ";
-
     "${config.xdg.configHome}/nixpkgs/config.nix".text = ''
       {
         allowUnfree = true;
@@ -66,6 +43,30 @@ in
     ssh = {
       enable = true;
       enableDefaultConfig = false;
+      matchBlocks = {
+        "*" = {
+          identityAgent = "~/.1password/agent.sock";
+          compression = true;
+          extraOptions = {
+            ConnectTimeout = "5";
+            ControlMaster = "auto";
+            ControlPath = "/tmp/ssh_mux_%h_%p_%r";
+            ControlPersist = "10m";
+            LogLevel = "QUIET";
+            ServerAliveInterval = "60";
+            ServerAliveCountMax = "2";
+            StrictHostKeyChecking = "no";
+            TCPKeepAlive = "yes";
+            UserKnownHostsFile = "/dev/null";
+          };
+          forwardAgent = true;
+          forwardX11 = true;
+        };
+        "github.com" = {
+          hostname = "github.com";
+          user = "git";
+        };
+      };
     };
     fish = {
       enable = true;
