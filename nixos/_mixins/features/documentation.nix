@@ -1,13 +1,13 @@
 # Optional documentation configuration
 # Import this mixin to enable comprehensive man pages and documentation
 
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   # Install comprehensive man pages
   environment.systemPackages = with pkgs; [
-    man-pages           # Linux programmer's manual (sections 2, 3, 4, 5, 7, 8)
-    man-pages-posix     # POSIX programmer's manual
+    man-pages # Linux programmer's manual (sections 2, 3, 4, 5, 7, 8)
+    man-pages-posix # POSIX programmer's manual
   ];
 
   documentation = {

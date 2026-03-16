@@ -1,7 +1,7 @@
 # Advanced example: Building specific packages with debug symbols
 # This shows how to get debug symbols for system libraries you're debugging
 
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> { } }:
 
 let
   # Helper function to build a package with debug info
@@ -14,20 +14,20 @@ let
 
     # Add debug compiler flags
     NIX_CFLAGS_COMPILE = toString (
-      (oldAttrs.NIX_CFLAGS_COMPILE or []) ++ [
-        "-g"        # Include debug symbols
-        "-O0"       # No optimization (easier debugging)
-        "-fno-omit-frame-pointer"  # Keep frame pointers
+      (oldAttrs.NIX_CFLAGS_COMPILE or [ ]) ++ [
+        "-g" # Include debug symbols
+        "-O0" # No optimization (easier debugging)
+        "-fno-omit-frame-pointer" # Keep frame pointers
       ]
     );
 
     # For CMake projects
-    cmakeFlags = (oldAttrs.cmakeFlags or []) ++ [
+    cmakeFlags = (oldAttrs.cmakeFlags or [ ]) ++ [
       "-DCMAKE_BUILD_TYPE=Debug"
     ];
 
     # For Meson projects
-    mesonFlags = (oldAttrs.mesonFlags or []) ++ [
+    mesonFlags = (oldAttrs.mesonFlags or [ ]) ++ [
       "-Dbuildtype=debug"
     ];
   });

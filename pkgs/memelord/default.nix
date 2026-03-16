@@ -1,5 +1,4 @@
-{ lib
-, writeShellScriptBin
+{ writeShellScriptBin
 , nodejs
 }:
 

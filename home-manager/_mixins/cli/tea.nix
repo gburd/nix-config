@@ -5,7 +5,7 @@
 
 {
   home.packages = with pkgs; [
-    tea  # Gitea/Forgejo CLI
+    tea # Gitea/Forgejo CLI
   ];
 
   # tea manages its own config at ~/.config/tea/config.yml

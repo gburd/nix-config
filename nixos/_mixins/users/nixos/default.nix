@@ -102,33 +102,37 @@ in
   # TODO: Determine cause of error in
   # nix.registry.nixpkgs.to.path
 
-  config.users.users.nixos = {
-    description = "NixOS";
-    extraGroups = [
-      "audio"
-      "networkmanager"
-      "users"
-      "video"
-      "wheel"
-    ]
-    ++ ifExists [
-      "docker"
-      "podman"
-    ];
-    group = "nixos";
-    isNormalUser = true;
-    homeMode = "0755";
+  config = {
+    users = {
+      users.nixos = {
+        description = "NixOS";
+        extraGroups = [
+          "audio"
+          "networkmanager"
+          "users"
+          "video"
+          "wheel"
+        ]
+        ++ ifExists [
+          "docker"
+          "podman"
+        ];
+        group = "nixos";
+        isNormalUser = true;
+        homeMode = "0755";
 
-    # mkpasswd -m sha-512
-    hashedPassword = "$6$Dq4WmzyLjQUTyXT1$0Ll5rZ0R33qfGnEmAOZQuh.6udRN19luImYAmqsCKxfV14yHQ8vt9B/pf945..r1jTmlu7wfAXSe7kfoBm9jK0";
-    openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
+        # mkpasswd -m sha-512
+        hashedPassword = "$6$Dq4WmzyLjQUTyXT1$0Ll5rZ0R33qfGnEmAOZQuh.6udRN19luImYAmqsCKxfV14yHQ8vt9B/pf945..r1jTmlu7wfAXSe7kfoBm9jK0";
+        openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
 
-    packages = [ pkgs.home-manager ];
-    shell = pkgs.fish;
+        packages = [ pkgs.home-manager ];
+        shell = pkgs.fish;
+      };
+      groups.nixos = { };
+    };
+
+    system.stateVersion = lib.mkForce lib.trivial.release;
+    environment.systemPackages = [ install-system ];
+    services.kmscon.autologinUser = "${username}";
   };
-  config.users.groups.nixos = { };
-
-  config.system.stateVersion = lib.mkForce lib.trivial.release;
-  config.environment.systemPackages = [ install-system ];
-  config.services.kmscon.autologinUser = "${username}";
 }

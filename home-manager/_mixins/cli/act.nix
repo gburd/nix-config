@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    act  # Run GitHub Actions locally with Docker
+    act # Run GitHub Actions locally with Docker
   ];
 
   # Optional: Configure act defaults
