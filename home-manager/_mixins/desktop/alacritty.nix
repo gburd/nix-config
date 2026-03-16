@@ -13,6 +13,13 @@
       scrolling = {
         history = 10000;
       };
+      keyboard.bindings = [
+        {
+          key = "Return";
+          mods = "Control|Shift";
+          action = "SpawnNewInstance";
+        }
+      ];
     };
   };
 

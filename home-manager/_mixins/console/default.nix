@@ -61,10 +61,13 @@
       # musl # musl libc for static linking (conflicts with glibc, both provide iconv)
       glibc.dev # glibc development headers
       # binutils # Removed: conflicts with gcc14 wrapper (both provide ld, as, etc.)
+      gnumake # GNU Make
       pkg-config # Build configuration tool
       autoconf # GNU Autoconf
       automake # GNU Automake
       libtool # Generic library support script
+      tree # Directory tree viewer
+      tig # TUI for Git
 
       # Virtualization tools
       qemu # Full system emulator (includes KVM support)
