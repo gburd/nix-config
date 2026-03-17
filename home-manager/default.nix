@@ -73,6 +73,7 @@ in
       keep-outputs = true;
       keep-derivations = true;
       warn-dirty = false;
+      sandbox = "relaxed";
     };
   };
 }
