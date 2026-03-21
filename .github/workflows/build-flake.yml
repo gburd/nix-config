@@ -1,5 +1,19 @@
 name: Build 🏗️ Flake Configuration
 
+# This workflow validates the Nix configuration on every push/PR.
+#
+# Local validation (run BEFORE committing):
+#   ./scripts/validate-config.sh
+#
+# If this workflow fails:
+#   1. Pull latest changes: git pull
+#   2. Run local validation: ./scripts/validate-config.sh
+#   3. Check error messages for specific file/line references
+#   4. Common issues: missing braces, import errors, option conflicts
+#
+# Emergency rollback:
+#   sudo nixos-rebuild switch --rollback
+
 on:
   push:
     branches: [main]

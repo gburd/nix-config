@@ -14,7 +14,7 @@
         "gebbhagfogifgggkldgodflihgfeippi" # Return YouTube Dislike
         "edlifbnjlicfpckhgjhflgkeeibhhcii" # Screenshot Tool
         "chphlpgkkbolifaimnlloiipkdnihall" # OneTab
-        "aeblfdkhhhdcdjpifhhbdiojplfjncoa" # 1Password
+        "khgocmkkpikpnmmkgmdnfckapcdkgfaf" # 1Password Beta
       ];
       extraOpts = {
         "AutofillAddressEnabled" = false;

@@ -23,8 +23,6 @@ in
     modules = [
       ../nixos
       inputs.agenix.nixosModules.default
-      # TODO: enable when services.displayManager is fixed
-      #inputs.chaotic.nixosModules.default
     ] ++ (inputs.nixpkgs.lib.optionals (installer != null) [ installer ]);
   };
 
