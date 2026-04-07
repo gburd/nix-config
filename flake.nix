@@ -93,6 +93,7 @@
 
         # Workstations
         "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
+        "gburd@meh" = libx.mkHome { hostname = "meh"; username = "gburd"; desktop = "gnome"; };
         "gburd@arnold" = libx.mkHome { hostname = "arnold"; username = "gburd"; };
 
         # Servers
@@ -114,6 +115,9 @@
         # Workstations
         # Lenovo Carbon X1 Extreme Gen 5 - x86_64
         floki = libx.mkHost { systemType = "workstation"; hostname = "floki"; username = "gburd"; desktop = "gnome"; };
+
+        # Mac Pro "Trash Can" (Late 2013) - x86_64
+        meh = libx.mkHost { systemType = "workstation"; hostname = "meh"; username = "gburd"; desktop = "gnome"; };
 
         # Servers
         # Can be executed locally:

@@ -9,6 +9,12 @@ with lib.hm.gvariant;
     ../../../desktop/vorta.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
+    # Email and productivity services
+    ../../../services/protonmail-bridge.nix
+    ../../../services/vdirsyncer.nix
+    ../../../services/proton-drive.nix
+    ../../../console/khal.nix
+    ../../../console/taskbook.nix
   ];
   # GNOME Terminal/Console paste warnings cannot be disabled via dconf
   # Use Alacritty instead (already configured) to avoid paste confirmation dialogs
@@ -30,6 +36,36 @@ with lib.hm.gvariant;
       "sublime/merge-license" = {
         path = "${config.home.homeDirectory}/.config/sublime-merge-license.bin";
       };
+
+      # Email account credentials (nested structure)
+      "email/proton/user" = { };
+      "email/proton/pass" = { };
+      "email/google/personal/user" = { };
+      "email/google/personal/pass" = { };
+      "email/google/pgus/user" = { };
+      "email/google/pgus/pass" = { };
+      "email/fastmail/user" = { };
+      "email/fastmail/pass" = { };
+      "email/apple/icloud/user" = { };
+      "email/apple/icloud/pass" = { };
+      "email/ms/outlook/user" = { };
+      "email/ms/outlook/pass" = { };
+      "email/amazon/user" = { };
+      "email/amazon/pass" = { };
+
+      # Calendar credentials (nested structure)
+      "calendar/google/personal/client-id" = { };
+      "calendar/google/personal/secret" = { };
+      "calendar/google/pgus/client-id" = { };
+      "calendar/google/pgus/secret" = { };
+      "calendar/apple/icloud/user" = { };
+      "calendar/apple/icloud/pass" = { };
+      "calendar/ms/outlook/user" = { };
+      "calendar/ms/outlook/pass" = { };
+
+      # Proton Drive credentials (nested structure)
+      "drive/proton/user" = { };
+      "drive/proton/pass" = { };
     };
   };
 

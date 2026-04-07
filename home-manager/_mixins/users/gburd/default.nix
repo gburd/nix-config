@@ -31,12 +31,16 @@ in
   home = {
 
     sessionVariables = {
-      # ...
+      # Use 1Password SSH agent
+      SSH_AUTH_SOCK = "$HOME/.1password/agent.sock";
     };
 
     packages = with pkgs; [
       tig
     ];
+
+    # Ensure 1Password SSH agent directory exists
+    file.".1password/.keep".text = "";
   };
 
   programs = {

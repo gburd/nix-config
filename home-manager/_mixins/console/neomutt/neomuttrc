@@ -1,41 +1,42 @@
-# Neomutt Configuration for Fastmail
+# Neomutt Multi-Account Configuration
 # Optimized for PostgreSQL mailing list workflow
 
 # ============================================================================
-# Account Settings (Fastmail)
+# Multi-Account Setup - Press F1-F7 to switch accounts
 # ============================================================================
+#
+# F1 = ProtonMail
+# F2 = Gmail Personal
+# F3 = Gmail Work
+# F4 = Fastmail (default)
+# F5 = iCloud
+# F6 = Outlook
+# F7 = Amazon
+#
+# Default account: Fastmail
+source ~/.config/neomutt/accounts/fastmail.muttrc
 
-# IMAP settings
-set imap_user = "$FASTMAIL_USER"  # Set via environment variable
-set imap_pass = "$FASTMAIL_PASS"  # Set via environment variable or password manager
-set folder = "imaps://imap.fastmail.com:993"
-set spoolfile = "+INBOX"
-set record = "+Sent"
-set postponed = "+Drafts"
-set trash = "+Trash"
+# Account Switching Macros (F1-F7)
+macro index <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
+macro index <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-personal.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Personal"
+macro index <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
+macro index <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
+macro index <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
+macro index <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
+macro index <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
-# SMTP settings
-set smtp_url = "smtps://$FASTMAIL_USER@smtp.fastmail.com:465"
-set smtp_pass = "$FASTMAIL_PASS"
-set ssl_force_tls = yes
-set ssl_starttls = yes
-
-# From header
-set from = "$FASTMAIL_USER"
-set realname = "Your Name"  # Update this
-set use_from = yes
-set envelope_from = yes
+# Same for pager mode
+macro pager <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
+macro pager <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-personal.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Personal"
+macro pager <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
+macro pager <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
+macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
+macro pager <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
+macro pager <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
 # ============================================================================
 # General Settings
 # ============================================================================
-
-# Mailboxes to monitor
-mailboxes +INBOX +Sent +Drafts +Trash +Spam
-
-# Cache for better performance
-set header_cache = "~/.cache/neomutt/headers"
-set message_cachedir = "~/.cache/neomutt/bodies"
 
 # Keep IMAP connection alive
 set imap_keepalive = 300

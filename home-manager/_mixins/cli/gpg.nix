@@ -29,7 +29,7 @@ in
   services.gpg-agent = {
     #TODO: gnupg vs gpg-agent ?
     enable = true;
-    enableSshSupport = true;
+    enableSshSupport = false; # Disabled to use 1Password SSH agent
     # TODO: sshKeys = [ "149F16412997785363112F3DBD713BC91D51B831" ];
     pinentry.package = pinentry-auto; # Use smart wrapper
     enableExtraSocket = true;
