@@ -44,6 +44,7 @@ creation_rules:
     key_groups:
     - age:
       - *floki
+      - *meh
       pgp:
       - *gburd
       - *greg
