@@ -14,9 +14,22 @@ with lib.hm.gvariant;
     ../../../console/taskbook.nix
   ];
 
-  # GNOME Terminal/Console paste warnings cannot be disabled via dconf
-  # Use Alacritty instead (already configured) to avoid paste confirmation dialogs
-  dconf.settings = { };
+  # GNOME configuration
+  dconf.settings = {
+    # Disable paste warnings in GNOME Console
+    "org/gnome/Console" = {
+      unsafe-paste-warning = false;
+    };
+
+    # Fix Alt-Tab window switching
+    "org/gnome/desktop/wm/keybindings" = {
+      switch-windows = [ "<Alt>Tab" ];
+      switch-windows-backward = [ "<Shift><Alt>Tab" ];
+      # Alternative app switcher (if using grouped mode)
+      switch-applications = [ ];
+      switch-applications-backward = [ ];
+    };
+  };
 
   # Sops secrets configuration
   sops = {
