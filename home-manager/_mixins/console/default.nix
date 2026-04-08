@@ -357,8 +357,6 @@
     };
     powerline-go = {
       enable = true;
-      enableBashIntegration = true;
-      enableFishIntegration = true;
       settings = {
         cwd-max-depth = 5;
         cwd-max-dir-size = 12;
