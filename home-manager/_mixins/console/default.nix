@@ -328,8 +328,37 @@
         scrollbar = true;
       };
     };
+    bash = {
+      enable = true;
+      enableCompletion = true;
+      initExtra = ''
+        # Detect if we're running in Claude Code by checking parent process
+        if pgrep -P $PPID claude-code >/dev/null 2>&1 || pgrep -a $PPID | grep -q claude-code; then
+          export CLAUDE_CODE=1
+        fi
+
+        # Use minimal prompt in Claude Code sessions (override powerline-go)
+        if [ -n "$CLAUDE_CODE" ]; then
+          PROMPT_COMMAND=""
+          PS1='\$ '
+        # In nix develop sessions, add a subtle indicator
+        elif [ -n "$IN_NIX_SHELL" ]; then
+          # Let powerline-go handle the prompt, but prepend [nix]
+          POWERLINE_COMMAND="$POWERLINE_COMMAND --shell-var IN_NIX_SHELL"
+        fi
+      '';
+      shellAliases = {
+        diff = "diffr";
+        glow = "glow --pager";
+        ip = "ip --color --brief";
+        top = "btm --basic --tree --hide_table_gap --dot_marker --mem_as_value";
+        tree = "eza --tree";
+      };
+    };
     powerline-go = {
       enable = true;
+      enableBashIntegration = true;
+      enableFishIntegration = true;
       settings = {
         cwd-max-depth = 5;
         cwd-max-dir-size = 12;
