@@ -52,12 +52,51 @@
 
   networking.hostName = "meh";
 
+  # Enable 1Password
+  programs._1password.enable = true;
+  programs._1password-gui = {
+    enable = true;
+    polkitPolicyOwners = [ "gburd" ];
+  };
+
+  # Enable core dumps in current directory with pattern core.<pid>
+  systemd.coredump.extraConfig = ''
+    Storage=none
+  '';
+  security.pam.loginLimits = [
+    { domain = "*"; type = "-"; item = "core"; value = "unlimited"; }
+  ];
+  boot.kernel.sysctl = {
+    "kernel.core_pattern" = "core.%p";
+    "kernel.core_uses_pid" = 1;
+  };
+
   # Mac Pro is a desktop, no power management needed
   powerManagement.enable = false;
+
+  # Disable suspend/sleep/hibernate
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
 
   services = {
     hardware.openrgb = {
       enable = false;  # Mac Pro doesn't support OpenRGB
+    };
+
+    # Disable all power-saving features
+    logind = {
+      lidSwitch = "ignore";
+      lidSwitchDocked = "ignore";
+      lidSwitchExternalPower = "ignore";
+      extraConfig = ''
+        HandlePowerKey=ignore
+        HandleSuspendKey=ignore
+        HandleHibernateKey=ignore
+        HandleLidSwitch=ignore
+        IdleAction=ignore
+      '';
     };
   };
 

@@ -81,6 +81,26 @@
   networking.hosts = {
     "192.168.1.185" = [ "meh" ];
   };
+
+  # Enable 1Password
+  programs._1password.enable = true;
+  programs._1password-gui = {
+    enable = true;
+    polkitPolicyOwners = [ "gburd" ];
+  };
+
+  # Enable core dumps in current directory with pattern core.<pid>
+  systemd.coredump.extraConfig = ''
+    Storage=none
+  '';
+  security.pam.loginLimits = [
+    { domain = "*"; type = "-"; item = "core"; value = "unlimited"; }
+  ];
+  boot.kernel.sysctl = {
+    "kernel.core_pattern" = "core.%p";
+    "kernel.core_uses_pid" = 1;
+  };
+
   powerManagement.powertop.enable = true;
   powerManagement.cpuFreqGovernor = "powersave";
 
