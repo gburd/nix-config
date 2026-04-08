@@ -32,6 +32,11 @@
     polkitPolicyOwners = [ "gburd" ];
   };
 
+  # Disable sudo lecture message
+  security.sudo.extraConfig = ''
+    Defaults lecture = never
+  '';
+
   # Enable core dumps in current directory with pattern core.<pid>
   systemd.coredump.extraConfig = ''
     Storage=none
