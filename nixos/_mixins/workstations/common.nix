@@ -37,6 +37,14 @@
     Defaults lecture = never
   '';
 
+  # Make Nix tools available at traditional FHS paths
+  # Provides /usr/bin/env, /bin/sh, and other standard paths
+  services.envfs.enable = true;
+
+  # Dynamic linker for non-NixOS binaries
+  # Provides /lib64/ld-linux-x86-64.so.2 and other standard library paths
+  programs.nix-ld.enable = true;
+
   # Enable core dumps in current directory with pattern core.<pid>
   systemd.coredump.extraConfig = ''
     Storage=none
