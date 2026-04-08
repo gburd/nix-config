@@ -29,6 +29,11 @@ with lib.hm.gvariant;
       switch-applications = [ ];
       switch-applications-backward = [ ];
     };
+
+    # Disable idle timeout on meh (desktop - never sleep)
+    "org/gnome/desktop/session" = {
+      idle-delay = mkUint32 0;  # Never go idle (overrides gnome.nix default)
+    };
   };
 
   # Sops secrets configuration

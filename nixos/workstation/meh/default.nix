@@ -56,6 +56,7 @@
       HandleHibernateKey = "ignore";
       HandleLidSwitch = "ignore";
       IdleAction = "ignore";
+      IdleActionSec = "0";  # Never trigger idle action
     };
   };
 
