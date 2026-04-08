@@ -10,27 +10,20 @@
     (import ./disks.nix)
     #./hardware-configuration.nix
 
+    # Common workstation configuration
+    ../../_mixins/workstations/common.nix
+
+    # Hardware-specific
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-gpu-nvidia
     inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-laptop-ssd
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x1-extreme-gen4
 
+    # Floki-specific
     ../../_mixins/desktop/daw.nix
-    ../../_mixins/desktop/ente.nix
-    ../../_mixins/desktop/logseq.nix
-    ../../_mixins/hardware/systemd-boot.nix
-    ../../_mixins/hardware/disable-nm-wait.nix
-    #    ../../_mixins/hardware/intel.accelerated-video-playback.nix
     ../../_mixins/hardware/gtx-1050ti.nix
     ../../_mixins/hardware/roccat.nix
-    ../../_mixins/services/bluetooth.nix
-    ../../_mixins/services/pipewire.nix
-    ../../_mixins/virt
-
-    # Optional: Enable comprehensive documentation and debug support
-    ../../_mixins/features/documentation.nix
-    ../../_mixins/features/debug-symbols.nix
   ];
 
   boot = {
@@ -64,15 +57,6 @@
     nvidiaBusId = "PCI:1:0:0"; # pci@0000:01:00.0
   };
 
-  console.keyMap = lib.mkForce "us";
-  console.font = lib.mkForce "${pkgs.terminus_font}/share/consolefonts/ter-232n.psf.gz";
-  services.kmscon.extraConfig = lib.mkForce ''
-    font-size=12
-    xkb-layout=us
-  '';
-  services.xserver.xkb.layout = lib.mkForce "us";
-  services.xserver.xkb.options = "ctrl:swapcaps";
-
   environment.systemPackages = with pkgs; [
     nvtopPackages.full
   ];
@@ -82,25 +66,7 @@
     "192.168.1.185" = [ "meh" ];
   };
 
-  # Enable 1Password
-  programs._1password.enable = true;
-  programs._1password-gui = {
-    enable = true;
-    polkitPolicyOwners = [ "gburd" ];
-  };
-
-  # Enable core dumps in current directory with pattern core.<pid>
-  systemd.coredump.extraConfig = ''
-    Storage=none
-  '';
-  security.pam.loginLimits = [
-    { domain = "*"; type = "-"; item = "core"; value = "unlimited"; }
-  ];
-  boot.kernel.sysctl = {
-    "kernel.core_pattern" = "core.%p";
-    "kernel.core_uses_pid" = 1;
-  };
-
+  # Laptop power management
   powerManagement.powertop.enable = true;
   powerManagement.cpuFreqGovernor = "powersave";
 
@@ -121,9 +87,6 @@
   #  virtualisation.podman.storageDriver = "btrfs";
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-
-  # support for cross-platform NixOS builds
-  boot.binfmt.emulatedSystems = [ "armv7l-linux" "aarch64-linux" ];
 
   # Fingerprint reader: Synaptics 06cb:009a (NOT SUPPORTED by libfprint)
   # This device requires python-validity which is not packaged in nixpkgs
