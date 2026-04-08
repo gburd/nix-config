@@ -6,7 +6,7 @@ keys:
   # Hosts
   - &hosts:
     - &floki age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
-    - &meh age1n3knvl2mqn00q7seth2sjt0rguv53euxzkltjxau5c9qx00g0veqy507xx
+    - &meh age150z9ve3g9zkue9rgmchh6gtgc8x8x5lrz7lhyq5n7l8992e8keqqt03yzw
     - &iso-console age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
     - &iso-desktop age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
 
