@@ -1,0 +1,24 @@
+# Fastmail (greg@burd.me)
+set imap_user = `cat $HOME/.config/sops-nix/secrets/email/fastmail/user`
+set imap_pass = `cat $HOME/.config/sops-nix/secrets/email/fastmail/pass`
+set folder = "imaps://imap.fastmail.com:993"
+set spoolfile = "+INBOX"
+set record = "+Sent"
+set postponed = "+Drafts"
+set trash = "+Trash"
+
+set smtp_url = "smtps://`cat $HOME/.config/sops-nix/secrets/email/fastmail/user`@smtp.fastmail.com:465"
+set smtp_pass = `cat $HOME/.config/sops-nix/secrets/email/fastmail/pass`
+
+set from = `cat $HOME/.config/sops-nix/secrets/email/fastmail/user`
+set realname = "Greg Burd"
+set use_from = yes
+set envelope_from = yes
+
+set header_cache = "~/.cache/neomutt/fastmail/headers"
+set message_cachedir = "~/.cache/neomutt/fastmail/bodies"
+
+mailboxes +INBOX +Sent +Drafts +Trash +Spam
+
+set status_format = "[Fastmail] %f [Msgs:%?M?%M/?%m%?n? New:%n?]---(%s/%S)-%>-(%P)---"
+color indicator black yellow

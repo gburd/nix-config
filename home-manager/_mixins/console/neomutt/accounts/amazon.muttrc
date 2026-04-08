@@ -1,0 +1,24 @@
+# Amazon Work Email
+set imap_user = `cat $HOME/.config/sops-nix/secrets/email/amazon/user`
+set imap_pass = `cat $HOME/.config/sops-nix/secrets/email/amazon/pass`
+set folder = "imaps://outlook.office365.com:993"
+set spoolfile = "+INBOX"
+set record = "+Sent Items"
+set postponed = "+Drafts"
+set trash = "+Deleted Items"
+
+set smtp_url = "smtps://`cat $HOME/.config/sops-nix/secrets/email/amazon/user`@smtp.office365.com:587"
+set smtp_pass = `cat $HOME/.config/sops-nix/secrets/email/amazon/pass`
+
+set from = `cat $HOME/.config/sops-nix/secrets/email/amazon/user`
+set realname = "Greg Burd"
+set use_from = yes
+set envelope_from = yes
+
+set header_cache = "~/.cache/neomutt/amazon/headers"
+set message_cachedir = "~/.cache/neomutt/amazon/bodies"
+
+mailboxes +INBOX "+Sent Items" +Drafts "+Deleted Items" "+Junk Email"
+
+set status_format = "[Amazon] %f [Msgs:%?M?%M/?%m%?n? New:%n?]---(%s/%S)-%>-(%P)---"
+color indicator black white

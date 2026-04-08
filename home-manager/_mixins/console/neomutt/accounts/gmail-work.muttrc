@@ -1,0 +1,24 @@
+# Gmail Work (PostgreSQL US)
+set imap_user = `cat $HOME/.config/sops-nix/secrets/email/google/pgus/user`
+set imap_pass = `cat $HOME/.config/sops-nix/secrets/email/google/pgus/pass`
+set folder = "imaps://imap.gmail.com:993"
+set spoolfile = "+INBOX"
+set record = "+[Gmail]/Sent Mail"
+set postponed = "+[Gmail]/Drafts"
+set trash = "+[Gmail]/Trash"
+
+set smtp_url = "smtps://`cat $HOME/.config/sops-nix/secrets/email/google/pgus/user`@smtp.gmail.com:465"
+set smtp_pass = `cat $HOME/.config/sops-nix/secrets/email/google/pgus/pass`
+
+set from = `cat $HOME/.config/sops-nix/secrets/email/google/pgus/user`
+set realname = "Greg Burd"
+set use_from = yes
+set envelope_from = yes
+
+set header_cache = "~/.cache/neomutt/gmail-work/headers"
+set message_cachedir = "~/.cache/neomutt/gmail-work/bodies"
+
+mailboxes +INBOX "+[Gmail]/Sent Mail" "+[Gmail]/Drafts" "+[Gmail]/Trash" "+[Gmail]/Spam"
+
+set status_format = "[Gmail Work] %f [Msgs:%?M?%M/?%m%?n? New:%n?]---(%s/%S)-%>-(%P)---"
+color indicator black blue

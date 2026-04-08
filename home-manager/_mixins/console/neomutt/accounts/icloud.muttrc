@@ -1,0 +1,24 @@
+# iCloud
+set imap_user = `cat $HOME/.config/sops-nix/secrets/email/apple/icloud/user`
+set imap_pass = `cat $HOME/.config/sops-nix/secrets/email/apple/icloud/pass`
+set folder = "imaps://imap.mail.me.com:993"
+set spoolfile = "+INBOX"
+set record = "+Sent Messages"
+set postponed = "+Drafts"
+set trash = "+Deleted Messages"
+
+set smtp_url = "smtps://`cat $HOME/.config/sops-nix/secrets/email/apple/icloud/user`@smtp.mail.me.com:587"
+set smtp_pass = `cat $HOME/.config/sops-nix/secrets/email/apple/icloud/pass`
+
+set from = `cat $HOME/.config/sops-nix/secrets/email/apple/icloud/user`
+set realname = "Greg Burd"
+set use_from = yes
+set envelope_from = yes
+
+set header_cache = "~/.cache/neomutt/icloud/headers"
+set message_cachedir = "~/.cache/neomutt/icloud/bodies"
+
+mailboxes +INBOX "+Sent Messages" +Drafts "+Deleted Messages" +Junk
+
+set status_format = "[iCloud] %f [Msgs:%?M?%M/?%m%?n? New:%n?]---(%s/%S)-%>-(%P)---"
+color indicator black magenta
