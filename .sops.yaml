@@ -3,9 +3,12 @@ keys:
   - &users:
     - &gburd D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF
     - &greg D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF
-  # Hosts
+  # User SSH keys (for home-manager secrets)
+  - &user-keys:
+    - &gburd-user age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
+  # Hosts (SSH host keys for NixOS system-level secrets)
   - &hosts:
-    - &floki age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
+    - &floki age1z2x0g05q2erpux006vwhul70d8akj9avrj67s9p27fm4ce32ly8qt8nllz
     - &meh age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
     - &iso-console age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
     - &iso-desktop age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
@@ -16,6 +19,7 @@ creation_rules:
     key_groups:
     - age:
       - *floki
+      - *gburd-user
       pgp:
       - *gburd
       - *greg
@@ -45,6 +49,7 @@ creation_rules:
     - age:
       - *floki
       - *meh
+      - *gburd-user
       pgp:
       - *gburd
       - *greg
