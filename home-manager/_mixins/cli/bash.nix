@@ -1,6 +1,6 @@
 { pkgs, lib, config, ... }:
 let
-  inherit (lib) mkIf;
+  inherit (lib) mkIf optionalString optionalAttrs;
   hasPackage = pname: lib.any (p: p ? pname && p.pname == pname) config.home.packages;
   hasRipgrep = hasPackage "ripgrep";
   hasEza = hasPackage "eza";
@@ -41,26 +41,27 @@ in
       hm = "home-manager --flake .";
       hms = "home-manager -b bkup --flake .#gburd@$(hostname) switch";
 
-      # Modern Unix tools
-      ls = mkIf hasEza "eza";
-      exa = mkIf hasEza "eza";
-
-      # Editor shortcuts
-      e = mkIf hasEmacs "emacsclient -t";
-      vim = mkIf hasNeovim "nvim";
-      vi = mkIf hasNeovim "nvim";
-      v = mkIf hasNeovim "nvim";
-
-      # Mail shortcuts
-      mutt = mkIf hasNeomutt "neomutt";
-      m = mkIf hasNeomutt "neomutt";
-
       # Locate
       locate = "plocate";
-
+    } // optionalAttrs hasEza {
+      # Modern Unix tools
+      ls = "eza";
+      exa = "eza";
+    } // optionalAttrs hasNeovim {
+      # Editor shortcuts
+      vim = "nvim";
+      vi = "nvim";
+      v = "nvim";
+    } // optionalAttrs hasEmacs {
+      e = "emacsclient -t";
+    } // optionalAttrs hasNeomutt {
+      # Mail shortcuts
+      mutt = "neomutt";
+      m = "neomutt";
+    } // optionalAttrs hasKitty {
       # Kitty shortcuts
-      cik = mkIf hasKitty "clone-in-kitty --type os-window";
-      ck = mkIf hasKitty "clone-in-kitty --type os-window";
+      cik = "clone-in-kitty --type os-window";
+      ck = "clone-in-kitty --type os-window";
     };
 
     # Bash functions (porting Fish functions)
@@ -68,28 +69,27 @@ in
       # Disable ctrl-s/ctrl-q flow control
       stty -ixon
 
+    '' + optionalString (hasNeovim && hasRipgrep) ''
       # Grep using ripgrep and pass to nvim (from Fish)
-      ${mkIf (hasNeomutt && hasRipgrep) ''
-        nvimrg() {
-          nvim -q <(rg --vimgrep "$@")
-        }
-        alias vrg=nvimrg
-      ''}
+      nvimrg() {
+        nvim -q <(rg --vimgrep "$@")
+      }
+      alias vrg=nvimrg
 
+    '' + optionalString hasShellColor ''
       # Integrate ssh with shellcolord (from Fish)
-      ${mkIf hasShellColor ''
-        ssh() {
-          ${shellcolor} disable $$
-          if [ -n "$KITTY_PID" ] && [ -n "$KITTY_WINDOW_ID" ] && command -v kitty >/dev/null 2>&1; then
-            command kitty +kitten ssh "$@"
-          else
-            command ssh "$@"
-          fi
-          ${shellcolor} enable $$
-          ${shellcolor} apply $$
-        }
-      ''}
+      ssh() {
+        ${shellcolor} disable $$
+        if [ -n "$KITTY_PID" ] && [ -n "$KITTY_WINDOW_ID" ] && command -v kitty >/dev/null 2>&1; then
+          command kitty +kitten ssh "$@"
+        else
+          command ssh "$@"
+        fi
+        ${shellcolor} enable $$
+        ${shellcolor} apply $$
+      }
 
+    '' + ''
       # Open command in $EDITOR with Ctrl-x Ctrl-e
       set -o emacs
       export VISUAL="$EDITOR"
