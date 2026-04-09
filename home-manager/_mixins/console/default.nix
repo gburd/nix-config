@@ -154,7 +154,7 @@
       icons = "auto";
     };
     fish = {
-      enable = true;
+      enable = false;
       shellAliases = {
         diff = "diffr";
         glow = "glow --pager";
@@ -346,13 +346,50 @@
           # Let powerline-go handle the prompt, but prepend [nix]
           POWERLINE_COMMAND="$POWERLINE_COMMAND --shell-var IN_NIX_SHELL"
         fi
+
+        # Disable ctrl-s/ctrl-q flow control
+        stty -ixon
       '';
       shellAliases = {
+        # Existing aliases
         diff = "diffr";
         glow = "glow --pager";
         ip = "ip --color --brief";
         top = "btm --basic --tree --hide_table_gap --dot_marker --mem_as_value";
         tree = "eza --tree";
+
+        # Fish-style aliases (ported from fish.nix)
+        clear = "printf '\\033[2J\\033[3J\\033[1;1H'";
+        jqless = "jq -C | less -r";
+
+        # Nix shortcuts
+        n = "nix";
+        nd = "nix develop -c $SHELL";
+        ns = "nix shell";
+        nsn = "nix shell nixpkgs#";
+        nb = "nix build";
+        nbn = "nix build nixpkgs#";
+        nf = "nix flake";
+
+        # NixOS shortcuts
+        nr = "nixos-rebuild --flake .";
+        nrs = "nixos-rebuild --flake . switch";
+        snr = "sudo nixos-rebuild --flake .";
+        snrs = "sudo nixos-rebuild --flake . switch";
+        hm = "home-manager --flake .";
+        hms = "home-manager -b bkup --flake .#gburd@$(hostname) switch";
+
+        # Modern Unix tools
+        ls = "eza";
+        exa = "eza";
+
+        # Editor shortcuts
+        vim = "nvim";
+        vi = "nvim";
+        v = "nvim";
+
+        # Locate
+        locate = "plocate";
       };
     };
     powerline-go = {

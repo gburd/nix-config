@@ -65,6 +65,44 @@
             '';
           };
         };
+
+        # Additional MCP servers can be configured manually in ~/.config/claude-code/mcp.json
+        # The home-manager module only supports: llms-docs, github, memelord
+        #
+        # To add more servers (sequential-thinking, git, brave-search, postgres, sqlite):
+        # See: https://github.com/modelcontextprotocol/servers
+        #
+        # Example manual configuration for ~/.config/claude-code/mcp.json:
+        # {
+        #   "mcpServers": {
+        #     "sequential-thinking": {
+        #       "command": "npx",
+        #       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+        #     },
+        #     "git": {
+        #       "command": "npx",
+        #       "args": ["-y", "@modelcontextprotocol/server-git"]
+        #     },
+        #     "brave-search": {
+        #       "command": "npx",
+        #       "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+        #       "env": {
+        #         "BRAVE_API_KEY": "your_api_key_here"
+        #       }
+        #     },
+        #     "postgres": {
+        #       "command": "npx",
+        #       "args": ["-y", "@modelcontextprotocol/server-postgres"],
+        #       "env": {
+        #         "DATABASE_URL": "postgresql://user:pass@localhost:5432/dbname"
+        #       }
+        #     },
+        #     "sqlite": {
+        #       "command": "npx",
+        #       "args": ["-y", "@modelcontextprotocol/server-sqlite"]
+        #     }
+        #   }
+        # }
       };
     };
   };

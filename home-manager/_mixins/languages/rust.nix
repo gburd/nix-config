@@ -15,14 +15,17 @@
     cargo-tarpaulin # Coverage tool with detailed reports
 
     # Additional Rust development tools
+    cargo-nextest # Next-generation test runner (30-50% faster than cargo test)
+    cargo-audit # Security vulnerability scanner
+    cargo-deny # Supply chain security (licenses/advisories/bans)
+    cargo-watch # Auto-rebuild on file changes
+    cargo-expand # Show macro expansion
+    cargo-flamegraph # Flamegraph profiler
+    ast-grep # CLAUDE.md requirement: structure-aware code search
+
     # Uncomment as needed:
-    # cargo-watch       # Auto-rebuild on file changes
     # cargo-edit        # cargo add, cargo rm, cargo upgrade
     # cargo-outdated    # Check for outdated dependencies
-    # cargo-audit       # Security vulnerability scanner
-    # cargo-nextest     # Next-generation test runner
-    # cargo-expand      # Show macro expansion
-    # cargo-flamegraph  # Flamegraph profiler
     # cargo-udeps       # Find unused dependencies
     # clippy            # Rust linter (included in rustup)
     # rustfmt           # Rust formatter (included in rustup)

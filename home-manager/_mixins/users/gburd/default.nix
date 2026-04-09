@@ -73,7 +73,7 @@ in
       };
     };
     fish = {
-      enable = true;
+      enable = false;
       interactiveShellInit = ''
         set fish_cursor_default block blink
         set fish_cursor_insert line blink

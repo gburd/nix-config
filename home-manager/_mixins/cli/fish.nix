@@ -13,7 +13,7 @@ let
 in
 {
   programs.fish = {
-    enable = true;
+    enable = false;
     shellAbbrs = rec {
       jqless = "jq -C | less -r";
 
