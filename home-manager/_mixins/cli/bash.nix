@@ -66,8 +66,10 @@ in
 
     # Bash functions (porting Fish functions)
     bashrcExtra = ''
-      # Disable ctrl-s/ctrl-q flow control
-      stty -ixon
+      # Disable ctrl-s/ctrl-q flow control (only in interactive terminals)
+      if [ -t 0 ]; then
+        stty -ixon 2>/dev/null || true
+      fi
 
     '' + optionalString (hasNeovim && hasRipgrep) ''
       # Grep using ripgrep and pass to nvim (from Fish)
