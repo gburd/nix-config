@@ -14,6 +14,9 @@
     podman-tui
   ];
 
+  hardware.nvidia-container-toolkit.enable =
+    lib.elem "nvidia" config.services.xserver.videoDrivers;
+
   virtualisation = {
     podman = {
       defaultNetwork.settings = {
@@ -22,7 +25,6 @@
       dockerCompat = !config.virtualisation.docker.enable;
       #dockerSocket.enable = !dockerEnabled;
       enable = true;
-      enableNvidia = lib.elem "nvidia" config.services.xserver.videoDrivers;
     };
   };
 
