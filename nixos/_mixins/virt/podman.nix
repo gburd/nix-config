@@ -19,7 +19,7 @@
       defaultNetwork.settings = {
         dns_enabled = true;
       };
-      dockerCompat = true; #!dockerEnabled;
+      dockerCompat = !config.virtualisation.docker.enable;
       #dockerSocket.enable = !dockerEnabled;
       enable = true;
       enableNvidia = lib.elem "nvidia" config.services.xserver.videoDrivers;

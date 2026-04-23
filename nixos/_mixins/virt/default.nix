@@ -3,7 +3,7 @@
   imports =
     [
       ./docker.nix
-      # ./podman.nix
+      ./podman.nix
     ]
     ++ lib.optional (builtins.isString desktop) ./desktop.nix;
   # TODO: Make containerization tools dynamic

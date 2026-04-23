@@ -22,7 +22,7 @@ let
 
     export GITHUB_PERSONAL_ACCESS_TOKEN
 
-    ${cfg.servers.github.pkg}/bin/github-mcp-server \
+    ${cfg.servers.github.pkg}/bin/github-mcp-server stdio \
       --dynamic-toolsets \
       --read-only \
       "$@"

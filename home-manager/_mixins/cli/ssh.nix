@@ -10,6 +10,9 @@ in
         host = "meh";
         hostname = "192.168.1.185";
         forwardAgent = true;
+        extraOptions = {
+          StreamLocalBindUnlink = "yes";
+        };
         remoteForwards = [
           {
             bind.address = ''/%d/.gnupg-sockets/S.gpg-agent'';
