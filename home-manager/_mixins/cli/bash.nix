@@ -92,8 +92,6 @@ in
       }
 
     '' + ''
-      # Open command in $EDITOR with Ctrl-x Ctrl-e
-      set -o emacs
       export VISUAL="$EDITOR"
     '';
 
