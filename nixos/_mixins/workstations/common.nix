@@ -32,6 +32,24 @@
     polkitPolicyOwners = [ "gburd" ];
   };
 
+  # NextDNS with DNS-over-TLS
+  services.resolved = {
+    enable = true;
+    dnsovertls = "true";
+    dns = [
+      "45.90.28.0#362f8c.dns.nextdns.io"
+      "2a07:a8c0::#362f8c.dns.nextdns.io"
+      "45.90.30.0#362f8c.dns.nextdns.io"
+      "2a07:a8c1::#362f8c.dns.nextdns.io"
+    ];
+    fallbackDns = [
+      "1.1.1.1"
+      "8.8.8.8"
+    ];
+  };
+  # Tell NetworkManager to use systemd-resolved
+  networking.networkmanager.dns = "systemd-resolved";
+
   # Disable sudo lecture message
   security.sudo.extraConfig = ''
     Defaults lecture = never
