@@ -132,6 +132,18 @@ with lib.hm.gvariant;
     ''
   );
 
+  # Override git signing to use ssh-keygen (no 1Password app on headless meh)
+  programs.git = {
+    signing = {
+      key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKCqHOIyYwbp42C7MxnRFxOcy+ZE8cNOWdsdvCgVFm1L";
+      signByDefault = true;
+    };
+    settings = {
+      gpg.format = "ssh";
+      "gpg.ssh".program = "${pkgs.openssh}/bin/ssh-keygen";
+    };
+  };
+
   home = {
     file.".inputrc".text = ''
       "\C-v": ""
