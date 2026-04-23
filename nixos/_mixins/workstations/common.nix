@@ -50,9 +50,10 @@
   # Tell NetworkManager to use systemd-resolved
   networking.networkmanager.dns = "systemd-resolved";
 
-  # Disable sudo lecture message
+  # Disable sudo lecture message and use_pty (fails in non-TTY contexts)
   security.sudo.extraConfig = ''
     Defaults lecture = never
+    Defaults !use_pty
   '';
 
   # Make Nix tools available at traditional FHS paths
