@@ -36,16 +36,16 @@
   services.resolved = {
     enable = true;
     dnsovertls = "true";
-    dns = [
-      "45.90.28.0#362f8c.dns.nextdns.io"
-      "2a07:a8c0::#362f8c.dns.nextdns.io"
-      "45.90.30.0#362f8c.dns.nextdns.io"
-      "2a07:a8c1::#362f8c.dns.nextdns.io"
-    ];
     fallbackDns = [
       "1.1.1.1"
       "8.8.8.8"
     ];
+    extraConfig = ''
+      DNS=45.90.28.0#362f8c.dns.nextdns.io
+      DNS=2a07:a8c0::#362f8c.dns.nextdns.io
+      DNS=45.90.30.0#362f8c.dns.nextdns.io
+      DNS=2a07:a8c1::#362f8c.dns.nextdns.io
+    '';
   };
   # Tell NetworkManager to use systemd-resolved
   networking.networkmanager.dns = "systemd-resolved";
