@@ -31,6 +31,11 @@
     enable = true;
     polkitPolicyOwners = [ "gburd" ];
   };
+  # Symlink op-ssh-sign to the standard path expected by git/1Password configs
+  systemd.tmpfiles.rules = [
+    "d /opt/1Password 0755 root root -"
+    "L+ /opt/1Password/op-ssh-sign - - - - ${pkgs._1password-gui}/share/1password/op-ssh-sign"
+  ];
 
   # NextDNS with DNS-over-TLS
   services.resolved = {
