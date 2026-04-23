@@ -10,10 +10,16 @@ in
         host = "meh";
         hostname = "192.168.1.185";
         forwardAgent = true;
-        remoteForwards = [{
-          bind.address = ''/%d/.gnupg-sockets/S.gpg-agent'';
-          host.address = ''/%d/.gnupg-sockets/S.gpg-agent.extra'';
-        }];
+        remoteForwards = [
+          {
+            bind.address = ''/%d/.gnupg-sockets/S.gpg-agent'';
+            host.address = ''/%d/.gnupg-sockets/S.gpg-agent.extra'';
+          }
+          {
+            bind.address = ''/%d/.1password/agent.sock'';
+            host.address = ''/%d/.1password/agent.sock'';
+          }
+        ];
       };
       net = {
         host = builtins.concatStringsSep " " hostnames;
