@@ -1,4 +1,4 @@
-{ self, pkgs, hostname, username, platform, stateVersion, outputs, ... /* lib, config */ }: {
+{ self, lib, pkgs, hostname, username, platform, stateVersion, outputs, ... }: {
   imports = [
     ./${hostname}
     ./_mixins/users/${username}
@@ -11,6 +11,8 @@
       ./_mixins/console/ai
     ];
 
+    home.username = lib.mkForce username;
+    home.homeDirectory = lib.mkForce "/Users/${username}";
     home.stateVersion = "24.11";
 
     # SSH host aliases

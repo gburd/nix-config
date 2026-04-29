@@ -3,25 +3,27 @@
 , fetchFromGitHub
 , pkg-config
 , openssl
+, python3
 , tree-sitter
 , installShellFiles
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "maki";
-  version = "0.5.0"; # Update to match latest release tag
+  version = "0-unstable-2026-04-29";
 
   src = fetchFromGitHub {
     owner = "gburd";
     repo = "maki";
-    rev = "v${version}"; # Uses release tag
-    hash = lib.fakeHash; # Replace after first build attempt
+    rev = "e5458aebf7deb6e48a6f9813bc11ffc6bbc3508f";
+    hash = "sha256-KrAH0ErqeBQHhU3oid87PlZdE9nHHD+AldIzLVlELqI=";
   };
 
-  cargoHash = lib.fakeHash; # Replace after first build attempt
+  cargoHash = "sha256-dNiHSE+m1nEvWBO6lQxrRLnypl9aM2bp8bfLnRtARh4=";
 
   nativeBuildInputs = [
     pkg-config
+    python3
     installShellFiles
   ];
 
@@ -29,6 +31,18 @@ rustPlatform.buildRustPackage rec {
     openssl
     tree-sitter
   ];
+
+  OPENSSL_NO_VENDOR = 1;
+
+  # monty crate references ../../../README.md from src/ which doesn't
+  # exist in vendored copy — create the file it expects
+  preBuild = ''
+    for d in $NIX_BUILD_TOP/maki-*-vendor/monty-*/src; do
+      target="$(realpath -m "$d/../../../README.md")"
+      mkdir -p "$(dirname "$target")"
+      touch "$target"
+    done
+  '';
 
   # Build only the main maki binary
   cargoBuildFlags = [ "--bin" "maki" ];

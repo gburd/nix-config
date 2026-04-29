@@ -226,9 +226,9 @@ with lib.hm.gvariant;
       xclip
 
       # AI coding agents
-      # kiro-cli    # Kiro CLI agent (uncomment after fixing sha256)
-      # kiro-ide    # Kiro IDE (uncomment after fixing sha256)
-      # maki        # maki agent from gburd/maki fork (uncomment after fixing hashes)
+      # kiro-cli    # Kiro CLI (download URLs require auth — not yet publicly available)
+      # kiro-ide    # Kiro IDE (download URLs return 404 — not yet publicly available)
+      maki          # AI coding agent from gburd/maki
     ];
 
     # http://rski.github.io/2021/09/05/nix-debugging.html

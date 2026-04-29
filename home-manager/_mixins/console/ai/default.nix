@@ -83,6 +83,8 @@
   programs.gh-dash.enable = true;
 
   home.packages = with pkgs; [
+    awscli2
+    aws-vault
     gh
     nodejs
     uv
