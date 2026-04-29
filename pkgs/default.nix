@@ -5,6 +5,9 @@
   auth0 = pkgs.callPackage ./auth0.nix { };
   ente-photos-desktop = pkgs.callPackage ./ente.nix { };
   charm-freeze = pkgs.callPackage ./charm-freeze.nix { };
+  kiro-cli = pkgs.callPackage ./kiro-cli { };
+  kiro-ide = pkgs.callPackage ./kiro-ide { };
+  maki = pkgs.callPackage ./maki { };
   nix-inspect = pkgs.callPackage ./nix-inspect { };
   tly = pkgs.callPackage ./tly { };
   mailspring = pkgs.callPackage ./mailspring { };

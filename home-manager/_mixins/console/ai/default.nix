@@ -16,7 +16,7 @@
       targets = {
         kiro = true;
         claude = true;
-        maki = false; # enable when maki is installed
+        maki = true;
       };
     };
 

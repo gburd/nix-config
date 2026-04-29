@@ -224,6 +224,11 @@ with lib.hm.gvariant;
       unstable.flyctl
       unstable.minio-client
       xclip
+
+      # AI coding agents
+      # kiro-cli    # Kiro CLI agent (uncomment after fixing sha256)
+      # kiro-ide    # Kiro IDE (uncomment after fixing sha256)
+      # maki        # maki agent from gburd/maki fork (uncomment after fixing hashes)
     ];
 
     # http://rski.github.io/2021/09/05/nix-debugging.html
