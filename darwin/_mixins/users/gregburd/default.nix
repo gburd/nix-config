@@ -1,27 +1,71 @@
 { pkgs, ... }: {
-  imports = [
-    # Temporarily disabled to isolate build issues:
-    # ../../nixos/console/auth0.nix  # network issues downloading Go deps
-    # ../../nixos/console/direnv.nix
-    # ../../nixos/console/kubectl.nix
-    # ../../nixos/desktop/spotify.nix
-  ];
+  # System-level packages for gregburd on darwin
+  # AI agent config (steering, skills, mcps) is in home-manager context
+  # via darwin/default.nix home-manager.users block
 
   environment.systemPackages = with pkgs; [
-    bazelisk
-    direnv
-    dive
+    # Shells & terminal
+    bash
     fish
     fishPlugins.foreign-env
-    guile
-    jdk11
+    tmux
+    neovim
+    emacs
+
+    # Build tools
+    autoconf
+    cmake
+    meson
+    ninja
+    ccache
+    gnumake
+    libtool
+    m4
+    pkgconf
+
+    # Languages & runtimes
+    go
+    gopls
+    rustup
+    nodejs
+    python3
+
+    # Dev tools
+    clang-tools
+    direnv
+    dive
+    git
+    git-lfs
+    htop
+    jq
     lazydocker
     lazygit
-    mariadb
     fastfetch
-    neovim
-    tmux
+    ripgrep
+    tig
     tokei
     tree
+
+    # Database
+    postgresql_16
+    pgcli
+    sqlite
+
+    # AWS
+    awscli2
+
+    # Nix tools
+    nixpkgs-fmt
+    statix
+    deadnix
+
+    # Security
+    gnupg
+
+    # Misc
+    coreutils
+    wget
+    xz
+    zstd
   ];
 }

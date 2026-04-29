@@ -1,18 +1,45 @@
 _: {
   homebrew = {
-    # macOS Applications managed via Homebrew Cask
     casks = [
-      # Add your preferred Mac applications here
-      # Examples:
-      # "discord"
-      # "firefox"
-      # "visual-studio-code"
+      "alacritty"
+      "discord"
+      "firefox"
+      "font-fira-code"
+      "font-fira-mono-for-powerline"
+      "font-fira-mono-nerd-font"
+      "font-meslo-for-powerlevel10k"
+      "font-sauce-code-pro-nerd-font"
+      "github"
+      "kaleidoscope"
+      "keepassxc"
+      "podman-desktop"
+      "serial"
+      "sublime-merge"
+      "therm"
+      "tla-plus-toolbox"
+      "typora"
+      "zed"
     ];
 
-    # Mac App Store applications
+    # Formulae not yet in nixpkgs or easier via brew on macOS
+    brews = [
+      "ada-url"
+      "bear"
+      "cereal-console"
+      "duckdb"
+      "lima"
+      "minicom"
+      "mise"
+      "mongodb-database-tools"
+      "podman"
+      "podman-compose"
+      "podman-tui"
+      "tea"
+    ];
+
     masApps = {
-      # Add Mac App Store apps here by ID
-      # Example: "Xcode" = 497799835;
+      # Add Mac App Store apps by ID if needed
+      # "Xcode" = 497799835;
     };
   };
 }

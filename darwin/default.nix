@@ -4,6 +4,53 @@
     ./_mixins/users/${username}
   ];
 
+  # Home Manager configuration for the primary user
+  home-manager.users.${username} = { pkgs, ... }: {
+    imports = [
+      ../modules/home-manager/ai
+      ./_mixins/console/ai
+    ];
+
+    home.stateVersion = "24.11";
+
+    # SSH host aliases
+    programs.ssh = {
+      enable = true;
+      matchBlocks = {
+        "aws" = {
+          hostname = "80a99738d7e2";
+          user = username;
+        };
+      };
+    };
+
+    # Git config
+    programs.git = {
+      enable = true;
+      userName = "Greg Burd";
+      userEmail = "gregburd@amazon.com";
+      lfs.enable = true;
+      aliases = {
+        st = "status --short";
+        ci = "commit";
+        co = "checkout";
+        di = "diff";
+        dc = "diff --cached";
+        aa = "add --all";
+        lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
+        lol = "log --graph --decorate --pretty=oneline --abbrev-commit";
+        lola = "log --graph --decorate --pretty=oneline --abbrev-commit --all";
+        sync = "pull --rebase";
+      };
+    };
+
+    home.packages = with pkgs; [
+      gh
+      nodejs
+      uv
+    ];
+  };
+
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   environment.systemPackages = with pkgs; [
