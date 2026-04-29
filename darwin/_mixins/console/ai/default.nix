@@ -67,7 +67,7 @@
             name = "memelord";
             runtimeInputs = [ pkgs.nodejs ];
             text = ''
-              exec npx -y @glommer/memelord-mcp-server "$@"
+              exec npx -y memelord "$@"
             '';
           };
         };

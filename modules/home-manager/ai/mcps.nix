@@ -56,6 +56,39 @@ let
       })
     cfg.servers.llms-docs.sources;
 
+  ### Memelord hooks ###
+  memelordHooks = {
+    SessionStart = [{
+      hooks = [{
+        type = "command";
+        command = "memelord hook session-start";
+        timeout = 10;
+      }];
+    }];
+    PostToolUse = [{
+      matcher = "*";
+      hooks = [{
+        type = "command";
+        command = "memelord hook post-tool-use";
+        timeout = 5;
+      }];
+    }];
+    Stop = [{
+      hooks = [{
+        type = "command";
+        command = "memelord hook stop";
+        timeout = 15;
+      }];
+    }];
+    SessionEnd = [{
+      hooks = [{
+        type = "command";
+        command = "memelord hook session-end";
+        timeout = 30;
+      }];
+    }];
+  };
+
   ### MCP Server configuration file ###
   mcpJsonText = builtins.toJSON {
     inherit mcpServers;
@@ -71,10 +104,12 @@ let
     // (optionalAttrs cfg.servers.memelord.enable {
     memelord = {
       command = "${cfg.servers.memelord.pkg}/bin/memelord";
+      args = [ "serve" ];
     };
   });
 
-  packages = [ ];
+  packages = [ ]
+    ++ (lib.optional cfg.servers.memelord.enable cfg.servers.memelord.pkg);
 in
 {
   options.programs.ai.mcps = {
@@ -156,6 +191,11 @@ in
       })
       (lib.mkIf cfg.targets.kiro {
         ".kiro/settings/mcp.json".text = mcpJsonText;
+      })
+      (lib.mkIf (cfg.targets.kiro && cfg.servers.memelord.enable) {
+        ".kiro/settings/settings.json".text = builtins.toJSON {
+          hooks = memelordHooks;
+        };
       })
     ];
   };

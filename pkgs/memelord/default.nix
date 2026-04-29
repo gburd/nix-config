@@ -3,7 +3,7 @@
 }:
 
 # Wrapper for memelord MCP server (persistent memory for coding agents)
-# Uses @glommer/memelord-mcp-server from npm
+# Uses memelord from npm (https://github.com/glommer/memelord)
 writeShellScriptBin "memelord" ''
-  exec ${nodejs}/bin/npx -y @glommer/memelord-mcp-server "$@"
+  exec ${nodejs}/bin/npx -y memelord "$@"
 ''
