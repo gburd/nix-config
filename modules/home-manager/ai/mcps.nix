@@ -91,6 +91,11 @@ in
         default = true;
         description = "Enables the ~/.config/claude-code/mcp.json output config file for Claude Code";
       };
+      kiro = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enables the ~/.kiro/settings/mcp.json output config file for Kiro CLI";
+      };
     };
 
     servers = {
@@ -148,6 +153,9 @@ in
       })
       (lib.mkIf cfg.targets.claude {
         ".config/claude-code/mcp.json".text = mcpJsonText;
+      })
+      (lib.mkIf cfg.targets.kiro {
+        ".kiro/settings/mcp.json".text = mcpJsonText;
       })
     ];
   };

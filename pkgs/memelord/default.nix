@@ -2,8 +2,8 @@
 , nodejs
 }:
 
-# Simple wrapper that uses npx to run memelord from npm
-# This avoids the complexity of building from source
+# Wrapper for memelord MCP server (persistent memory for coding agents)
+# Uses @glommer/memelord-mcp-server from npm
 writeShellScriptBin "memelord" ''
-  exec ${nodejs}/bin/npx memelord@latest "$@"
+  exec ${nodejs}/bin/npx -y @glommer/memelord-mcp-server "$@"
 ''
