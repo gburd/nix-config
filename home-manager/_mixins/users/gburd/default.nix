@@ -30,17 +30,12 @@ in
 
   home = {
 
-    sessionVariables = {
-      # Use 1Password SSH agent
-      SSH_AUTH_SOCK = "$HOME/.1password/agent.sock";
-    };
+    # NOTE: SSH_AUTH_SOCK removed - now using standard ssh-agent via ssh-management module
+    # (Previously used 1Password SSH agent at ~/.1password/agent.sock)
 
     packages = with pkgs; [
       tig
     ];
-
-    # Ensure 1Password SSH agent directory exists
-    file.".1password/.keep".text = "";
   };
 
   programs = {
@@ -49,7 +44,8 @@ in
       enableDefaultConfig = false;
       matchBlocks = {
         "*" = {
-          identityAgent = "~/.1password/agent.sock";
+          # NOTE: identityAgent removed - now using standard ssh-agent
+          # (Previously used 1Password SSH agent)
           compression = true;
           extraOptions = {
             ConnectTimeout = "5";

@@ -18,10 +18,7 @@ in
             bind.address = ''/%d/.gnupg-sockets/S.gpg-agent'';
             host.address = ''/%d/.gnupg-sockets/S.gpg-agent.extra'';
           }
-          {
-            bind.address = ''/%d/.1password/agent.sock'';
-            host.address = ''/%d/.1password/agent.sock'';
-          }
+          # NOTE: 1Password agent socket forwarding removed - now using standard ssh-agent
         ];
       };
       net = {

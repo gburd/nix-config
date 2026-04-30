@@ -12,6 +12,8 @@ with lib.hm.gvariant;
     ../../../services/proton-drive.nix
     ../../../console/khal.nix
     ../../../console/taskbook.nix
+    # SSH key management with rotation
+    ../../../../modules/home-manager/ssh-management
   ];
 
   # GNOME configuration
@@ -51,6 +53,14 @@ with lib.hm.gvariant;
       };
       "sublime/merge-license" = {
         path = "${config.home.homeDirectory}/.config/sublime-merge-license.bin";
+      };
+
+      # SSH key management (new)
+      "ssh-keys/auth" = {
+        path = "${config.home.homeDirectory}/.ssh/id_auth_ed25519";
+      };
+      "ssh-keys/signing" = {
+        path = "${config.home.homeDirectory}/.ssh/id_signing_ed25519";
       };
 
       # Email account credentials (nested structure)
@@ -132,16 +142,23 @@ with lib.hm.gvariant;
     ''
   );
 
-  # Override git signing to use ssh-keygen (no 1Password app on headless meh)
-  programs.git = {
-    signing = {
-      key = lib.mkForce "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKCqHOIyYwbp42C7MxnRFxOcy+ZE8cNOWdsdvCgVFm1L";
-      signByDefault = lib.mkForce true;
+  # SSH key management with rotation support (replaces 1Password SSH agent)
+  services.ssh-management = {
+    enable = true;
+
+    authKey = {
+      secret = config.sops.secrets."ssh-keys/auth".path;
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIH57HkgLJYRhgkZGBs+/LBmiBrZtIr08INS2zQkEJoS greg@burd.me-auth-meh-202604";
     };
-    settings = {
-      gpg.format = "ssh";
-      "gpg.ssh".program = "${pkgs.openssh}/bin/ssh-keygen";
+
+    signingKey = {
+      secret = config.sops.secrets."ssh-keys/signing".path;
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuaVJD7BbkXTN0dYCT6HURZZ8kGS/WbmS+nd+B8KtMY greg@burd.me-signing-meh-202604";
     };
+
+    rotationInterval = "quarterly";
+    sync1Password = true;
+    gitHostingServices = [ "github" "codeberg" ];
   };
 
   home = {
