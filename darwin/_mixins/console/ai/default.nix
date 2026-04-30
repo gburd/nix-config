@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   # AI agent configuration for macOS (darwin)
   # Note: No sops-nix on darwin — credentials managed via ada CLI and env vars
@@ -70,6 +70,11 @@
               exec npx -y memelord "$@"
             '';
           };
+        };
+
+        filesystem = {
+          enable = true;
+          # Uses config.home.homeDirectory by default
         };
       };
     };

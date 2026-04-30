@@ -76,6 +76,11 @@
             '';
           };
         };
+
+        filesystem = {
+          enable = true;
+          path = config.home.homeDirectory;
+        };
       };
     };
   };

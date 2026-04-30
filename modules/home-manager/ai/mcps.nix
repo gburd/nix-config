@@ -95,6 +95,12 @@ let
   };
 
   mcpServers = { }
+    // (optionalAttrs cfg.servers.filesystem.enable {
+    filesystem = {
+      command = "npx";
+      args = [ "-y" "@modelcontextprotocol/server-filesystem" cfg.servers.filesystem.path ];
+    };
+  })
     // (optionalAttrs cfg.servers.llms-docs.enable llmWrappers)
     // (optionalAttrs cfg.servers.github.enable {
     github = {
@@ -174,6 +180,15 @@ in
         pkg = mkOption {
           type = types.package;
           description = "The memelord package";
+        };
+      };
+
+      filesystem = {
+        enable = mkEnableOption "filesystem MCP server integration";
+        path = mkOption {
+          type = types.str;
+          default = config.home.homeDirectory;
+          description = "Root path for filesystem server access";
         };
       };
     };
