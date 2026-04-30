@@ -3,29 +3,38 @@
 , fetchurl
 , autoPatchelfHook
 , makeWrapper
+, unzip
+, gcc-unwrapped
 }:
 
 let
-  version = "1.26.0";
-  platform = if stdenv.hostPlatform.isLinux then "linux" else "darwin";
-  arch = if stdenv.hostPlatform.isAarch64 then "arm64" else "x64";
-  sha256 = lib.fakeSha256; # Replace after first build attempt
+  # Note: Version may not match actual binary version from "latest" channel
+  # Updated: 2026-04-30 - New URL structure from prod.download.cli.kiro.dev
+  version = "latest";
+  channel = "stable";
+  arch = if stdenv.hostPlatform.isAarch64 then "aarch64" else "x86_64";
+  libc = if stdenv.hostPlatform.isMusl then "-musl" else "";
+  sha256 = "sha256-v2mr6NStS2RAylWwNYkwxK3Ra/NAtB/XGR0s/TQaE+c="; # Updated: 2026-04-30
 in
 stdenv.mkDerivation {
   pname = "kiro-cli";
   inherit version;
 
-  # The official installer downloads from cli.kiro.dev
-  # We fetch the binary directly instead of running the install script
+  # Official installer now uses prod.download.cli.kiro.dev
+  # Pattern: https://prod.download.cli.kiro.dev/{channel}/latest/kirocli-{arch}-linux{-musl}.zip
   src = fetchurl {
-    url = "https://cli.kiro.dev/download/${platform}/${arch}/latest";
+    url = "https://prod.download.cli.kiro.dev/${channel}/latest/kirocli-${arch}-linux${libc}.zip";
     inherit sha256;
-    name = "kiro-cli-${version}-${platform}-${arch}.tar.gz";
+    name = "kiro-cli-${version}-${arch}-linux.zip";
   };
 
-  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [
+  nativeBuildInputs = [ unzip ] ++ lib.optionals stdenv.hostPlatform.isLinux [
     autoPatchelfHook
     makeWrapper
+  ];
+
+  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
+    gcc-unwrapped.lib # Provides libgcc_s.so.1
   ];
 
   dontConfigure = true;

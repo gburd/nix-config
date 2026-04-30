@@ -22,9 +22,17 @@ in
 appimageTools.wrapType2 {
   inherit pname version;
 
+  # FIXME: Download URL is broken as of 2026-04-30
+  # - Old URL: https://kiro.dev/downloads/latest/linux returns 404
+  # - New infrastructure: https://prod.download.desktop.kiro.dev/ returns 403 (Access Denied)
+  # - Kiro has locked down their download infrastructure
+  # Possible solutions:
+  # 1. Use their installer script (impure)
+  # 2. Manual download and local path
+  # 3. Wait for Kiro to provide stable download URLs
   src = fetchurl {
     url = "https://kiro.dev/downloads/latest/linux";
-    sha256 = lib.fakeSha256; # Replace after first build attempt
+    sha256 = lib.fakeSha256; # Cannot obtain - download URL is inaccessible
     name = "kiro-${version}-linux.AppImage";
   };
 
