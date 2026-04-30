@@ -7,45 +7,15 @@ let
 in
 {
   config = mkIf cfg.enable {
-    # Deploy authentication key from sops
+    # Public keys are managed via home.file (text content)
     home.file = mkMerge [
-      (mkIf (cfg.authKey.secret != null && cfg.authKey.publicKey != null) {
-        ".ssh/id_auth_ed25519" = {
-          source = cfg.authKey.secret;
-          onChange = ''
-            chmod 600 ${cfg.authKey.path}
-            # Ensure public key is also present
-            if [ ! -f "${cfg.authKey.path}.pub" ]; then
-              echo "${cfg.authKey.publicKey}" > "${cfg.authKey.path}.pub"
-              chmod 644 "${cfg.authKey.path}.pub"
-            fi
-            # Add to ssh-agent if running
-            if [ -n "''${SSH_AUTH_SOCK:-}" ] && command -v ssh-add >/dev/null 2>&1; then
-              ${pkgs.openssh}/bin/ssh-add "${cfg.authKey.path}" 2>/dev/null || true
-            fi
-            echo "✓ Authentication key deployed to ${cfg.authKey.path}"
-          '';
-        };
-
+      (mkIf (cfg.authKey.publicKey != null) {
         ".ssh/id_auth_ed25519.pub" = {
           text = cfg.authKey.publicKey;
         };
       })
 
-      (mkIf (cfg.signingKey.secret != null && cfg.signingKey.publicKey != null) {
-        ".ssh/id_signing_ed25519" = {
-          source = cfg.signingKey.secret;
-          onChange = ''
-            chmod 600 ${cfg.signingKey.path}
-            # Ensure public key is also present
-            if [ ! -f "${cfg.signingKey.path}.pub" ]; then
-              echo "${cfg.signingKey.publicKey}" > "${cfg.signingKey.path}.pub"
-              chmod 644 "${cfg.signingKey.path}.pub"
-            fi
-            echo "✓ Signing key deployed to ${cfg.signingKey.path}"
-          '';
-        };
-
+      (mkIf (cfg.signingKey.publicKey != null) {
         ".ssh/id_signing_ed25519.pub" = {
           text = cfg.signingKey.publicKey;
         };
@@ -55,7 +25,7 @@ in
       (mkIf (cfg.authKey.publicKey != null || cfg.signingKey.publicKey != null) {
         ".ssh/key-metadata.json" = {
           text = builtins.toJSON {
-            hostname = config.home.username + "@" + ((builtins.getEnv "HOSTNAME") or "unknown");
+            hostname = config.home.username + "@" + (let h = builtins.getEnv "HOSTNAME"; in if h == "" then "unknown" else h);
             rotation_interval = cfg.rotationInterval;
             last_check = "managed-by-systemd-timer";
             auth_key = {
@@ -72,6 +42,38 @@ in
         };
       })
     ];
+
+    # Activation script to handle private key permissions and ssh-agent
+    home.activation.setupSshKeys = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      ${optionalString (cfg.authKey.secret != null && cfg.authKey.publicKey != null) ''
+        # Authentication key setup
+        if [ -f "${cfg.authKey.secret}" ]; then
+          # Sops has already placed the private key, ensure correct permissions
+          chmod 600 "${cfg.authKey.secret}" 2>/dev/null || true
+
+          # Add to ssh-agent if running
+          if [ -n "''${SSH_AUTH_SOCK:-}" ] && command -v ssh-add >/dev/null 2>&1; then
+            ${pkgs.openssh}/bin/ssh-add "${cfg.authKey.secret}" 2>/dev/null || true
+          fi
+
+          echo "✓ Authentication key configured at ${cfg.authKey.secret}"
+        else
+          echo "⚠️  WARNING: Authentication key not found at ${cfg.authKey.secret}"
+        fi
+      ''}
+
+      ${optionalString (cfg.signingKey.secret != null && cfg.signingKey.publicKey != null) ''
+        # Signing key setup
+        if [ -f "${cfg.signingKey.secret}" ]; then
+          # Sops has already placed the private key, ensure correct permissions
+          chmod 600 "${cfg.signingKey.secret}" 2>/dev/null || true
+
+          echo "✓ Signing key configured at ${cfg.signingKey.secret}"
+        else
+          echo "⚠️  WARNING: Signing key not found at ${cfg.signingKey.secret}"
+        fi
+      ''}
+    '';
 
     # SSH config to use the auth key
     programs.ssh.matchBlocks = mkIf (cfg.authKey.publicKey != null) {
