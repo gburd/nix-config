@@ -55,7 +55,7 @@ in
       (mkIf (cfg.authKey.publicKey != null || cfg.signingKey.publicKey != null) {
         ".ssh/key-metadata.json" = {
           text = builtins.toJSON {
-            hostname = config.home.username + "@" + (builtins.getEnv "HOSTNAME" or "unknown");
+            hostname = config.home.username + "@" + ((builtins.getEnv "HOSTNAME") or "unknown");
             rotation_interval = cfg.rotationInterval;
             last_check = "managed-by-systemd-timer";
             auth_key = {
@@ -90,25 +90,6 @@ in
         hostname = "codeberg.org";
         user = "git";
         identityFile = [ cfg.authKey.path ];
-      };
-    };
-
-    # Create metadata file with key information
-    home.file.".ssh/key-metadata.json" = mkIf (cfg.authKey.publicKey != null || cfg.signingKey.publicKey != null) {
-      text = builtins.toJSON {
-        hostname = config.home.username + "@" + (builtins.getEnv "HOSTNAME" or "unknown");
-        rotation_interval = cfg.rotationInterval;
-        last_check = "managed-by-systemd-timer";
-        auth_key = {
-          path = cfg.authKey.path;
-          fingerprint = "calculated-at-runtime";
-          deployed = "managed-by-home-manager";
-        };
-        signing_key = {
-          path = cfg.signingKey.path;
-          fingerprint = "calculated-at-runtime";
-          deployed = "managed-by-home-manager";
-        };
       };
     };
   };
