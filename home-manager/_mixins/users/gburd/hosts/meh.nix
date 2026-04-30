@@ -13,7 +13,7 @@ with lib.hm.gvariant;
     ../../../console/khal.nix
     ../../../console/taskbook.nix
     # SSH key management with rotation
-    ../../../../modules/home-manager/ssh-management
+    ../../../../../../modules/home-manager/ssh-management
   ];
 
   # GNOME configuration
