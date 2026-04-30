@@ -35,12 +35,12 @@ in
       text = let
         # Get user email from git config
         userEmail = config.programs.git.userEmail or (
-          if config.programs.git.extraConfig ? user.email
-          then config.programs.git.extraConfig.user.email
+          if config.programs.git.settings ? user.email
+          then config.programs.git.settings.user.email
           else "greg@burd.me"
         );
         # Get hostname for comment
-        hostname = (builtins.getEnv "HOSTNAME") or "unknown";
+        hostname = let h = builtins.getEnv "HOSTNAME"; in if h == "" then "unknown" else h;
       in ''
         # SSH allowed signers file for git signature verification
         # Format: email namespaces="git" ssh-key [comment]
