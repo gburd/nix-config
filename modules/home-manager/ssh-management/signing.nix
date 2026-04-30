@@ -14,7 +14,7 @@ in
         signByDefault = true;
       };
 
-      extraConfig = {
+      settings = {
         # Use SSH format for signing
         gpg.format = "ssh";
 
@@ -40,7 +40,7 @@ in
           else "greg@burd.me"
         );
         # Get hostname for comment
-        hostname = builtins.getEnv "HOSTNAME" or "unknown";
+        hostname = (builtins.getEnv "HOSTNAME") or "unknown";
       in ''
         # SSH allowed signers file for git signature verification
         # Format: email namespaces="git" ssh-key [comment]
