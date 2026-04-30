@@ -249,7 +249,7 @@ in
         ssh-sync-to-1password
         ```
 
-        This syncs your local SSH keys to 1Password vault (${cfg.sync1Password} vault).
+        This syncs your local SSH keys to 1Password vault (Private vault by default).
 
         ### Restore Keys from 1Password
         ```bash
