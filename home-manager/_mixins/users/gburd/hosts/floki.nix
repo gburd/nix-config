@@ -15,6 +15,8 @@ with lib.hm.gvariant;
     ../../../services/proton-drive.nix
     ../../../console/khal.nix
     ../../../console/taskbook.nix
+    # SSH key management with rotation
+    ../../../../modules/home-manager/ssh-management
   ];
   # GNOME configuration
   dconf.settings = {
@@ -48,6 +50,14 @@ with lib.hm.gvariant;
       };
       "sublime/merge-license" = {
         path = "${config.home.homeDirectory}/.config/sublime-merge-license.bin";
+      };
+
+      # SSH key management (new)
+      "ssh-keys/auth" = {
+        path = "${config.home.homeDirectory}/.ssh/id_auth_ed25519";
+      };
+      "ssh-keys/signing" = {
+        path = "${config.home.homeDirectory}/.ssh/id_signing_ed25519";
       };
 
       # Email account credentials (nested structure)
@@ -128,6 +138,25 @@ with lib.hm.gvariant;
       fi
     ''
   );
+
+  # SSH key management with rotation support (replaces GPG signing with SSH)
+  services.ssh-management = {
+    enable = true;
+
+    authKey = {
+      secret = config.sops.secrets."ssh-keys/auth".path;
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO6HS8oDnpvGKTisMx38pq1I3YJP4+ds7WIYF+L578dW greg@burd.me-auth-floki-202604";
+    };
+
+    signingKey = {
+      secret = config.sops.secrets."ssh-keys/signing".path;
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ31SSVgFMDHNic/+zA41muVDVIuPVaUOnKIXJ31PyTb greg@burd.me-signing-floki-202604";
+    };
+
+    rotationInterval = "quarterly";
+    sync1Password = true;
+    gitHostingServices = [ "github" "codeberg" ];
+  };
 
   home = {
     # NOTE: persistence disabled for standalone home-manager
