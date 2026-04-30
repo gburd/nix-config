@@ -10,8 +10,8 @@ in
     # Configure git to use SSH signing
     programs.git = {
       signing = {
-        key = cfg.signingKey.publicKey;
-        signByDefault = true;
+        key = mkForce cfg.signingKey.publicKey;
+        signByDefault = mkForce true;
       };
 
       settings = {
