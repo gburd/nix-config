@@ -6,6 +6,13 @@ let
   cfg = config.services.ssh-management;
 in
 {
+  imports = [
+    ./keys.nix
+    ./signing.nix
+    ./rotation.nix
+    ./sync.nix
+  ];
+
   options.services.ssh-management = {
     enable = mkEnableOption "SSH key management with rotation support";
 
@@ -87,14 +94,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Import submodules
-    imports = [
-      ./keys.nix
-      ./signing.nix
-      ./rotation.nix
-      ./sync.nix
-    ];
-
     # Ensure SSH directory exists with correct permissions
     home.file.".ssh/.keep" = {
       text = "";
