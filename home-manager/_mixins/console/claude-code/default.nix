@@ -63,6 +63,4 @@
     nix-tree # Visualize dependencies
     nix-diff # Compare derivations
   ];
-
-  xdg.configFile."claude-code/mcp-config.json".source = ./mcp-config.json;
 }
