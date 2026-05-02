@@ -31,6 +31,14 @@
 
     kernelModules = [ "kvm-intel" ];
     kernelPackages = pkgs.linuxPackages;
+
+    # Enable amdgpu for GCN 1.0 (Southern Islands / Tahiti) GPUs.
+    # The R9 280X (Radeon HD 7970) uses "radeon" by default;
+    # amdgpu is required for RADV Vulkan compute (needed by Ollama).
+    kernelParams = [
+      "amdgpu.si_support=1"
+      "radeon.si_support=0"
+    ];
   };
 
   networking.hostName = "meh";
