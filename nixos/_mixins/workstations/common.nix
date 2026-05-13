@@ -52,8 +52,15 @@
       DNS=2a07:a8c1::#362f8c.dns.nextdns.io
     '';
   };
-  # Tell NetworkManager to use systemd-resolved
+  # Tell NetworkManager to use systemd-resolved, but don't let per-link
+  # DHCP DNS override the global NextDNS config in resolved.conf
   networking.networkmanager.dns = "systemd-resolved";
+  networking.networkmanager.settings = {
+    connection = {
+      "ipv4.ignore-auto-dns" = true;
+      "ipv6.ignore-auto-dns" = true;
+    };
+  };
 
   # Disable sudo lecture message and use_pty (fails in non-TTY contexts)
   security.sudo.extraConfig = ''
