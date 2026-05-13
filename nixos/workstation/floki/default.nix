@@ -1,10 +1,12 @@
-# Motherboard: LENOVO 21DE001EUS ver: SDK0T76528 WIN ssn: W1CG27P023B
-# CPU:         12th Gen Intel(R) Core(TM) i9-12900H
-# GPU:         NVIDIA GeForce GTX 1050 Ti Mobile with Max-Q Design
-# RAM:         32GB DDR5
-# SATA:        WD_BLACK SN850X 4TB (624331WD) SSD
+# Motherboard: LENOVO 21MKCTO1WW (ThinkPad X1 Carbon Gen 13 Aura Edition)
+# CPU:         Intel Core Ultra 7 258V (Lunar Lake, 4P+4E cores, 8 threads, 4.8GHz)
+# GPU:         Intel Arc 140V (Xe2/Battlemage, 8 Xe2 cores, ~67 TOPS)
+# NPU:         Intel AI Boost NPU (~48 TOPS, intel_vpu driver, /dev/accel/accel0)
+# RAM:         32GB LPDDR5X (on-package)
+# NVMe:        WD_BLACK SN850X 4TB (PCIe Gen 4)
+# WiFi:        Intel BE201 (Wi-Fi 7, 320MHz)
 
-{ inputs, lib, pkgs, config, ... }:
+{ inputs, lib, pkgs, ... }:
 {
   imports = [
     (import ./disks.nix)
@@ -15,14 +17,12 @@
 
     # Hardware-specific
     inputs.nixos-hardware.nixosModules.common-cpu-intel
-    inputs.nixos-hardware.nixosModules.common-gpu-nvidia
     inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-laptop-ssd
-    inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x1-extreme-gen4
 
     # Floki-specific
     ../../_mixins/desktop/daw.nix
-    ../../_mixins/hardware/gtx-1050ti.nix
+    ../../_mixins/hardware/intel.accelerated-video-playback.nix
     ../../_mixins/hardware/roccat.nix
   ];
 
@@ -30,35 +30,39 @@
     initrd = {
       availableKernelModules = [
         "ahci"
-        "i915"
         "nvme"
         "rtsx_pci_sdmmc"
         "sd_mod"
         "thunderbolt"
         "usb_storage"
+        "xe"
         "xhci_pci"
       ];
     };
 
-    kernelModules = [ "kvm-intel" "nvidia" "i915" ];
-    #kernelPackages = pkgs.linuxPackages_latest;
-    kernelPackages = pkgs.linuxPackages;
-  };
+    kernelModules = [
+      "kvm-intel"
+      "intel_vpu" # Intel NPU (Neural Processing Unit) — /dev/accel/accel0
+    ];
 
-  # https://nixos.wiki/wiki/Nvidia
-  # Use offload mode for better battery life and Wayland compatibility
-  # Apps can request NVIDIA with: __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia app
-  hardware.nvidia.prime = {
-    offload.enable = true;
-    offload.enableOffloadCmd = true; # provides nvidia-offload command
-    sync.enable = false;
-    # nix-shell -p lshw.out --run 'sudo lshw -c display'
-    intelBusId = "PCI:0:2:0"; # pci@0000:00:02.0
-    nvidiaBusId = "PCI:1:0:0"; # pci@0000:01:00.0
+    # i915 is unused on Lunar Lake (xe driver handles Arc 140V entirely)
+    blacklistedKernelModules = [ "i915" ];
+
+    # Use latest kernel for best Lunar Lake (Core Ultra 200V) + Arc Xe2 support
+    kernelPackages = pkgs.linuxPackages_latest;
+
+    # Enable full 320MHz channels for Intel BE201 Wi-Fi 7 when connected to capable AP
+    extraModprobeConfig = ''
+      options cfg80211 ieee80211_regdom=US
+    '';
   };
 
   environment.systemPackages = with pkgs; [
-    nvtopPackages.full
+    intel-gpu-tools            # intel_gpu_top, intel_reg, etc.
+    intel-npu-driver           # Level Zero backend for NPU inference
+    libva-utils                # vainfo — VA-API codec diagnostics
+    nvtopPackages.intel
+    openvino                   # OpenVINO runtime with CPU/GPU/NPU plugins
   ];
 
   networking.hostName = "floki";
@@ -84,36 +88,10 @@
   };
 
   virtualisation.docker.storageDriver = "btrfs";
-  #  virtualisation.podman.storageDriver = "btrfs";
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
-  # Fingerprint reader: Synaptics 06cb:009a (NOT SUPPORTED by libfprint)
-  # This device requires python-validity which is not packaged in nixpkgs
-  # Leaving configuration commented out until support is available
+  # Fingerprint reader: Synaptics 06cb:0123 — NOT supported by libfprint or python-validity
+  # No packaged NixOS driver exists for this device; blocked on upstream support
   # services.fprintd.enable = true;
-  # services.fprintd.tod.enable = true;
-  # services.fprintd.tod.driver = pkgs.libfprint-2-tod1-goodix;
-
-  # security.pam.services.login.fprintAuth = lib.mkForce true;
-  # # similarly to how other distributions handle the fingerprinting login
-  # security.pam.services.gdm-fingerprint = lib.mkIf config.services.fprintd.enable {
-  #   text = ''
-  #     auth       required                    pam_shells.so
-  #     auth       requisite                   pam_nologin.so
-  #     auth       requisite                   pam_faillock.so      preauth
-  #     auth       required                    ${pkgs.fprintd}/lib/security/pam_fprintd.so
-  #     auth       optional                    pam_permit.so
-  #     auth       required                    pam_env.so
-  #     auth       [success=ok default=1]      ${pkgs.gdm}/lib/security/pam_gdm.so
-  #     auth       optional                    ${pkgs.gnome-keyring}/lib/security/pam_gnome_keyring.so
-#
-  #     account    include                     login
-#
-  #     password   required                    pam_deny.so
-#
-  #     session    include                     login
-  #     session    optional                    ${pkgs.gnome-keyring}/lib/security/pam_gnome_keyring.so auto_start
-  #   '';
-  # };
 }
