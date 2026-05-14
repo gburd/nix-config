@@ -77,6 +77,10 @@ with lib.hm.gvariant;
         path = "${config.home.homeDirectory}/.config/borgmatic/.rsync-key";
         mode = "0600";
       };
+      "backup/borg-keyfile" = {
+        path = "${config.home.homeDirectory}/.config/borg/keys/zh6216_rsync_net__borg";
+        mode = "0600";
+      };
 
       # Email account credentials (nested structure)
       "email/proton/user" = { };

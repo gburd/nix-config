@@ -29,6 +29,9 @@
       };
     };
 
+    # Maki agent configuration
+    maki.enable = true;
+
     # MCP Server configuration
     mcps = {
       enable = true;

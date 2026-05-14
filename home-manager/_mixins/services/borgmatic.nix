@@ -35,7 +35,7 @@ let
     keep_weekly = 4;
     keep_monthly = 3;
     # Passphrase file written by sops (floki/meh) or manually created (arnold/other)
-    encryption_passphrase_command = "cat ${config.home.homeDirectory}/.config/borgmatic/.passphrase";
+    encryption_passcommand = "cat ${config.home.homeDirectory}/.config/borgmatic/.passphrase";
     # rsync.net uses "borg1" for borg 1.x server-side binary
     remote_path = "borg1";
     # Use sops-deployed rsync.net key (works unattended without 1Password)
