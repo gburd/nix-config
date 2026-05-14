@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, ... }:
 let
   cfg = config.programs.ai.skills;
   inherit (lib) mkEnableOption mkOption types;

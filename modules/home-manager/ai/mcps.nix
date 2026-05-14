@@ -91,7 +91,7 @@ let
 
   ### MCP Server configuration file ###
   mcpJsonText = builtins.toJSON {
-    mcpServers = mcpServers;
+    inherit mcpServers;
   };
 
   # Maki uses a different TOML format: [mcp.name] with command=[] or url=""
@@ -130,12 +130,11 @@ let
   })
     // (optionalAttrs cfg.servers.agora.enable {
     agora = {
-      url = cfg.servers.agora.url;
+      inherit (cfg.servers.agora) url;
     };
   });
 
-  packages = [ ]
-    ++ (lib.optional cfg.servers.memelord.enable cfg.servers.memelord.pkg);
+  packages = lib.optional cfg.servers.memelord.enable cfg.servers.memelord.pkg;
 in
 {
   options.programs.ai.mcps = {

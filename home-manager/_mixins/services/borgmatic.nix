@@ -9,7 +9,7 @@
 # Initial repo setup (run once per host, NOT idempotent):
 #   borg init --encryption=repokey ssh://zh6216@zh6216.rsync.net/./borg
 # when prompted for passphrase, use the value from sops "backup/borg-passphrase"
-{ config, pkgs, lib, ... }:
+{ config, pkgs, ... }:
 let
   borgmaticConfig = {
     source_directories = [ config.home.homeDirectory ];

@@ -21,7 +21,7 @@ in
         # Configure ssh-keygen as the signing program
         "gpg.ssh" = {
           program = "${pkgs.openssh}/bin/ssh-keygen";
-          allowedSignersFile = cfg.allowedSignersFile;
+          inherit (cfg) allowedSignersFile;
         };
 
         # Commit and tag signing
@@ -35,9 +35,7 @@ in
       text = let
         # Get user email from git config
         userEmail = config.programs.git.userEmail or (
-          if config.programs.git.settings ? user.email
-          then config.programs.git.settings.user.email
-          else "greg@burd.me"
+          config.programs.git.settings.user.email or "greg@burd.me"
         );
         # Get hostname for comment
         hostname = let h = builtins.getEnv "HOSTNAME"; in if h == "" then "unknown" else h;

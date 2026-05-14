@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 {
   # AI agent configuration for macOS (darwin)
   # Note: No sops-nix on darwin — credentials managed via ada CLI and env vars

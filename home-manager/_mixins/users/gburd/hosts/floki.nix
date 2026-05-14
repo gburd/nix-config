@@ -205,16 +205,15 @@ with lib.hm.gvariant;
     # Pan NNTP newsreader: pre-configure postgr.esq (PostgreSQL mailing lists)
     file.".pan2/servers.xml".text = ''
       <?xml version="1.0" encoding="utf-8" ?>
-      <servers>
+      <server-properties>
         <server>
           <host>mail.postgr.esq</host>
           <port>563</port>
-          <ssl>1</ssl>
-          <newsgroups-filename>mail.postgr.esq.strstrstr</newsgroups-filename>
+          <use-ssl>1</use-ssl>
           <connection-limit>2</connection-limit>
-          <expire-mode>cache-only</expire-mode>
+          <rank>1</rank>
         </server>
-      </servers>
+      </server-properties>
     '';
 
     file.".config/direnv/direnv.toml".text = ''

@@ -6,7 +6,6 @@
 # Update hash below, then rebuild.
 {
   lib,
-  stdenv,
   fetchFromGitHub,
   rustPlatform,
   nodejs,

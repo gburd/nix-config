@@ -4,7 +4,7 @@
 # GPU: Dual AMD FirePro
 # RAM: Up to 64GB DDR3 ECC
 
-{ inputs, lib, pkgs, config, ... }:
+{ inputs, lib, pkgs, ... }:
 {
   imports = [
     ./hardware-configuration.nix

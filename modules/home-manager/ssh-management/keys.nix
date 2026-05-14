@@ -29,12 +29,12 @@ in
             rotation_interval = cfg.rotationInterval;
             last_check = "managed-by-systemd-timer";
             auth_key = {
-              path = cfg.authKey.path;
+              inherit (cfg.authKey) path;
               fingerprint = "calculated-at-runtime";
               deployed = "managed-by-home-manager";
             };
             signing_key = {
-              path = cfg.signingKey.path;
+              inherit (cfg.signingKey) path;
               fingerprint = "calculated-at-runtime";
               deployed = "managed-by-home-manager";
             };

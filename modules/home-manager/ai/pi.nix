@@ -6,7 +6,7 @@ let
   settingsJson = builtins.toJSON {
     lastChangelogVersion = "0.74.0";
     defaultProvider = "amazon-bedrock";
-    defaultModel = cfg.defaultModel;
+    inherit (cfg) defaultModel;
     defaultThinkingLevel = "high";
     theme = "dark";
     quietStartup = false;
