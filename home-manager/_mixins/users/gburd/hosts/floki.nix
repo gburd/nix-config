@@ -69,9 +69,13 @@ with lib.hm.gvariant;
         path = "${config.home.homeDirectory}/.ssh/id_signing_ed25519";
       };
 
-      # Borg backup passphrase (used by borgmatic)
+      # Borg backup passphrase and SSH key (used by borgmatic)
       "backup/borg-passphrase" = {
         path = "${config.home.homeDirectory}/.config/borgmatic/.passphrase";
+      };
+      "backup/rsync-ssh-key" = {
+        path = "${config.home.homeDirectory}/.config/borgmatic/.rsync-key";
+        mode = "0600";
       };
 
       # Email account credentials (nested structure)

@@ -38,8 +38,8 @@ let
     encryption_passphrase_command = "cat ${config.home.homeDirectory}/.config/borgmatic/.passphrase";
     # rsync.net uses "borg1" for borg 1.x server-side binary
     remote_path = "borg1";
-    # Use default SSH agent key (1Password agent provides the rsync.net key)
-    ssh_command = "ssh -o IdentitiesOnly=no";
+    # Use sops-deployed rsync.net key (works unattended without 1Password)
+    ssh_command = "ssh -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes";
   };
 in
 {
