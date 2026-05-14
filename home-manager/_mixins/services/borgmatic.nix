@@ -36,6 +36,8 @@ let
     keep_monthly = 3;
     # Passphrase file written by sops (floki/meh) or manually created (arnold/other)
     encryption_passphrase_command = "cat ${config.home.homeDirectory}/.config/borgmatic/.passphrase";
+    # rsync.net uses "borg1" for borg 1.x server-side binary
+    remote_path = "borg1";
     # Use default SSH agent key (1Password agent provides the rsync.net key)
     ssh_command = "ssh -o IdentitiesOnly=no";
   };
