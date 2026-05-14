@@ -85,9 +85,12 @@ rustPlatform.buildRustPackage {
     mv tauri.conf.patched.json src-tauri/tauri.conf.json
   '';
 
-  # Fix blank/dark window on Wayland (WebKitGTK DMA-BUF renderer issue)
+  # Fix blank/dark window on Wayland (WebKitGTK rendering issues)
   preFixup = ''
-    gappsWrapperArgs+=(--set WEBKIT_DISABLE_DMABUF_RENDERER 1)
+    gappsWrapperArgs+=(
+      --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+      --set WEBKIT_DISABLE_COMPOSITING_MODE 1
+    )
   '';
 
   postInstall = ''

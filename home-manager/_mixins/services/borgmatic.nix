@@ -21,14 +21,57 @@ let
     ];
     archive_name_format = "{hostname}-{now:%F-%T}";
     compression = "auto,zstd,7";
-    exclude_patterns = [
-      "${config.home.homeDirectory}/.cache"
-      "${config.home.homeDirectory}/.rustup"
-      "${config.home.homeDirectory}/.cargo"
-      "${config.home.homeDirectory}/.ccache"
-      "${config.home.homeDirectory}/.npm"
-      "${config.home.homeDirectory}/.pgrx"
-    ];
+    exclude_patterns =
+      let h = config.home.homeDirectory; in [
+        # Build tool caches (large, regenerable)
+        "${h}/.cache"
+        "${h}/.rustup"
+        "${h}/.cargo"
+        "${h}/.ccache"
+        "${h}/.npm"
+        "${h}/.pgrx"
+        "${h}/.gradle/caches"
+        "${h}/.m2/repository"
+        "${h}/go/pkg/mod/cache"
+        "${h}/.nv/GLCache"
+        "${h}/.nvm"
+        # Browser caches (regenerable, large)
+        "${h}/.mozilla/firefox/*/Cache"
+        "${h}/.mozilla/firefox/*/minidumps"
+        "${h}/.config/google-chrome/*/Local Storage"
+        "${h}/.config/google-chrome/*/Session Storage"
+        "${h}/.config/google-chrome/*/Service Worker/CacheStorage"
+        "${h}/.config/google-chrome/ShaderCache"
+        "${h}/.config/BraveSoftware/Brave-Browser/ShaderCache"
+        "${h}/.config/BraveSoftware/Brave-Browser/*/Service Worker/CacheStorage"
+        "${h}/.config/chromium/*/Service Worker/CacheStorage"
+        # Desktop/app caches
+        "${h}/.local/share/Trash"
+        "${h}/.local/share/baloo"
+        "${h}/.local/share/zeitgeist"
+        "${h}/.local/share/tracker"
+        "${h}/.local/share/gvfs-metadata"
+        "${h}/.thumbnails"
+        "${h}/.var/app/*/cache"
+        "${h}/.var/app/*/.cache"
+        # IDE/editor caches
+        "${h}/.config/Code/CachedData"
+        "${h}/.config/Code/Cache"
+        "${h}/.config/Code/logs"
+        "${h}/.vscode/extensions"
+        "${h}/.config/**/blob_storage"
+        "${h}/.config/**/GPUCache"
+        "${h}/.config/**/Code Cache"
+        # Misc regenerable state
+        "${h}/.gnupg/random_seed"
+        "${h}/.ICEauthority"
+        "${h}/.Xauthority"
+        "${h}/nohup.out"
+        # Nix store symlinks (huge, managed by nix)
+        "${h}/.nix-profile"
+        "${h}/.nix-defexpr"
+        "${h}/.local/state/nix"
+      ];
     exclude_if_present = [ ".nobackup" ".borgignore" ];
     keep_within = "2d";
     keep_daily = 7;
