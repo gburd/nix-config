@@ -29,7 +29,7 @@ let
     ];
     skills = [ "~/.kiro/skills" ];
     prompts = [ ];
-    extensions = [ ];
+    extensions = [ "~/.pi/agent/extensions" ];
     themes = [ ];
     packages = [ "npm:@tintinweb/pi-subagents" ];
     enableSkillCommands = true;
@@ -61,6 +61,13 @@ in
     home.file = {
       ".pi/agent/settings.json".text = settingsJson;
       ".pi/agent/auth.json".text = "{}";
+      ".pi/agent/extensions/agora-mcp.ts".source = ./pi-extensions/agora-mcp.ts;
+      ".pi/agent/extensions/coccinelle.ts".source = ./pi-extensions/coccinelle.ts;
+      ".pi/agent/extensions/context-monitor.ts".source = ./pi-extensions/context-monitor.ts;
+      ".pi/agent/extensions/lsp.ts".source = ./pi-extensions/lsp.ts;
+      ".pi/agent/extensions/memelord-mcp.ts".source = ./pi-extensions/memelord-mcp.ts;
+      ".pi/agent/extensions/project-context.ts".source = ./pi-extensions/project-context.ts;
+      ".pi/agent/extensions/safety-hooks.ts".source = ./pi-extensions/safety-hooks.ts;
     };
   };
 }

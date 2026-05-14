@@ -202,6 +202,21 @@ with lib.hm.gvariant;
       set enable-bracketed-paste off
     '';
 
+    # Pan NNTP newsreader: pre-configure postgr.esq (PostgreSQL mailing lists)
+    file.".pan2/servers.xml".text = ''
+      <?xml version="1.0" encoding="utf-8" ?>
+      <servers>
+        <server>
+          <host>mail.postgr.esq</host>
+          <port>563</port>
+          <ssl>1</ssl>
+          <newsgroups-filename>mail.postgr.esq.strstrstr</newsgroups-filename>
+          <connection-limit>2</connection-limit>
+          <expire-mode>cache-only</expire-mode>
+        </server>
+      </servers>
+    '';
+
     file.".config/direnv/direnv.toml".text = ''
       [global]
       load_dotenv = true
@@ -282,6 +297,9 @@ with lib.hm.gvariant;
       lmstudio      # Local LLM runner (LM Studio)
       maki          # AI coding agent from gburd/maki
       terax-ai      # AI assistant UI (Bedrock support pending upstream issue #138)
+
+      # PostgreSQL community
+      pan           # GTK NNTP newsreader (postgr.esq PostgreSQL mailing lists)
     ];
 
     # http://rski.github.io/2021/09/05/nix-debugging.html

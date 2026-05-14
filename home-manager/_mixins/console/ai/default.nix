@@ -89,11 +89,11 @@
           path = config.home.homeDirectory;
         };
 
-        # Agora public-inbox MCP server (PostgreSQL community discussion archive)
-        # Moved from LAN meh:8484/sse to public hosted endpoint
+        # Agora: PostgreSQL community discussion archive (postgr.esq)
+        # Also available via NNTP (mail.postgr.esq:563), IMAP, web
         agora = {
           enable = true;
-          url = "https://postgr.esq/l/mcp";
+          url = "https://postgr.esq/l/mcp/";
         };
       };
     };

@@ -218,11 +218,11 @@ in
       };
 
       agora = {
-        enable = mkEnableOption "Agora public-inbox MCP SSE server";
+        enable = mkEnableOption "Postgr.esq/l MCP server (PostgreSQL community archive)";
         url = mkOption {
           type = types.str;
-          default = "https://postgr.esq/l/mcp";
-          description = "URL for the Agora MCP SSE server";
+          default = "https://postgr.esq/l/mcp/";
+          description = "URL for the Postgr.esq/l MCP server";
         };
       };
     };
