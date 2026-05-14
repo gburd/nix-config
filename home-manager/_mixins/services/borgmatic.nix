@@ -36,7 +36,8 @@ let
     keep_monthly = 3;
     # Passphrase file written by sops (floki/meh) or manually created (arnold/other)
     encryption_passphrase_command = "cat ${config.home.homeDirectory}/.config/borgmatic/.passphrase";
-    ssh_command = "ssh -i ${config.home.homeDirectory}/.ssh/id_auth_ed25519";
+    # Use default SSH agent key (1Password agent provides the rsync.net key)
+    ssh_command = "ssh -o IdentitiesOnly=no";
   };
 in
 {
