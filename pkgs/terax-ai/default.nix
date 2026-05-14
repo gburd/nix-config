@@ -85,6 +85,11 @@ rustPlatform.buildRustPackage {
     mv tauri.conf.patched.json src-tauri/tauri.conf.json
   '';
 
+  # Fix blank/dark window on Wayland (WebKitGTK DMA-BUF renderer issue)
+  preFixup = ''
+    gappsWrapperArgs+=(--set WEBKIT_DISABLE_DMABUF_RENDERER 1)
+  '';
+
   postInstall = ''
     # Rename binary to match pname (cargo tauri build installs as 'terax')
     mv "$out/bin/terax" "$out/bin/terax-ai" 2>/dev/null || true
