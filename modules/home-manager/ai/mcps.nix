@@ -91,8 +91,23 @@ let
 
   ### MCP Server configuration file ###
   mcpJsonText = builtins.toJSON {
-    inherit mcpServers;
+    mcpServers = mcpServers;
   };
+
+  # Maki uses a different TOML format: [mcp.name] with command=[] or url=""
+  makiMcpToml =
+    let
+      renderServer = name: server:
+        if server ? url then
+          "[mcp.${name}]\nurl = \"${server.url}\"\n"
+        else
+          "[mcp.${name}]\ncommand = [${
+            builtins.concatStringsSep ", "
+              (map (s: "\"${s}\"") ([ server.command ] ++ (server.args or [])))
+          }]\n";
+    in
+    builtins.concatStringsSep "\n"
+      (lib.mapAttrsToList renderServer mcpServers);
 
   mcpServers = { }
     // (optionalAttrs cfg.servers.filesystem.enable {
@@ -111,6 +126,11 @@ let
     memelord = {
       command = "${cfg.servers.memelord.pkg}/bin/memelord";
       args = [ "serve" ];
+    };
+  })
+    // (optionalAttrs cfg.servers.agora.enable {
+    agora = {
+      url = cfg.servers.agora.url;
     };
   });
 
@@ -136,6 +156,11 @@ in
         type = types.bool;
         default = true;
         description = "Enables the ~/.kiro/settings/mcp.json output config file for Kiro CLI";
+      };
+      maki = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enables the ~/.maki/mcp.toml output config file for Maki";
       };
     };
 
@@ -191,6 +216,15 @@ in
           description = "Root path for filesystem server access";
         };
       };
+
+      agora = {
+        enable = mkEnableOption "Agora public-inbox MCP SSE server";
+        url = mkOption {
+          type = types.str;
+          default = "https://postgr.esq/l/mcp";
+          description = "URL for the Agora MCP SSE server";
+        };
+      };
     };
   };
 
@@ -211,6 +245,9 @@ in
         ".kiro/settings/settings.json".text = builtins.toJSON {
           hooks = memelordHooks;
         };
+      })
+      (lib.mkIf cfg.targets.maki {
+        ".maki/mcp.toml".text = makiMcpToml;
       })
     ];
   };

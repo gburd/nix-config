@@ -39,6 +39,12 @@ with lib.hm.gvariant;
       xkb-options = [ "grp:alt_shift_toggle" "ctrl:swapcaps" ];
     };
 
+    "org/gnome/desktop/peripherals/keyboard" = {
+      repeat = true;
+      repeat-interval = mkUint32 17;  # ~60 keys/sec (fast)
+      delay = mkUint32 200;           # 200ms initial delay
+    };
+
     "org/gnome/desktop/interface" = {
       clock-format = "24h";
       color-scheme = "prefer-dark";

@@ -66,13 +66,13 @@
   ];
 
   networking.hostName = "floki";
-  networking.hosts = {
-    "192.168.1.185" = [ "meh" ];
-  };
 
   # Laptop power management
-  powerManagement.powertop.enable = true;
-  powerManagement.cpuFreqGovernor = "powersave";
+  # power-profiles-daemon integrates with GNOME Shell to switch between
+  # Power Saver / Balanced / Performance based on AC vs battery automatically.
+  # Replaces static cpuFreqGovernor + powertop.enable (which applied battery
+  # tuning unconditionally at boot regardless of power source).
+  services.power-profiles-daemon.enable = true;
 
   services = {
     hardware.openrgb = {

@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
+  # borgbackup is provided by services/borgmatic.nix; vorta is the GUI frontend
   home.packages = with pkgs; [
-    borgbackup
     vorta
   ];
 

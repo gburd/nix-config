@@ -36,6 +36,7 @@
         default = true;
         claude = true;
         kiro = true;
+        maki = true;
       };
 
       servers = {
@@ -81,6 +82,13 @@
           enable = true;
           path = config.home.homeDirectory;
         };
+
+        # Agora public-inbox MCP server (PostgreSQL community discussion archive)
+        # Moved from LAN meh:8484/sse to public hosted endpoint
+        agora = {
+          enable = true;
+          url = "https://postgr.esq/l/mcp";
+        };
       };
     };
   };
@@ -92,6 +100,7 @@
     aws-vault
     gh
     nodejs
+    ssm-session-manager-plugin
     uv
   ];
 }

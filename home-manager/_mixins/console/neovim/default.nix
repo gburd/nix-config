@@ -8,11 +8,17 @@
     extraPackages = with pkgs; [
       # Language servers
       lua-language-server
-      nil
+      nixd              # Nix LSP (more complete than nil)
       # rust-analyzer is provided by rustup (via languages/rust.nix)
       # to avoid conflicts with rustup's wrapper
       clang-tools # provides clangd
-      pyright
+      gopls       # Go LSP
+      pyright     # Python LSP
+      sqls        # SQL LSP
+      taplo       # TOML LSP + formatter
+      vscode-langservers-extracted   # JSON, HTML, CSS, ESLint LSP
+      yaml-language-server
+      perlPackages.PLS               # Perl LSP
       nodePackages.bash-language-server
 
       # Formatters

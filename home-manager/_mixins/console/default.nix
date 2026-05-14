@@ -83,6 +83,21 @@
       valgrind # Memory debugger and profiler
       heaptrack # Heap memory profiler
       perf # Performance analysis tools
+      bpftrace # BPF-based dynamic tracing
+
+      # Semantic patching for C/C++ (useful for large codebases)
+      coccinelle
+
+      # Data format tools
+      dasel   # Query/modify JSON/YAML/TOML/XML/CSV
+      fx      # Interactive JSON viewer
+      htmlq   # HTML query (like jq for HTML)
+      miller  # CSV/TSV/JSON/NIDX swiss army knife
+      qsv     # Fast CSV processor
+      xmlstarlet # XML processor
+
+      # Cloud tools
+      unstable.flyctl # Fly.io CLI
     ];
 
     sessionVariables = {
@@ -92,6 +107,9 @@
       VISUAL = "nvim";
     };
   };
+
+  # Restart changed systemd user services on home-manager switch
+  systemd.user.startServices = "sd-switch";
 
   programs = {
     atuin = {

@@ -11,4 +11,5 @@
   nix-inspect = pkgs.callPackage ./nix-inspect { };
   tly = pkgs.callPackage ./tly { };
   mailspring = pkgs.callPackage ./mailspring { };
+  terax-ai = pkgs.callPackage ./terax-ai { };
 }

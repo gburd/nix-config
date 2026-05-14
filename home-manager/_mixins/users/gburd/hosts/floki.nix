@@ -7,6 +7,7 @@ with lib.hm.gvariant;
     # inputs.impermanence.nixosModules.home-manager.impermanence
     ../../../console/ai # Opt-in AI configuration for this host
     ../../../desktop/vorta.nix
+    ../../../services/borgmatic.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
     # Email and productivity services
@@ -33,6 +34,14 @@ with lib.hm.gvariant;
       switch-applications = [ ];
       switch-applications-backward = [ ];
     };
+
+    # Power management: Performance profile on AC, never auto-suspend
+    "org/gnome/settings-daemon/plugins/power" = {
+      power-profile-on-ac = "performance";      # max performance when plugged in
+      power-profile-on-battery = "power-saver"; # conservative when on battery
+      sleep-inactive-ac-type = "nothing";       # don't suspend on AC when idle
+      sleep-inactive-ac-timeout = 0;            # 0 = never
+    };
   };
 
   # Sops secrets configuration
@@ -58,6 +67,11 @@ with lib.hm.gvariant;
       };
       "ssh-keys/signing" = {
         path = "${config.home.homeDirectory}/.ssh/id_signing_ed25519";
+      };
+
+      # Borg backup passphrase (used by borgmatic)
+      "backup/borg-passphrase" = {
+        path = "${config.home.homeDirectory}/.config/borgmatic/.passphrase";
       };
 
       # Email account credentials (nested structure)
@@ -250,14 +264,15 @@ with lib.hm.gvariant;
       # tree  # Removed: provided by cli mixin
       tree-sitter
       unstable.element-desktop
-      unstable.flyctl
       unstable.minio-client
       xclip
 
-      # AI coding agents
+      # AI tools
       # kiro-cli    # Kiro CLI (download URLs require auth — not yet publicly available)
       # kiro-ide    # Kiro IDE (download URLs return 404 — not yet publicly available)
+      lmstudio      # Local LLM runner (LM Studio)
       maki          # AI coding agent from gburd/maki
+      terax-ai      # AI assistant UI (Bedrock support pending upstream issue #138)
     ];
 
     # http://rski.github.io/2021/09/05/nix-debugging.html

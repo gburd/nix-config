@@ -4,6 +4,7 @@ with lib.hm.gvariant;
   imports = [
     ../../../console/ai # Opt-in AI configuration for this host
     ../../../desktop/vorta.nix
+    ../../../services/borgmatic.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
     # Email and productivity services
@@ -61,6 +62,11 @@ with lib.hm.gvariant;
       };
       "ssh-keys/signing" = {
         path = "${config.home.homeDirectory}/.ssh/id_signing_ed25519";
+      };
+
+      # Borg backup passphrase (used by borgmatic)
+      "backup/borg-passphrase" = {
+        path = "${config.home.homeDirectory}/.config/borgmatic/.passphrase";
       };
 
       # Email account credentials (nested structure)
@@ -222,7 +228,6 @@ with lib.hm.gvariant;
       rebar3
       tree-sitter
       unstable.element-desktop
-      unstable.flyctl
       unstable.minio-client
       xclip
     ];

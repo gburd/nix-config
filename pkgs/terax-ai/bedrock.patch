@@ -1,0 +1,594 @@
+diff --git a/package.json b/package.json
+index 8c886a8..3c7c6ef 100644
+--- a/package.json
++++ b/package.json
+@@ -10,6 +10,7 @@
+     "tauri": "tauri"
+   },
+   "dependencies": {
++    "@ai-sdk/amazon-bedrock": "^4.0.0",
+     "@ai-sdk/anthropic": "^3.0.71",
+     "@ai-sdk/cerebras": "^2.0.46",
+     "@ai-sdk/google": "^3.0.64",
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 0a7f5da..32fde35 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -8,6 +8,9 @@ importers:
+ 
+   .:
+     dependencies:
++      '@ai-sdk/amazon-bedrock':
++        specifier: ^4.0.0
++        version: 4.0.105(zod@4.3.6)
+       '@ai-sdk/anthropic':
+         specifier: ^3.0.71
+         version: 3.0.71(zod@4.3.6)
+@@ -261,12 +264,24 @@ importers:
+ 
+ packages:
+ 
++  '@ai-sdk/amazon-bedrock@4.0.105':
++    resolution: {integrity: sha512-mNnJeRTIYRL2I2MS9ElRJTFMSeHqbx5EMCVsIlEKKTI4+2O+Zu0K7Rtp16HRXtxMepJF1Y756rAmUm/JvuXOGg==}
++    engines: {node: '>=18'}
++    peerDependencies:
++      zod: ^3.25.76 || ^4.1.8
++
+   '@ai-sdk/anthropic@3.0.71':
+     resolution: {integrity: sha512-bUWOzrzR0gJKJO/PLGMR4uH2dqEgqGhrsCV+sSpk4KtOEnUQlfjZI/F7BFlqSvVpFbjdgYRRLysAeEZpJ6S1lg==}
+     engines: {node: '>=18'}
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
++  '@ai-sdk/anthropic@3.0.77':
++    resolution: {integrity: sha512-ML8C2M1YvPA1ulEx4TiyF0k1xvC2ikEiPBIC1PPQ0a5xELUGrO2lAaEzsTEoJ+eCeDd8PSBuFJjs+r+9yIwQXA==}
++    engines: {node: '>=18'}
++    peerDependencies:
++      zod: ^3.25.76 || ^4.1.8
++
+   '@ai-sdk/cerebras@2.0.46':
+     resolution: {integrity: sha512-MK8uzm5k+G0HM/pjHfrQGvPsIUy1zSqat716UNpuGo33GQGsABf3jorXyuKmmsGhQpyoKB03DqKZs821FID3Iw==}
+     engines: {node: '>=18'}
+@@ -321,6 +336,16 @@ packages:
+     peerDependencies:
+       zod: ^3.25.76 || ^4.1.8
+ 
++  '@ai-sdk/provider-utils@4.0.27':
++    resolution: {integrity: sha512-ubkAJ+xODouwtmN1tYlvTPphH1hPOBfZaEQe8U7skGvFAnIRs9PPpsq57bC2+Ky/MB4yzhd6YOsxTAx9sGpazw==}
++    engines: {node: '>=18'}
++    peerDependencies:
++      zod: ^3.25.76 || ^4.1.8
++
++  '@ai-sdk/provider@3.0.10':
++    resolution: {integrity: sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw==}
++    engines: {node: '>=18'}
++
+   '@ai-sdk/provider@3.0.8':
+     resolution: {integrity: sha512-oGMAgGoQdBXbZqNG0Ze56CHjDZ1IDYOwGYxYjO5KLSlz5HiNQ9udIXsPZ61VWaHGZ5XW/jyjmr6t2xz2jGVwbQ==}
+     engines: {node: '>=18'}
+@@ -344,6 +369,17 @@ packages:
+   '@antfu/install-pkg@1.1.0':
+     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
+ 
++  '@aws-crypto/crc32@5.2.0':
++    resolution: {integrity: sha512-nLbCWqQNgUiwwtFsen1AdzAtvuLRsQS8rYgMuxCrdKf9kOssamGLuPwyTY9wyYblNr9+1XM8v6zoDTPPSIeANg==}
++    engines: {node: '>=16.0.0'}
++
++  '@aws-crypto/util@5.2.0':
++    resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
++
++  '@aws-sdk/types@3.973.8':
++    resolution: {integrity: sha512-gjlAdtHMbtR9X5iIhVUvbVcy55KnznpC6bkDUWW9z915bi0ckdUr5cjf16Kp6xq0bP5HBD2xzgbL9F9Quv5vUw==}
++    engines: {node: '>=20.0.0'}
++
+   '@babel/code-frame@7.29.0':
+     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
+     engines: {node: '>=6.9.0'}
+@@ -1657,79 +1693,66 @@ packages:
+     resolution: {integrity: sha512-2QxQrM+KQ7DAW4o22j+XZ6RKdxjLD7BOWTP0Bv0tmjdyhXSsr2Ul1oJDQqh9Zf5qOwTuTc7Ek83mOFaKnodPjg==}
+     cpu: [arm]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@rollup/rollup-linux-arm-musleabihf@4.60.2':
+     resolution: {integrity: sha512-TbziEu2DVsTEOPif2mKWkMeDMLoYjx95oESa9fkQQK7r/Orta0gnkcDpzwufEcAO2BLBsD7mZkXGFqEdMRRwfw==}
+     cpu: [arm]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@rollup/rollup-linux-arm64-gnu@4.60.2':
+     resolution: {integrity: sha512-bO/rVDiDUuM2YfuCUwZ1t1cP+/yqjqz+Xf2VtkdppefuOFS2OSeAfgafaHNkFn0t02hEyXngZkxtGqXcXwO8Rg==}
+     cpu: [arm64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@rollup/rollup-linux-arm64-musl@4.60.2':
+     resolution: {integrity: sha512-hr26p7e93Rl0Za+JwW7EAnwAvKkehh12BU1Llm9Ykiibg4uIr2rbpxG9WCf56GuvidlTG9KiiQT/TXT1yAWxTA==}
+     cpu: [arm64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@rollup/rollup-linux-loong64-gnu@4.60.2':
+     resolution: {integrity: sha512-pOjB/uSIyDt+ow3k/RcLvUAOGpysT2phDn7TTUB3n75SlIgZzM6NKAqlErPhoFU+npgY3/n+2HYIQVbF70P9/A==}
+     cpu: [loong64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@rollup/rollup-linux-loong64-musl@4.60.2':
+     resolution: {integrity: sha512-2/w+q8jszv9Ww1c+6uJT3OwqhdmGP2/4T17cu8WuwyUuuaCDDJ2ojdyYwZzCxx0GcsZBhzi3HmH+J5pZNXnd+Q==}
+     cpu: [loong64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@rollup/rollup-linux-ppc64-gnu@4.60.2':
+     resolution: {integrity: sha512-11+aL5vKheYgczxtPVVRhdptAM2H7fcDR5Gw4/bTcteuZBlH4oP9f5s9zYO9aGZvoGeBpqXI/9TZZihZ609wKw==}
+     cpu: [ppc64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@rollup/rollup-linux-ppc64-musl@4.60.2':
+     resolution: {integrity: sha512-i16fokAGK46IVZuV8LIIwMdtqhin9hfYkCh8pf8iC3QU3LpwL+1FSFGej+O7l3E/AoknL6Dclh2oTdnRMpTzFQ==}
+     cpu: [ppc64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@rollup/rollup-linux-riscv64-gnu@4.60.2':
+     resolution: {integrity: sha512-49FkKS6RGQoriDSK/6E2GkAsAuU5kETFCh7pG4yD/ylj9rKhTmO3elsnmBvRD4PgJPds5W2PkhC82aVwmUcJ7A==}
+     cpu: [riscv64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@rollup/rollup-linux-riscv64-musl@4.60.2':
+     resolution: {integrity: sha512-mjYNkHPfGpUR00DuM1ZZIgs64Hpf4bWcz9Z41+4Q+pgDx73UwWdAYyf6EG/lRFldmdHHzgrYyge5akFUW0D3mQ==}
+     cpu: [riscv64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@rollup/rollup-linux-s390x-gnu@4.60.2':
+     resolution: {integrity: sha512-ALyvJz965BQk8E9Al/JDKKDLH2kfKFLTGMlgkAbbYtZuJt9LU8DW3ZoDMCtQpXAltZxwBHevXz5u+gf0yA0YoA==}
+     cpu: [s390x]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@rollup/rollup-linux-x64-gnu@4.60.2':
+     resolution: {integrity: sha512-UQjrkIdWrKI626Du8lCQ6MJp/6V1LAo2bOK9OTu4mSn8GGXIkPXk/Vsp4bLHCd9Z9Iz2OTEaokUE90VweJgIYQ==}
+     cpu: [x64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@rollup/rollup-linux-x64-musl@4.60.2':
+     resolution: {integrity: sha512-bTsRGj6VlSdn/XD4CGyzMnzaBs9bsRxy79eTqTCBsA8TMIEky7qg48aPkvJvFe1HyzQ5oMZdg7AnVlWQSKLTnw==}
+     cpu: [x64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@rollup/rollup-openbsd-x64@4.60.2':
+     resolution: {integrity: sha512-6d4Z3534xitaA1FcMWP7mQPq5zGwBmGbhphh2DwaA1aNIXUu3KTOfwrWpbwI4/Gr0uANo7NTtaykFyO2hPuFLg==}
+@@ -1768,6 +1791,34 @@ packages:
+     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
+     engines: {node: '>=18'}
+ 
++  '@smithy/core@3.24.2':
++    resolution: {integrity: sha512-IKS7qX59fAGCYBmt5JChcDswQDupZqT2Yn2ZBA3UgTlsjRNNkQzZobbn95xoAAdtTyJmBiJB3Y02qR3rgy3Zog==}
++    engines: {node: '>=18.0.0'}
++
++  '@smithy/eventstream-codec@4.3.2':
++    resolution: {integrity: sha512-o5vbgeviqo25wICV4Bgh3lC+iyFITJLj9b8sdLPBPIb3WUJFLVaMOpsinN3nwdfjRSdw57q7C7hZi2axc62Ohg==}
++    engines: {node: '>=18.0.0'}
++
++  '@smithy/is-array-buffer@2.2.0':
++    resolution: {integrity: sha512-GGP3O9QFD24uGeAXYUjwSTXARoqpZykHadOmA8G5vfJPK0/DC67qa//0qvqrJzL1xc8WQWX7/yc7fwudjPHPhA==}
++    engines: {node: '>=14.0.0'}
++
++  '@smithy/types@4.14.1':
++    resolution: {integrity: sha512-59b5HtSVrVR/eYNei3BUj3DCPKD/G7EtDDe7OEJE7i7FtQFugYo6MxbotS8mVJkLNVf8gYaAlEBwwtJ9HzhWSg==}
++    engines: {node: '>=18.0.0'}
++
++  '@smithy/util-buffer-from@2.2.0':
++    resolution: {integrity: sha512-IJdWBbTcMQ6DA0gdNhh/BwrLkDR+ADW5Kr1aZmd4k3DIF6ezMV4R2NIAmT08wQJ3yUK82thHWmC/TnK/wpMMIA==}
++    engines: {node: '>=14.0.0'}
++
++  '@smithy/util-utf8@2.3.0':
++    resolution: {integrity: sha512-R8Rdn8Hy72KKcebgLiv8jQcQkXoLMOGGv5uI1/k0l+snqkOzQ1R0ChUBCxWMlBsFMekWjq0wRudIweFs7sKT5A==}
++    engines: {node: '>=14.0.0'}
++
++  '@smithy/util-utf8@4.3.2':
++    resolution: {integrity: sha512-Bswgu9zDwZRp5HBQKIaW6QrKrbwQ9RuOyAg2adsIjJTHA2SmE0XXBk+mYP82Ay6I3XzkY5lM7K9R0XZDFzJ3tw==}
++    engines: {node: '>=18.0.0'}
++
+   '@standard-schema/spec@1.1.0':
+     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+ 
+@@ -1809,28 +1860,24 @@ packages:
+     engines: {node: '>= 20'}
+     cpu: [arm64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@tailwindcss/oxide-linux-arm64-musl@4.2.3':
+     resolution: {integrity: sha512-MmIA32rNEOrjh6wnevlR3OjjlCuwgZ4JMJo7Vrhk4Fk56Vxi7EeF7cekSKwvlrnfcn/ERC1LdcG3sFneU8WdoA==}
+     engines: {node: '>= 20'}
+     cpu: [arm64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@tailwindcss/oxide-linux-x64-gnu@4.2.3':
+     resolution: {integrity: sha512-BiCy1YV0IKO+xbD7gyZnENU4jdwDygeGQjncJoeIE5Kp4UqWHFsKUSJ3pp7vYURrqVzwJX2xD5gQeGnoXp4xPQ==}
+     engines: {node: '>= 20'}
+     cpu: [x64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@tailwindcss/oxide-linux-x64-musl@4.2.3':
+     resolution: {integrity: sha512-venvyAu0AMKdr0c1Oz23IJJdZ72zSwKyHrLvqQV1cn49vPAJk3AuVtDkJ1ayk1sYI4M4j8Jv6ZGflpaP0QVSXQ==}
+     engines: {node: '>= 20'}
+     cpu: [x64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@tailwindcss/oxide-wasm32-wasi@4.2.3':
+     resolution: {integrity: sha512-e3kColrZZCdtbwIOc07cNQ2zNf1sTPXTYLjjPlsgsaf+ttzAg/hOlDyEgHoOlBGxM88nPxeVaOGe9ThqVzPncg==}
+@@ -1891,35 +1938,30 @@ packages:
+     engines: {node: '>= 10'}
+     cpu: [arm64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@tauri-apps/cli-linux-arm64-musl@2.10.1':
+     resolution: {integrity: sha512-MIj78PDDGjkg3NqGptDOGgfXks7SYJwhiMh8SBoZS+vfdz7yP5jN18bNaLnDhsVIPARcAhE1TlsZe/8Yxo2zqg==}
+     engines: {node: '>= 10'}
+     cpu: [arm64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@tauri-apps/cli-linux-riscv64-gnu@2.10.1':
+     resolution: {integrity: sha512-X0lvOVUg8PCVaoEtEAnpxmnkwlE1gcMDTqfhbefICKDnOTJ5Est3qL0SrWxizDackIOKBcvtpejrSiVpuJI1kw==}
+     engines: {node: '>= 10'}
+     cpu: [riscv64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@tauri-apps/cli-linux-x64-gnu@2.10.1':
+     resolution: {integrity: sha512-2/12bEzsJS9fAKybxgicCDFxYD1WEI9kO+tlDwX5znWG2GwMBaiWcmhGlZ8fi+DMe9CXlcVarMTYc0L3REIRxw==}
+     engines: {node: '>= 10'}
+     cpu: [x64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   '@tauri-apps/cli-linux-x64-musl@2.10.1':
+     resolution: {integrity: sha512-Y8J0ZzswPz50UcGOFuXGEMrxbjwKSPgXftx5qnkuMs2rmwQB5ssvLb6tn54wDSYxe7S6vlLob9vt0VKuNOaCIQ==}
+     engines: {node: '>= 10'}
+     cpu: [x64]
+     os: [linux]
+-    libc: [musl]
+ 
+   '@tauri-apps/cli-win32-arm64-msvc@2.10.1':
+     resolution: {integrity: sha512-iSt5B86jHYAPJa/IlYw++SXtFPGnWtFJriHn7X0NFBVunF6zu9+/zOn8OgqIWSl8RgzhLGXQEEtGBdR4wzpVgg==}
+@@ -2272,6 +2314,9 @@ packages:
+     resolution: {integrity: sha512-6t10qk83GOG8p0vKmaCr8eiilZwO171AvbROMtvvNiwrTly62t+7XkA8RdIIVbpMhCASAsxgAzdRSwh6nw/5Dg==}
+     engines: {node: '>=4'}
+ 
++  aws4fetch@1.0.20:
++    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
++
+   bail@2.0.2:
+     resolution: {integrity: sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw==}
+ 
+@@ -3245,28 +3290,24 @@ packages:
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   lightningcss-linux-arm64-musl@1.32.0:
+     resolution: {integrity: sha512-UpQkoenr4UJEzgVIYpI80lDFvRmPVg6oqboNHfoH4CQIfNA+HOrZ7Mo7KZP02dC6LjghPQJeBsvXhJod/wnIBg==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm64]
+     os: [linux]
+-    libc: [musl]
+ 
+   lightningcss-linux-x64-gnu@1.32.0:
+     resolution: {integrity: sha512-V7Qr52IhZmdKPVr+Vtw8o+WLsQJYCTd8loIfpDaMRWGUZfBOYEJeyJIkqGIDMZPwPx24pUMfwSxxI8phr/MbOA==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [x64]
+     os: [linux]
+-    libc: [glibc]
+ 
+   lightningcss-linux-x64-musl@1.32.0:
+     resolution: {integrity: sha512-bYcLp+Vb0awsiXg/80uCRezCYHNg1/l3mt0gzHnWV9XP1W5sKa5/TCdGWaR/zBM2PeF/HbsQv/j2URNOiVuxWg==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [x64]
+     os: [linux]
+-    libc: [musl]
+ 
+   lightningcss-win32-arm64-msvc@1.32.0:
+     resolution: {integrity: sha512-8SbC8BR40pS6baCM8sbtYDSwEVQd4JlFTOlaD3gWGHfThTcABnNDBda6eTZeqbofalIJhFx0qKzgHJmcPTnGdw==}
+@@ -4329,12 +4370,28 @@ packages:
+ 
+ snapshots:
+ 
++  '@ai-sdk/amazon-bedrock@4.0.105(zod@4.3.6)':
++    dependencies:
++      '@ai-sdk/anthropic': 3.0.77(zod@4.3.6)
++      '@ai-sdk/provider': 3.0.10
++      '@ai-sdk/provider-utils': 4.0.27(zod@4.3.6)
++      '@smithy/eventstream-codec': 4.3.2
++      '@smithy/util-utf8': 4.3.2
++      aws4fetch: 1.0.20
++      zod: 4.3.6
++
+   '@ai-sdk/anthropic@3.0.71(zod@4.3.6)':
+     dependencies:
+       '@ai-sdk/provider': 3.0.8
+       '@ai-sdk/provider-utils': 4.0.23(zod@4.3.6)
+       zod: 4.3.6
+ 
++  '@ai-sdk/anthropic@3.0.77(zod@4.3.6)':
++    dependencies:
++      '@ai-sdk/provider': 3.0.10
++      '@ai-sdk/provider-utils': 4.0.27(zod@4.3.6)
++      zod: 4.3.6
++
+   '@ai-sdk/cerebras@2.0.46(zod@4.3.6)':
+     dependencies:
+       '@ai-sdk/openai-compatible': 2.0.42(zod@4.3.6)
+@@ -4393,6 +4450,17 @@ snapshots:
+       eventsource-parser: 3.0.8
+       zod: 4.3.6
+ 
++  '@ai-sdk/provider-utils@4.0.27(zod@4.3.6)':
++    dependencies:
++      '@ai-sdk/provider': 3.0.10
++      '@standard-schema/spec': 1.1.0
++      eventsource-parser: 3.0.8
++      zod: 4.3.6
++
++  '@ai-sdk/provider@3.0.10':
++    dependencies:
++      json-schema: 0.4.0
++
+   '@ai-sdk/provider@3.0.8':
+     dependencies:
+       json-schema: 0.4.0
+@@ -4423,6 +4491,23 @@ snapshots:
+       package-manager-detector: 1.6.0
+       tinyexec: 1.1.1
+ 
++  '@aws-crypto/crc32@5.2.0':
++    dependencies:
++      '@aws-crypto/util': 5.2.0
++      '@aws-sdk/types': 3.973.8
++      tslib: 2.8.1
++
++  '@aws-crypto/util@5.2.0':
++    dependencies:
++      '@aws-sdk/types': 3.973.8
++      '@smithy/util-utf8': 2.3.0
++      tslib: 2.8.1
++
++  '@aws-sdk/types@3.973.8':
++    dependencies:
++      '@smithy/types': 4.14.1
++      tslib: 2.8.1
++
+   '@babel/code-frame@7.29.0':
+     dependencies:
+       '@babel/helper-validator-identifier': 7.28.5
+@@ -5930,6 +6015,40 @@ snapshots:
+ 
+   '@sindresorhus/merge-streams@4.0.0': {}
+ 
++  '@smithy/core@3.24.2':
++    dependencies:
++      '@aws-crypto/crc32': 5.2.0
++      '@smithy/types': 4.14.1
++      tslib: 2.8.1
++
++  '@smithy/eventstream-codec@4.3.2':
++    dependencies:
++      '@smithy/core': 3.24.2
++      tslib: 2.8.1
++
++  '@smithy/is-array-buffer@2.2.0':
++    dependencies:
++      tslib: 2.8.1
++
++  '@smithy/types@4.14.1':
++    dependencies:
++      tslib: 2.8.1
++
++  '@smithy/util-buffer-from@2.2.0':
++    dependencies:
++      '@smithy/is-array-buffer': 2.2.0
++      tslib: 2.8.1
++
++  '@smithy/util-utf8@2.3.0':
++    dependencies:
++      '@smithy/util-buffer-from': 2.2.0
++      tslib: 2.8.1
++
++  '@smithy/util-utf8@4.3.2':
++    dependencies:
++      '@smithy/core': 3.24.2
++      tslib: 2.8.1
++
+   '@standard-schema/spec@1.1.0': {}
+ 
+   '@tailwindcss/node@4.2.3':
+@@ -6455,6 +6574,8 @@ snapshots:
+     dependencies:
+       tslib: 2.8.1
+ 
++  aws4fetch@1.0.20: {}
++
+   bail@2.0.2: {}
+ 
+   balanced-match@4.0.4: {}
+diff --git a/src/modules/ai/components/AiStatusBarControls.tsx b/src/modules/ai/components/AiStatusBarControls.tsx
+index 16a3fae..46e484d 100644
+--- a/src/modules/ai/components/AiStatusBarControls.tsx
++++ b/src/modules/ai/components/AiStatusBarControls.tsx
+@@ -66,6 +66,7 @@ const PROVIDER_ICON = {
+   openrouter: GlobeIcon,
+   "openai-compatible": PlugIcon,
+   lmstudio: ComputerIcon,
++  bedrock: BrainIcon,
+ } as const satisfies Record<ProviderId, typeof ChatGptIcon>;
+ 
+ export function AiOpenButton({ onOpen }: { onOpen: () => void }) {
+diff --git a/src/modules/ai/config.ts b/src/modules/ai/config.ts
+index 875500e..00a55bc 100644
+--- a/src/modules/ai/config.ts
++++ b/src/modules/ai/config.ts
+@@ -10,7 +10,8 @@ export type ProviderId =
+   | "deepseek"
+   | "openrouter"
+   | "openai-compatible"
+-  | "lmstudio";
++  | "lmstudio"
++  | "bedrock";
+ 
+ export type ProviderInfo = {
+   id: ProviderId;
+@@ -94,6 +95,13 @@ export const PROVIDERS: readonly ProviderInfo[] = [
+     keyPrefix: null,
+     consoleUrl: "https://lmstudio.ai/docs/basics/server",
+   },
++  {
++    id: "bedrock",
++    label: "AWS Bedrock",
++    keyringAccount: "bedrock-bearer-token",
++    keyPrefix: null,
++    consoleUrl: "https://us-east-1.console.aws.amazon.com/bedrock/home#/models",
++  },
+ ] as const;
+ 
+ export function getProvider(id: ProviderId): ProviderInfo {
+@@ -502,6 +510,53 @@ export const MODELS = [
+     tags: ["tools", "coding"],
+   },
+ 
++  // ── AWS Bedrock (bearer-token auth via AWS_BEARER_TOKEN_BEDROCK) ────────────
++  {
++    id: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
++    provider: "bedrock",
++    label: "Claude 3.5 Sonnet (Bedrock)",
++    hint: "Balanced",
++    description: "Anthropic Claude 3.5 Sonnet via AWS Bedrock.",
++    capabilities: { intelligence: 4, speed: 4, cost: 3 },
++    tags: ["vision", "tools", "coding"],
++  },
++  {
++    id: "us.anthropic.claude-3-5-haiku-20241022-v1:0",
++    provider: "bedrock",
++    label: "Claude 3.5 Haiku (Bedrock)",
++    hint: "Fast",
++    description: "Anthropic Claude 3.5 Haiku via AWS Bedrock.",
++    capabilities: { intelligence: 3, speed: 5, cost: 4 },
++    tags: ["vision", "tools"],
++  },
++  {
++    id: "us.anthropic.claude-3-opus-20240229-v1:0",
++    provider: "bedrock",
++    label: "Claude 3 Opus (Bedrock)",
++    hint: "Best",
++    description: "Anthropic Claude 3 Opus via AWS Bedrock.",
++    capabilities: { intelligence: 5, speed: 2, cost: 1 },
++    tags: ["vision", "reasoning", "tools", "coding"],
++  },
++  {
++    id: "us.amazon.nova-pro-v1:0",
++    provider: "bedrock",
++    label: "Amazon Nova Pro",
++    hint: "Bedrock",
++    description: "Amazon\u2019s multimodal flagship via AWS Bedrock.",
++    capabilities: { intelligence: 4, speed: 3, cost: 3 },
++    tags: ["vision", "tools"],
++  },
++  {
++    id: "us.amazon.nova-lite-v1:0",
++    provider: "bedrock",
++    label: "Amazon Nova Lite",
++    hint: "Fast",
++    description: "Amazon\u2019s fast and affordable model via AWS Bedrock.",
++    capabilities: { intelligence: 3, speed: 5, cost: 5 },
++    tags: ["tools"],
++  },
++
+   // ── Generic OpenAI-compatible (user-defined endpoint) ─────────────────────
+   {
+     id: "openai-compatible-custom",
+@@ -579,6 +634,11 @@ export const MODEL_CONTEXT_LIMITS: Record<string, number> = {
+   "z-ai/glm-4.6": 128_000,
+   "openai-compatible-custom": 128_000,
+   "lmstudio-local": 32_000,
++  "us.anthropic.claude-3-5-sonnet-20241022-v2:0": 200_000,
++  "us.anthropic.claude-3-5-haiku-20241022-v1:0": 200_000,
++  "us.anthropic.claude-3-opus-20240229-v1:0": 200_000,
++  "us.amazon.nova-pro-v1:0": 300_000,
++  "us.amazon.nova-lite-v1:0": 300_000,
+ };
+ 
+ export function getModelContextLimit(modelId: string | undefined): number {
+@@ -663,6 +723,7 @@ export const DEFAULT_AUTOCOMPLETE_MODEL: Partial<Record<ProviderId, string>> = {
+   deepseek: "deepseek-v4-flash",
+   openrouter: "openai/gpt-5.4-mini",
+   "openai-compatible": "",
++  bedrock: "us.anthropic.claude-3-5-haiku-20241022-v1:0",
+ };
+ 
+ /** Curated list of fast models suitable for inline completion (speed ≥ 4). */
+diff --git a/src/modules/ai/lib/agent.ts b/src/modules/ai/lib/agent.ts
+index 315f27e..b610fc3 100644
+--- a/src/modules/ai/lib/agent.ts
++++ b/src/modules/ai/lib/agent.ts
+@@ -166,6 +166,17 @@ export async function buildLanguageModel(
+       })(resolvedModelId);
+       break;
+     }
++    case "bedrock": {
++      // Bearer-token auth: store your AWS_BEARER_TOKEN_BEDROCK value as the
++      // API key in Terax Settings -> AI -> AWS Bedrock.
++      // apiKey takes precedence over SigV4; falls back to SigV4 if not set.
++      const { createAmazonBedrock } = await import("@ai-sdk/amazon-bedrock");
++      built = createAmazonBedrock({
++        region: "us-east-1",
++        ...(key ? { apiKey: key } : {}),
++      })(resolvedModelId);
++      break;
++    }
+     default: {
+       const _exhaustive: never = provider;
+       throw new Error(`Unsupported provider: ${_exhaustive as ProviderId}`);
+diff --git a/src/modules/ai/lib/keyring.ts b/src/modules/ai/lib/keyring.ts
+index abd0985..e8892f5 100644
+--- a/src/modules/ai/lib/keyring.ts
++++ b/src/modules/ai/lib/keyring.ts
+@@ -20,6 +20,7 @@ export const EMPTY_PROVIDER_KEYS: ProviderKeys = {
+   openrouter: null,
+   "openai-compatible": null,
+   lmstudio: null,
++  bedrock: null,
+ };
+ 
+ export async function getKey(provider: ProviderId): Promise<string | null> {
+diff --git a/src/settings/components/ProviderIcon.tsx b/src/settings/components/ProviderIcon.tsx
+index 82cc0a6..9d4c54f 100644
+--- a/src/settings/components/ProviderIcon.tsx
++++ b/src/settings/components/ProviderIcon.tsx
+@@ -9,6 +9,7 @@ import {
+   CpuIcon,
+   DeepseekIcon,
+   GlobeIcon,
++  BrainIcon,
+   PlugIcon,
+ } from "@hugeicons/core-free-icons";
+ import { HugeiconsIcon } from "@hugeicons/react";
+@@ -24,6 +25,7 @@ const ICON_BY_PROVIDER = {
+   openrouter: GlobeIcon,
+   "openai-compatible": PlugIcon,
+   lmstudio: ComputerIcon,
++  bedrock: BrainIcon,
+ } as const satisfies Record<ProviderId, typeof ChatGptIcon>;
+ 
+ type Props = {

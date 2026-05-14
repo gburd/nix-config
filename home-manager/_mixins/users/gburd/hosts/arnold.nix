@@ -1,11 +1,28 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
+with lib.hm.gvariant;
 {
-  # Arnold is a Fedora system running home-manager via Nix
-  # Import shared mixins for CLI and console tools
+  # Arnold is a Fedora system running home-manager via Nix (not NixOS)
+  # No sops-nix, no GNOME desktop, no email/calendar services
   imports = [
-    ../../cli # Shared CLI tools
-    ../../console # Shared console (neovim, tmux, etc.)
+    # console and cli are imported by users/gburd/default.nix for all hosts
+    ../../../console/ai         # AI tools (opt-in; sops `or null` fallbacks safe without sops)
+    ../../../services/borgmatic.nix
   ];
+
+  # Match floki/meh fast keyboard repeat (set in gnome.nix for NixOS hosts)
+  dconf.settings = {
+    "org/gnome/desktop/peripherals/keyboard" = {
+      repeat = true;
+      repeat-interval = mkUint32 17;  # ~60 keys/sec
+      delay = mkUint32 200;           # 200ms initial delay
+    };
+  };
+
+  # Create .Xauthority so X11-forwarded SSH connections don't print a warning
+  home.activation.createXauthority = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    [ -f "$HOME/.Xauthority" ] || touch "$HOME/.Xauthority"
+    chmod 600 "$HOME/.Xauthority"
+  '';
 
   home.file.".inputrc".text = ''
     "\C-v": ""
@@ -17,29 +34,39 @@
     load_dotenv = true
   '';
 
-  # Arnold-specific packages
   home.packages = with pkgs; [
-    autoconf
+    # gcc / gdb / gnumake / pkg-config / ripgrep / tig / tree / cmake / autoconf / libtool provided by console
+    # clang-tools / pyright / gopls / nixd / lldb / strace / ltrace / valgrind etc. provided by console/neovim
+    # awscli2 / ssm-session-manager-plugin / flyctl provided by console/ai and console
     bash
-    cmake
+    bison
+    cfssl
     dig
+    elixir
+    emacs
+    erlang
     file
-    gcc
-    gdb
-    gnumake
+    flex
+    go
     htop
-    libtool
     lsof
+    lua5_1
+    luajitPackages.luarocks  # for neovim (LuaJIT)
+    luarocks                 # for standalone Lua 5.1
     m4
+    ninja
     openssl
     perl
-    pkg-config
     python3
-    ripgrep
-    tig
-    tree
+    readline
+    rebar3
+    tree-sitter
     xclip
-  ];
+    zlib
 
-  home.enableDebugInfo = true;
+    # AI tools
+    lmstudio      # Local LLM runner (LM Studio)
+    maki          # AI coding agent from gburd/maki
+    terax-ai      # AI assistant UI (Bedrock support pending upstream issue #138)
+  ];
 }

@@ -6,6 +6,7 @@
     ../desktop/logseq.nix
     ../hardware/systemd-boot.nix
     ../hardware/disable-nm-wait.nix
+    ../services/avahi.nix
     ../services/bluetooth.nix
     ../services/pipewire.nix
     ../virt
@@ -50,6 +51,8 @@
       DNS=2a07:a8c0::#362f8c.dns.nextdns.io
       DNS=45.90.30.0#362f8c.dns.nextdns.io
       DNS=2a07:a8c1::#362f8c.dns.nextdns.io
+      # Route .local queries to mDNS (avahi), not upstream NextDNS
+      Domains=~local
     '';
   };
   # Tell NetworkManager to use systemd-resolved, but don't let per-link
@@ -60,6 +63,20 @@
       "ipv4.ignore-auto-dns" = true;
       "ipv6.ignore-auto-dns" = true;
     };
+  };
+
+  # LAN host resolution: bare names (meh, floki, etc.) resolve via search domain
+  # "local" appended → hostname.local → answered by avahi mDNS
+  networking.search = [ "local" ];
+
+  # Known static LAN hosts (fallback if mDNS not yet available)
+  # For DHCP hosts, mDNS via avahi (hostname.local) is the primary mechanism.
+  # Add IPs here for any hosts with DHCP reservations or static addresses.
+  networking.hosts = {
+    "192.168.1.185" = [ "meh" "meh.local" ];
+    # arnold  — fill in IP when static/reserved (currently resolves via mDNS)
+    # greenfly (rv) — fill in IP when connected to LAN
+    # sun (icarus)  — fill in IP when connected to LAN
   };
 
   # Disable sudo lecture message and use_pty (fails in non-TTY contexts)

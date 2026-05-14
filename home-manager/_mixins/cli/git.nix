@@ -44,6 +44,14 @@ in
       gpg.program = "${config.programs.gpg.package}/bin/gpg2";
     };
     lfs.enable = true;
-    ignores = [ ".direnv" "result" ];
+    ignores = [
+      ".direnv"
+      "result"
+      # AI tool runtime dirs — contain state/sessions, not source
+      ".memelord/"
+      ".pi/agent/sessions/"
+      ".kiro/sessions/"
+      ".claude/settings.local.json"
+    ];
   };
 }
