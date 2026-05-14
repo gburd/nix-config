@@ -85,11 +85,13 @@ rustPlatform.buildRustPackage {
     mv tauri.conf.patched.json src-tauri/tauri.conf.json
   '';
 
-  # Fix blank/dark window on Wayland (WebKitGTK rendering issues)
+  # Fix blank/dark window on Wayland (WebKitGTK + Intel Xe2 GPU issues)
+  # Force XWayland rendering which works reliably with WebKitGTK on newer Intel GPUs
   preFixup = ''
     gappsWrapperArgs+=(
       --set WEBKIT_DISABLE_DMABUF_RENDERER 1
       --set WEBKIT_DISABLE_COMPOSITING_MODE 1
+      --set GDK_BACKEND x11
     )
   '';
 

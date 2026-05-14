@@ -65,6 +65,7 @@ with lib.hm.gvariant;
     zlib
 
     # AI tools
+    bitnet        # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
     lmstudio      # Local LLM runner (LM Studio)
     maki          # AI coding agent from gburd/maki
     terax-ai      # AI assistant UI (Bedrock support pending upstream issue #138)

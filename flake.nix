@@ -63,6 +63,9 @@
     sops-nix.url = "github:mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
+    bitnet-flake.url = "github:general-intelligence-systems/bitnet-flake";
+    bitnet-flake.inputs.nixpkgs.follows = "nixpkgs";
+
     # TODO... review below here
     impermanence.url = "github:nix-community/impermanence";
 

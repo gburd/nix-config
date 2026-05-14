@@ -278,6 +278,7 @@ with lib.hm.gvariant;
       # AI tools
       # kiro-cli    # Kiro CLI (download URLs require auth — not yet publicly available)
       # kiro-ide    # Kiro IDE (download URLs return 404 — not yet publicly available)
+      bitnet        # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
       lmstudio      # Local LLM runner (LM Studio)
       maki          # AI coding agent from gburd/maki
       terax-ai      # AI assistant UI (Bedrock support pending upstream issue #138)

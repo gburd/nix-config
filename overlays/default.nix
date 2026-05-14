@@ -66,4 +66,10 @@
       config.allowUnfree = true;
     };
   };
+
+  # BitNet 1-bit LLM inference (from bitnet-flake)
+  bitnet-packages = final: _prev: {
+    bitnet = inputs.bitnet-flake.packages.${final.stdenv.hostPlatform.system}.default or null;
+    bitnet-3B = inputs.bitnet-flake.packages.${final.stdenv.hostPlatform.system}.bitnet-3B or null;
+  };
 }

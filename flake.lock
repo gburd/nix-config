@@ -23,6 +23,26 @@
         "type": "github"
       }
     },
+    "bitnet-flake": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1776849100,
+        "narHash": "sha256-S3aXOTQXe3fhjTQhkF/ZfqHtkRfsBM75HGKbrNQwgNU=",
+        "owner": "general-intelligence-systems",
+        "repo": "bitnet-flake",
+        "rev": "e7ec72147e6928cf67ae3366e07a2f1d4d69080e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "general-intelligence-systems",
+        "repo": "bitnet-flake",
+        "type": "github"
+      }
+    },
     "chaotic": {
       "inputs": {
         "flake-schemas": "flake-schemas",
@@ -1061,6 +1081,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "bitnet-flake": "bitnet-flake",
         "chaotic": "chaotic",
         "devshells": "devshells",
         "disko": "disko",
