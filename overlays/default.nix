@@ -68,8 +68,26 @@
   };
 
   # BitNet 1-bit LLM inference (from bitnet-flake)
-  bitnet-packages = final: _prev: {
-    bitnet = inputs.bitnet-flake.packages.${final.stdenv.hostPlatform.system}.default or null;
-    bitnet-3B = inputs.bitnet-flake.packages.${final.stdenv.hostPlatform.system}.bitnet-3B or null;
-  };
+  # Wraps upstream to fix: huggingface_hub[cli] missing + 'huggingface-cli' renamed to 'hf'
+  bitnet-packages = final: _prev:
+    let
+      wrapBitnet = name: pkg:
+        if pkg == null then null
+        else final.writeShellScriptBin name ''
+          VENV_DIR="''${HOME}/.cache/bitnet/venv"
+          REPO_DIR="''${HOME}/.cache/bitnet/BitNet"
+          # Install huggingface_hub if missing
+          if [ -d "$VENV_DIR" ] && ! [ -x "$VENV_DIR/bin/hf" ]; then
+            "$VENV_DIR/bin/pip" install -q "huggingface_hub[cli]" 2>/dev/null || true
+          fi
+          # Patch deprecated 'huggingface-cli' -> 'hf' in setup_env.py
+          if [ -f "$REPO_DIR/setup_env.py" ]; then
+            ${final.gnused}/bin/sed -i 's/huggingface-cli/hf/g' "$REPO_DIR/setup_env.py" 2>/dev/null || true
+          fi
+          exec ${pkg}/bin/${name} "$@"
+        '';
+    in {
+      bitnet = wrapBitnet "bitnet-bitnet-2B-4T" (inputs.bitnet-flake.packages.${final.stdenv.hostPlatform.system}.default or null);
+      bitnet-3B = wrapBitnet "bitnet-bitnet-3B" (inputs.bitnet-flake.packages.${final.stdenv.hostPlatform.system}.bitnet-3B or null);
+    };
 }

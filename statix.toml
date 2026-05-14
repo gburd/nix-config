@@ -1,0 +1,6 @@
+# statix configuration — ignore files with pre-existing patterns that are
+# intentional (examples) or structural (NixOS module system patterns)
+[disabled]
+  # "Repeated keys" warning is a false positive for NixOS module patterns
+  # where environment.* options are set across multiple logical blocks
+  repeated_keys = ["examples/*", "nixos/_mixins/features/debug-symbols.nix"]

@@ -78,10 +78,17 @@ rustPlatform.buildRustPackage {
     xdotool
   ];
 
-  # Disable auto-updater artifact signing (Nix manages updates; no signing key needed)
+  # Patch tauri.conf.json for Linux compatibility:
+  # - Disable updater artifact signing (Nix manages updates)
+  # - Force window visible on creation (Linux WebKitGTK doesn't reliably fire show events)
+  # - Remove overlay title bar (causes detached WebView on Linux GTK/WebKitGTK)
   postPatch = ''
-    ${jq}/bin/jq '.bundle.createUpdaterArtifacts = false' \
-      src-tauri/tauri.conf.json > tauri.conf.patched.json
+    ${jq}/bin/jq '
+      .bundle.createUpdaterArtifacts = false |
+      .app.windows[0].visible = true |
+      del(.app.windows[0].titleBarStyle) |
+      del(.app.windows[0].hiddenTitle)
+    ' src-tauri/tauri.conf.json > tauri.conf.patched.json
     mv tauri.conf.patched.json src-tauri/tauri.conf.json
   '';
 

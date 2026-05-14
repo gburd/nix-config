@@ -32,6 +32,9 @@
     # Maki agent configuration
     maki.enable = true;
 
+    # Pi coding agent (pi.dev)
+    pi.enable = true;
+
     # MCP Server configuration
     mcps = {
       enable = true;
