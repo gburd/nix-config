@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ lib, pkgs, ... }:
 let
   ssh = "${pkgs.openssh}/bin/ssh";
 
@@ -30,9 +30,9 @@ in
   home.packages = [ git-gburd ];
   programs.git = {
     enable = true;
-    package = pkgs.gitFull; # gitAndTools namespace removed
+    package = pkgs.gitFull;
     signing = {
-      key = "D4BB42BE729AEFBD2EFEBF8822931AF7895E82DF";
+      key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKCqHOIyYwbp42C7MxnRFxOcy+ZE8cNOWdsdvCgVFm1L";
       signByDefault = true;
     };
     settings = {
@@ -41,7 +41,10 @@ in
         email = "greg@burd.me";
       };
       init.defaultBranch = "main";
-      gpg.program = "${config.programs.gpg.package}/bin/gpg2";
+      gpg.format = "ssh";
+      "gpg.ssh".program = lib.mkDefault "/opt/1Password/op-ssh-sign";
+      commit.gpgsign = true;
+      tag.gpgsign = true;
     };
     lfs.enable = true;
     ignores = [

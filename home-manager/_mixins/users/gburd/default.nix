@@ -29,10 +29,6 @@ in
   };
 
   home = {
-
-    # NOTE: SSH_AUTH_SOCK removed - now using standard ssh-agent via ssh-management module
-    # (Previously used 1Password SSH agent at ~/.1password/agent.sock)
-
     packages = with pkgs; [
       tig
     ];
@@ -44,8 +40,7 @@ in
       enableDefaultConfig = false;
       matchBlocks = {
         "*" = {
-          # NOTE: identityAgent removed - now using standard ssh-agent
-          # (Previously used 1Password SSH agent)
+          identityAgent = "~/.1password/agent.sock";
           compression = true;
           extraOptions = {
             ConnectTimeout = "5";

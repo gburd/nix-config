@@ -9,6 +9,26 @@ with lib.hm.gvariant;
     ../../../services/borgmatic.nix
   ];
 
+  home.sessionVariables = {
+    AWS_PROFILE = "isengard";
+  };
+
+  # Arnold-specific SSH hosts
+  programs.ssh.matchBlocks = {
+    "agora-deploy" = lib.hm.dag.entryBefore [ "*" ] {
+      host = "fra fra.postgr.esq 89.145.162.3 gva gva.postgr.esq 185.19.30.253";
+      user = "root";
+      identityFile = "~/.ssh/agora-deploy";
+      identitiesOnly = true;
+      extraOptions.IdentityAgent = "none";
+    };
+    "nuc" = lib.hm.dag.entryBefore [ "*" ] {
+      host = "nuc";
+      identityFile = "~/.ssh/id_ed25519";
+      identitiesOnly = true;
+    };
+  };
+
   # Match floki/meh fast keyboard repeat (set in gnome.nix for NixOS hosts)
   dconf.settings = {
     "org/gnome/desktop/peripherals/keyboard" = {
