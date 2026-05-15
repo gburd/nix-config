@@ -49,12 +49,9 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [
       (pkgs.writeShellScriptBin "pi" ''
-        # Source Bedrock bearer token (sops-decrypted secret takes priority)
+        # Source Bedrock bearer token from sops-decrypted secret
         if [ -r "$HOME/.config/claude-code/.bearer_token" ]; then
           export AWS_BEARER_TOKEN_BEDROCK="$(cat "$HOME/.config/claude-code/.bearer_token")"
-        elif [ -r "$HOME/.pi/agent/env.sh" ]; then
-          # shellcheck source=/dev/null
-          . "$HOME/.pi/agent/env.sh"
         fi
         export AWS_REGION="''${AWS_REGION:-us-east-1}"
 
