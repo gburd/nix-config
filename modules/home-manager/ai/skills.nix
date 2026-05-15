@@ -6,16 +6,20 @@ let
   kiroSkillNames = [
     "aws-ec2-lifecycle" "aws-isengard-auth" "aws-rds-aurora"
     "aws-s3-ops" "aws-serverless" "aws-terraform"
-    "c-to-rust" "rust-idiomatic" "rust-testing"
-    "rust-error-handling" "rust-async" "rust-traits"
-    "rust-ownership" "review-diff" "watchdog"
-    "maintain-docs" "pg-numa-benchmark"
+    "btw" "c-to-rust" "checkpoint" "dream"
+    "flex-bison-to-lime" "maintain-docs" "memelord-init"
+    "pg-numa-benchmark" "review-diff" "think-hard"
+    "rust-async" "rust-error-handling" "rust-idiomatic"
+    "rust-ownership" "rust-testing" "rust-traits"
+    "watchdog"
   ];
 
   claudeSkillNames = [
     "aws-ec2-lifecycle" "aws-isengard-auth" "aws-rds-aurora"
     "aws-s3-ops" "aws-serverless" "aws-terraform"
-    "review-diff" "watchdog" "maintain-docs" "pg-numa-benchmark"
+    "btw" "checkpoint" "dream" "maintain-docs"
+    "memelord-init" "pg-numa-benchmark" "review-diff"
+    "think-hard" "watchdog"
   ];
 
   kiroSkillFiles = builtins.listToAttrs (builtins.concatMap (name:

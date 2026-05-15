@@ -10,6 +10,7 @@ let
     "tools.md" = ./files/steering/tools.md;
     "aws-builder.md" = ./files/steering/aws-builder.md;
     "mcp-config.md" = ./files/steering/mcp-config.md;
+    "voice.md" = ./files/steering/voice.md;
   };
 in
 {
