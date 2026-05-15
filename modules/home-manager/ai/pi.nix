@@ -49,11 +49,20 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [
       (pkgs.writeShellScriptBin "pi" ''
-        # Source Bedrock auth token if available
+        # Source Bedrock bearer token (sops-decrypted secret takes priority)
         if [ -r "$HOME/.config/claude-code/.bearer_token" ]; then
           export AWS_BEARER_TOKEN_BEDROCK="$(cat "$HOME/.config/claude-code/.bearer_token")"
+        elif [ -r "$HOME/.pi/agent/env.sh" ]; then
+          # shellcheck source=/dev/null
+          . "$HOME/.pi/agent/env.sh"
         fi
-        export AWS_REGION="''${AWS_REGION:-us-east-2}"
+        export AWS_REGION="''${AWS_REGION:-us-east-1}"
+
+        # Prevent SigV4 credential chain from conflicting with bearer token auth
+        unset AWS_PROFILE AWS_DEFAULT_PROFILE \
+              AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
+              AWS_SDK_LOAD_CONFIG
+
         exec ${pkgs.nodejs}/bin/npx -y @earendil-works/pi-coding-agent "$@"
       '')
     ];
