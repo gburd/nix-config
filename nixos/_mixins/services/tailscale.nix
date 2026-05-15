@@ -1,7 +1,10 @@
 { config, pkgs, ... }: {
   environment.systemPackages = with pkgs; [ tailscale ];
 
-  services.tailscale.enable = true;
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "both"; # Allow acting as subnet router or exit node
+  };
 
   networking = {
     firewall = {

@@ -9,6 +9,7 @@
     ../services/avahi.nix
     ../services/bluetooth.nix
     ../services/pipewire.nix
+    ../services/tailscale.nix
     ../virt
 
     # Optional: Enable comprehensive documentation and debug support
