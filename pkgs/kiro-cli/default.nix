@@ -14,7 +14,7 @@ let
   channel = "stable";
   arch = if stdenv.hostPlatform.isAarch64 then "aarch64" else "x86_64";
   libc = if stdenv.hostPlatform.isMusl then "-musl" else "";
-  sha256 = "sha256-v2mr6NStS2RAylWwNYkwxK3Ra/NAtB/XGR0s/TQaE+c="; # Updated: 2026-04-30
+  sha256 = "sha256-UzvMs9cdldXcdpqw2CgsMIhpA3GC4HQkvMq2lkSYy/M="; # Updated: 2026-05-15
 in
 stdenv.mkDerivation {
   pname = "kiro-cli";
