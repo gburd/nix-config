@@ -134,7 +134,44 @@ let
     };
   });
 
-  packages = lib.optional cfg.servers.memelord.enable cfg.servers.memelord.pkg;
+  # Claude Code user-scoped format (stored in ~/.claude.json under mcpServers)
+  # Requires explicit "type" field and "env" for stdio servers
+  claudeUserMcpServers = { }
+    // (optionalAttrs cfg.servers.filesystem.enable {
+    filesystem = {
+      type = "stdio";
+      command = "npx";
+      args = [ "-y" "@modelcontextprotocol/server-filesystem" cfg.servers.filesystem.path ];
+      env = { };
+    };
+  })
+    // (optionalAttrs cfg.servers.github.enable {
+    github = {
+      type = "stdio";
+      command = "${githubMcpServer}";
+      args = [ ];
+      env = { };
+    };
+  })
+    // (optionalAttrs cfg.servers.memelord.enable {
+    memelord = {
+      type = "stdio";
+      command = "${cfg.servers.memelord.pkg}/bin/memelord";
+      args = [ "serve" ];
+      env = { };
+    };
+  })
+    // (optionalAttrs cfg.servers.agora.enable {
+    agora = {
+      type = "http";
+      inherit (cfg.servers.agora) url;
+    };
+  });
+
+  claudeUserMcpJson = builtins.toJSON claudeUserMcpServers;
+
+  packages = lib.optional cfg.servers.memelord.enable cfg.servers.memelord.pkg
+    ++ lib.optional cfg.targets.claude pkgs.jq;
 in
 {
   options.programs.ai.mcps = {
@@ -149,7 +186,7 @@ in
       claude = mkOption {
         type = types.bool;
         default = true;
-        description = "Enables the ~/.config/claude-code/mcp.json output config file for Claude Code";
+        description = "Injects MCP servers into ~/.claude.json (user-scoped) for Claude Code";
       };
       kiro = mkOption {
         type = types.bool;
@@ -234,9 +271,6 @@ in
       (lib.mkIf cfg.targets.default {
         ".mcp.json".text = mcpJsonText;
       })
-      (lib.mkIf cfg.targets.claude {
-        ".config/claude-code/mcp.json".text = mcpJsonText;
-      })
       (lib.mkIf cfg.targets.kiro {
         ".kiro/settings/mcp.json".text = mcpJsonText;
       })
@@ -249,5 +283,24 @@ in
         ".maki/mcp.toml".text = makiMcpToml;
       })
     ];
+
+    # Claude Code reads user-scoped MCP servers from ~/.claude.json (mcpServers key).
+    # Since ~/.claude.json is a mutable state file, we merge via activation script.
+    home.activation.claudeMcpServers = lib.mkIf cfg.targets.claude (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        CLAUDE_JSON="${config.home.homeDirectory}/.claude.json"
+        MCP_PAYLOAD='${claudeUserMcpJson}'
+
+        if [ -f "$CLAUDE_JSON" ]; then
+          # Merge mcpServers into existing ~/.claude.json
+          ${pkgs.jq}/bin/jq --argjson servers "$MCP_PAYLOAD" \
+            '.mcpServers = $servers' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" \
+            && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+        else
+          # Create ~/.claude.json with just mcpServers
+          echo "$MCP_PAYLOAD" | ${pkgs.jq}/bin/jq '{mcpServers: .}' > "$CLAUDE_JSON"
+        fi
+      ''
+    );
   };
 }
