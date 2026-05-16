@@ -60,6 +60,10 @@ in
               AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
               AWS_SDK_LOAD_CONFIG
 
+        # npm global prefix must be writable (Nix store is read-only)
+        export NPM_CONFIG_PREFIX="''${HOME}/.npm-global"
+        mkdir -p "$NPM_CONFIG_PREFIX"
+
         exec ${pkgs.nodejs}/bin/npx -y @earendil-works/pi-coding-agent "$@"
       '')
     ];
