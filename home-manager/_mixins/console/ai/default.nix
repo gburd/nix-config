@@ -93,7 +93,7 @@
         # Also available via NNTP (mail.postgr.esq:563), IMAP, web
         agora = {
           enable = true;
-          url = "https://postgr.esq/l/mcp/";
+          url = "https://postgr.esq/mcp/";
         };
       };
     };

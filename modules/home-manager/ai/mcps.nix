@@ -257,7 +257,7 @@ in
         enable = mkEnableOption "Postgr.esq/l MCP server (PostgreSQL community archive)";
         url = mkOption {
           type = types.str;
-          default = "https://postgr.esq/l/mcp/";
+          default = "https://postgr.esq/mcp/";
           description = "URL for the Postgr.esq/l MCP server";
         };
       };
