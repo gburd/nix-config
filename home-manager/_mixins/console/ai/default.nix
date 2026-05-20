@@ -89,9 +89,9 @@
           path = config.home.homeDirectory;
         };
 
-        # Agora: PostgreSQL community discussion archive (postgr.esq)
+        # PostgreSQL community discussion archive (postgr.esq)
         # Also available via NNTP (mail.postgr.esq:563), IMAP, web
-        agora = {
+        "postgr.esq" = {
           enable = true;
           url = "https://postgr.esq/mcp/";
         };
