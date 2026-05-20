@@ -32,7 +32,7 @@ let
     extensions = [ "~/.pi/agent/extensions" ];
     themes = [ ];
     packages = [
-      "npm:@tintinweb/pi-subagents"
+      "npm:@gotgenes/pi-subagents"
       "npm:pi-mcp-adapter"
       "npm:pi-skillful"
     ];
