@@ -97,12 +97,11 @@ let
   # Maki uses a different TOML format: [mcp.name] with command=[] or url=""
   makiMcpToml =
     let
-      quoteName = n: if builtins.match ".*[.].*" n != null then "\"${n}\"" else n;
       renderServer = name: server:
         if server ? url then
-          "[mcp.${quoteName name}]\nurl = \"${server.url}\"\n"
+          "[mcp.${name}]\nurl = \"${server.url}\"\n"
         else
-          "[mcp.${quoteName name}]\ncommand = [${
+          "[mcp.${name}]\ncommand = [${
             builtins.concatStringsSep ", "
               (map (s: "\"${s}\"") ([ server.command ] ++ (server.args or [])))
           }]\n";
@@ -129,9 +128,9 @@ let
       args = [ "serve" ];
     };
   })
-    // (optionalAttrs cfg.servers."postgr.esq".enable {
-    "postgr.esq" = {
-      inherit (cfg.servers."postgr.esq") url;
+    // (optionalAttrs cfg.servers.postgresq.enable {
+    postgresq = {
+      inherit (cfg.servers.postgresq) url;
     };
   });
 
@@ -162,10 +161,10 @@ let
       env = { };
     };
   })
-    // (optionalAttrs cfg.servers."postgr.esq".enable {
-    "postgr.esq" = {
+    // (optionalAttrs cfg.servers.postgresq.enable {
+    postgresq = {
       type = "http";
-      inherit (cfg.servers."postgr.esq") url;
+      inherit (cfg.servers.postgresq) url;
     };
   });
 
@@ -254,7 +253,7 @@ in
         };
       };
 
-      "postgr.esq" = {
+      postgresq = {
         enable = mkEnableOption "Postgr.esq/l MCP server (PostgreSQL community archive)";
         url = mkOption {
           type = types.str;

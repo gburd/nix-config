@@ -91,7 +91,7 @@
 
         # PostgreSQL community discussion archive (postgr.esq)
         # Also available via NNTP (mail.postgr.esq:563), IMAP, web
-        "postgr.esq" = {
+        postgresq = {
           enable = true;
           url = "https://postgr.esq/mcp/";
         };
