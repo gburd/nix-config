@@ -136,8 +136,8 @@ let
   })
     // (optionalAttrs cfg.servers.server-git.enable {
     git = {
-      command = "npx";
-      args = [ "-y" "@modelcontextprotocol/server-git" ];
+      command = "${pkgs.uv}/bin/uvx";
+      args = [ "--from" "mcp-server-git" "mcp-server-git" ];
     };
   })
     // (optionalAttrs cfg.servers.context7.enable {
@@ -196,8 +196,8 @@ let
     // (optionalAttrs cfg.servers.server-git.enable {
     git = {
       type = "stdio";
-      command = "npx";
-      args = [ "-y" "@modelcontextprotocol/server-git" ];
+      command = "${pkgs.uv}/bin/uvx";
+      args = [ "--from" "mcp-server-git" "mcp-server-git" ];
       env = { };
     };
   })
