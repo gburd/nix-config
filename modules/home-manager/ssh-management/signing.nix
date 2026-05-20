@@ -34,9 +34,7 @@ in
     home.file.".ssh/allowed_signers" = {
       text = let
         # Get user email from git config
-        userEmail = config.programs.git.userEmail or (
-          config.programs.git.settings.user.email or "greg@burd.me"
-        );
+        userEmail = config.programs.git.settings.user.email or "greg@burd.me";
         # Get hostname for comment
         hostname = let h = builtins.getEnv "HOSTNAME"; in if h == "" then "unknown" else h;
       in ''

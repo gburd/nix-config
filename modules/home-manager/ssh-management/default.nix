@@ -105,12 +105,8 @@ in
     # Use standard ssh-agent instead of 1Password
     programs.ssh = {
       enable = true;
-      addKeysToAgent = "yes";
-
-      # Remove any 1Password agent references
       extraConfig = ''
-        # Standard ssh-agent configuration
-        # Keys managed by ssh-management module
+        AddKeysToAgent yes
       '';
     };
 
