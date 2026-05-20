@@ -95,6 +95,18 @@
           enable = true;
           url = "https://postgr.esq/mcp/";
         };
+
+        # Persistent knowledge graph across sessions
+        server-memory.enable = true;
+
+        # Local Git operations (diff, log, blame, branch) beyond GitHub MCP
+        server-git.enable = true;
+
+        # Live version-aware library documentation
+        context7.enable = true;
+
+        # Structured multi-step reasoning for complex decisions
+        sequential-thinking.enable = true;
       };
     };
   };

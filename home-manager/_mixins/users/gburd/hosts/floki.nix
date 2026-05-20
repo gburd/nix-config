@@ -19,6 +19,9 @@ with lib.hm.gvariant;
     # SSH key management with rotation
     (inputs.self + "/modules/home-manager/ssh-management")
   ];
+  # LMStudio NPU-accelerated local models (floki has Intel Arc NPU)
+  programs.ai.lmstudio.enable = true;
+
   # GNOME configuration
   dconf.settings = {
     # Disable paste warnings in GNOME Console

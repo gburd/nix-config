@@ -30,8 +30,9 @@
     sqlfluff # SQL linter (zero warnings policy)
     pgcli # PostgreSQL with auto-completion
 
-    # Rust database development
-    rpg-cli # https://github.com/NikolayS/rpg - Rust Postgres extension generator
+    # C/Rust code analysis and verification
+    coccinelle # C semantic patching (dbsql, libdb, openldap)
+    tlaplus # TLA+ model checker (Aether formal verification)
 
     # CI/CD validation (CLAUDE.md requirements)
     actionlint # GitHub Actions linter

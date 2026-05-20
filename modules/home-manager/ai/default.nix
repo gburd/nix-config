@@ -2,6 +2,7 @@
 {
   imports = [
     ./bedrock.nix
+    ./lmstudio.nix
     ./maki.nix
     ./mcps.nix
     ./pi.nix

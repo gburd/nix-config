@@ -5,9 +5,6 @@ let
   inherit (lib.attrsets) optionalAttrs;
 
   ### GitHub MCP ###
-  # The githubMcpServer package wrapper relies on auth context provided
-  # by the github CLI, accessed from the user PATH. This ensures a simple
-  # process to authenticate to the MCP server when necessary.
   githubMcpServer = pkgs.writeShellScript "github-mcp-server" ''
     if ! command -v gh &> /dev/null; then
       echo "Error: github-cli not installed!" >&2
@@ -29,9 +26,6 @@ let
   '';
 
   ### llms.txt doc wrappers ###
-  # Provides utility wrapping of llms.txt resources online behind a
-  # local Python server to fulfill an MCP server with more interactive
-  # documentation access targeted at LLM consumption.
   mcpdoc-wrapper-of = name: projectUrlMap:
     let
       urlArgs = builtins.concatStringsSep " " (
@@ -132,10 +126,34 @@ let
     postgresq = {
       inherit (cfg.servers.postgresq) url;
     };
+  })
+    # Phase 1 npm MCP servers
+    // (optionalAttrs cfg.servers.server-memory.enable {
+    memory = {
+      command = "npx";
+      args = [ "-y" "@modelcontextprotocol/server-memory" ];
+    };
+  })
+    // (optionalAttrs cfg.servers.server-git.enable {
+    git = {
+      command = "npx";
+      args = [ "-y" "@modelcontextprotocol/server-git" ];
+    };
+  })
+    // (optionalAttrs cfg.servers.context7.enable {
+    context7 = {
+      command = "npx";
+      args = [ "-y" "@upstash/context7-mcp@latest" ];
+    };
+  })
+    // (optionalAttrs cfg.servers.sequential-thinking.enable {
+    sequential-thinking = {
+      command = "npx";
+      args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
+    };
   });
 
   # Claude Code user-scoped format (stored in ~/.claude.json under mcpServers)
-  # Requires explicit "type" field and "env" for stdio servers
   claudeUserMcpServers = { }
     // (optionalAttrs cfg.servers.filesystem.enable {
     filesystem = {
@@ -165,6 +183,38 @@ let
     postgresq = {
       type = "http";
       inherit (cfg.servers.postgresq) url;
+    };
+  })
+    // (optionalAttrs cfg.servers.server-memory.enable {
+    memory = {
+      type = "stdio";
+      command = "npx";
+      args = [ "-y" "@modelcontextprotocol/server-memory" ];
+      env = { };
+    };
+  })
+    // (optionalAttrs cfg.servers.server-git.enable {
+    git = {
+      type = "stdio";
+      command = "npx";
+      args = [ "-y" "@modelcontextprotocol/server-git" ];
+      env = { };
+    };
+  })
+    // (optionalAttrs cfg.servers.context7.enable {
+    context7 = {
+      type = "stdio";
+      command = "npx";
+      args = [ "-y" "@upstash/context7-mcp@latest" ];
+      env = { };
+    };
+  })
+    // (optionalAttrs cfg.servers.sequential-thinking.enable {
+    sequential-thinking = {
+      type = "stdio";
+      command = "npx";
+      args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
+      env = { };
     };
   });
 
@@ -218,12 +268,6 @@ in
           });
           default = { };
           description = "Map of llms.txt sites. Keys are used for mcp.json keys.";
-          example = {
-            nix = {
-              url = "https://nixos.org/llms.txt";
-              title = "NixOS Documentation";
-            };
-          };
         };
       };
 
@@ -232,7 +276,7 @@ in
         pkg = mkOption {
           type = types.package;
           default = pkgs.github-mcp-server or (throw "github-mcp-server package not available");
-          description = "The package to use for github-mcp-server. Will invoke \$pkg/bin/github-mcp-server";
+          description = "The package to use for github-mcp-server";
         };
       };
 
@@ -260,6 +304,22 @@ in
           default = "https://postgr.esq/mcp/";
           description = "URL for the Postgr.esq/l MCP server";
         };
+      };
+
+      server-memory = {
+        enable = mkEnableOption "MCP server-memory (persistent knowledge graph)";
+      };
+
+      server-git = {
+        enable = mkEnableOption "MCP server-git (local Git operations)";
+      };
+
+      context7 = {
+        enable = mkEnableOption "Context7 (live version-aware library docs)";
+      };
+
+      sequential-thinking = {
+        enable = mkEnableOption "Sequential thinking (structured multi-step reasoning)";
       };
     };
   };

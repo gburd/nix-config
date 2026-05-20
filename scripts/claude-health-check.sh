@@ -6,7 +6,7 @@ echo ""
 
 # Check critical tools
 echo "## Essential Tools"
-for tool in cargo-nextest cargo-audit cargo-deny ast-grep ruff pyright actionlint uv rpg-cli; do
+for tool in cargo-nextest cargo-audit cargo-deny ast-grep ruff pyright actionlint uv coccinelle tlaplus; do
   if command -v "$tool" &>/dev/null; then
     version=$(command -v "$tool" | xargs basename 2>/dev/null || echo "")
     echo "✓ $tool: $(command -v "$tool")"

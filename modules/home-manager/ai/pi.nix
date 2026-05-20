@@ -31,7 +31,11 @@ let
     prompts = [ "~/.pi/agent/prompts" ];
     extensions = [ "~/.pi/agent/extensions" ];
     themes = [ ];
-    packages = [ "npm:@tintinweb/pi-subagents" ];
+    packages = [
+      "npm:@tintinweb/pi-subagents"
+      "npm:pi-mcp-adapter"
+      "npm:pi-skillful"
+    ];
     enableSubAgents = true;
     enableSkillCommands = true;
   };
