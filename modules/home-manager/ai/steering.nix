@@ -51,9 +51,10 @@ in
           (steeringFiles // cfg.extraFiles)
       ))
 
-      # Claude global CLAUDE.md (thin redirect to AGENTS.md)
+      # Claude global CLAUDE.md — voice/stance + redirect to AGENTS.md
       (lib.mkIf cfg.targets.claude {
-        ".claude/CLAUDE.md".text = ''
+        ".claude/CLAUDE.md".text = builtins.readFile ./files/steering/voice.md + ''
+
           See AGENTS.md for all project instructions.
           These standards apply equally in Claude Code and Kiro CLI.
         '';

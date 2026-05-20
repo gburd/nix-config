@@ -28,10 +28,11 @@ let
       "us.anthropic.claude-haiku-4-5-*"
     ];
     skills = [ "~/.kiro/skills" ];
-    prompts = [ ];
+    prompts = [ "~/.pi/agent/prompts" ];
     extensions = [ "~/.pi/agent/extensions" ];
     themes = [ ];
     packages = [ "npm:@tintinweb/pi-subagents" ];
+    enableSubAgents = true;
     enableSkillCommands = true;
   };
 in
@@ -71,6 +72,7 @@ in
     home.file = {
       ".pi/agent/settings.json".text = settingsJson;
       ".pi/agent/auth.json".text = "{}";
+      ".pi/agent/prompts/voice.md".source = ./files/steering/voice.md;
       # Extensions that use only public Pi API and node builtins
       ".pi/agent/extensions/coccinelle.ts".source = ./pi-extensions/coccinelle.ts;
       ".pi/agent/extensions/context-monitor.ts".source = ./pi-extensions/context-monitor.ts;
