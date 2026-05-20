@@ -71,8 +71,7 @@ with lib.hm.gvariant;
     htop
     lsof
     lua5_1
-    luajitPackages.luarocks  # for neovim (LuaJIT)
-    luarocks                 # for standalone Lua 5.1
+    luajitPackages.luarocks  # for neovim (LuaJIT) and standalone use
     m4
     ninja
     openssl
