@@ -14,6 +14,11 @@ let
     "watchdog"
   ];
 
+  # Kiro skills with nested reference directories (subdirs under references/)
+  kiroSkillDeepDirs = {
+    hegel = ./files/kiro-skills/hegel;
+  };
+
   claudeSkillNames = [
     "aws-ec2-lifecycle" "aws-isengard-auth" "aws-rds-aurora"
     "aws-s3-ops" "aws-serverless" "aws-terraform"
@@ -24,19 +29,33 @@ let
 
   # Claude skills deployed as directories (multiple files per skill)
   claudeSkillDirs = {
+    hegel = ./files/claude-skills/hegel;
     postgresq = ./files/claude-skills/postgresq;
   };
 
-  claudeSkillDirFiles = builtins.listToAttrs (builtins.concatMap (name:
+  # Recursively collect all files from a directory tree
+  collectFiles = prefix: dir:
     let
-      dir = claudeSkillDirs.${name};
-      files = builtins.attrNames (builtins.readDir dir);
+      entries = builtins.readDir dir;
+      names = builtins.attrNames entries;
     in
-    map (f: {
-      name = ".claude/skills/${name}/${f}";
-      value = { source = dir + "/${f}"; };
-    }) files
+    builtins.concatMap (name:
+      if entries.${name} == "directory"
+      then collectFiles "${prefix}/${name}" (dir + "/${name}")
+      else [{ path = "${prefix}/${name}"; source = dir + "/${name}"; }]
+    ) names;
+
+  claudeSkillDirFiles = builtins.listToAttrs (builtins.concatMap (name:
+    let files = collectFiles ".claude/skills/${name}" claudeSkillDirs.${name};
+    in
+    map (f: { name = f.path; value = { source = f.source; }; }) files
   ) (builtins.attrNames claudeSkillDirs));
+
+  kiroSkillDeepDirFiles = builtins.listToAttrs (builtins.concatMap (name:
+    let files = collectFiles ".kiro/skills/${name}" kiroSkillDeepDirs.${name};
+    in
+    map (f: { name = f.path; value = { source = f.source; }; }) files
+  ) (builtins.attrNames kiroSkillDeepDirs));
 
   kiroSkillFiles = builtins.listToAttrs (builtins.concatMap (name:
     let
@@ -80,6 +99,7 @@ in
   config = lib.mkIf cfg.enable {
     home.file = lib.mkMerge [
       (lib.mkIf cfg.targets.kiro kiroSkillFiles)
+      (lib.mkIf cfg.targets.kiro kiroSkillDeepDirFiles)
       (lib.mkIf cfg.targets.claude claudeSkillFiles)
       (lib.mkIf cfg.targets.claude claudeSkillDirFiles)
     ];
