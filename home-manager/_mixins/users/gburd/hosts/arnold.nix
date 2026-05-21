@@ -1,13 +1,23 @@
-{ lib, pkgs, ... }:
+{ inputs, lib, pkgs, config, ... }:
 with lib.hm.gvariant;
 {
   # Arnold is a Fedora system running home-manager via Nix (not NixOS)
-  # No sops-nix, no GNOME desktop, no email/calendar services
   imports = [
     # console and cli are imported by users/gburd/default.nix for all hosts
     ../../../console/ai         # AI tools (opt-in; sops `or null` fallbacks safe without sops)
     ../../../services/borgmatic.nix
   ];
+
+  # Sops secrets — reuses floki's secrets.yaml (encrypted to gburd-user age key)
+  sops = {
+    defaultSopsFile = "${inputs.self}/nixos/workstation/floki/secrets.yaml";
+    age.sshKeyPaths = [ "${config.home.homeDirectory}/.ssh/id_ed25519" ];
+    secrets = {
+      "aws/bearer_token_bedrock" = {
+        path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
+      };
+    };
+  };
 
   home.sessionVariables = {
     AWS_PROFILE = "asbxbedrock";
