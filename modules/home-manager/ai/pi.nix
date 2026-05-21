@@ -57,13 +57,12 @@ in
         # Source Bedrock bearer token from sops-decrypted secret
         if [ -r "$HOME/.config/claude-code/.bearer_token" ]; then
           export AWS_BEARER_TOKEN_BEDROCK="$(cat "$HOME/.config/claude-code/.bearer_token")"
+          # Prevent SigV4 credential chain from conflicting with bearer token auth
+          unset AWS_PROFILE AWS_DEFAULT_PROFILE \
+                AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
+                AWS_SDK_LOAD_CONFIG
         fi
         export AWS_REGION="''${AWS_REGION:-us-east-1}"
-
-        # Prevent SigV4 credential chain from conflicting with bearer token auth
-        unset AWS_PROFILE AWS_DEFAULT_PROFILE \
-              AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
-              AWS_SDK_LOAD_CONFIG
 
         # npm global prefix must be writable (Nix store is read-only)
         export NPM_CONFIG_PREFIX="''${HOME}/.npm-global"

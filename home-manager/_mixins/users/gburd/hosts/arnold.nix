@@ -10,7 +10,7 @@ with lib.hm.gvariant;
   ];
 
   home.sessionVariables = {
-    AWS_PROFILE = "isengard";
+    AWS_PROFILE = "asbxbedrock";
   };
 
   # Arnold-specific SSH hosts
