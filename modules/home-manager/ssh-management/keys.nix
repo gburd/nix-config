@@ -86,12 +86,14 @@ in
         hostname = "github.com";
         user = "git";
         identityFile = [ cfg.authKey.path ];
+        identitiesOnly = true;
       };
 
       "codeberg.org" = mkIf (builtins.elem "codeberg" cfg.gitHostingServices) {
         hostname = "codeberg.org";
         user = "git";
         identityFile = [ cfg.authKey.path ];
+        identitiesOnly = true;
       };
     };
   };
