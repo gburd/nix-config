@@ -41,6 +41,39 @@ Use teams of coordinated sub-agents when possible to parallelize work and avoid 
 2. **Reviewer** agent analyzes architecture and finds issues
 3. **Re-reviewer** verifies the fix — catches lead-level errors
 
+### Sub-Agent Model Selection (Bedrock specifics)
+
+When calling the Agent tool, **omit the `model` parameter unless
+you have a specific reason to override it.** Sub-agents that
+inherit the parent's model are guaranteed to work because the
+parent's invocation already proved the model is dispatchable.
+
+Bedrock model IDs come in two forms:
+
+- **Bare model ID** (`anthropic.claude-haiku-4-5-20251001-v1:0`) —
+  requires *provisioned* throughput. On-demand calls fail with
+  `Invocation of model ID ... with on-demand throughput isn't
+  supported.` The sub-agent dies after ~1 second with no usable
+  output; the parent sees only "completed: 0 tool uses".
+- **Cross-region inference profile** (`us.anthropic.claude-...`,
+  `eu.anthropic.claude-...`, `apac.anthropic.claude-...`) —
+  supports on-demand throughput. This is what `enabledModels`
+  in `~/.pi/agent/settings.json` should contain.
+
+If you must pass a `model:` parameter explicitly:
+
+- ✅ Use a full inference-profile ID with the `us.` / `eu.` /
+  `apac.` prefix.
+- ❌ Do **not** use a bare `anthropic.*` model ID.
+- ⚠️ Fuzzy names (`sonnet`, `haiku`, `opus`) work *most* of the
+  time but the resolver can land on a bare ID. The safety hooks
+  in `pi-extensions/safety-hooks.ts` warn on fuzzy names and
+  block bare IDs.
+
+**If a sub-agent completes in under 2 seconds with 0 tool uses,
+assume it failed at model dispatch.** Verify the model ID, drop
+the `model:` override, and re-dispatch.
+
 ## Project Layout Conventions
 
 - Use `<project>/.local/` for worktrees, temp artifacts, and ephemeral state
