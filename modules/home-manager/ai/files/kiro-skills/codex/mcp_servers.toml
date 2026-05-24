@@ -1,0 +1,173 @@
+# MCP servers used by these skills.
+#
+# Paste these blocks into ~/.codex/config.toml. Adjust paths/env to match your
+# host. Servers are independent; install whichever you actually need. Servers
+# that require credentials or per-operator configuration ship with
+# `enabled = false`; flip on after you have the creds/paths sorted.
+#
+# Canonical configuration (Nix): see
+#   nix-config/modules/home-manager/ai/mcps.nix
+# This file is the hand-install equivalent for Codex users.
+
+# ---------------------------------------------------------------------------
+# memelord -- persistent memory across sessions.
+#
+# Source:    https://github.com/earendil-works/memelord
+# Transport: stdio
+# Install:   npm install -g @earendil-works/memelord
+# Storage:   one MEMELORD_DIR per project, or one global directory shared
+#            across all your projects (operator's choice).
+#
+# Adjust the absolute paths to match your install. `which memelord` will tell
+# you where the binary landed.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.memelord]
+command = "node"
+args = ["/home/REPLACE_ME/.npm-global/bin/memelord", "serve"]
+env = { MEMELORD_DIR = "/home/REPLACE_ME/.memelord" }
+enabled = true
+
+# ---------------------------------------------------------------------------
+# postgresq -- PostgreSQL community + git + code intelligence over MCP
+# (the agora server, publicly hosted).
+#
+# Source:    https://codeberg.org/postgresq/agora
+# Public:    https://postgr.esq/
+# Transport: SSE
+# Endpoint:  https://postgr.esq/mcp/
+#
+# 108-tool MCP exposing the entire pgsql-hackers archive (188k+ messages),
+# 28 git repos with code intel (165k+ symbols), commitfest, buildfarm, wiki.
+# Primary tool for PG community research.
+#
+# If your Codex build lacks native SSE transport for MCP, run a stdio bridge
+# (e.g. mcp-proxy) and point this entry at the bridge instead.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.postgresq]
+url = "https://postgr.esq/mcp/"
+transport = "sse"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# github -- read-only GitHub repos and issues.
+#
+# Source:    github-mcp-server (Go binary)
+# Transport: stdio
+# Auth:      GITHUB_PERSONAL_ACCESS_TOKEN (typically `gh auth token`)
+#
+# Replace REPLACE_ME with the absolute path to your github-mcp-server binary.
+# Either export GITHUB_PERSONAL_ACCESS_TOKEN in the shell that launches Codex,
+# or set it in the env block below. `--dynamic-toolsets` keeps the toolset
+# small until you actually fetch a repo; `--read-only` prevents accidental
+# writes from the agent.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.github]
+command = "/REPLACE_ME/path/to/github-mcp-server"
+args = ["stdio", "--dynamic-toolsets", "--read-only"]
+# env = { GITHUB_PERSONAL_ACCESS_TOKEN = "ghp_..." }
+enabled = false  # requires `gh auth login` and binary path
+
+# ---------------------------------------------------------------------------
+# filesystem -- sandboxed local file access for the agent.
+#
+# Source:    @modelcontextprotocol/server-filesystem
+# Transport: stdio
+#
+# The trailing path is the root the agent is allowed to read/write under.
+# Tighten or widen as appropriate; defaults to $HOME, which is usually wrong.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.filesystem]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "/home/REPLACE_ME"]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# memory -- knowledge-graph persistent memory (distinct from memelord).
+#
+# Source:    @modelcontextprotocol/server-memory
+# Transport: stdio
+#
+# Structured entity/relation/observation graph; complements memelord's
+# freeform notes. Useful for multi-hop deduction within a single session.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.memory]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-memory"]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# git -- local Git operations (log, diff, blame, show) on the working tree.
+#
+# Source:    mcp-server-git (official MCP, Python)
+# Transport: stdio
+# Install:   uvx handles dependency fetch; requires `uv` on PATH.
+#
+# Distinct from `github` (remote) and `postgresq` (curated PG repos with
+# code intel). Use this for local archaeology on whatever you have checked
+# out.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.git]
+command = "uvx"
+args = ["--from", "mcp-server-git", "mcp-server-git"]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# context7 -- live, version-aware library documentation (Upstash).
+#
+# Source:    @upstash/context7-mcp
+# Transport: stdio
+#
+# Resolves the failure mode where the agent confidently cites a library API
+# that does not exist in the version you have pinned. Pulls docs for the
+# version your project is actually using.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp@latest"]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# sequential-thinking -- structured multi-step reasoning scaffold.
+#
+# Source:    @modelcontextprotocol/server-sequential-thinking
+# Transport: stdio
+#
+# Externalises the agent's chain of thought into revisable steps. Useful for
+# complex internals deduction (WAL replay traces, lock-interaction reasoning,
+# cross-module invariant checks) where a single forward pass produces
+# hand-wavy nonsense.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.sequential-thinking]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# llms-docs -- mcpdoc wrappers for llms.txt sources.
+#
+# Source:    mcpdoc (Python; via uvx)
+# Transport: stdio
+#
+# Each operator picks their own llms.txt sources -- PostgreSQL official docs,
+# pgsql-hackers archive renders, vendor docs, etc. -- and registers one MCP
+# server entry per source. The example below is a placeholder; copy it per
+# source you want to expose. Disabled by default because the URL list is
+# operator-specific.
+# ---------------------------------------------------------------------------
+
+[mcp_servers.pg-docs]
+command = "uvx"
+args = [
+  "--from", "mcpdoc", "mcpdoc",
+  "--urls", "PostgreSQL:https://www.postgresql.org/llms.txt",
+  "--transport", "stdio",
+]
+enabled = false  # configure your own llms.txt sources first
