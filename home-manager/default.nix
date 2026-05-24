@@ -67,14 +67,15 @@ in
 
   nix = {
     package = lib.mkDefault pkgs.unstable.nix;
+    # Only non-restricted settings here. Restricted settings
+    # (auto-optimise-store, keep-outputs, keep-derivations, sandbox) must be
+    # configured at the daemon level and are set in nixos/default.nix for
+    # NixOS hosts. On standalone home-manager hosts (e.g. arnold/Fedora) the
+    # user must be added to /etc/nix/nix.conf `trusted-users` for those to
+    # take effect; otherwise nix-daemon emits a warning on every invocation.
     settings = {
-      auto-optimise-store = true;
       experimental-features = [ "nix-command" "flakes" ];
-      # Avoid unwanted garbage collection when using nix-direnv
-      keep-outputs = true;
-      keep-derivations = true;
       warn-dirty = false;
-      sandbox = "relaxed";
     };
   };
 }

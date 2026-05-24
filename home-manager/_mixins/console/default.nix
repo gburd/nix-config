@@ -150,7 +150,7 @@
           enable_gpu_memory = true;
           group_processes = true;
           hide_table_gap = true;
-          mem_as_value = true;
+          process_memory_as_value = true;
           tree = true;
         };
       };
@@ -177,7 +177,7 @@
         diff = "diffr";
         glow = "glow --pager";
         ip = "ip --color --brief";
-        top = "btm --basic --tree --hide_table_gap --dot_marker --mem_as_value";
+        top = "btm --basic --tree --hide_table_gap --dot_marker --process_memory_as_value";
         tree = "eza --tree";
       };
       functions =
@@ -373,7 +373,7 @@
         diff = "diffr";
         glow = "glow --pager";
         ip = "ip --color --brief";
-        top = "btm --basic --tree --hide_table_gap --dot_marker --mem_as_value";
+        top = "btm --basic --tree --hide_table_gap --dot_marker --process_memory_as_value";
         tree = "eza --tree";
 
         # Fish-style aliases (ported from fish.nix)

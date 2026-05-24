@@ -1,3 +1,8 @@
+---
+name: coccinelle
+description: Run semantic patches on C/C++ via spatch. Use for AST-level refactoring, finding API usage patterns, enforcing coding standards structurally, migrating deprecated APIs, and finding null-deref / resource-leak patterns across large codebases. Pairs with the Pi `coccinelle` extension's pre-defined patterns (null-checks, error-handling, memory-leaks, resource-leaks, dead-code, simplify-conditionals, const-correctness).
+---
+
 # Coccinelle — C Semantic Patching
 
 Use Coccinelle (spatch) for structured, semantic code transformations and searches across C codebases. Coccinelle understands C syntax at the AST level, unlike regex-based tools.
