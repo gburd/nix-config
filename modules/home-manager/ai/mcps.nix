@@ -33,7 +33,10 @@ let
           (builtins.attrNames projectUrlMap)
       );
     in
-    pkgs.writeScript "mcpdoc-wrapper-${name}" ''
+    # Use writeShellScript (not writeScript) so the rendered file gets a
+    # `#!${runtimeShell}` shebang. Without it, kiro-cli's direct execve()
+    # fails with ENOEXEC ("Exec format error (os error 8)").
+    pkgs.writeShellScript "mcpdoc-wrapper-${name}" ''
       exec ${pkgs.uv}/bin/uvx --from mcpdoc mcpdoc \
         --urls \
         ${urlArgs} \
