@@ -40,17 +40,41 @@ stdenv.mkDerivation {
   dontConfigure = true;
   dontBuild = true;
 
+  # The upstream zip ships three sibling binaries that work as a unit:
+  #   kiro-cli      — small launcher; execvp()s kiro-cli-chat / kiro-cli-term via $PATH
+  #   kiro-cli-chat — main chat client (~395 MB)
+  #   kiro-cli-term — terminal/PTY helper (~86 MB)
+  # Installing only kiro-cli leaves the launcher unable to find its peers and it
+  # fails with `error: No such file or directory (os error 2)`. Install all three.
   installPhase = ''
     runHook preInstall
     mkdir -p $out/bin
-    if [ -f kiro-cli ]; then
-      install -m755 kiro-cli $out/bin/kiro-cli
-    elif [ -d bin ]; then
-      install -m755 bin/kiro-cli $out/bin/kiro-cli
-    else
-      # Tarball may extract differently — find the binary
-      find . -name 'kiro-cli' -type f -exec install -m755 {} $out/bin/kiro-cli \;
+
+    # Locate the bin/ directory inside the extracted archive.
+    bin_dir=""
+    for candidate in bin kirocli/bin */bin; do
+      if [ -f "$candidate/kiro-cli" ]; then
+        bin_dir="$candidate"
+        break
+      fi
+    done
+    if [ -z "$bin_dir" ]; then
+      # Fallback: search anywhere
+      bin_dir="$(dirname "$(find . -name kiro-cli -type f | head -1)")"
     fi
+    if [ -z "$bin_dir" ] || [ ! -f "$bin_dir/kiro-cli" ]; then
+      echo "ERROR: kiro-cli binary not found in archive" >&2
+      exit 1
+    fi
+
+    for f in kiro-cli kiro-cli-chat kiro-cli-term; do
+      if [ -f "$bin_dir/$f" ]; then
+        install -m755 "$bin_dir/$f" "$out/bin/$f"
+      else
+        echo "WARNING: $f not found in archive (kiro-cli will likely fail at runtime)" >&2
+      fi
+    done
+
     runHook postInstall
   '';
 
