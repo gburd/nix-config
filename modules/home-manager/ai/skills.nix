@@ -48,13 +48,13 @@ let
   claudeSkillDirFiles = builtins.listToAttrs (builtins.concatMap (name:
     let files = collectFiles ".claude/skills/${name}" claudeSkillDirs.${name};
     in
-    map (f: { name = f.path; value = { source = f.source; }; }) files
+    map (f: { name = f.path; value = { inherit (f) source; }; }) files
   ) (builtins.attrNames claudeSkillDirs));
 
   kiroSkillDeepDirFiles = builtins.listToAttrs (builtins.concatMap (name:
     let files = collectFiles ".kiro/skills/${name}" kiroSkillDeepDirs.${name};
     in
-    map (f: { name = f.path; value = { source = f.source; }; }) files
+    map (f: { name = f.path; value = { inherit (f) source; }; }) files
   ) (builtins.attrNames kiroSkillDeepDirs));
 
   kiroSkillFiles = builtins.listToAttrs (builtins.concatMap (name:
