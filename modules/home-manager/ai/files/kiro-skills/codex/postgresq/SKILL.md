@@ -1,6 +1,6 @@
 # PostgreSQL Community Research
 
-Use the postgresq MCP server (https://postgr.esq/mcp/) to research PostgreSQL community discussions, patches, and development history.
+Use the postgresq MCP server (https://pg.ddx.io/mcp/) to research PostgreSQL community discussions, patches, and development history.
 
 ## Capabilities
 

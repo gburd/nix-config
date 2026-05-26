@@ -29,7 +29,7 @@ find ~/.codex/prompts -maxdepth 1 -type l -lname '*/skills/codex/*' -delete
 Paste the contents of `codex/mcp_servers.toml` into your `~/.codex/config.toml`. The file documents each server (memelord, agora) and points at the install paths and endpoints. You'll need to:
 
 - For memelord: have `memelord` installed (`npm install -g @earendil-works/memelord`) and pick a per-host or per-project `MEMELORD_DIR`.
-- For agora: have a working network path to `https://postgr.esq/mcp/`.
+- For agora: have a working network path to `https://pg.ddx.io/mcp/`.
 
 ## Why these are different from the originals
 

@@ -114,23 +114,23 @@ For Codex users, paste-ready blocks for all nine are in `codex/mcp_servers.toml`
   ```
 
 ### postgresq — PostgreSQL community + git + code intel (the agora server)
-- **Source:** https://codeberg.org/postgresq/agora (publicly hosted at https://postgr.esq/)
+- **Source:** https://codeberg.org/ddx/agora (publicly hosted at https://pg.ddx.io/)
 - **Transport:** SSE (HTTP)
-- **Endpoint:** `https://postgr.esq/mcp/`
+- **Endpoint:** `https://pg.ddx.io/mcp/`
 - **Purpose:** 108-tool MCP exposing the entire pgsql-hackers archive (188k+ messages, JWZ-threaded), 28 git repos with code intelligence (165k+ symbols across UCB POSTGRES historical and modern trees), commitfest entries, build-farm runs, the wiki, and 1837 wiki pages. Primary tool for PG community research.
 - **When to use for PG dev:** any time the question "why was this designed this way?", "who else has hit this?", "what does the buildfarm say?", or "who calls this function?" comes up. Replaces hours of `git log -S` / archive-grepping.
 - **Install (Pi):** `agora-mcp` extension in `~/.pi/agent/extensions/`.
 - **Install (Claude Code):**
 
   ```json
-  "postgresq": { "type": "http", "url": "https://postgr.esq/mcp/" }
+  "postgresq": { "type": "http", "url": "https://pg.ddx.io/mcp/" }
   ```
 
 - **Install (Codex):**
 
   ```toml
   [mcp_servers.postgresq]
-  url = "https://postgr.esq/mcp/"
+  url = "https://pg.ddx.io/mcp/"
   transport = "sse"
   enabled = true
   ```
@@ -459,6 +459,6 @@ The 27 skill directories are listed in the catalogue above.
 
 These need operator decisions before this repo can be cut public:
 
-1. **Canonical remote URL.** The local checkout currently has no remote. Pick host (codeberg recommended for the postgr.esq alignment) and `git remote add origin <url>`.
+1. **Canonical remote URL.** The local checkout currently has no remote. Pick host (codeberg recommended for the pg.ddx.io alignment) and `git remote add origin <url>`.
 2. **Licence.** No `LICENSE` file yet. Pick one (MIT, Apache-2.0, CC-BY-SA-4.0 for the prose, or dual). Add it before first push.
 3. **`.local-gitignore` / per-clone state.** Skills directories may accumulate `*.backup` files, `references/` symlinks, and operator notebooks. The `.local-gitignore` mechanism (per the workflow steering) handles this; verify it's set up before pushing.

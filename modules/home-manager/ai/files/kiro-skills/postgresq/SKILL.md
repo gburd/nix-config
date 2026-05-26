@@ -1,11 +1,11 @@
 ---
 name: postgresq
-description: Research the PostgreSQL community via the agora MCP server (https://postgr.esq/mcp/). Use when investigating PostgreSQL internals or extension development, reviewing or writing patches, understanding historical design decisions, finding related prior art, or tracing a feature through 76k+ pgsql-hackers messages and the upstream/master git history.
+description: Research the PostgreSQL community via the agora MCP server (https://pg.ddx.io/mcp/). Use when investigating PostgreSQL internals or extension development, reviewing or writing patches, understanding historical design decisions, finding related prior art, or tracing a feature through 76k+ pgsql-hackers messages and the upstream/master git history.
 ---
 
 # PostgreSQL Community Research
 
-Use the postgresq MCP server (https://postgr.esq/mcp/) to research PostgreSQL community discussions, patches, and development history.
+Use the postgresq MCP server (https://pg.ddx.io/mcp/) to research PostgreSQL community discussions, patches, and development history.
 
 ## Capabilities
 

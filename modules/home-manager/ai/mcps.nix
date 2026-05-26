@@ -304,8 +304,8 @@ in
         enable = mkEnableOption "Postgr.esq/l MCP server (PostgreSQL community archive)";
         url = mkOption {
           type = types.str;
-          default = "https://postgr.esq/mcp/";
-          description = "URL for the Postgr.esq/l MCP server";
+          default = "https://pg.ddx.io/mcp/";
+          description = "URL for the Postgr.esq/l MCP server (canonical hostname is pg.ddx.io as of 2026-05 rebrand; postgr.esq still 301-redirects)";
         };
       };
 

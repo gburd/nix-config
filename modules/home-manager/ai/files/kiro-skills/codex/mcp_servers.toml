@@ -33,9 +33,9 @@ enabled = true
 # (the agora server, publicly hosted).
 #
 # Source:    https://codeberg.org/postgresq/agora
-# Public:    https://postgr.esq/
+# Public:    https://pg.ddx.io/
 # Transport: SSE
-# Endpoint:  https://postgr.esq/mcp/
+# Endpoint:  https://pg.ddx.io/mcp/
 #
 # 108-tool MCP exposing the entire pgsql-hackers archive (188k+ messages),
 # 28 git repos with code intel (165k+ symbols), commitfest, buildfarm, wiki.
@@ -46,7 +46,7 @@ enabled = true
 # ---------------------------------------------------------------------------
 
 [mcp_servers.postgresq]
-url = "https://postgr.esq/mcp/"
+url = "https://pg.ddx.io/mcp/"
 transport = "sse"
 enabled = true
 

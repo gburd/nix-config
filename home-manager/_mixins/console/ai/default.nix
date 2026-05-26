@@ -89,11 +89,11 @@
           path = config.home.homeDirectory;
         };
 
-        # PostgreSQL community discussion archive (postgr.esq)
-        # Also available via NNTP (mail.postgr.esq:563), IMAP, web
+        # PostgreSQL community discussion archive (pg.ddx.io)
+        # Also available via NNTP (nntp.pg.ddx.io:119/563), IMAP, web
         postgresq = {
           enable = true;
-          url = "https://postgr.esq/mcp/";
+          url = "https://pg.ddx.io/mcp/";
         };
 
         # Persistent knowledge graph across sessions
