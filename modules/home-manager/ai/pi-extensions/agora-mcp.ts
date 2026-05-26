@@ -8,7 +8,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { StreamableHTTPMCPClient } from "../lib/mcp-client";
 
-const AGORA_URL = "https://postgr.esq/l/mcp/";
+const AGORA_URL = "https://pg.ddx.io/mcp/";
 
 export default async function (pi: ExtensionAPI) {
   let mcpClient: StreamableHTTPMCPClient | null = null;

@@ -205,12 +205,12 @@ with lib.hm.gvariant;
       set enable-bracketed-paste off
     '';
 
-    # Pan NNTP newsreader: pre-configure postgr.esq (PostgreSQL mailing lists)
+    # Pan NNTP newsreader: pre-configure pg.ddx.io (PostgreSQL mailing lists)
     file.".pan2/servers.xml".text = ''
       <?xml version="1.0" encoding="utf-8" ?>
       <server-properties>
         <server>
-          <host>mail.postgr.esq</host>
+          <host>nntp.pg.ddx.io</host>
           <port>563</port>
           <use-ssl>1</use-ssl>
           <connection-limit>2</connection-limit>
@@ -301,7 +301,7 @@ with lib.hm.gvariant;
       terax-ai      # AI assistant UI (Bedrock support pending upstream issue #138)
 
       # PostgreSQL community
-      pan           # GTK NNTP newsreader (postgr.esq PostgreSQL mailing lists)
+      pan           # GTK NNTP newsreader (pg.ddx.io PostgreSQL mailing lists)
     ];
 
     # http://rski.github.io/2021/09/05/nix-debugging.html

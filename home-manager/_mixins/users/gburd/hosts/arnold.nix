@@ -26,7 +26,7 @@ with lib.hm.gvariant;
   # Arnold-specific SSH hosts
   programs.ssh.matchBlocks = {
     "agora-deploy" = lib.hm.dag.entryBefore [ "*" ] {
-      host = "fra fra.postgr.esq 89.145.162.3 gva gva.postgr.esq 185.19.30.253";
+      host = "fra fra.pg.ddx.io 89.145.162.3 gva gva.pg.ddx.io 185.19.30.253";
       user = "root";
       identityFile = "~/.ssh/agora-deploy";
       identitiesOnly = true;
