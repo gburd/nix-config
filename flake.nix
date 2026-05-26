@@ -66,6 +66,32 @@
     bitnet-flake.url = "github:general-intelligence-systems/bitnet-flake";
     bitnet-flake.inputs.nixpkgs.follows = "nixpkgs";
 
+    # PostgreSQL community agent skills (https://codeberg.org/ddx/skills.git).
+    # One input per agent branch — content overlaps but each branch ships its
+    # own per-agent extras (claude/, pi/, kiro/, codex/, maki/ subdirs).
+    # Deployed by modules/home-manager/ai/skills.nix as a blend over the
+    # in-tree operator skills, not a replacement.
+    postgresq-skills-claude = {
+      url = "git+https://codeberg.org/ddx/skills.git?ref=claude";
+      flake = false;
+    };
+    postgresq-skills-pi = {
+      url = "git+https://codeberg.org/ddx/skills.git?ref=pi";
+      flake = false;
+    };
+    postgresq-skills-kiro = {
+      url = "git+https://codeberg.org/ddx/skills.git?ref=kiro";
+      flake = false;
+    };
+    postgresq-skills-codex = {
+      url = "git+https://codeberg.org/ddx/skills.git?ref=codex";
+      flake = false;
+    };
+    postgresq-skills-maki = {
+      url = "git+https://codeberg.org/ddx/skills.git?ref=maki";
+      flake = false;
+    };
+
     # TODO... review below here
     impermanence.url = "github:nix-community/impermanence";
 
