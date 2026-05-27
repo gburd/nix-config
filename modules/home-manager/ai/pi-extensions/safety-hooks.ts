@@ -39,6 +39,7 @@ const FUZZY_NAMES = new Set([
   "sonnet", "opus", "haiku",
   "claude-sonnet", "claude-opus", "claude-haiku",
 ]);
+const DEFAULT_REGION_PREFIX = "us.";
 
 export default function (pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
@@ -158,5 +159,33 @@ export default function (pi: ExtensionAPI) {
   // Track session start for status
   pi.on("session_start", async (_event, ctx) => {
     ctx.ui.setStatus("safety", "🛡️  Safety hooks active");
+  });
+
+  // Warn when the parent session selects a bare model ID.
+  pi.on("model_select", async (event, ctx) => {
+    const id = event.model.id;
+    if (KNOWN_BAD_MODEL.test(id)) {
+      ctx.ui.notify(
+        `⚠️  Model '${id}' is a bare Bedrock ID (no inference profile prefix). ` +
+          "On-demand invocations will fail. Use /model with a 'us.' prefixed ID " +
+          "or let the default model from settings.json take effect.",
+        "warning",
+      );
+    }
+  });
+
+  // Rewrite bare model IDs in the provider request payload before they
+  // reach Bedrock. This catches cases where Pi's internal resolver lands
+  // on a bare ID despite enabledModels containing only inference profiles.
+  pi.on("before_provider_request", async (event) => {
+    const payload = event.payload as Record<string, unknown> | undefined;
+    if (!payload || typeof payload !== "object") return;
+    const modelId = payload.modelId ?? payload.model;
+    if (typeof modelId === "string" && KNOWN_BAD_MODEL.test(modelId)) {
+      const fixed = DEFAULT_REGION_PREFIX + modelId;
+      const key = "modelId" in payload ? "modelId" : "model";
+      (payload as Record<string, unknown>)[key] = fixed;
+      return payload;
+    }
   });
 }
