@@ -27,7 +27,14 @@ in
     #   ${pkgs.nvd}/bin/nvd diff $oldGenPath $newGenPath
     # '';
     homeDirectory = if isDarwin then "/Users/${username}" else "/home/${username}";
-    sessionPath = [ "$HOME/.local/bin" ];
+    # Note: do NOT use `sessionPath = [ "$HOME/.local/bin" ];` here — home-manager
+    # always *prepends* sessionPath, which puts ~/.local/bin ahead of
+    # ~/.nix-profile/bin and lets stale self-installer copies (e.g. an old
+    # ~/.local/bin/claude) shadow nix-managed binaries. Append instead so
+    # nix wins; user-installed binaries still resolve as a fallback.
+    sessionVariablesExtra = ''
+      export PATH="$PATH''${PATH:+:}$HOME/.local/bin"
+    '';
     inherit stateVersion;
     inherit username;
   };
