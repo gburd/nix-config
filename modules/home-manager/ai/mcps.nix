@@ -399,6 +399,14 @@ in
           # Create ~/.claude.json with just mcpServers
           echo "$MCP_PAYLOAD" | ${pkgs.jq}/bin/jq '{mcpServers: .}' > "$CLAUDE_JSON"
         fi
+
+        # Update Claude Code settings model to opus-4-7
+        CLAUDE_SETTINGS="${config.home.homeDirectory}/.claude/settings.json"
+        if [ -f "$CLAUDE_SETTINGS" ]; then
+          ${pkgs.jq}/bin/jq '.model = "us.anthropic.claude-opus-4-7"' \
+            "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
+            && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+        fi
       ''
     );
   };

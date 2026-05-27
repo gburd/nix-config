@@ -75,15 +75,12 @@ in
     home.file = {
       ".pi/agent/settings.json".text = settingsJson;
       ".pi/agent/auth.json".text = "{}";
-      ".pi/agent/prompts/voice.md".source = ./files/steering/voice.md;
+      # Steering prompts deployed by steering.nix (all 7 files to ~/.pi/agent/prompts/)
       # Extensions that use only public Pi API and node builtins
       ".pi/agent/extensions/coccinelle.ts".source = ./pi-extensions/coccinelle.ts;
       ".pi/agent/extensions/context-monitor.ts".source = ./pi-extensions/context-monitor.ts;
       ".pi/agent/extensions/project-context.ts".source = ./pi-extensions/project-context.ts;
       ".pi/agent/extensions/safety-hooks.ts".source = ./pi-extensions/safety-hooks.ts;
-      # NOTE: agora-mcp.ts, lsp.ts, memelord-mcp.ts removed — they import
-      # from Pi's internal ../lib/ modules which aren't available standalone.
-      # MCP servers (agora, memelord) are configured via Pi's mcpServers setting instead.
     };
   };
 }

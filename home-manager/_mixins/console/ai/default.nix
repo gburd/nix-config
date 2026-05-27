@@ -16,7 +16,9 @@
       targets = {
         kiro = true;
         claude = true;
+        pi = true;
         maki = true;
+        codex = true;
       };
     };
 
@@ -34,6 +36,9 @@
 
     # Pi coding agent (pi.dev)
     pi.enable = true;
+
+    # OpenAI Codex agent
+    codex.enable = true;
 
     # MCP Server configuration
     mcps = {
