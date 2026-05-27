@@ -336,6 +336,42 @@ in
       })
       (lib.mkIf cfg.targets.kiro {
         ".kiro/settings/mcp.json".text = mcpJsonText;
+        # Agent config: trust all safe tools, deny destructive ones via hooks
+        ".kiro/agents/default.json".text = builtins.toJSON {
+          name = "default";
+          description = "Default agent with broad tool trust (safety enforced via hooks)";
+          allowedTools = [
+            # All built-in tools
+            "read" "write" "shell" "glob" "grep" "code"
+            "web_search" "web_fetch" "knowledge" "subagent"
+            "introspect" "todo_list" "use_aws"
+            # Aliases
+            "fs_read" "fs_write" "execute_bash" "fs_search"
+            # All MCP server tools
+            "@context7" "@filesystem" "@git" "@github"
+            "@memelord" "@memory" "@postgresq"
+            "@sequential-thinking" "@nix" "@rust" "@python"
+            "@home-manager"
+          ];
+          toolsSettings = {
+            execute_bash = {
+              deniedCommands = [
+                "rm -rf *" "rm -fr *"
+                "git push --force*" "git push *--force*"
+                "git reset --hard*"
+              ];
+            };
+            use_aws = {
+              autoAllowReadonly = true;
+            };
+          };
+          hooks = {
+            preToolUse = [{
+              matcher = "shell";
+              command = "CMD=$(cat | jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qE 'rm[[:space:]]+-[^[:space:]]*r[^[:space:]]*f'; then echo 'BLOCKED: Use trash instead of rm -rf' >&2; exit 2; fi";
+            }];
+          };
+        };
       })
       (lib.mkIf (cfg.targets.kiro && cfg.servers.memelord.enable) {
         ".kiro/settings/settings.json".text = builtins.toJSON {
