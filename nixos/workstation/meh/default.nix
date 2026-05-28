@@ -42,6 +42,7 @@
   };
 
   networking.hostName = "meh";
+  networking.firewall.enable = lib.mkForce false;
 
   # Mac Pro is a desktop workstation - disable power management
   powerManagement.enable = false;
