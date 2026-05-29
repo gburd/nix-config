@@ -26,8 +26,21 @@ in
       type = types.str;
       # Bedrock has Opus 4.8 as of 2026-05-29 under the inference-profile ID
       # `us.anthropic.claude-opus-4-8` (no -v1:0 suffix in the new naming).
-      # Verified working with the user's bearer token via direct InvokeModel
-      # probe. Bump this when 4.9+ ships.
+      #
+      # IMPORTANT AUTH CAVEAT (verified 2026-05-29): hermes routes Claude
+      # models through the bundled Anthropic SDK's AnthropicBedrock client
+      # (anthropic 0.87.0), which signs requests with SigV4 *only* and has no
+      # bearer-token support. It therefore needs resolvable IAM credentials
+      # (AWS_ACCESS_KEY_ID/SECRET, a named/SSO profile, or an instance role) and
+      # FAILS with "could not resolve credentials from session" when only
+      # AWS_BEARER_TOKEN_BEDROCK is present. The bearer token *does* work for
+      # hermes' non-Claude Bedrock models (Nova/DeepSeek/Llama) which use the
+      # boto3 Converse path, and for every other agent here (pi/claude/maki)
+      # which hit InvokeModel directly. To make hermes work with Opus on
+      # Bedrock, provision IAM creds via sops and wire them through
+      # programs.ai.bedrock.credentialsFile (-> ~/.aws/credentials). Until then
+      # hermes is configured correctly but cannot authenticate. Bump the id
+      # when 4.9+ ships.
       default = "us.anthropic.claude-opus-4-8";
       description = "Default Bedrock model ID for Hermes (must be a real inference-profile ID).";
     };
