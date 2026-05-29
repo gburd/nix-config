@@ -230,6 +230,7 @@ with lib.hm.gvariant;
       lsof
       luajitPackages.luarocks
       m4
+      maki          # AI coding agent from gburd/maki
       openssl
       perl
       plocate
