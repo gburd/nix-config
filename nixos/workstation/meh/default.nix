@@ -42,7 +42,16 @@
   };
 
   networking.hostName = "meh";
-  networking.firewall.enable = lib.mkForce false;
+
+  # Firewall ON for the external interface (default config from
+  # nixos/_mixins/services/firewall.nix). Tailscale traffic stays unrestricted
+  # because nixos/_mixins/services/tailscale.nix sets
+  # `networking.firewall.trustedInterfaces = [ "tailscale0" ]`, which bypasses
+  # all firewall rules for traffic on that interface. So:
+  #   - LAN/WAN: filtered (firewalled)
+  #   - tailscale0: every port open
+  # If you ever need to disable firewall again for debugging, prefer
+  # `sudo iptables -F` at runtime over re-adding lib.mkForce false here.
 
   # Mac Pro is a desktop workstation - disable power management
   powerManagement.enable = false;

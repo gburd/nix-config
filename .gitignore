@@ -26,3 +26,7 @@ arnold-nix-setup
 arnold-nvim
 
 .memelord/
+
+# Linux core dumps (kernel.core_pattern format)
+core.[0-9]*
+core-[0-9]*
