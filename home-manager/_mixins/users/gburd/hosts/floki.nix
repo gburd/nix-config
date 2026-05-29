@@ -297,7 +297,7 @@ with lib.hm.gvariant;
       # kiro-ide    # Kiro IDE (download URLs return 404 — not yet publicly available)
       bitnet        # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
       lmstudio      # Local LLM runner (LM Studio)
-      maki          # AI coding agent from gburd/maki
+      # maki installed (wrapped) by modules/home-manager/ai/maki.nix
       terax-ai      # AI assistant UI (Bedrock support pending upstream issue #138)
 
       # PostgreSQL community

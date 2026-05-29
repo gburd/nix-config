@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 let
   cfg = config.programs.ai.maki;
   inherit (lib) mkEnableOption mkOption types;
@@ -179,17 +179,47 @@ in
 
     defaultModel = mkOption {
       type = types.str;
-      # Must be a full Bedrock inference-profile spec. maki does NOT translate
-      # short Claude names to inference profiles; a bare "bedrock/claude-opus-4-8"
-      # is sent to Bedrock as "anthropic.claude-opus-4-8", which on-demand
-      # invocation rejects with 400 "provided model identifier is invalid".
-      # The us.-prefixed profile id is passed through verbatim and works.
-      default = "bedrock/us.anthropic.claude-opus-4-8";
-      description = "Default model for maki provider (full Bedrock inference-profile spec)";
+      # maki 0.3.9 routes Bedrock through the Anthropic provider gated by
+      # CLAUDE_CODE_USE_BEDROCK=1 (set by the launcher wrapper below). The
+      # model spec is "anthropic/<id>"; maki sends <id> to Bedrock verbatim,
+      # so <id> must be a full us.-prefixed inference-profile id (a bare
+      # "anthropic.claude-opus-4-8" is rejected for on-demand invocation).
+      default = "anthropic/us.anthropic.claude-opus-4-8";
+      description = "Default model for maki (anthropic/<full Bedrock inference-profile id>)";
+    };
+
+    package = mkOption {
+      type = types.package;
+      default = pkgs.maki;
+      description = "The maki package to wrap and install";
+    };
+
+    region = mkOption {
+      type = types.str;
+      default = "us-east-1";
+      description = "AWS region for Bedrock (maki 0.3.9 requires AWS_REGION to be set)";
     };
   };
 
   config = lib.mkIf cfg.enable {
+    home.packages = [
+      # maki 0.3.9 reaches Bedrock only when CLAUDE_CODE_USE_BEDROCK=1 and
+      # AWS_REGION are set, and authenticates with the sops-decrypted bearer
+      # token. Wrap the binary so these are present regardless of the parent
+      # shell, without exporting them globally (which bedrock.nix avoids).
+      (pkgs.writeShellScriptBin "maki" ''
+        if [ -r "$HOME/.config/claude-code/.bearer_token" ]; then
+          export AWS_BEARER_TOKEN_BEDROCK="$(cat "$HOME/.config/claude-code/.bearer_token")"
+          unset AWS_PROFILE AWS_DEFAULT_PROFILE \
+                AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
+                AWS_SDK_LOAD_CONFIG
+        fi
+        export CLAUDE_CODE_USE_BEDROCK=1
+        export AWS_REGION="''${AWS_REGION:-${cfg.region}}"
+        exec ${cfg.package}/bin/maki "$@"
+      '')
+    ];
+
     home.file = {
       ".config/maki/config.toml".text = configToml;
       ".config/maki/permissions.toml".text = permissionsToml;
