@@ -27,20 +27,18 @@ in
       # Bedrock has Opus 4.8 as of 2026-05-29 under the inference-profile ID
       # `us.anthropic.claude-opus-4-8` (no -v1:0 suffix in the new naming).
       #
-      # IMPORTANT AUTH CAVEAT (verified 2026-05-29): hermes routes Claude
+      # IMPORTANT AUTH NOTE (verified 2026-05-29): hermes routes Claude
       # models through the bundled Anthropic SDK's AnthropicBedrock client
-      # (anthropic 0.87.0), which signs requests with SigV4 *only* and has no
-      # bearer-token support. It therefore needs resolvable IAM credentials
-      # (AWS_ACCESS_KEY_ID/SECRET, a named/SSO profile, or an instance role) and
-      # FAILS with "could not resolve credentials from session" when only
-      # AWS_BEARER_TOKEN_BEDROCK is present. The bearer token *does* work for
-      # hermes' non-Claude Bedrock models (Nova/DeepSeek/Llama) which use the
-      # boto3 Converse path, and for every other agent here (pi/claude/maki)
-      # which hit InvokeModel directly. To make hermes work with Opus on
-      # Bedrock, provision IAM creds via sops and wire them through
-      # programs.ai.bedrock.credentialsFile (-> ~/.aws/credentials). Until then
-      # hermes is configured correctly but cannot authenticate. Bump the id
-      # when 4.9+ ships.
+      # (anthropic 0.87.0), which upstream signs with SigV4 *only* — it would
+      # otherwise FAIL with "could not resolve credentials from session" given
+      # we carry only AWS_BEARER_TOKEN_BEDROCK (no IAM keys). We fix this with
+      # an idempotent overlay patch (files/hermes/patch_bedrock_bearer.py),
+      # applied to the pipx venv after every install/upgrade, that makes
+      # get_auth_headers() emit an `Authorization: Bearer` header when the
+      # bearer token is set (Bedrock's HTTPS endpoint accepts it directly) and
+      # otherwise falls back to the unchanged upstream SigV4 path. The `hermes`
+      # launcher wrapper below exports the token so the SDK sees it. Bump the
+      # id when 4.9+ ships.
       default = "us.anthropic.claude-opus-4-8";
       description = "Default Bedrock model ID for Hermes (must be a real inference-profile ID).";
     };
@@ -73,6 +71,21 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [
       pkgs.pipx
+      # `hermes` launcher wrapper. pipx installs the real binary at
+      # ~/.local/bin/hermes; this nix-profile shim shadows it (nix-profile/bin
+      # precedes ~/.local/bin on PATH) and exports AWS_BEARER_TOKEN_BEDROCK +
+      # AWS_REGION so the SDK's (patched) Bedrock auth path can authenticate
+      # regardless of the parent shell. Mirrors the pi/maki wrappers.
+      (pkgs.writeShellScriptBin "hermes" ''
+        if [ -r "$HOME/.config/claude-code/.bearer_token" ]; then
+          export AWS_BEARER_TOKEN_BEDROCK="$(cat "$HOME/.config/claude-code/.bearer_token")"
+          unset AWS_PROFILE AWS_DEFAULT_PROFILE \
+                AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
+                AWS_SDK_LOAD_CONFIG
+        fi
+        export AWS_REGION="''${AWS_REGION:-${cfg.region}}"
+        exec "$HOME/.local/bin/hermes" "$@"
+      '')
     ];
 
     # ~/.hermes/config.yaml — picked up by `hermes` on every invocation.
@@ -116,6 +129,14 @@ in
           echo "[hermes] install failed — run 'pipx install $SPEC' manually" >&2
         }
       fi
+
+      # Overlay patch: teach the bundled Anthropic SDK's Bedrock auth path to
+      # accept AWS_BEARER_TOKEN_BEDROCK. Idempotent — safe to re-run after
+      # every install/upgrade above. Any python3 works (the script only does
+      # file IO); use the nix one for determinism.
+      ${pkgs.python3}/bin/python3 ${./files/hermes/patch_bedrock_bearer.py} \
+        "$PIPX_HOME/venvs/hermes-agent" || \
+        echo "[hermes] bedrock bearer patch failed (non-fatal)"
     '';
   };
 }

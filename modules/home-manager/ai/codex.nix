@@ -1,13 +1,10 @@
 { config, lib, pkgs, ... }:
 let
   cfg = config.programs.ai.codex;
-  mcpCfg = config.programs.ai.mcps;
   inherit (lib) mkEnableOption mkOption types;
 
   # Codex uses TOML for MCP config in ~/.codex/config.toml
   # Format: [mcp_servers.<name>] with command/args/env fields
-  memelordPkg = mcpCfg.servers.memelord.pkg or null;
-
   configToml = ''
     # Codex configuration — managed by home-manager
     model = "${cfg.defaultModel}"

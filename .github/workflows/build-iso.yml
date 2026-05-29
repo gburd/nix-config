@@ -35,19 +35,26 @@ jobs:
       with:
         persist-credentials: false
     - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25  # v22
-    - name: Build Console ISO
+    - name: Build & upload Console ISO (skipped if not defined in flake)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REF: ${{ github.ref }}
       run: |
-        nix build .#nixosConfigurations.iso-console.config.system.build.isoImage
+        # The flake does not currently provide an `iso-console` nixosConfiguration
+        # (host configs require per-host directories + disko layouts). Skip
+        # gracefully so tagged releases don't fail; the build runs automatically
+        # once `.#nixosConfigurations.iso-console` is added.
+        attr='.#nixosConfigurations.iso-console.config.system.build.isoImage'
+        if ! nix eval --accept-flake-config "${attr}.drvPath" >/dev/null 2>&1; then
+          echo "::notice title=Console ISO::iso-console not defined in flake; skipping ISO build/upload."
+          exit 0
+        fi
+        nix build --accept-flake-config "${attr}"
         mkdir iso || true
         ISO=$(head -n1 result/nix-support/hydra-build-products | cut -d'/' -f6)
         sudo mv "result/iso/${ISO}" "iso/console-${ISO}"
         sha256sum "iso/console-${ISO}" > "iso/console-${ISO}.sha256"
         sed -i -r "s/ .*\/(.+)/  \1/g" "iso/console-${ISO}.sha256"
-    - name: Upload Console ISO
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_REF: ${{ github.ref }}
-      run: |
         for artefact in "iso/"*; do
           gh release upload "$GITHUB_REF" "${artefact}" --clobber
         done
@@ -63,19 +70,23 @@ jobs:
       with:
         persist-credentials: false
     - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25  # v22
-    - name: Build Desktop ISO
+    - name: Build & upload Desktop ISO (skipped if not defined in flake)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REF: ${{ github.ref }}
       run: |
-        nix build .#nixosConfigurations.iso-desktop.config.system.build.isoImage
+        # See note in build-console-iso. Skips gracefully when undefined.
+        attr='.#nixosConfigurations.iso-desktop.config.system.build.isoImage'
+        if ! nix eval --accept-flake-config "${attr}.drvPath" >/dev/null 2>&1; then
+          echo "::notice title=Desktop ISO::iso-desktop not defined in flake; skipping ISO build/upload."
+          exit 0
+        fi
+        nix build --accept-flake-config "${attr}"
         mkdir iso || true
         ISO=$(head -n1 result/nix-support/hydra-build-products | cut -d'/' -f6)
         sudo mv "result/iso/${ISO}" "iso/desktop-${ISO}"
         sha256sum "iso/desktop-${ISO}" > "iso/desktop-${ISO}.sha256"
         sed -i -r "s/ .*\/(.+)/  \1/g" "iso/desktop-${ISO}.sha256"
-    - name: Upload Desktop ISO
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_REF: ${{ github.ref }}
-      run: |
         for artefact in "iso/"*; do
           gh release upload "$GITHUB_REF" "${artefact}" --clobber
         done
@@ -95,7 +106,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REF: ${{ github.ref }}
       run: |
-        if [ "$(gh release view "$GITHUB_REF" --json assets --template '{{len .assets}}')" -lt 0 ]; then
-          exit 1
-        fi
+        # Un-draft the release. ISO assets are attached above when available;
+        # releases without ISOs (current state) still publish with notes.
         gh release edit "$GITHUB_REF" --draft=false

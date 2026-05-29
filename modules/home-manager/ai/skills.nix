@@ -127,7 +127,7 @@ let
     skillsGitDeployments;
 
   skillsGitFiles = lib.mapAttrs'
-    (name: spec: lib.nameValuePair spec.target {
+    (_name: spec: lib.nameValuePair spec.target {
       source = spec.input;
       recursive = false;
     })
