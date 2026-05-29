@@ -26,6 +26,66 @@
 
 Describe what the code does now — not discarded approaches or prior iterations. Use plain, factual language. Avoid: critical, crucial, essential, significant, comprehensive, robust, elegant.
 
+## Release Tagging
+
+This repo (and the maintainer's other personal repos) use date-based annotated tags:
+
+- Format: `vYYYY.MM.DD`. For a second+ release on the same day, append `.N`:
+  `v2026.05.29`, `v2026.05.29.1`, `v2026.05.29.2`.
+- Always **annotated** tags (`git tag -a vYYYY.MM.DD[.N] -m "..."`), never lightweight.
+- Tag **after** the fixes are merged to `main`. Order of operations:
+  1. merge/fast-forward to `main`, 2. `git push origin main`, 3. create the tag,
+  4. `git push origin <tag>`.
+- The tag message is a one-line summary of what shipped in that release.
+- Pushing a tag triggers the `Build 🏗️ and Publish 📀` workflow (drafts a GitHub
+  release, builds any defined ISOs, then un-drafts). Check the run after tagging.
+- Note: "never push to main / never force-push" still holds for shared/team repos.
+  The direct-to-main + tag flow above is the maintainer's deliberate process for
+  these personal single-author repos, and force-pushing a mirror (see below) is a
+  maintainer-directed exception — do it only when explicitly asked.
+
+## Lessons: Nix-managed AI Agent Configs
+
+When working on `modules/home-manager/ai/` (Bedrock-backed agents: pi, claude,
+maki, hermes, codex; plus kiro-cli):
+
+- **Telemetry ships ON by default.** Disable it declaratively, don't assume:
+  kiro-cli (`telemetry.enabled = false` in `~/.kiro/settings/cli.json`),
+  Claude Code (`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=true` +
+  `DISABLE_TELEMETRY/ERROR_REPORTING/BUG_COMMAND`), pi
+  (`enableInstallTelemetry=false` and `PI_TELEMETRY=0`). For tools whose state
+  file is mutable, enforce via a `home.activation` `jq` patch (create-if-missing).
+- **"Ultra" thinking == pi's `xhigh`** (off/minimal/low/medium/high/xhigh).
+  The env-var efforts (`CLAUDE_THINKING_EFFORT`, codex `model_reasoning_effort`,
+  hermes `reasoning_effort`) top out at `high` — don't invent higher values.
+- **Bedrock auth has two paths.** The bearer token (`AWS_BEARER_TOKEN_BEDROCK`)
+  works for `InvokeModel`/Converse and Bedrock's HTTPS endpoint accepts
+  `Authorization: Bearer <token>` directly. The Anthropic SDK's `AnthropicBedrock`
+  client is **SigV4-only** and fails with "could not resolve credentials from
+  session" on a bearer-only host. kiro-cli does **not** use Bedrock at all — it
+  authenticates with its own subscription/credits.
+- **Verify model reachability before claiming it works.** A direct InvokeModel
+  probe (or `curl` to `/model/<id>/invoke`) proving HTTP 200 does not prove a
+  given agent's code path works — agents route through different SDKs.
+- **Patching pipx/venv tools:** ship an idempotent Python patcher in-repo and run
+  it from `home.activation` **after** the pipx install/upgrade (pipx upgrade can
+  overwrite the venv). Guard with a sentinel marker, and locate code by parsing
+  (e.g. balance parens to find a signature end) rather than matching exact lines,
+  so the patch survives upstream version drift. Wrap the agent binary in a
+  `writeShellScriptBin` shim that exports the bearer token, mirroring pi/maki.
+- **Flakes only see git-tracked files.** A new file referenced by a module won't
+  build until `git add`-ed.
+
+## CI Expectations (this repo)
+
+- `deadnix --fail .` and `statix check .` are blocking in the Lint workflow — no
+  unused bindings/args (prefix intentionally-unused lambda args with `_`).
+  `nixpkgs-fmt --check` is `continue-on-error`, so format your touched files but
+  it won't block. Run all three locally before pushing.
+- Tag-only workflows must **skip gracefully** when a referenced flake attribute
+  doesn't exist (e.g. the ISO build checks `nix eval ...drvPath` first), so a
+  missing optional output never fails a release.
+
 ## Cross-Tool Compatibility
 
 These standards apply equally in Claude Code, Kiro CLI, Pi, and Maki. See AGENTS.md in project roots for project-specific context. All tools share the same coding standards, Rust conventions, and workflow expectations.
