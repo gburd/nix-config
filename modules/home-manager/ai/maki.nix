@@ -179,8 +179,13 @@ in
 
     defaultModel = mkOption {
       type = types.str;
-      default = "bedrock/claude-opus-4-8";
-      description = "Default model for maki provider";
+      # Must be a full Bedrock inference-profile spec. maki does NOT translate
+      # short Claude names to inference profiles; a bare "bedrock/claude-opus-4-8"
+      # is sent to Bedrock as "anthropic.claude-opus-4-8", which on-demand
+      # invocation rejects with 400 "provided model identifier is invalid".
+      # The us.-prefixed profile id is passed through verbatim and works.
+      default = "bedrock/us.anthropic.claude-opus-4-8";
+      description = "Default model for maki provider (full Bedrock inference-profile spec)";
     };
   };
 
