@@ -179,7 +179,7 @@ in
 
     defaultModel = mkOption {
       type = types.str;
-      default = "bedrock/claude-opus-4-7";
+      default = "bedrock/claude-opus-4-8";
       description = "Default model for maki provider";
     };
   };

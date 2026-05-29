@@ -549,12 +549,25 @@ in
           echo "$MCP_PAYLOAD" | ${pkgs.jq}/bin/jq '{mcpServers: .}' > "$CLAUDE_JSON"
         fi
 
-        # Update Claude Code settings model to opus-4-7
+        # Update Claude Code settings model to opus-4-8 (latest Bedrock
+        # inference profile as of 2026-05-29). Also writes
+        # CLAUDE_THINKING_EFFORT=high into the env block so any tool
+        # launched via Claude Code's spawn surface picks it up.
         CLAUDE_SETTINGS="${config.home.homeDirectory}/.claude/settings.json"
         if [ -f "$CLAUDE_SETTINGS" ]; then
-          ${pkgs.jq}/bin/jq '.model = "us.anthropic.claude-opus-4-7"' \
+          ${pkgs.jq}/bin/jq '.model = "us.anthropic.claude-opus-4-8" | .env.CLAUDE_THINKING_EFFORT = "high" | .env.ANTHROPIC_THINKING_EFFORT = "high"' \
             "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
             && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+        fi
+
+        # Update kiro-cli's chat.defaultModel to opus 4.8. kiro uses its
+        # own model namespace with a dot (claude-opus-4.8) which maps
+        # internally to us.anthropic.claude-opus-4-8.
+        KIRO_CLI="${config.home.homeDirectory}/.kiro/settings/cli.json"
+        if [ -f "$KIRO_CLI" ]; then
+          ${pkgs.jq}/bin/jq '."chat.defaultModel" = "claude-opus-4.8"' \
+            "$KIRO_CLI" > "$KIRO_CLI.tmp" \
+            && mv "$KIRO_CLI.tmp" "$KIRO_CLI"
         fi
       ''
     );

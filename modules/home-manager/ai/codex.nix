@@ -11,6 +11,7 @@ let
   configToml = ''
     # Codex configuration — managed by home-manager
     model = "${cfg.defaultModel}"
+    model_reasoning_effort = "high"
     approval_mode = "auto-edit"
 
     [mcp_servers.memelord]
@@ -49,7 +50,7 @@ in
 
     defaultModel = mkOption {
       type = types.str;
-      default = "us.anthropic.claude-opus-4-7";
+      default = "us.anthropic.claude-opus-4-8";
       description = "Default model for Codex";
     };
   };

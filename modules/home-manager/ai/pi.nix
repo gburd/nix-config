@@ -24,8 +24,13 @@ let
     };
     enabledModels = [
       "us.anthropic.claude-sonnet-4-5-*"
-      "us.anthropic.claude-opus-4-7*"
+      "us.anthropic.claude-sonnet-4-6"
+      "us.anthropic.claude-opus-4-1-*"
+      "us.anthropic.claude-opus-4-7"
+      "us.anthropic.claude-opus-4-8"
       "us.anthropic.claude-haiku-4-5-*"
+      "deepseek.v3.2"
+      "us.deepseek.r1-v1:0"
     ];
     skills = [ "~/.kiro/skills" ];
     prompts = [ "~/.pi/agent/prompts" ];
@@ -46,7 +51,7 @@ in
 
     defaultModel = mkOption {
       type = types.str;
-      default = "us.anthropic.claude-opus-4-7";
+      default = "us.anthropic.claude-opus-4-8";
       description = "Default model for Pi provider";
     };
   };

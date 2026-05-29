@@ -24,10 +24,11 @@ in
 
     defaultModel = mkOption {
       type = types.str;
-      # Bedrock's claude-opus-4-1 is the latest opus that actually resolves
-      # against the user's bearer token as of 2026-05-29. Update when
-      # Anthropic ships 4.7/4.8 to Bedrock inference profiles.
-      default = "us.anthropic.claude-opus-4-1-20250805-v1:0";
+      # Bedrock has Opus 4.8 as of 2026-05-29 under the inference-profile ID
+      # `us.anthropic.claude-opus-4-8` (no -v1:0 suffix in the new naming).
+      # Verified working with the user's bearer token via direct InvokeModel
+      # probe. Bump this when 4.9+ ships.
+      default = "us.anthropic.claude-opus-4-8";
       description = "Default Bedrock model ID for Hermes (must be a real inference-profile ID).";
     };
 
@@ -69,6 +70,7 @@ in
       model:
         provider: bedrock
         default: ${cfg.defaultModel}
+        reasoning_effort: high
 
       bedrock:
         region: ${cfg.region}
