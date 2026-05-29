@@ -4,12 +4,14 @@ let
   inherit (lib) mkEnableOption mkOption types;
 
   steeringFiles = {
+    "must-rules.md" = ./files/steering/must-rules.md;
     "coding-standards.md" = ./files/steering/coding-standards.md;
     "rust-conventions.md" = ./files/steering/rust-conventions.md;
     "workflow.md" = ./files/steering/workflow.md;
     "tools.md" = ./files/steering/tools.md;
     "aws-builder.md" = ./files/steering/aws-builder.md;
     "mcp-config.md" = ./files/steering/mcp-config.md;
+    "postgresql-workflow.md" = ./files/steering/postgresql-workflow.md;
     "voice.md" = ./files/steering/voice.md;
   };
 

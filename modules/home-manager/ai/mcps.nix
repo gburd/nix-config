@@ -504,10 +504,25 @@ in
               # match (or interactive y/n).
               autoAllowReadonly = true;
               allowedCommands = kiroAllowedBashCommands;
+              # Regex denylist — commands matching ^...$ are BLOCKED outright.
+              # Each entry kiro wraps with ^...$ implicitly. Bias toward broader
+              # patterns than the user's exact phrasing because LLMs paraphrase.
               deniedCommands = [
-                "rm -rf *" "rm -fr *"
-                "git push --force*" "git push *--force*"
-                "git reset --hard*"
+                # Destructive recursive removal
+                "rm\\s+(-[a-zA-Z]*[rRfF][a-zA-Z]*\\s+)+.*"
+                "rm\\s+--recursive.*"
+                # Force-push variants (--force, --force-with-lease, -f, -f=)
+                "git\\s+push.*\\s--force(-with-lease)?(\\s.*)?"
+                "git\\s+push.*\\s-f(\\s.*|=.*)?"
+                # History rewrites on shared refs
+                "git\\s+reset\\s+--hard.*"
+                "git\\s+filter-(branch|repo).*"
+                "git\\s+update-ref\\s+-d\\s+refs/heads/main.*"
+                # Pipe-to-shell (curl|bash, wget|sh, etc.)
+                ".*\\|\\s*(bash|sh|zsh|fish)(\\s.*)?"
+                # mkfs / dd to block-device patterns
+                "mkfs.*"
+                "dd\\s+.*of=/dev/.*"
               ];
             };
             use_aws = {
@@ -553,10 +568,37 @@ in
         # inference profile as of 2026-05-29). Also writes
         # CLAUDE_THINKING_EFFORT=high into the env block so any tool
         # launched via Claude Code's spawn surface picks it up.
+        # Also injects permissions.deny rules for destructive git/shell
+        # ops (force-push, hard-reset, rm -rf, pipe-to-shell, mkfs/dd).
         CLAUDE_SETTINGS="${config.home.homeDirectory}/.claude/settings.json"
         if [ -f "$CLAUDE_SETTINGS" ]; then
-          ${pkgs.jq}/bin/jq '.model = "us.anthropic.claude-opus-4-8" | .env.CLAUDE_THINKING_EFFORT = "high" | .env.ANTHROPIC_THINKING_EFFORT = "high"' \
-            "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
+          ${pkgs.jq}/bin/jq '
+            .model = "us.anthropic.claude-opus-4-8"
+            | .env.CLAUDE_THINKING_EFFORT = "high"
+            | .env.ANTHROPIC_THINKING_EFFORT = "high"
+            | .permissions.deny = (
+                (.permissions.deny // []) + [
+                  "Bash(rm -rf *)",
+                  "Bash(rm -fr *)",
+                  "Bash(rm -Rf *)",
+                  "Bash(rm --recursive *)",
+                  "Bash(git push --force*)",
+                  "Bash(git push --force-with-lease*)",
+                  "Bash(git push -f *)",
+                  "Bash(git push *-f *)",
+                  "Bash(git push *--force*)",
+                  "Bash(git reset --hard*)",
+                  "Bash(git filter-branch*)",
+                  "Bash(git filter-repo*)",
+                  "Bash(curl * | bash*)",
+                  "Bash(curl * | sh*)",
+                  "Bash(wget * | bash*)",
+                  "Bash(wget * | sh*)",
+                  "Bash(mkfs *)",
+                  "Bash(dd * of=/dev/*)"
+                ] | unique
+              )
+          ' "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
             && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
         fi
 
