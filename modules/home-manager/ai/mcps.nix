@@ -34,8 +34,8 @@ let
       );
     in
     # Use writeShellScript (not writeScript) so the rendered file gets a
-    # `#!${runtimeShell}` shebang. Without it, kiro-cli's direct execve()
-    # fails with ENOEXEC ("Exec format error (os error 8)").
+      # `#!${runtimeShell}` shebang. Without it, kiro-cli's direct execve()
+      # fails with ENOEXEC ("Exec format error (os error 8)").
     pkgs.writeShellScript "mcpdoc-wrapper-${name}" ''
       exec ${pkgs.uv}/bin/uvx --from mcpdoc mcpdoc \
         --urls \
@@ -485,15 +485,36 @@ in
           description = "Default agent with broad tool trust (safety enforced via hooks)";
           allowedTools = [
             # All built-in tools
-            "read" "write" "shell" "glob" "grep" "code"
-            "web_search" "web_fetch" "knowledge" "subagent"
-            "introspect" "todo_list" "use_aws"
+            "read"
+            "write"
+            "shell"
+            "glob"
+            "grep"
+            "code"
+            "web_search"
+            "web_fetch"
+            "knowledge"
+            "subagent"
+            "introspect"
+            "todo_list"
+            "use_aws"
             # Aliases
-            "fs_read" "fs_write" "execute_bash" "fs_search"
+            "fs_read"
+            "fs_write"
+            "execute_bash"
+            "fs_search"
             # All MCP server tools
-            "@context7" "@filesystem" "@git" "@github"
-            "@memelord" "@memory" "@postgresq"
-            "@sequential-thinking" "@nix" "@rust" "@python"
+            "@context7"
+            "@filesystem"
+            "@git"
+            "@github"
+            "@memelord"
+            "@memory"
+            "@postgresq"
+            "@sequential-thinking"
+            "@nix"
+            "@rust"
+            "@python"
             "@home-manager"
           ];
           toolsSettings = {
@@ -576,6 +597,11 @@ in
             .model = "us.anthropic.claude-opus-4-8"
             | .env.CLAUDE_THINKING_EFFORT = "high"
             | .env.ANTHROPIC_THINKING_EFFORT = "high"
+            | .env.CLAUDE_CODE_ENABLE_TELEMETRY = "false"
+            | .env.DISABLE_TELEMETRY = "true"
+            | .env.DISABLE_ERROR_REPORTING = "true"
+            | .env.DISABLE_BUG_COMMAND = "true"
+            | .env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "true"
             | .permissions.deny = (
                 (.permissions.deny // []) + [
                   "Bash(rm -rf *)",
@@ -602,15 +628,22 @@ in
             && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
         fi
 
-        # Update kiro-cli's chat.defaultModel to opus 4.8. kiro uses its
-        # own model namespace with a dot (claude-opus-4.8) which maps
-        # internally to us.anthropic.claude-opus-4-8.
+        # Update kiro-cli's chat.defaultModel to opus 4.8 and force
+        # telemetry off (kiro ships with telemetry ENABLED by default — it
+        # phones home to Amazon unless telemetry.enabled is false). cli.json
+        # is a mutable state file, so create it if missing and patch it
+        # otherwise. kiro uses its own model namespace with a dot
+        # (claude-opus-4.8) which maps internally to us.anthropic.claude-opus-4-8.
         KIRO_CLI="${config.home.homeDirectory}/.kiro/settings/cli.json"
-        if [ -f "$KIRO_CLI" ]; then
-          ${pkgs.jq}/bin/jq '."chat.defaultModel" = "claude-opus-4.8"' \
-            "$KIRO_CLI" > "$KIRO_CLI.tmp" \
-            && mv "$KIRO_CLI.tmp" "$KIRO_CLI"
+        ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$KIRO_CLI")"
+        if [ ! -f "$KIRO_CLI" ]; then
+          echo '{}' > "$KIRO_CLI"
         fi
+        ${pkgs.jq}/bin/jq '
+          ."chat.defaultModel" = "claude-opus-4.8"
+          | ."telemetry.enabled" = false
+        ' "$KIRO_CLI" > "$KIRO_CLI.tmp" \
+          && mv "$KIRO_CLI.tmp" "$KIRO_CLI"
       ''
     );
   };

@@ -7,7 +7,9 @@ let
     lastChangelogVersion = "0.74.0";
     defaultProvider = "amazon-bedrock";
     inherit (cfg) defaultModel;
-    defaultThinkingLevel = "high";
+    # "ultra" high thinking == pi's top thinking level (off/minimal/low/
+    # medium/high/xhigh). xhigh is the max and what the user wants by default.
+    defaultThinkingLevel = "xhigh";
     theme = "dark";
     quietStartup = false;
     enableInstallTelemetry = false;
@@ -68,6 +70,10 @@ in
                 AWS_SDK_LOAD_CONFIG
         fi
         export AWS_REGION="''${AWS_REGION:-us-east-1}"
+
+        # Telemetry hardening: disable the anonymous install/update ping to
+        # pi.dev (belt-and-suspenders with enableInstallTelemetry=false).
+        export PI_TELEMETRY=0
 
         # npm global prefix must be writable (Nix store is read-only)
         export NPM_CONFIG_PREFIX="''${HOME}/.npm-global"
