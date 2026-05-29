@@ -9,8 +9,14 @@
   imports = [
     ./hardware-configuration.nix
 
-    # Common workstation configuration
+    # Common workstation configuration (already brings in tailscale.nix)
     ../../_mixins/workstations/common.nix
+
+    # Auto-authenticate Tailscale via sops-nix-managed auth key.
+    # Provision the key by editing nixos/_mixins/secrets.yaml.
+    # See nixos/_mixins/services/tailscale-autoconnect.nix for the
+    # full provisioning workflow.
+    ../../_mixins/services/tailscale-autoconnect.nix
 
     # Hardware-specific
     inputs.nixos-hardware.nixosModules.common-cpu-intel
