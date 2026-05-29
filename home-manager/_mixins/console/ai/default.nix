@@ -40,6 +40,10 @@
     # OpenAI Codex agent
     codex.enable = true;
 
+    # Hermes Agent (NousResearch self-improving agent, installed via pipx;
+    # uses the same AWS_BEARER_TOKEN_BEDROCK as the other agents).
+    hermes.enable = true;
+
     # MCP Server configuration
     mcps = {
       enable = true;

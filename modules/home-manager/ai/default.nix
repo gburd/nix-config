@@ -3,6 +3,7 @@
   imports = [
     ./bedrock.nix
     ./codex.nix
+    ./hermes.nix
     ./lmstudio.nix
     ./maki.nix
     ./mcps.nix

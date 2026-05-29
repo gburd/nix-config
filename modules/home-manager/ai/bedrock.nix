@@ -51,7 +51,7 @@ in
       home.file.".aws/credentials".source = cfg.credentialsFile;
     })
 
-    # Bearer-token-driven configuration. Two complementary outputs:
+    # Bearer-token-driven configuration. Three complementary outputs:
     #
     #   1. ~/.config/fish/conf.d/aws-bedrock-token.fish — auto-sourced by
     #      fish on every interactive/login session, regardless of whether
@@ -60,7 +60,15 @@ in
     #      so any tool launched from the shell (Kiro, Pi, Maki, terax-ai,
     #      AWS SDK, ...) can pick it up.
     #
-    #   2. A home.activation script that patches ~/.claude/settings.json's
+    #   2. ~/.profile addition via home.sessionVariablesExtra — same
+    #      thing for bash/POSIX login shells. Without this, agents launched
+    #      from a bash login (notably arnold's default user shell) would
+    #      not see the bearer token and fall back to STS / no-auth, which
+    #      breaks Hermes (whose Bedrock provider checks
+    #      AWS_BEARER_TOKEN_BEDROCK *first*) and any other tool that goes
+    #      through the env-var path.
+    #
+    #   3. A home.activation script that patches ~/.claude/settings.json's
     #      env block in place. Claude Code reads its env from that file
     #      rather than the parent shell, so we keep this on for parity.
     (lib.mkIf (cfg.bearerTokenFile != null) {
@@ -74,6 +82,15 @@ in
         if test -r ${cfg.bearerTokenFile}
             set -gx AWS_BEARER_TOKEN_BEDROCK (cat ${cfg.bearerTokenFile})
         end
+      '';
+
+      home.sessionVariablesExtra = ''
+        # bedrock.nix: bash/POSIX login-shell counterpart of the fish
+        # snippet above. Sourced by ~/.profile on bash login so bash-spawned
+        # agents see the bearer token in env.
+        if [ -r ${cfg.bearerTokenFile} ]; then
+          export AWS_BEARER_TOKEN_BEDROCK="$(cat ${cfg.bearerTokenFile})"
+        fi
       '';
 
       home.activation.injectAwsBearerToken = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
