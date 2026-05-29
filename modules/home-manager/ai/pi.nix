@@ -33,6 +33,15 @@ let
       "us.anthropic.claude-haiku-4-5-*"
       "deepseek.v3.2"
       "us.deepseek.r1-v1:0"
+      # DeepSeek V3.2 is the newest DeepSeek on Bedrock as of 2026-05-29
+      # (on-demand, verified working with the bearer token). Upstream has
+      # since shipped DeepSeek V4 (Pro & Flash, ~2026-05-06) but AWS has not
+      # onboarded it yet. TODO: when `aws bedrock list-foundation-models`
+      # shows a deepseek.v4* id (likely `deepseek.v4-pro` or similar), add it
+      # here — e.g. "deepseek.v4-pro" (and/or "us.deepseek.v4-pro-*" if it is
+      # inference-profile-only). Check with:
+      #   aws bedrock list-foundation-models --region us-east-1 \
+      #     | jq -r '.modelSummaries[].modelId | select(test("deepseek"))'
     ];
     skills = [ "~/.kiro/skills" ];
     prompts = [ "~/.pi/agent/prompts" ];
