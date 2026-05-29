@@ -6,18 +6,26 @@ let
 
   ### GitHub MCP ###
   githubMcpServer = pkgs.writeShellScript "github-mcp-server" ''
-    if ! command -v gh &> /dev/null; then
-      echo "Error: github-cli not installed!" >&2
-      exit 2
+    # Resolve a GitHub token from, in order: an existing env var, a configured
+    # token file (e.g. a sops-nix secret), then `gh auth token`. The token-file
+    # path lets headless hosts (e.g. arnold) work without an interactive
+    # `gh auth login`, which is the usual reason this MCP server fails to start.
+    TOKEN="''${GITHUB_PERSONAL_ACCESS_TOKEN:-}"
+    ${lib.optionalString (cfg.servers.github.tokenFile != null) ''
+      if [ -z "$TOKEN" ] && [ -r "${toString cfg.servers.github.tokenFile}" ]; then
+        TOKEN="$(cat "${toString cfg.servers.github.tokenFile}")"
+      fi
+    ''}
+    if [ -z "$TOKEN" ] && command -v gh &> /dev/null; then
+      TOKEN="$(gh auth token 2>/dev/null || true)"
     fi
-
-    GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"
-    if [ -z "$GITHUB_PERSONAL_ACCESS_TOKEN" ]; then
-      echo "Error: github-cli is not authenticated!" >&2
+    if [ -z "$TOKEN" ]; then
+      echo "Error: no GitHub token. Set GITHUB_PERSONAL_ACCESS_TOKEN, configure" >&2
+      echo "programs.ai.mcps.servers.github.tokenFile (sops), or run 'gh auth login'." >&2
       exit 3
     fi
 
-    export GITHUB_PERSONAL_ACCESS_TOKEN
+    export GITHUB_PERSONAL_ACCESS_TOKEN="$TOKEN"
 
     ${cfg.servers.github.pkg}/bin/github-mcp-server stdio \
       --dynamic-toolsets \
@@ -423,6 +431,15 @@ in
           type = types.package;
           default = pkgs.github-mcp-server or (throw "github-mcp-server package not available");
           description = "The package to use for github-mcp-server";
+        };
+        tokenFile = mkOption {
+          type = types.nullOr types.path;
+          default = null;
+          description = ''
+            Optional path to a file containing a GitHub token (e.g. a sops-nix
+            secret). Used before falling back to `gh auth token`, so headless
+            hosts without an interactive `gh auth login` can still run the MCP.
+          '';
         };
       };
 
