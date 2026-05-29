@@ -49,15 +49,17 @@
 
   networking.hostName = "meh";
 
-  # Firewall ON for the external interface (default config from
-  # nixos/_mixins/services/firewall.nix). Tailscale traffic stays unrestricted
-  # because nixos/_mixins/services/tailscale.nix sets
-  # `networking.firewall.trustedInterfaces = [ "tailscale0" ]`, which bypasses
-  # all firewall rules for traffic on that interface. So:
-  #   - LAN/WAN: filtered (firewalled)
-  #   - tailscale0: every port open
-  # If you ever need to disable firewall again for debugging, prefer
-  # `sudo iptables -F` at runtime over re-adding lib.mkForce false here.
+  # Firewall disabled. The `trustedInterfaces = [ "tailscale0" ]` setting
+  # from nixos/_mixins/services/tailscale.nix should be enough in theory,
+  # but in practice meh hits packet drops with the firewall on — likely
+  # the `fwmark 0x80000 unreachable` rule (Tailscale's own outbound
+  # routing) interacting with conntrack/nftables in a way that breaks
+  # connections originating from QEMU slirp NAT and similar non-trivial
+  # paths. Re-test with the firewall off whenever connectivity is
+  # known-good and only re-enable here if you can confirm tailscale↔
+  # peer flows survive (a `cargo nextest` distributed run between meh
+  # and floki is the canonical regression test).
+  networking.firewall.enable = lib.mkForce false;
 
   # Mac Pro is a desktop workstation - disable power management
   powerManagement.enable = false;
