@@ -3,6 +3,7 @@
     ../cli # CLI tools (git, gh, gpg, fish, etc.)
     ./neovim
     ./tmux.nix
+    ./cargo.nix
     ./claude-code
     ./gdb
     ./lldb

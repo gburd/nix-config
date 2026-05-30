@@ -57,6 +57,8 @@ with lib.hm.gvariant;
       "aws/bearer_token_bedrock" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
       };
+      # Crates.io API token (exposed as $CARGO_REGISTRY_TOKEN by console/cargo.nix)
+      "cargo/crates_io_token" = { };
       "jetbrains/clion-key" = {
         path = "${config.home.homeDirectory}/.config/JetBrains/clion.key";
       };
