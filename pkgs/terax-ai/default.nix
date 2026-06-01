@@ -34,7 +34,7 @@ let
     rev = "v${version}";
     hash = "sha256-yy48tMW5XadrDNaqSBApgGl1LgduevqIUXsDiv5ejMk=";
   };
-  patches = [ ./bedrock.patch ];
+  patches = [ ./bedrock.patch ./linux-no-crossorigin.patch ];
 in
 rustPlatform.buildRustPackage {
   inherit pname version src patches;
