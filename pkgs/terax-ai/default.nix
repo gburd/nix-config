@@ -4,35 +4,35 @@
 # First-time hash bootstrap (pnpmDeps.hash):
 #   nix build .#terax-ai 2>&1 | grep "got:"
 # Update hash below, then rebuild.
-{
-  lib,
-  fetchFromGitHub,
-  rustPlatform,
-  nodejs,
-  pnpm,
-  jq,
-  cargo-tauri,
-  pkg-config,
-  wrapGAppsHook4,
-  gobject-introspection,
-  webkitgtk_4_1,
-  gtk3,
-  openssl,
-  dbus,
-  glib,
-  glib-networking,
-  libsoup_3,
-  libappindicator-gtk3,
-  xdotool,
+{ lib
+, fetchFromGitHub
+, rustPlatform
+, nodejs
+, pnpm
+, jq
+, cargo-tauri
+, pkg-config
+, wrapGAppsHook4
+, gobject-introspection
+, webkitgtk_4_1
+, gtk3
+, openssl
+, dbus
+, glib
+, glib-networking
+, libsoup_3
+, libappindicator-gtk3
+, xdotool
+,
 }:
 let
   pname = "terax-ai";
-  version = "0.6.4";
+  version = "0.7.3";
   src = fetchFromGitHub {
     owner = "crynta";
     repo = "terax-ai";
     rev = "v${version}";
-    hash = "sha256-q6TJFUpMS1dPrZWAnbfpbfCaZZToUvw6RDemPsaORJU=";
+    hash = "sha256-yy48tMW5XadrDNaqSBApgGl1LgduevqIUXsDiv5ejMk=";
   };
   patches = [ ./bedrock.patch ];
 in
@@ -52,7 +52,7 @@ rustPlatform.buildRustPackage {
   pnpmDeps = pnpm.fetchDeps {
     inherit pname version src patches;
     fetcherVersion = 3;
-    hash = "sha256-W9xiKcqr+EKwr0nNNZmVLVm9YqLnyZviGa+fqRYYur4=";
+    hash = "sha256-VpYFyylvwVqGF5P9bxWFrh5LdDJ0HVk8xuSp03yCsVU=";
   };
 
   nativeBuildInputs = [
@@ -91,13 +91,16 @@ rustPlatform.buildRustPackage {
     mv tauri.conf.patched.json src-tauri/tauri.conf.json
   '';
 
-  # Fix blank/dark window on Wayland (WebKitGTK + Intel Xe2 GPU issues)
-  # Force XWayland rendering which works reliably with WebKitGTK on newer Intel GPUs
+  # WebKitGTK render env. Use --set-default (not --set) so it can be overridden
+  # at runtime for experimentation, e.g. `GDK_BACKEND=wayland terax-ai` or
+  # `WEBKIT_DISABLE_COMPOSITING_MODE=0 terax-ai`. Defaults mirror upstream's
+  # NixOS packaging (issue #462): GDK_BACKEND fallback list + compositing off.
+  # (DMABUF renderer is left enabled; disabling it did not help the blank
+  # window and modern WebKitGTK 2.52 handles it.)
   preFixup = ''
     gappsWrapperArgs+=(
-      --set WEBKIT_DISABLE_DMABUF_RENDERER 1
-      --set WEBKIT_DISABLE_COMPOSITING_MODE 1
-      --set GDK_BACKEND x11
+      --set-default GDK_BACKEND 'x11,wayland'
+      --set-default WEBKIT_DISABLE_COMPOSITING_MODE 1
     )
   '';
 
