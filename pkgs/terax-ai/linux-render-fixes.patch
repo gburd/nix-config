@@ -1,0 +1,49 @@
+diff --git a/vite.config.ts b/vite.config.ts
+index 3743490..7ffd6ad 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -5,9 +5,20 @@ import { defineConfig } from "vite";
+ 
+ const host = process.env.TAURI_DEV_HOST;
+ 
++// Strip `crossorigin` Vite adds to module/preload/stylesheet tags; on
++// Linux/WebKitGTK these load over Tauri's custom protocol (no CORS headers),
++// so crossorigin fetches fail. Harmless on other platforms.
++const stripCrossorigin = {
++  name: "strip-crossorigin-webkitgtk",
++  enforce: "post" as const,
++  transformIndexHtml(html: string) {
++    return html.replace(/ crossorigin(="")?/g, "");
++  },
++};
++
+ // https://vite.dev/config/
+ export default defineConfig(async ({ mode }) => ({
+-  plugins: [react(), tailwindcss()],
++  plugins: [react(), tailwindcss(), stripCrossorigin],
+   resolve: {
+     alias: {
+       "@": path.resolve(__dirname, "./src"),
+@@ -32,18 +43,10 @@ export default defineConfig(async ({ mode }) => ({
+       output: {
+         manualChunks(id: string) {
+           if (!id.includes("node_modules")) return;
+-
+-          // Each AI provider SDK in its own chunk so unused providers
+-          // don't bloat the initial load (lazy-imported in agent.ts).
+-          if (id.includes("@ai-sdk/anthropic")) return "ai-anthropic";
+-          if (id.includes("@ai-sdk/google")) return "ai-google";
+-          if (id.includes("@ai-sdk/openai-compatible"))
+-            return "ai-openai-compat";
+-          if (id.includes("@ai-sdk/openai")) return "ai-openai";
+-          if (id.includes("@ai-sdk/cerebras")) return "ai-cerebras";
+-          if (id.includes("@ai-sdk/groq")) return "ai-groq";
+-          if (id.includes("@ai-sdk/xai")) return "ai-xai";
+-          if (id.includes("@ai-sdk/")) return "ai-sdk-shared";
++          // All @ai-sdk/* in one chunk: per-provider splitting breaks the
++          // shared-symbol init order on WebKitGTK ("ht is not a function" in
++          // ai-anthropic) and yields a blank window.
++          if (id.includes("@ai-sdk/")) return "ai-sdk";
+ 
+           if (id.includes("/xterm/") || id.includes("@xterm/")) return "xterm";
+           if (
