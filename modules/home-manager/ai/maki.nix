@@ -117,7 +117,32 @@ in
         fi
         export CLAUDE_CODE_USE_BEDROCK=1
         export AWS_REGION="''${AWS_REGION:-${cfg.region}}"
-        exec ${cfg.package}/bin/maki "$@"
+
+        # maki 0.3.9 routes the 'anthropic/' provider through Bedrock when
+        # CLAUDE_CODE_USE_BEDROCK=1, but Bedrock cross-region inference
+        # profiles require the full 'us.anthropic.<short-name>' id. The
+        # 'maki models' list shows the SHORT names ('anthropic/claude-opus-4-8'),
+        # so users who select from the /model UI or pass '-m anthropic/<short>'
+        # silently end up with a request that Bedrock rejects with
+        # 400 'The provided model identifier is invalid.'
+        #
+        # Rewrite any '-m anthropic/<short>' arg to '-m anthropic/us.anthropic.<short>'
+        # before exec, unless the spec already has the us.anthropic. prefix.
+        args=()
+        while [ $# -gt 0 ]; do
+          if { [ "$1" = "-m" ] || [ "$1" = "--model" ]; } \
+             && [ -n "''${2:-}" ] \
+             && [[ "$2" == anthropic/* ]] \
+             && [[ "$2" != anthropic/us.anthropic.* ]]; then
+            args+=( "$1" "anthropic/us.anthropic.''${2#anthropic/}" )
+            shift 2
+          else
+            args+=( "$1" )
+            shift
+          fi
+        done
+
+        exec ${cfg.package}/bin/maki "''${args[@]}"
       '')
     ];
 
