@@ -18,6 +18,22 @@ with lib.hm.gvariant;
       };
       # Crates.io API token (exposed as $CARGO_REGISTRY_TOKEN by console/cargo.nix)
       "cargo/crates_io_token" = { };
+
+      # Borgmatic backup secrets — mirrors floki/meh. Fixes nightly
+      # borgmatic.service failure ("cat: ~/.config/borgmatic/.passphrase: No
+      # such file or directory") on arnold. The borg-keyfile already exists on
+      # arnold from a manual provision; sops will rewrite it byte-identically.
+      "backup/borg-passphrase" = {
+        path = "${config.home.homeDirectory}/.config/borgmatic/.passphrase";
+      };
+      "backup/rsync-ssh-key" = {
+        path = "${config.home.homeDirectory}/.config/borgmatic/.rsync-key";
+        mode = "0600";
+      };
+      "backup/borg-keyfile" = {
+        path = "${config.home.homeDirectory}/.config/borg/keys/zh6216_rsync_net__borg";
+        mode = "0600";
+      };
     };
   };
 
