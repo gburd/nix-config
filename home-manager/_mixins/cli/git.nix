@@ -26,22 +26,23 @@ let
     fi
   '';
 
-  # Pre-commit guard: refuses to commit crash/profile dumps and large
-  # binaries. Born from repeated leaks where `perf record` / Valgrind /
-  # core dumps captured the shell environment (including a live
-  # AWS_BEARER_TOKEN_BEDROCK) and got committed. A name + size guard
-  # catches every one of those cases without the false positives of an
-  # inline secret-regex. Installed globally via core.hooksPath; chains to
-  # any repo-local .git/hooks/pre-commit so husky / pre-commit / lefthook
-  # still run.
+  # Pre-commit guard. Two layers, both run on staged changes:
+  #   1. Dump/large-binary guard (name + size). Born from repeated leaks
+  #      where perf record / Valgrind / core dumps captured the shell
+  #      environment (including a live AWS_BEARER_TOKEN_BEDROCK) and got
+  #      committed. A binary dump is invisible to text secret scanners.
+  #   2. gitleaks protect --staged. Catches literal credentials typed
+  #      into text files (tokens, keys, high-entropy strings).
+  # Installed globally via core.hooksPath; chains to any repo-local
+  # .git/hooks/pre-commit so husky / pre-commit / lefthook still run.
   #
   # Escape hatches:
-  #   ALLOW_DUMP_COMMIT=1 git commit ...   (skip the guard, keep chaining)
+  #   ALLOW_DUMP_COMMIT=1 git commit ...   (skip both checks, keep chaining)
   #   git commit --no-verify               (skip all hooks)
   #   DUMP_GUARD_MAX_MB=20 git commit ...  (raise the binary size ceiling)
   git-dump-guard = pkgs.writeShellApplication {
     name = "git-dump-guard";
-    runtimeInputs = [ pkgs.git pkgs.gnugrep pkgs.coreutils ];
+    runtimeInputs = [ pkgs.git pkgs.gnugrep pkgs.coreutils pkgs.gitleaks ];
     text = ''
       chain_only=0
       if [ "''${ALLOW_DUMP_COMMIT:-}" = "1" ]; then
@@ -78,6 +79,14 @@ let
           printf '\ndump-guard: commit aborted. Override: ALLOW_DUMP_COMMIT=1 git commit ...  or  git commit --no-verify\n' >&2
           exit 1
         fi
+
+        # Secret scan of staged text changes. --no-banner keeps it quiet;
+        # nonzero exit means a finding (or, with --exit-code, a leak).
+        if ! gitleaks protect --staged --redact --no-banner 2>/dev/null; then
+          printf '\ngitleaks: BLOCKED - a staged change looks like a secret.\n' >&2
+          printf 'Review above. Override: ALLOW_DUMP_COMMIT=1 git commit ...  or  git commit --no-verify\n' >&2
+          exit 1
+        fi
       fi
 
       # Chain to a repo-local hook so we never shadow project hook managers.
@@ -98,9 +107,7 @@ let
   # dumps head the list (root cause of past AWS token leaks: perf /
   # Valgrind / core dumps captured the shell env). Used both for
   # programs.git.ignores (-> ~/.config/git/ignore) and to populate
-  # ~/.gitignore_global, which a hand-maintained ~/.gitconfig still
-  # points core.excludesFile at; writing both keeps them in sync no
-  # matter which config file wins precedence.
+  # ~/.gitignore_global for any tooling that references that path.
   globalIgnores = [
     ".direnv"
     "result"
@@ -133,18 +140,27 @@ let
   ];
 in
 {
-  home.packages = [ git-gburd ];
+  home.packages = [ git-gburd pkgs.gitleaks ];
 
   # Global pre-commit hook (core.hooksPath points here below).
   xdg.configFile."git/hooks/pre-commit".source =
     "${git-dump-guard}/bin/git-dump-guard";
 
-  # Mirror the ignore list to ~/.gitignore_global. A hand-maintained
-  # ~/.gitconfig (not managed here) sets core.excludesFile to this path
-  # and, being read last, wins over home-manager's ~/.config/git/ignore.
-  # Writing this file makes the patterns effective regardless.
+  # Mirror the ignore list to ~/.gitignore_global so any tool or config
+  # referencing that conventional path resolves to a real file.
   home.file.".gitignore_global".text =
     lib.concatStringsSep "\n" globalIgnores + "\n";
+
+  # Retire the old hand-maintained ~/.gitconfig: everything in it now
+  # lives in programs.git below, so the stray real file (which shadowed
+  # home-manager's ~/.config/git/config) must be removed for HM's config
+  # to take effect. Back it up once, then delete.
+  home.activation.retireStrayGitconfig =
+    lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+      if [ -e "$HOME/.gitconfig" ] && [ ! -L "$HOME/.gitconfig" ]; then
+        run mv -v "$HOME/.gitconfig" "$HOME/.gitconfig.pre-home-manager.bak"
+      fi
+    '';
 
   programs.git = {
     enable = true;
@@ -153,6 +169,8 @@ in
       key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKCqHOIyYwbp42C7MxnRFxOcy+ZE8cNOWdsdvCgVFm1L";
       signByDefault = true;
     };
+    lfs.enable = true;
+    # Aliases live in console/default.nix (richer set already there).
     settings = {
       user = {
         name = "Greg Burd";
@@ -163,11 +181,43 @@ in
       "gpg.ssh".program = lib.mkDefault "/opt/1Password/op-ssh-sign";
       commit.gpgsign = true;
       tag.gpgsign = true;
-      # Route all repos through the global dump guard. It chains to any
-      # repo-local .git/hooks/pre-commit, so project hooks still run.
-      core.hooksPath = "${config.xdg.configHome}/git/hooks";
+
+      # --- migrated from the old hand-maintained ~/.gitconfig ---
+      # (push.default / pull.* / aliases / init are owned by
+      # console/default.nix; not redefined here to avoid merge conflicts.)
+      color = {
+        ui = "auto";
+        diff = "auto";
+        status = "auto";
+        branch = "auto";
+      };
+      format.pretty = "format:%C(yellow)%h%Creset | %C(green)%ad (%ar)%Creset | %C(blue)%an%Creset | %s";
+      push.autoSetupRemote = true;
+      branch.autosetuprebase = "always";
+      receive.denyCurrentBranch = "warn";
+      core = {
+        editor = "nvim";
+        quotepath = false;
+        # NB: core.pager is owned by programs.delta (enableGitIntegration);
+        # the old ~/.gitconfig's `less -FMRiX` is intentionally dropped in
+        # favor of delta.
+        # Route all repos through the global dump + gitleaks guard. It
+        # chains to any repo-local .git/hooks/pre-commit, so project
+        # hooks still run.
+        hooksPath = "${config.xdg.configHome}/git/hooks";
+      };
+      "protocol \"file\"".allow = "always";
+      diff.tool = "meld";
+      difftool.prompt = false;
+      "difftool \"meld\"".cmd = "meld \"$LOCAL\" \"$REMOTE\"";
+      merge.tool = "meld";
+      "mergetool \"meld\"".cmd = "meld \"$LOCAL\" \"$BASE\" \"$REMOTE\" --output \"$MERGED\"";
+      # CRLF helper filter (referenced by per-repo .gitattributes that opt in).
+      "filter \"cr\"" = {
+        clean = "LC_CTYPE=C awk '{printf(\"%s\\n\", $0)}' | LC_CTYPE=C tr '\\r' '\\n'";
+        smudge = "tr '\\n' '\\r'";
+      };
     };
-    lfs.enable = true;
     ignores = globalIgnores;
   };
 }
