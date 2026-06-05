@@ -93,6 +93,44 @@ let
       exit 0
     '';
   };
+
+  # Patterns that must never be committed in any repo. Crash/profile
+  # dumps head the list (root cause of past AWS token leaks: perf /
+  # Valgrind / core dumps captured the shell env). Used both for
+  # programs.git.ignores (-> ~/.config/git/ignore) and to populate
+  # ~/.gitignore_global, which a hand-maintained ~/.gitconfig still
+  # points core.excludesFile at; writing both keeps them in sync no
+  # matter which config file wins precedence.
+  globalIgnores = [
+    ".direnv"
+    "result"
+    # AI tool runtime dirs — contain state/sessions, not source
+    ".memelord/"
+    ".pi/agent/sessions/"
+    ".kiro/sessions/"
+    ".claude/settings.local.json"
+    # Crash dumps & profiling artifacts — never commit these.
+    "core"
+    "core.[0-9]*"
+    "*.core"
+    "vgcore.*"
+    "perf.data"
+    "perf.data.old"
+    "*.perf.data"
+    "*.coredump"
+    "*.hprof"
+    "*.dmp"
+    "*.mdmp"
+    # Compiled build artifacts that have leaked into history before.
+    # (Language-specific build dirs like target/ stay in per-repo
+    # .gitignore to avoid surprising global excludes.)
+    "*.o"
+    "*.lo"
+    "*.gcda"
+    "*.gcno"
+    "*.gcov"
+    ".libs/"
+  ];
 in
 {
   home.packages = [ git-gburd ];
@@ -100,6 +138,13 @@ in
   # Global pre-commit hook (core.hooksPath points here below).
   xdg.configFile."git/hooks/pre-commit".source =
     "${git-dump-guard}/bin/git-dump-guard";
+
+  # Mirror the ignore list to ~/.gitignore_global. A hand-maintained
+  # ~/.gitconfig (not managed here) sets core.excludesFile to this path
+  # and, being read last, wins over home-manager's ~/.config/git/ignore.
+  # Writing this file makes the patterns effective regardless.
+  home.file.".gitignore_global".text =
+    lib.concatStringsSep "\n" globalIgnores + "\n";
 
   programs.git = {
     enable = true;
@@ -123,37 +168,6 @@ in
       core.hooksPath = "${config.xdg.configHome}/git/hooks";
     };
     lfs.enable = true;
-    ignores = [
-      ".direnv"
-      "result"
-      # AI tool runtime dirs — contain state/sessions, not source
-      ".memelord/"
-      ".pi/agent/sessions/"
-      ".kiro/sessions/"
-      ".claude/settings.local.json"
-      # Crash dumps & profiling artifacts — root cause of past AWS token
-      # leaks (perf/Valgrind/core dumps captured the shell env). Never
-      # commit these.
-      "core"
-      "core.[0-9]*"
-      "*.core"
-      "vgcore.*"
-      "perf.data"
-      "perf.data.old"
-      "*.perf.data"
-      "*.coredump"
-      "*.hprof"
-      "*.dmp"
-      "*.mdmp"
-      # Compiled build artifacts that have leaked into history before.
-      # (Language-specific build dirs like target/ stay in per-repo
-      # .gitignore to avoid surprising global excludes.)
-      "*.o"
-      "*.lo"
-      "*.gcda"
-      "*.gcno"
-      "*.gcov"
-      ".libs/"
-    ];
+    ignores = globalIgnores;
   };
 }
