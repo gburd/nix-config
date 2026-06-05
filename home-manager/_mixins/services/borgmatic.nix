@@ -78,11 +78,24 @@ let
     keep_weekly = 4;
     keep_monthly = 3;
     # Passphrase file written by sops (floki/meh) or manually created (arnold/other)
-    encryption_passcommand = "cat ${config.home.homeDirectory}/.config/borgmatic/.passphrase";
+    # Use absolute path to coreutils/cat: systemd user units inherit a minimal
+    # PATH (just systemd's own bin dir on some hosts, e.g. meh), causing
+    # `cat` to fail with `[Errno 2] No such file or directory: 'cat'` when
+    # borgmatic spawns the passcommand subprocess.
+    encryption_passcommand = "${pkgs.coreutils}/bin/cat ${config.home.homeDirectory}/.config/borgmatic/.passphrase";
     # rsync.net uses "borg1" for borg 1.x server-side binary
     remote_path = "borg1";
-    # Use sops-deployed rsync.net key (works unattended without 1Password)
-    ssh_command = "ssh -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes";
+    # Use sops-deployed rsync.net key (works unattended without 1Password).
+    # Pin ssh to openssh_gssapi explicitly: on Fedora (arnold), system-wide
+    # /etc/ssh/ssh_config.d/50-redhat.conf includes
+    # /etc/crypto-policies/back-ends/openssh.config which sets
+    # `GSSAPIKexAlgorithms`. Plain nixpkgs openssh lacks the GSSAPI-kex patch
+    # and refuses that option ("Bad configuration option:
+    # gssapikexalgorithms"), aborting every connection. openssh_gssapi is the
+    # same OpenSSH + GSSAPI-kex patch, so it parses the file cleanly. Using
+    # the absolute path here also sidesteps the systemd-user PATH issue (see
+    # encryption_passcommand above).
+    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes";
   };
 in
 {
