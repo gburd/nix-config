@@ -77,6 +77,18 @@ let
     keep_daily = 7;
     keep_weekly = 4;
     keep_monthly = 3;
+    # Reliability knobs: a `borg create` of ~1.2T home with 3.35M chunks spends
+    # significant time scanning files locally; if no SSH traffic flows during
+    # that window, rsync.net's borg1 server closes the connection ("Connection
+    # closed by remote host", exit 81). Two complementary defences:
+    #   - SSH keepalives (in ssh_command below) keep the channel alive.
+    #   - checkpoint_interval commits an intermediate archive every 5 minutes,
+    #     so partial progress survives an interrupted run; subsequent runs
+    #     resume rather than restart from zero.
+    # lock_wait gives concurrent runs a chance to finish rather than failing
+    # immediately on a stale lock.
+    checkpoint_interval = 300;
+    lock_wait = 60;
     # Passphrase file written by sops (floki/meh) or manually created (arnold/other)
     # Use absolute path to coreutils/cat: systemd user units inherit a minimal
     # PATH (just systemd's own bin dir on some hosts, e.g. meh), causing
@@ -95,7 +107,15 @@ let
     # same OpenSSH + GSSAPI-kex patch, so it parses the file cleanly. Using
     # the absolute path here also sidesteps the systemd-user PATH issue (see
     # encryption_passcommand above).
-    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes";
+    #
+    # `LogLevel=ERROR` overrides the user's global `~/.ssh/config` setting of
+    # `LogLevel QUIET`, which previously silenced auth failures and made borg
+    # report only the misleading "Connection closed by remote host" — hiding
+    # 3+ weeks of broken backups behind that single line. ERROR keeps normal
+    # operation quiet but still surfaces real failures (Permission denied,
+    # etc.). ServerAliveInterval/CountMax keep the channel alive across long
+    # local-scan phases so rsync.net doesn't drop us as idle.
+    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
   };
 in
 {
