@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
   ssh = "${pkgs.openssh}/bin/ssh";
 
@@ -25,9 +25,82 @@ let
       ${ssh} -A git@burd.me git -C "/srv/git/$repo" $@
     fi
   '';
+
+  # Pre-commit guard: refuses to commit crash/profile dumps and large
+  # binaries. Born from repeated leaks where `perf record` / Valgrind /
+  # core dumps captured the shell environment (including a live
+  # AWS_BEARER_TOKEN_BEDROCK) and got committed. A name + size guard
+  # catches every one of those cases without the false positives of an
+  # inline secret-regex. Installed globally via core.hooksPath; chains to
+  # any repo-local .git/hooks/pre-commit so husky / pre-commit / lefthook
+  # still run.
+  #
+  # Escape hatches:
+  #   ALLOW_DUMP_COMMIT=1 git commit ...   (skip the guard, keep chaining)
+  #   git commit --no-verify               (skip all hooks)
+  #   DUMP_GUARD_MAX_MB=20 git commit ...  (raise the binary size ceiling)
+  git-dump-guard = pkgs.writeShellApplication {
+    name = "git-dump-guard";
+    runtimeInputs = [ pkgs.git pkgs.gnugrep pkgs.coreutils ];
+    text = ''
+      chain_only=0
+      if [ "''${ALLOW_DUMP_COMMIT:-}" = "1" ]; then
+        chain_only=1
+      fi
+
+      block=0
+      max_mb="''${DUMP_GUARD_MAX_MB:-5}"
+      max_bytes=$(( max_mb * 1024 * 1024 ))
+
+      # Crash dumps and profiling artifacts, matched on basename.
+      dump_re='(^|/)(core|core\.[0-9]+|vgcore\.[^/]+|[^/]+\.core|perf\.data|perf\.data\.old|[^/]+\.perf\.data|[^/]+\.coredump|[^/]+\.hprof|[^/]+\.dmp|[^/]+\.mdmp)$'
+
+      if [ "$chain_only" -eq 0 ]; then
+        while IFS= read -r -d "" f; do
+          if printf '%s\n' "$f" | grep -qE "$dump_re"; then
+            printf 'dump-guard: BLOCKED %s (crash/profile dump)\n' "$f" >&2
+            block=1
+            continue
+          fi
+          size=$(git cat-file -s ":$f" 2>/dev/null || printf '0')
+          if [ "$size" -gt "$max_bytes" ]; then
+            # grep -I treats a file containing NUL as "binary, no match".
+            # Process substitution avoids a SIGPIPE/pipefail race.
+            if ! LC_ALL=C grep -Iq . < <(git show ":$f" 2>/dev/null); then
+              printf 'dump-guard: BLOCKED %s (%s-byte binary > %s MiB; use git-lfs or .gitignore)\n' "$f" "$size" "$max_mb" >&2
+              block=1
+              continue
+            fi
+          fi
+        done < <(git diff --cached --name-only -z --diff-filter=AM)
+
+        if [ "$block" -ne 0 ]; then
+          printf '\ndump-guard: commit aborted. Override: ALLOW_DUMP_COMMIT=1 git commit ...  or  git commit --no-verify\n' >&2
+          exit 1
+        fi
+      fi
+
+      # Chain to a repo-local hook so we never shadow project hook managers.
+      git_dir=$(git rev-parse --git-dir 2>/dev/null || printf '.git')
+      local_hook="$git_dir/hooks/pre-commit"
+      self=$(readlink -f "$0" 2>/dev/null || printf '%s' "$0")
+      if [ -x "$local_hook" ]; then
+        local_real=$(readlink -f "$local_hook" 2>/dev/null || printf '%s' "$local_hook")
+        if [ "$local_real" != "$self" ]; then
+          exec "$local_hook"
+        fi
+      fi
+      exit 0
+    '';
+  };
 in
 {
   home.packages = [ git-gburd ];
+
+  # Global pre-commit hook (core.hooksPath points here below).
+  xdg.configFile."git/hooks/pre-commit".source =
+    "${git-dump-guard}/bin/git-dump-guard";
+
   programs.git = {
     enable = true;
     package = pkgs.gitFull;
@@ -45,6 +118,9 @@ in
       "gpg.ssh".program = lib.mkDefault "/opt/1Password/op-ssh-sign";
       commit.gpgsign = true;
       tag.gpgsign = true;
+      # Route all repos through the global dump guard. It chains to any
+      # repo-local .git/hooks/pre-commit, so project hooks still run.
+      core.hooksPath = "${config.xdg.configHome}/git/hooks";
     };
     lfs.enable = true;
     ignores = [
@@ -55,6 +131,29 @@ in
       ".pi/agent/sessions/"
       ".kiro/sessions/"
       ".claude/settings.local.json"
+      # Crash dumps & profiling artifacts — root cause of past AWS token
+      # leaks (perf/Valgrind/core dumps captured the shell env). Never
+      # commit these.
+      "core"
+      "core.[0-9]*"
+      "*.core"
+      "vgcore.*"
+      "perf.data"
+      "perf.data.old"
+      "*.perf.data"
+      "*.coredump"
+      "*.hprof"
+      "*.dmp"
+      "*.mdmp"
+      # Compiled build artifacts that have leaked into history before.
+      # (Language-specific build dirs like target/ stay in per-repo
+      # .gitignore to avoid surprising global excludes.)
+      "*.o"
+      "*.lo"
+      "*.gcda"
+      "*.gcno"
+      "*.gcov"
+      ".libs/"
     ];
   };
 }
