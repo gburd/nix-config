@@ -9,8 +9,42 @@
 # Initial repo setup (run once per host, NOT idempotent):
 #   borg init --encryption=repokey ssh://zh6216@zh6216.rsync.net/./borg
 # when prompted for passphrase, use the value from sops "backup/borg-passphrase"
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
+  # rubo77/rsync-homedir-excludes — vendored snapshot of
+  # https://raw.githubusercontent.com/rubo77/rsync-homedir-excludes/master/rsync-homedir-excludes.txt
+  # sha256: 3f73592de0903df36a30842914b3a82af94a666c1da4bce9258195b3b910fb77
+  # To refresh:
+  #   curl -fsS https://raw.githubusercontent.com/rubo77/rsync-homedir-excludes/master/rsync-homedir-excludes.txt \
+  #     -o home-manager/_mixins/services/borgmatic-excludes-rubo77.txt
+  #   sha256sum home-manager/_mixins/services/borgmatic-excludes-rubo77.txt   # update the comment above
+  #
+  # Format conversion (rsync syntax → borg patterns):
+  #   - Lines starting with `/`         → `${h}<line>`           (anchored to home)
+  #   - Lines without a leading `/`     → `sh:${h}/**/<line>`    (match anywhere; sh: enables `**` across path separators, fm: does not)
+  # Empty lines and `#`-comments are skipped.
+  rubo77ExcludePatterns =
+    let
+      h = config.home.homeDirectory;
+      raw = builtins.readFile ./borgmatic-excludes-rubo77.txt;
+      lines = lib.splitString "\n" raw;
+      stripped = map (l: lib.removeSuffix "\r" l) lines;
+      keep = l:
+        let s = lib.strings.trim l;
+        in s != "" && !(lib.hasPrefix "#" s);
+      patterns = builtins.filter keep stripped;
+      toBorg = l:
+        let
+          # Strip rsync's trailing-slash "directory-only" marker; borg paths
+          # don't end with `/`, so the trailing slash would silently match
+          # nothing.
+          s = lib.removeSuffix "/" (lib.strings.trim l);
+        in if lib.hasPrefix "/" s
+           then "${h}${s}"
+           else "sh:${h}/**/${s}";
+    in
+      map toBorg patterns;
+
   borgmaticConfig = {
     source_directories = [ config.home.homeDirectory ];
     repositories = [
@@ -71,7 +105,7 @@ let
         "${h}/.nix-profile"
         "${h}/.nix-defexpr"
         "${h}/.local/state/nix"
-      ];
+      ] ++ rubo77ExcludePatterns;
     exclude_if_present = [ ".nobackup" ".borgignore" ];
     keep_within = "2d";
     keep_daily = 7;
