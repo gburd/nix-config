@@ -9,8 +9,19 @@
 # Initial repo setup (run once per host, NOT idempotent):
 #   borg init --encryption=repokey ssh://zh6216@zh6216.rsync.net/./borg
 # when prompted for passphrase, use the value from sops "backup/borg-passphrase"
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, hostname, ... }:
 let
+  # Per-host schedule — stagger the three workstations so they don't fight
+  # for the repo lock. Each window is 15 min wide; gaps between hosts are
+  # 90 min, enough for a fast incremental run to finish before the next
+  # host fires (and far enough apart that even a long initial run on one
+  # host won't push later hosts past the morning window).
+  borgmaticSchedule = {
+    floki  = { onCalendar = "02:00"; randomizedDelaySec = "15min"; };
+    meh    = { onCalendar = "03:30"; randomizedDelaySec = "15min"; };
+    arnold = { onCalendar = "05:00"; randomizedDelaySec = "15min"; };
+  }.${hostname} or { onCalendar = "02:30"; randomizedDelaySec = "30min"; };
+
   # rubo77/rsync-homedir-excludes — vendored snapshot of
   # https://raw.githubusercontent.com/rubo77/rsync-homedir-excludes/master/rsync-homedir-excludes.txt
   # sha256: 3f73592de0903df36a30842914b3a82af94a666c1da4bce9258195b3b910fb77
@@ -176,12 +187,12 @@ in
     };
   };
 
-  # Systemd timer: daily at 02:30, randomised ±30 min
+  # Systemd timer: per-host schedule (see borgmaticSchedule above).
   systemd.user.timers.borgmatic = {
     Unit.Description = "borgmatic backup timer";
     Timer = {
-      OnCalendar = "02:30";
-      RandomizedDelaySec = "30min";
+      OnCalendar = borgmaticSchedule.onCalendar;
+      RandomizedDelaySec = borgmaticSchedule.randomizedDelaySec;
       Persistent = true;
     };
     Install.WantedBy = [ "timers.target" ];
