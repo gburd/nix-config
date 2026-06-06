@@ -1,0 +1,89 @@
+name: Refresh 🧹 rubo77 borgmatic excludes
+
+on:
+  # Weekly check Mondays 06:00 UTC; also manually invokable.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    name: Check upstream rubo77/rsync-homedir-excludes for drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - name: Fetch upstream + diff
+        id: drift
+        run: |
+          set -euo pipefail
+          URL="https://raw.githubusercontent.com/rubo77/rsync-homedir-excludes/master/rsync-homedir-excludes.txt"
+          TARGET="home-manager/_mixins/services/borgmatic-excludes-rubo77.txt"
+          NIXFILE="home-manager/_mixins/services/borgmatic.nix"
+
+          curl -fsS --max-time 30 "$URL" -o "$TARGET.new"
+
+          OLD_SHA=$(sha256sum "$TARGET"     | awk '{print $1}')
+          NEW_SHA=$(sha256sum "$TARGET.new" | awk '{print $1}')
+          echo "old: $OLD_SHA"
+          echo "new: $NEW_SHA"
+
+          if [ "$OLD_SHA" = "$NEW_SHA" ]; then
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+            rm "$TARGET.new"
+            exit 0
+          fi
+
+          mv "$TARGET.new" "$TARGET"
+
+          # Keep the sha256 in borgmatic.nix's leading comment in sync.
+          # Comment line looks like:  # sha256: <64-hex>
+          sed -i "s/^\(  # sha256: \)[a-f0-9]\{64\}/\1$NEW_SHA/" "$NIXFILE"
+
+          # Quick numeric summary for the PR body
+          OLD_COUNT=$(git show HEAD:"$TARGET" | grep -cvE '^\s*(#|$)')
+          NEW_COUNT=$(grep -cvE '^\s*(#|$)' "$TARGET")
+          {
+            echo "drift=true"
+            echo "old_sha=$OLD_SHA"
+            echo "new_sha=$NEW_SHA"
+            echo "old_count=$OLD_COUNT"
+            echo "new_count=$NEW_COUNT"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open PR with the refresh
+        if: steps.drift.outputs.drift == 'true'
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e  # v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/refresh-rubo77-excludes
+          delete-branch: true
+          commit-message: |
+            chore(borgmatic): refresh rubo77 homedir-excludes (auto-PR)
+
+            sha256 ${{ steps.drift.outputs.old_sha }} -> ${{ steps.drift.outputs.new_sha }}
+            non-comment lines ${{ steps.drift.outputs.old_count }} -> ${{ steps.drift.outputs.new_count }}
+          title: "chore(borgmatic): refresh rubo77 homedir-excludes"
+          body: |
+            Automated refresh of the vendored
+            [rubo77/rsync-homedir-excludes](https://github.com/rubo77/rsync-homedir-excludes)
+            list, detected by the weekly drift check.
+
+            | | before | after |
+            |---|---|---|
+            | sha256 | `${{ steps.drift.outputs.old_sha }}` | `${{ steps.drift.outputs.new_sha }}` |
+            | non-comment lines | ${{ steps.drift.outputs.old_count }} | ${{ steps.drift.outputs.new_count }} |
+
+            **Review the diff** before merging — patterns that look harmless
+            upstream may exclude files we actually want backed up. Merging this
+            PR (and a subsequent `home-manager switch`) will deploy the new
+            excludes to floki/meh/arnold on their next run.
+          labels: |
+            chore
+            backups
