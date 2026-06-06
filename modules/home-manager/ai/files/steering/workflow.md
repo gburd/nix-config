@@ -136,15 +136,47 @@ the `model:` override, and re-dispatch.
 
 ## Project Layout Conventions
 
-- Use `<project>/.local/` for worktrees, temp artifacts, and ephemeral state
+- Use `<project>/.local/` for project-internal worktrees and ephemeral state
 - Use `<project>/.local/worktrees/agent-*` for agent worktree isolation
-- Use `<project>/.local/tmp/` for test databases and I/O-intensive workloads
-- Never use `/tmp` or other tmpfs for database/storage tests — they are RAM-backed, size-limited, and don't represent real I/O latency
-- Avoid filling `/tmp` — clean up anything placed there when finished
+- Use **`/scratch/<user>/<your-mktemp-dir>`** for builds, tests, benchmarks,
+  and any I/O-intensive workload — not `/tmp`. The home-manager
+  `console/scratch.nix` mixin already exports `TMPDIR` to a per-shell
+  `mktemp` dir under `/scratch/<user>/`, so `nix-shell`, `cargo`, `pnpm`,
+  `pgbench`, etc. land there automatically. If you need an explicit
+  workspace (e.g. for a long-running benchmark), create your own with
+  `mktemp -d /scratch/$USER/<tag>-XXXXXX`.
+- **Never use `/tmp` (or any other tmpfs) for database/storage tests** —
+  tmpfs is RAM-backed, size-limited, and gives misleading I/O latency
+  numbers that won't match production deployment.
+- Avoid filling `/tmp`. If you absolutely must put something in `/tmp`,
+  clean it up before exiting.
 
-## Cleanup
+## Cleanup (mandatory, not optional)
 
-Always clean up intermediate files (build artifacts, test outputs, temp dirs). They accumulate and waste disk. Remove them when no longer needed.
+Agents and humans alike must leave the host as clean as they found it.
+Disk space is finite and `/scratch` is shared.
+
+- **Build/install/benchmark artefacts**: when a task is finished, remove
+  build output (`target/`, `build/`, `dist/`, `node_modules/` if not
+  needed for repro), benchmark result trees, downloaded test corpora,
+  large logs, generated DB clusters (`pg_ctl stop && rm -rf $PGDATA`).
+  Use `trash` (or `rm` on individual files; never `rm -rf` arbitrary
+  paths).
+- **Worktrees**: when finished with a `git worktree`, prune it:
+  ```sh
+  git worktree remove --force <path>     # then
+  git worktree prune
+  ```
+  Don't leave abandoned `<project>/.local/worktrees/agent-*` lying
+  around.
+- **`/scratch/$USER/tmp-*` dirs**: shells auto-`rmdir` their own
+  empty session dir on exit; anything you wrote into them is yours
+  to remove when you're done with it.
+- **Long-running data**: if a benchmark needs to keep gigabytes of
+  state across runs, put it in a clearly-named directory under
+  `/scratch/$USER/<purpose>/` and remove the whole tree when the
+  experiment is over.
+- **Before declaring "done"**: `du -shx /scratch/$USER ~/.cache ~/.cargo/target ~/ws/<project>/target 2>/dev/null` and reclaim anything you don't need.
 
 ## Non-Interactive Tools
 

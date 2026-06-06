@@ -2,6 +2,7 @@
   imports = [
     ../cli # CLI tools (git, gh, gpg, fish, etc.)
     ./neovim
+    ./scratch.nix
     ./tmux.nix
     ./cargo.nix
     ./claude-code
