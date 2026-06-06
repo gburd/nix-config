@@ -160,7 +160,22 @@ let
     # operation quiet but still surfaces real failures (Permission denied,
     # etc.). ServerAliveInterval/CountMax keep the channel alive across long
     # local-scan phases so rsync.net doesn't drop us as idle.
-    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
+    #
+    # Unattended-auth flags (added 2026-06-06 after overnight failure):
+    #   IdentityAgent=none           — skip ssh-agent entirely. The user's
+    #     ~/.ssh/config sets `IdentityAgent ~/.1password/agent.sock`
+    #     globally; without this override, ssh contacts 1Password to sign
+    #     even though we pass `-i .rsync-key -o IdentitiesOnly=yes`
+    #     (IdentitiesOnly only restricts which keys are *offered*, not
+    #     whether the agent is *contacted*). 1Password then prompts the
+    #     desktop for unlock, which is impossible from systemd-user units
+    #     running at 02:00.
+    #   BatchMode=yes                — fail-fast on any prompt request
+    #     instead of waiting (also implied by systemd's lack of a tty, but
+    #     explicit).
+    #   PreferredAuthentications=publickey — reject password/keyboard-
+    #     interactive auth methods entirely.
+    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o PreferredAuthentications=publickey -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
   };
 in
 {
