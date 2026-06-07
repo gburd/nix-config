@@ -120,7 +120,7 @@
 
         # Workstations
         "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
-        "gburd@meh" = libx.mkHome { hostname = "meh"; username = "gburd"; desktop = "gnome"; };
+        "gburd@meh" = libx.mkHome { hostname = "meh"; username = "gburd"; };  # headless
         "gburd@arnold" = libx.mkHome { hostname = "arnold"; username = "gburd"; };
 
         # Servers
@@ -143,8 +143,10 @@
         # Lenovo Carbon X1 Extreme Gen 5 - x86_64
         floki = libx.mkHost { systemType = "workstation"; hostname = "floki"; username = "gburd"; desktop = "gnome"; };
 
-        # Mac Pro "Trash Can" (Late 2013) - x86_64
-        meh = libx.mkHost { systemType = "workstation"; hostname = "meh"; username = "gburd"; desktop = "gnome"; };
+        # Mac Pro "Trash Can" (Late 2013) - x86_64 - HEADLESS (terminal-only;
+        # GPU compute via the AMD FirePro D700s is preserved via
+        # nixos/_mixins/hardware/gpu-compute.nix imported from the host).
+        meh = libx.mkHost { systemType = "workstation"; hostname = "meh"; username = "gburd"; };
 
         # Servers
         # Can be executed locally:

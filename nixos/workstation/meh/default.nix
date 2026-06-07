@@ -22,6 +22,14 @@
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-ssd
+
+    # Headless GPU compute (Mesa/Vulkan/OpenCL userspace) so the FirePros
+    # are usable for Ollama / llama.cpp / OpenCL workloads without a
+    # display server. desktop = null is passed in flake.nix so
+    # _mixins/desktop/default.nix (which would otherwise enable
+    # hardware.graphics) is NOT imported; this module fills that gap
+    # for headless GPU compute.
+    ../../_mixins/hardware/gpu-compute.nix
   ];
 
   boot = {

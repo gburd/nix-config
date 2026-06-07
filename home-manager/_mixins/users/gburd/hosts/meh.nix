@@ -1,13 +1,13 @@
-{ inputs, lib, pkgs, config, ... }:
-with lib.hm.gvariant;
+{ inputs, pkgs, config, ... }:
+# meh is a headless terminal-only host (no X / Wayland / GNOME); kept here
+# for productivity CLIs, services, and AI tooling. GPU compute support for
+# Ollama / llama.cpp / OpenCL is preserved by
+# nixos/_mixins/hardware/gpu-compute.nix imported from the NixOS host.
 {
   imports = [
     ../../../console/ai # Opt-in AI configuration for this host
-    ../../../desktop/vorta.nix
     ../../../services/borgmatic.nix
-    ../../../desktop/sublime.nix
-    ../../../desktop/sublime-merge.nix
-    # Email and productivity services
+    # Email and productivity services (CLI / daemon)
     ../../../services/protonmail-bridge.nix
     ../../../services/vdirsyncer.nix
     ../../../services/proton-drive.nix
@@ -16,28 +16,6 @@ with lib.hm.gvariant;
     # SSH key management with rotation
     (inputs.self + "/modules/home-manager/ssh-management")
   ];
-
-  # GNOME configuration
-  dconf.settings = {
-    # Disable paste warnings in GNOME Console
-    "org/gnome/Console" = {
-      unsafe-paste-warning = false;
-    };
-
-    # Fix Alt-Tab window switching
-    "org/gnome/desktop/wm/keybindings" = {
-      switch-windows = [ "<Alt>Tab" ];
-      switch-windows-backward = [ "<Shift><Alt>Tab" ];
-      # Alternative app switcher (if using grouped mode)
-      switch-applications = [ ];
-      switch-applications-backward = [ ];
-    };
-
-    # Disable idle timeout on meh (desktop - never sleep)
-    "org/gnome/desktop/session" = {
-      idle-delay = mkUint32 0;  # Never go idle (overrides gnome.nix default)
-    };
-  };
 
   # Sops secrets configuration
   sops = {
@@ -51,12 +29,6 @@ with lib.hm.gvariant;
       };
       # Crates.io API token (exposed as $CARGO_REGISTRY_TOKEN by console/cargo.nix)
       "cargo/crates_io_token" = { };
-      "jetbrains/clion-key" = {
-        path = "${config.home.homeDirectory}/.config/JetBrains/clion.key";
-      };
-      "sublime/merge-license" = {
-        path = "${config.home.homeDirectory}/.config/sublime-merge-license.bin";
-      };
 
       # SSH key management (new)
       "ssh-keys/auth" = {
@@ -112,51 +84,12 @@ with lib.hm.gvariant;
   };
 
   # Activation script to link CLion license to all version directories
-  home.activation.linkClionLicense = lib.mkIf (config.sops.secrets ? "jetbrains/clion-key") (
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      CLION_LICENSE="${config.sops.secrets."jetbrains/clion-key".path}"
-
-      if [ -f "$CLION_LICENSE" ]; then
-        # Find all CLion version directories and create symlinks
-        for clion_dir in ${config.home.homeDirectory}/.config/JetBrains/CLion*; do
-          if [ -d "$clion_dir" ]; then
-            TARGET="$clion_dir/clion.key"
-            # Remove existing file/symlink if it exists
-            if [ -e "$TARGET" ] || [ -L "$TARGET" ]; then
-              rm -f "$TARGET"
-            fi
-            # Create symlink
-            ln -sf "$CLION_LICENSE" "$TARGET"
-            echo "Linked CLion license to $TARGET"
-          fi
-        done
-      else
-        echo "Warning: CLion license not found at $CLION_LICENSE"
-      fi
-    ''
-  );
+  # (CLion is a GUI app; meh is headless, so this is intentionally a no-op:
+  # the sops secret is no longer declared on this host.)
 
   # Activation script to link Sublime Merge license
-  home.activation.linkSublimeMergeLicense = lib.mkIf (config.sops.secrets ? "sublime/merge-license") (
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      MERGE_LICENSE="${config.sops.secrets."sublime/merge-license".path}"
-      MERGE_TARGET="${config.home.homeDirectory}/.config/sublime-merge/Local/License.sublime_license"
-
-      if [ -f "$MERGE_LICENSE" ]; then
-        # Create Local directory if it doesn't exist
-        mkdir -p "$(dirname "$MERGE_TARGET")"
-        # Remove existing file/symlink if it exists
-        if [ -e "$MERGE_TARGET" ] || [ -L "$MERGE_TARGET" ]; then
-          rm -f "$MERGE_TARGET"
-        fi
-        # Create symlink
-        ln -sf "$MERGE_LICENSE" "$MERGE_TARGET"
-        echo "Linked Sublime Merge license to $MERGE_TARGET"
-      else
-        echo "Warning: Sublime Merge license not found at $MERGE_LICENSE"
-      fi
-    ''
-  );
+  # (Sublime Merge is a GUI app; meh is headless, so this is intentionally
+  # a no-op: the sops secret is no longer declared on this host.)
 
   # SSH key management with rotation support (replaces 1Password SSH agent)
   services.ssh-management = {
