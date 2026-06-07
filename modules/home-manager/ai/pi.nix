@@ -5,11 +5,20 @@ let
 
   settingsJson = builtins.toJSON {
     lastChangelogVersion = "0.74.0";
-    defaultProvider = "amazon-bedrock";
-    inherit (cfg) defaultModel;
-    # "ultra" high thinking == pi's top thinking level (off/minimal/low/
-    # medium/high/xhigh). xhigh is the max and what the user wants by default.
-    defaultThinkingLevel = "xhigh";
+    # Route through the local LiteLLM proxy
+    # (modules/home-manager/ai/litellm.nix); the litellm pi-extension
+    # below registers all models the proxy exposes as one provider.
+    inherit (cfg) defaultProvider defaultModel;
+    # Pi's own thinking-level toggle. With LiteLLM in front, thinking is
+    # driven entirely by the proxy's server-side `output_config.effort`
+    # (xhigh by default for all Anthropic models in litellm.nix). Pi must
+    # NOT send the legacy `thinking.type.enabled` payload field that
+    # LiteLLM maps `xhigh` to client-side — Opus 4.7+ rejects it with
+    # 400 "thinking.type.enabled is not supported for this model. Use
+    # thinking.type.adaptive and output_config.effort". So we set pi's
+    # client-side level to "off"; the server-side adaptive thinking still
+    # applies and we get max-effort by default.
+    defaultThinkingLevel = "off";
     theme = "dark";
     quietStartup = false;
     enableInstallTelemetry = false;
@@ -24,25 +33,13 @@ let
       maxRetries = 3;
       baseDelayMs = 2000;
     };
-    enabledModels = [
-      "us.anthropic.claude-sonnet-4-5-*"
-      "us.anthropic.claude-sonnet-4-6"
-      "us.anthropic.claude-opus-4-1-*"
-      "us.anthropic.claude-opus-4-7"
-      "us.anthropic.claude-opus-4-8"
-      "us.anthropic.claude-haiku-4-5-*"
-      "deepseek.v3.2"
-      "us.deepseek.r1-v1:0"
-      # DeepSeek V3.2 is the newest DeepSeek on Bedrock as of 2026-05-29
-      # (on-demand, verified working with the bearer token). Upstream has
-      # since shipped DeepSeek V4 (Pro & Flash, ~2026-05-06) but AWS has not
-      # onboarded it yet. TODO: when `aws bedrock list-foundation-models`
-      # shows a deepseek.v4* id (likely `deepseek.v4-pro` or similar), add it
-      # here — e.g. "deepseek.v4-pro" (and/or "us.deepseek.v4-pro-*" if it is
-      # inference-profile-only). Check with:
-      #   aws bedrock list-foundation-models --region us-east-1 \
-      #     | jq -r '.modelSummaries[].modelId | select(test("deepseek"))'
-    ];
+    # All `litellm:*` ids the proxy exposes are enabled. The dynamic
+    # extension below registers each one with metadata derived from the
+    # model id, so we don't need to keep a parallel list here. We omit
+    # the enabledModels filter entirely: pi applies that filter against
+    # built-in providers BEFORE extensions register theirs, so any value
+    # here either over-restricts (drops everything) or is misleadingly
+    # ineffective.
     skills = [ "~/.kiro/skills" ];
     prompts = [ "~/.pi/agent/prompts" ];
     extensions = [ "~/.pi/agent/extensions" ];
@@ -62,26 +59,38 @@ in
 
     defaultModel = mkOption {
       type = types.str;
-      default = "us.anthropic.claude-opus-4-8";
-      description = "Default model for Pi provider";
+      # LiteLLM alias (see modules/home-manager/ai/litellm.nix). Resolves
+      # to bedrock/converse/us.anthropic.claude-opus-4-8 on the proxy
+      # side with output_config.effort=xhigh. Pi's defaultModel is
+      # provider-scoped (no `provider:` prefix), so just "claude-opus-4-8".
+      default = "claude-opus-4-8";
+      description = "Default model id for Pi (resolved within defaultProvider).";
+    };
+
+    defaultProvider = mkOption {
+      type = types.str;
+      default = "litellm";
+      description = ''
+        Default Pi provider. The custom 'litellm' provider is registered
+        by the bundled pi-extensions/litellm.ts at startup. Change this
+        only if you want Pi to default to a different built-in provider
+        (e.g. anthropic) for some reason.
+      '';
     };
   };
 
   config = lib.mkIf cfg.enable {
     home.packages = [
       (pkgs.writeShellScriptBin "pi" ''
-        # Source Bedrock bearer token from sops-decrypted secret
-        if [ -r "$HOME/.config/claude-code/.bearer_token" ]; then
-          export AWS_BEARER_TOKEN_BEDROCK="$(cat "$HOME/.config/claude-code/.bearer_token")"
-          # Prevent SigV4 credential chain from conflicting with bearer token auth
-          unset AWS_PROFILE AWS_DEFAULT_PROFILE \
-                AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
-                AWS_SDK_LOAD_CONFIG
-        fi
-        export AWS_REGION="''${AWS_REGION:-us-east-1}"
+        # Pi's launcher — no Bedrock env vars exported here. Auth is via
+        # the per-host LiteLLM virtual key in
+        # ~/.config/litellm/keys/pi.key, picked up by the litellm.ts
+        # extension at startup. The local LiteLLM proxy holds the actual
+        # AWS bearer token; pi never sees it.
 
-        # Telemetry hardening: disable the anonymous install/update ping to
-        # pi.dev (belt-and-suspenders with enableInstallTelemetry=false).
+        # Telemetry hardening: disable the anonymous install/update ping
+        # to pi.dev (belt-and-suspenders with enableInstallTelemetry=false
+        # in settings.json).
         export PI_TELEMETRY=0
 
         # npm global prefix must be writable (Nix store is read-only)
@@ -99,6 +108,7 @@ in
       # Extensions that use only public Pi API and node builtins
       ".pi/agent/extensions/coccinelle.ts".source = ./pi-extensions/coccinelle.ts;
       ".pi/agent/extensions/context-monitor.ts".source = ./pi-extensions/context-monitor.ts;
+      ".pi/agent/extensions/litellm.ts".source = ./pi-extensions/litellm.ts;
       ".pi/agent/extensions/project-context.ts".source = ./pi-extensions/project-context.ts;
       ".pi/agent/extensions/safety-hooks.ts".source = ./pi-extensions/safety-hooks.ts;
     };
