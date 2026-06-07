@@ -121,8 +121,12 @@ in
         isNormalUser = true;
         homeMode = "0755";
 
-        # mkpasswd -m sha-512
-        hashedPassword = "$6$Dq4WmzyLjQUTyXT1$0Ll5rZ0R33qfGnEmAOZQuh.6udRN19luImYAmqsCKxfV14yHQ8vt9B/pf945..r1jTmlu7wfAXSe7kfoBm9jK0";
+        # Ephemeral installer/live-ISO account; password is the literal
+        # "nixos" (mkpasswd -m sha-512). DISTINCT from root's hash on
+        # purpose — a live ISO has no sops to source a secret from, but the
+        # installer password must not be the same value as the real root
+        # account's (which now comes from sops, see users/root).
+        hashedPassword = "$6$fI4MvrbBWZQoQRAa$tuXU4S3AHh.VwDLDepho56g0syhwk7ZALF9t9Tr6SDjavvSyamie8fm16cXKi0n6wA/cRQL9PYN/6gHYU.Fxz.";
         openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
 
         packages = [ pkgs.home-manager ];
