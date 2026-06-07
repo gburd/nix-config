@@ -1,17 +1,16 @@
 { pkgs, ... }:
 {
   # AI agent configuration for macOS (darwin)
-  # Note: No sops-nix on darwin — credentials managed via ada CLI and env vars
+  # Note: No sops-nix on darwin — credentials managed via ada CLI and env vars.
+  # The old programs.ai.bedrock block was removed when bedrock.nix was
+  # retired (the Linux hosts moved to a per-host LiteLLM proxy). On darwin
+  # there is no LiteLLM proxy yet; Bedrock credentials are still managed
+  # entirely outside nix:
+  #   ada credentials update --once --account <ID> --role <ROLE> \
+  #       --provider conduit --profile asbxbedrock
+  #   Bearer token lives in ~/.claude/settings.json (managed by Claude
+  #   Code itself). TODO: port darwin to the LiteLLM proxy model too.
   programs.ai = {
-    bedrock = {
-      enable = true;
-      region = "us-west-2";
-      profile = "asbxbedrock";
-      # No credentialsFile or bearerTokenFile — managed outside nix:
-      #   ada credentials update --once --account <ID> --role <ROLE> --provider conduit --profile asbxbedrock
-      #   Bearer token is in ~/.claude/settings.json (managed by Claude Code itself)
-    };
-
     steering = {
       enable = true;
       targets = {

@@ -22,7 +22,6 @@ in
     };
     modules = [
       ../nixos
-      inputs.agenix.nixosModules.default
     ] ++ (inputs.nixpkgs.lib.optionals (installer != null) [ installer ]);
   };
 
@@ -36,6 +35,14 @@ in
       {
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
+        # HM modules (e.g. programs.ai.skills, which reads
+        # inputs.postgresq-skills-*) need the flake args too — darwin's
+        # specialArgs only reach the system modules, not the nested HM
+        # ones, so forward them explicitly here.
+        home-manager.extraSpecialArgs = {
+          inherit inputs outputs hostname username platform stateVersion sshMatrix;
+          desktop = null;
+        };
       }
     ];
   };
@@ -53,7 +60,6 @@ in
 
     modules = [
       ../nixos
-      inputs.agenix.nixosModules.default
     ];
   };
 
@@ -70,19 +76,9 @@ in
 
     modules = [
       ../nixos
-      inputs.agenix.nixosModules.default
       {
         boot.kernelParams = [ "console=tty0" ]; # enable physical display tty, not serial port
       }
-    ];
-  };
-
-  mkDroid = { hostname, username, platform ? "aarch64-linux" }: inputs.nix-on-droid.lib.nixOnDroidConfiguration {
-    specialArgs = {
-      inherit self inputs outputs hostname username platform stateVersion sshMatrix;
-    };
-    modules = [
-      ../android
     ];
   };
 

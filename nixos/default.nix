@@ -111,7 +111,6 @@
       vim
     ];
     systemPackages = with pkgs; [
-      agenix
       pciutils
       psmisc
       unzip
@@ -186,7 +185,6 @@
 
       # You can also add overlays exported from other flakes:
       # neovim-nightly-overlay.overlays.default
-      inputs.agenix.overlays.default
 
       # Or define it inline, for example:
       # (final: prev: {
@@ -280,8 +278,6 @@
         rebuild-home = "home-manager switch -b backup --flake $HOME/ws/nix-config";
         rebuild-host = "sudo nixos-rebuild switch --flake $HOME/ws/nix-config";
         rebuild-lock = "pushd $HOME/ws/nix-config && nix flake lock --recreate-lock-file && popd";
-
-        modify-secret = "agenix -i ~/.ssh/id_rsa -e"; # the path relative to /secrets must be passed without `./`
 
         rebuild-iso-console = "sudo true && pushd $HOME/ws/nix-config && nix build .#nixosConfigurations.iso-console.config.system.build.isoImage && set ISO (head -n1 result/nix-support/hydra-build-products | cut -d'/' -f6) && sudo cp result/iso/$ISO ~/Quickemu/nixos-console/nixos.iso && popd";
         test-iso-console = "pushd ~/Quickemu/ && quickemu --vm nixos-console.conf --ssh-port 54321 && popd";

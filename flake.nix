@@ -19,9 +19,6 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-trunk.url = "github:nixos/nixpkgs/master";
 
-    agenix.url = "github:ryantm/agenix";
-    agenix.inputs.nixpkgs.follows = "nixpkgs";
-
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -31,9 +28,6 @@
     # Chaotic's Nyx provides many additional packages like NordVPN
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     chaotic.inputs.nixpkgs.follows = "nixpkgs";
-
-    nix-doom-emacs.url = "github:nix-community/nix-doom-emacs";
-    nix-doom-emacs.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     nix-formatter-pack.url = "github:Gerschtli/nix-formatter-pack";
     nix-formatter-pack.inputs.nixpkgs.follows = "nixpkgs";
@@ -45,10 +39,6 @@
 
     devshells.url = "github:gburd/devshells";
     devshells.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Android support with nix-on-droid. Currently not updated for 25.05
-    nix-on-droid.url = "github:nix-community/nix-on-droid/release-23.11";
-    nix-on-droid.inputs.nixpkgs.follows = "nixpkgs";
 
     # Darwin support with nix-darwin
     nix-darwin.url = "github:LnL7/nix-darwin";
@@ -158,12 +148,9 @@
         #      --build-host  ${USERNAME}@${HOST}.${TAILNET}
       };
 
-      # nixOnDroidConfigurations = {
-      #   pixel6a-legacy = nix-on-droid.lib.nixOnDroidConfiguration {
-      #     modules = [ ./android/pixel6a/config.nix ];
-      #   };
-      #   pixel6a = libx.mkDroid { hostname = "pixel6a"; username = "gburd"; };
-      # };
+      # nixOnDroidConfigurations removed along with the nix-on-droid input
+      # (was never wired into outputs; release-23.11 dragged in a stale
+      # nixpkgs + home-manager chain).
 
       # Devshell for bootstrapping; acessible via 'nix develop' or 'nix-shell' (legacy)
       #inherit (devshells) devShells;
