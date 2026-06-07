@@ -3,20 +3,8 @@ let
   cfg = config.programs.ai.hermes;
   inherit (lib) mkEnableOption mkOption types;
 
-  # Hermes Agent is a fast-moving Python package (released 2026-05-29 as
-  # v0.15.1; the upstream repo still ships frequent point releases). Rather
-  # than pin every transitive into a Nix derivation we install it through
-  # pipx during home-manager activation. This trades pure-Nix reproducibility
-  # for keeping up with upstream automatically (`pipx upgrade` on every
-  # switch). The pipx venv lives in ~/.local/share/pipx/venvs/hermes-agent
-  # and the resulting `hermes` / `hermes-agent` shims land in ~/.local/bin
-  # which the home-manager PATH appends after ~/.nix-profile/bin (so nix
-  # always wins over local installs, see home-manager/default.nix).
   pipxBin = "${pkgs.pipx}/bin/pipx";
-  # pipx will use whatever python3 is already on the user's PATH (3.13 from
-  # the shared home.packages set). hermes-agent requires Python 3.11+, so
-  # 3.13 satisfies; we deliberately don't pin a specific python here to
-  # avoid buildEnv conflicts with the user's primary python3.
+  litellmKey = "${config.home.homeDirectory}/.config/litellm/keys/hermes.key";
 in
 {
   options.programs.ai.hermes = {
@@ -24,37 +12,26 @@ in
 
     defaultModel = mkOption {
       type = types.str;
-      # Bedrock has Opus 4.8 as of 2026-05-29 under the inference-profile ID
-      # `us.anthropic.claude-opus-4-8` (no -v1:0 suffix in the new naming).
-      #
-      # IMPORTANT AUTH NOTE (verified 2026-05-29): hermes routes Claude
-      # models through the bundled Anthropic SDK's AnthropicBedrock client
-      # (anthropic 0.87.0), which upstream signs with SigV4 *only* — it would
-      # otherwise FAIL with "could not resolve credentials from session" given
-      # we carry only AWS_BEARER_TOKEN_BEDROCK (no IAM keys). We fix this with
-      # an idempotent overlay patch (files/hermes/patch_bedrock_bearer.py),
-      # applied to the pipx venv after every install/upgrade, that makes
-      # get_auth_headers() emit an `Authorization: Bearer` header when the
-      # bearer token is set (Bedrock's HTTPS endpoint accepts it directly) and
-      # otherwise falls back to the unchanged upstream SigV4 path. The `hermes`
-      # launcher wrapper below exports the token so the SDK sees it. Bump the
-      # id when 4.9+ ships.
-      default = "us.anthropic.claude-opus-4-8";
-      description = "Default Bedrock model ID for Hermes (must be a real inference-profile ID).";
+      # LiteLLM alias (modules/home-manager/ai/litellm.nix). The proxy
+      # resolves it to bedrock/converse/us.anthropic.claude-opus-4-8 with
+      # adaptive thinking + output_config.effort=xhigh server-side.
+      default = "claude-opus-4-8";
+      description = "Default LiteLLM-aliased model for Hermes.";
     };
 
-    region = mkOption {
+    litellmUrl = mkOption {
       type = types.str;
-      default = "us-east-1";
-      description = "AWS region for Bedrock invocations.";
+      default = "http://127.0.0.1:4000/v1";
+      description = "Base URL for the local LiteLLM proxy (OpenAI-compat endpoint).";
     };
 
     extras = mkOption {
       type = types.listOf types.str;
-      # `bedrock` pulls in boto3 for the Converse API. Add others (anthropic,
-      # exa, firecrawl, fal) only if/when the user opts into them.
-      default = [ "bedrock" ];
-      description = "PyPI extras to install with hermes-agent (e.g. bedrock, anthropic, exa).";
+      # We no longer need the bedrock extra: traffic goes through the
+      # LiteLLM proxy via the OpenAI-compatible endpoint, not the
+      # Anthropic SDK's Bedrock adapter.
+      default = [ ];
+      description = "PyPI extras to install with hermes-agent (rarely needed under LiteLLM routing).";
     };
 
     autoUpgrade = mkOption {
@@ -71,35 +48,72 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [
       pkgs.pipx
-      # `hermes` launcher wrapper. pipx installs the real binary at
-      # ~/.local/bin/hermes; this nix-profile shim shadows it (nix-profile/bin
-      # precedes ~/.local/bin on PATH) and exports AWS_BEARER_TOKEN_BEDROCK +
-      # AWS_REGION so the SDK's (patched) Bedrock auth path can authenticate
-      # regardless of the parent shell. Mirrors the pi/maki wrappers.
+      # `hermes` launcher wrapper: reads the per-host LiteLLM virtual key
+      # at every invocation and exports it as LITELLM_API_KEY (which the
+      # config.yaml's `providers.litellm.key_env` references). All AWS /
+      # Bedrock plumbing is unset defensively so the migration is a clean
+      # break — hermes never sees AWS credentials.
       (pkgs.writeShellScriptBin "hermes" ''
-        if [ -r "$HOME/.config/claude-code/.bearer_token" ]; then
-          export AWS_BEARER_TOKEN_BEDROCK="$(cat "$HOME/.config/claude-code/.bearer_token")"
-          unset AWS_PROFILE AWS_DEFAULT_PROFILE \
-                AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
-                AWS_SDK_LOAD_CONFIG
+        if [ -r "${litellmKey}" ]; then
+          export LITELLM_API_KEY="$(${pkgs.coreutils}/bin/cat "${litellmKey}")"
+        else
+          echo "hermes: ${litellmKey} not readable; is litellm.service running?" >&2
+          exit 78  # EX_CONFIG
         fi
-        export AWS_REGION="''${AWS_REGION:-${cfg.region}}"
+
+        unset AWS_BEARER_TOKEN_BEDROCK AWS_REGION \
+              AWS_PROFILE AWS_DEFAULT_PROFILE \
+              AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
+              AWS_SDK_LOAD_CONFIG \
+              ANTHROPIC_API_KEY ANTHROPIC_BASE_URL \
+              CLAUDE_CODE_USE_BEDROCK CLAUDE_CODE_SKIP_BEDROCK_AUTH \
+              ANTHROPIC_BEDROCK_BASE_URL
+
         exec "$HOME/.local/bin/hermes" "$@"
       '')
     ];
 
     # ~/.hermes/config.yaml — picked up by `hermes` on every invocation.
-    # Mirrors the layout in the upstream Bedrock guide
-    # (NousResearch/hermes-agent/website/docs/guides/aws-bedrock.md).
+    # Uses hermes' v12+ keyed `providers` schema (one entry per custom
+    # provider). The top-level `model: "<provider>:<id>"` string form is
+    # used so hermes routes through the named custom provider on every
+    # invocation; the dict form (`model: {provider: ..., default: ...}`)
+    # is honoured by the model picker but the `-z` oneshot path falls
+    # back to auto-detection from the model name (which matches
+    # "claude-*" against the built-in Anthropic provider).
     home.file.".hermes/config.yaml".text = ''
       # Generated by modules/home-manager/ai/hermes.nix — do not edit.
+      # Routes through the local LiteLLM proxy
+      # (modules/home-manager/ai/litellm.nix); auth via the per-host
+      # virtual key in ~/.config/litellm/keys/hermes.key, exported as
+      # LITELLM_API_KEY by the hermes launcher wrapper.
+      #
+      # The dict form of `model:` separates provider from default-model so
+      # hermes' `resolve_inference_provider()` picks up `model.provider`
+      # directly (without needing to colon-parse the model id, which only
+      # accepts known-provider prefixes from `_KNOWN_PROVIDER_NAMES`).
+      # "custom:<name>" selects the named entry in `providers.<name>` below.
+
       model:
-        provider: bedrock
+        provider: "custom:litellm"
         default: ${cfg.defaultModel}
         reasoning_effort: high
 
-      bedrock:
-        region: ${cfg.region}
+      providers:
+        litellm:
+          # Keep `name` clean (no spaces / punctuation) so its normalised
+          # form matches the `custom:litellm` selector in `model.provider`
+          # above. `_normalize_custom_provider_name(name)` does
+          # `name.strip().lower().replace(' ', '-')`, so a friendly name
+          # with spaces would not match.
+          name: "litellm"
+          base_url: "${cfg.litellmUrl}"
+          # `key_env` tells hermes to read the API key from the named
+          # environment variable on every request, so a rotated keyfile
+          # picks up on the next exec without restarting hermes.
+          key_env: "LITELLM_API_KEY"
+          default_model: ${cfg.defaultModel}
+          api_mode: "chat"
     '';
 
     home.activation.installHermesAgent = lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" ] ''
@@ -112,7 +126,11 @@ in
 
       ${pkgs.coreutils}/bin/mkdir -p "$PIPX_BIN_DIR" "$PIPX_HOME"
 
-      EXTRAS=${lib.escapeShellArg "[${lib.concatStringsSep "," cfg.extras}]"}
+      EXTRAS=${lib.escapeShellArg (
+        if cfg.extras == []
+        then ""
+        else "[${lib.concatStringsSep "," cfg.extras}]"
+      )}
       SPEC="hermes-agent$EXTRAS"
 
       if ${pipxBin} list --short 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '^hermes-agent '; then
@@ -130,13 +148,11 @@ in
         }
       fi
 
-      # Overlay patch: teach the bundled Anthropic SDK's Bedrock auth path to
-      # accept AWS_BEARER_TOKEN_BEDROCK. Idempotent — safe to re-run after
-      # every install/upgrade above. Any python3 works (the script only does
-      # file IO); use the nix one for determinism.
-      ${pkgs.python3}/bin/python3 ${./files/hermes/patch_bedrock_bearer.py} \
-        "$PIPX_HOME/venvs/hermes-agent" || \
-        echo "[hermes] bedrock bearer patch failed (non-fatal)"
+      # NOTE: the bedrock-bearer-overlay patcher
+      # (files/hermes/patch_bedrock_bearer.py) was removed when hermes
+      # migrated to LiteLLM. The Anthropic SDK's bedrock auth path is no
+      # longer reached because traffic goes through the OpenAI-compat
+      # endpoint of the local proxy.
     '';
   };
 }
