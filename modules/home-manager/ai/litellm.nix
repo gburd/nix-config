@@ -47,7 +47,7 @@ let
     #             agents get the model's full generation budget rather
     #             than a flat 32000. budget_tokens (legacy thinking) still
     #             fits because it's carved out of maxOutput, not on top.
-    { name = "claude-opus-4-8";   bedrock = "us.anthropic.claude-opus-4-8";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-opus-4-8";   bedrock = "us.anthropic.claude-opus-4-8";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-opus-4-8" ]; }
     { name = "claude-opus-4-7";   bedrock = "us.anthropic.claude-opus-4-7";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
     { name = "claude-opus-4-6";   bedrock = "us.anthropic.claude-opus-4-6-v1";           converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
     { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6";            converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 64000; }
@@ -55,11 +55,8 @@ let
     # Legacy-thinking models (Opus 4.5/4.1, Sonnet 4.5, Haiku 4.5)
     { name = "claude-opus-4-5";   bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
     { name = "claude-opus-4-1";   bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 32000; }
-    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; aliases = [ "us.anthropic.claude-sonnet-4-5-20250929-v1:0" ]; }
     { name = "claude-haiku-4-5";  bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0";  converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
-
-    # DeepSeek
-    { name = "deepseek-r1";       bedrock = "us.deepseek.r1-v1:0";                       converse = false; }
 
     # DeepSeek
     { name = "deepseek-r1";       bedrock = "us.deepseek.r1-v1:0";                       converse = false; maxInput = 128000; maxOutput = 32000; }
@@ -99,57 +96,82 @@ let
   #   - effort is stripped for models that reject output_config.
   #
   # policy mode values: "adaptive" | "adaptive+effort" | "enabled" | "none"
-  thinkingPolicy = builtins.listToAttrs (map
-    (m: {
-      inherit (m) name;
-      value = {
-        mode =
-          if (m.thinkingMode or null) == "adaptive" then
-            (if m ? effort then "adaptive+effort" else "adaptive")
-          else if (m.thinkingMode or null) == "enabled" then "enabled"
-          else "none";
-        effort = m.effort or null;
-        budget = m.thinkingBudget or 16000;
-      };
-    })
+  thinkingPolicy = builtins.listToAttrs (lib.concatMap
+    (m:
+      let
+        pol = {
+          mode =
+            if (m.thinkingMode or null) == "adaptive" then
+              (if m ? effort then "adaptive+effort" else "adaptive")
+            else if (m.thinkingMode or null) == "enabled" then "enabled"
+            else "none";
+          effort = m.effort or null;
+          budget = m.thinkingBudget or 16000;
+        };
+      in
+      # Key the policy under the primary name AND every legacy alias, so
+      # the normalizer hook applies identically whether a client sends
+      # "claude-opus-4-8" or the legacy "us.anthropic.claude-opus-4-8".
+      [{ inherit (m) name; value = pol; }]
+      ++ map (alias: { name = alias; value = pol; }) (m.aliases or [ ]))
     cfg.models);
 
   # The actual config for LiteLLM's proxy. Built as an attrset and emitted
   # as JSON, which is valid YAML — bypasses the indent hazards of
   # multi-line indented-string Nix interpolation entirely.
+
+  # Build one model_list row for a given public name. Factored out so we
+  # can emit both the primary alias (m.name) and any legacy aliases
+  # (m.aliases) with identical params — see legacyAliases below.
+  mkModelRow = m: rowName: {
+    model_name = rowName;
+    litellm_params = {
+      model = (if m.converse then "bedrock/converse/" else "bedrock/") + m.bedrock;
+      aws_region_name = "os.environ/AWS_REGION";
+      # Give each agent the model's full output-token budget rather
+      # than a flat 32000. Falls back to 32000 for any model without
+      # an explicit maxOutput.
+      max_tokens = m.maxOutput or 32000;
+    };
+    # NOTE: thinking / output_config are deliberately NOT set here.
+    # LiteLLM merges litellm_params into the request *after* the
+    # async_pre_call_hook runs, so a static thinking block here would
+    # re-appear behind the hook's back — e.g. when a client omits
+    # thinking and asks for a tiny max_tokens, the static
+    # budget_tokens=16000 would exceed max_tokens and Bedrock 400s
+    # ("max_tokens must be greater than thinking.budget_tokens").
+    # Instead thinking_normalizer.py is the single source of truth: it
+    # sets the correct thinking shape for EVERY request (the policy map
+    # is derived from the same cfg.models list) and caps/drops the
+    # budget against max_tokens. See thinkingHookPy below.
+
+    # model_info overrides LiteLLM's built-in price/context DB so the
+    # /model/info and /v1/models endpoints advertise the *true*
+    # Bedrock context window + output ceiling for each alias. Clients
+    # that size their context budget from the proxy (Pi reads this)
+    # then won't trigger premature context-overflow recovery on the
+    # 1M-token Opus/Sonnet 4.6+ models.
+    model_info = {
+      max_input_tokens = m.maxInput or 200000;
+      max_output_tokens = m.maxOutput or 32000;
+      max_tokens = m.maxOutput or 32000;
+    };
+  };
+
   configJson = builtins.toJSON {
-    model_list = map
-      (m: {
-        model_name = m.name;
-        litellm_params = {
-          model = (if m.converse then "bedrock/converse/" else "bedrock/") + m.bedrock;
-          aws_region_name = "os.environ/AWS_REGION";
-          # Give each agent the model's full output-token budget rather
-          # than a flat 32000. Falls back to 32000 for any model without
-          # an explicit maxOutput.
-          max_tokens = m.maxOutput or 32000;
-        } // (lib.optionalAttrs (m ? effort) {
-          output_config = { inherit (m) effort; };
-        }) // (lib.optionalAttrs (m ? thinkingMode) (
-          if m.thinkingMode == "adaptive" then
-            { thinking = { type = "adaptive"; }; }
-          else if m.thinkingMode == "enabled" then
-            { thinking = { type = "enabled"; budget_tokens = m.thinkingBudget or 16000; }; }
-          else { }
-        ));
-        # model_info overrides LiteLLM's built-in price/context DB so the
-        # /model/info and /v1/models endpoints advertise the *true*
-        # Bedrock context window + output ceiling for each alias. Clients
-        # that size their context budget from the proxy (Pi reads this)
-        # then won't trigger premature context-overflow recovery on the
-        # 1M-token Opus/Sonnet 4.6+ models.
-        model_info = {
-          max_input_tokens = m.maxInput or 200000;
-          max_output_tokens = m.maxOutput or 32000;
-          max_tokens = m.maxOutput or 32000;
-        };
-      })
-      cfg.models;
+    model_list =
+      (map (m: mkModelRow m m.name) cfg.models)
+      # Legacy-id alias rows: extra model_list entries whose model_name is
+      # the OLD built-in amazon-bedrock model id (e.g.
+      # "us.anthropic.claude-opus-4-8") so that resuming a pre-migration
+      # Pi session — which persisted the bedrock id — restores cleanly via
+      # the amazon-bedrock provider override (see pi-extensions/litellm.ts)
+      # instead of warning "Could not restore model amazon-bedrock/…".
+      # They reuse the matching model's params, so the thinking-normalizer
+      # hook (keyed on model_name) also covers them via legacyPolicy below.
+      ++ lib.concatMap
+        (m: map (alias: mkModelRow m alias) (m.aliases or [ ]))
+        cfg.models;
 
     litellm_settings = {
       drop_params = true;
@@ -307,16 +329,21 @@ let
             return
         if mode == "enabled":
             # enabled-only models reject adaptive AND output_config.effort.
-            # Bedrock also requires max_tokens > thinking.budget_tokens,
-            # so if the client asked for a small max_tokens we cap the
-            # budget to leave at least 1024 tokens of headroom for the
-            # response (and never go below 1024 of thinking budget).
+            # Bedrock also requires max_tokens > thinking.budget_tokens.
+            # If the client asked for a small max_tokens, cap the budget
+            # to leave >=1024 tokens of headroom for the response; and if
+            # max_tokens is too small to fit any sane thinking budget at
+            # all (<2048), drop thinking entirely rather than send an
+            # impossible budget that Bedrock would 400 on.
+            data.pop("output_config", None)
             budget = int(pol.get("budget", 16000))
             mt = data.get("max_tokens")
             if isinstance(mt, int) and mt > 0:
-                budget = min(budget, max(1024, mt - 1024))
+                if mt < 2048:
+                    data.pop("thinking", None)
+                    return
+                budget = min(budget, mt - 1024)
             data["thinking"] = {"type": "enabled", "budget_tokens": budget}
-            data.pop("output_config", None)
             return
 
     class ThinkingNormalizer(CustomLogger):

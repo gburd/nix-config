@@ -34,6 +34,13 @@ const supportsImage = (id: string) =>
   id.includes("pixtral") ||
   id.includes("llama4");
 
+// Legacy built-in amazon-bedrock model ids (full inference-profile
+// strings) that the proxy also exposes as aliases for old-session
+// restore. They always start with a region+vendor prefix like
+// "us.anthropic.", "us.meta.", etc. — our normal aliases never contain
+// dots, so a dot is a reliable discriminator.
+const isLegacyBedrockId = (id: string) => id.includes(".");
+
 // Fallback context/output sizes used only when the proxy's /model/info
 // doesn't carry explicit values for a model. The proxy (litellm.nix) sets
 // model_info.max_input_tokens / max_output_tokens for every model, so these
@@ -109,24 +116,65 @@ export default async function (pi: ExtensionAPI) {
     // restart. Cheap (cat is fast, file is mode 600).
     apiKey: `!cat ${KEY_FILE}`,
     api: "openai-completions",
-    models: payload.data.map((m) => {
-      const info = infoByName.get(m.id);
-      return {
-        id: m.id,
-        name: m.id,
-        reasoning: isReasoning(m.id),
-        input: supportsImage(m.id) ? ["text", "image"] : ["text"],
-        // Cost is 0 because we pay AWS directly for Bedrock; the proxy is local.
-        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-        // True context window from the proxy (1M for Opus/Sonnet 4.6+,
-        // 200K for legacy Claude, etc.), falling back to a heuristic.
-        contextWindow: info?.maxInput ?? fallbackContextFor(m.id),
-        // Full output budget from the proxy; the proxy itself also caps
-        // max_tokens per model, so this just lets pi plan accurately.
-        maxTokens: info?.maxOutput ?? 32_000,
-      };
-    }),
+    // Skip the legacy-id aliases (us.anthropic.*) the proxy also exposes
+    // for old-session restore; they're surfaced under the amazon-bedrock
+    // provider below instead so the litellm picker stays clean.
+    models: payload.data
+      .filter((m) => !isLegacyBedrockId(m.id))
+      .map((m) => {
+        const info = infoByName.get(m.id);
+        return {
+          id: m.id,
+          name: m.id,
+          reasoning: isReasoning(m.id),
+          input: supportsImage(m.id) ? ["text", "image"] : ["text"],
+          // Cost is 0 because we pay AWS directly for Bedrock; the proxy is local.
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+          // True context window from the proxy (1M for Opus/Sonnet 4.6+,
+          // 200K for legacy Claude, etc.), falling back to a heuristic.
+          contextWindow: info?.maxInput ?? fallbackContextFor(m.id),
+          // Full output budget from the proxy; the proxy itself also caps
+          // max_tokens per model, so this just lets pi plan accurately.
+          maxTokens: info?.maxOutput ?? 32_000,
+        };
+      }),
   });
+
+  // Compatibility shim for pre-migration sessions.
+  //
+  // Before everything moved behind the proxy, Pi used its built-in
+  // `amazon-bedrock` provider and persisted model ids like
+  // "amazon-bedrock/us.anthropic.claude-opus-4-8" into the session
+  // JSONL. Resuming such a session now prints:
+  //   "Could not restore model amazon-bedrock/us.anthropic.claude-opus-4-8.
+  //    Using litellm/claude-opus-4-8"
+  // because Pi's built-in bedrock provider needs direct AWS creds we no
+  // longer supply. Override the amazon-bedrock provider to point at the
+  // local proxy and expose exactly the legacy ids the proxy now aliases
+  // (see litellm.nix's `aliases`), so the restore resolves silently.
+  // The thinking-normalizer hook keys on these ids too, so thinking is
+  // handled identically.
+  const legacyModels = payload.data.filter((m) => isLegacyBedrockId(m.id));
+  if (legacyModels.length > 0) {
+    pi.registerProvider("amazon-bedrock", {
+      baseUrl: LITELLM_URL,
+      apiKey: `!cat ${KEY_FILE}`,
+      api: "openai-completions",
+      models: legacyModels.map((m) => {
+        const info = infoByName.get(m.id);
+        return {
+          id: m.id,
+          name: m.id,
+          reasoning: isReasoning(m.id),
+          input: supportsImage(m.id) ? ["text", "image"] : ["text"],
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+          contextWindow: info?.maxInput ?? fallbackContextFor(m.id),
+          maxTokens: info?.maxOutput ?? 32_000,
+        };
+      }),
+    });
+    pi.log?.(`litellm-extension: amazon-bedrock compat shim for ${legacyModels.length} legacy id(s)`);
+  }
 
   pi.log?.(`litellm-extension: registered ${payload.data.length} models from ${LITELLM_URL}`);
 }
