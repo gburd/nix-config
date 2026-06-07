@@ -27,15 +27,13 @@
   ];
 
   # Exclude packages
-  environment.gnome.excludePackages = (with pkgs; [
+  environment.gnome.excludePackages = with pkgs; [
     # for packages that are pkgs.***
     gnome-tour
     gnome-connections
     epiphany # web browser
     geary # email reader
     evince # document viewer
-  ]) ++ (with pkgs.gnome; [
-    # for packages that are pkgs.gnome.***
-  ]);
+  ];
 
 }

@@ -50,12 +50,25 @@ in
             LogLevel = "QUIET";
             ServerAliveInterval = "60";
             ServerAliveCountMax = "2";
-            StrictHostKeyChecking = "no";
             TCPKeepAlive = "yes";
+            # accept-new: trust a host on FIRST contact (no prompt) but
+            # WARN+refuse if a known host's key later changes — i.e. keep
+            # the MITM protection that StrictHostKeyChecking=no +
+            # UserKnownHostsFile=/dev/null threw away. Real known_hosts so
+            # changes are actually detected. forwardAgent/forwardX11 are
+            # deliberately NOT set globally: they're scoped per-trusted-
+            # host in cli/ssh.nix (net/trusted/meh/santorini blocks).
+            StrictHostKeyChecking = "accept-new";
+          };
+        };
+        # Throwaway / ephemeral local targets (quickemu VMs, freshly-imaged
+        # boxes, link-local) where the host key churns and there's nothing
+        # to MITM. Here — and ONLY here — skip verification.
+        "192.168.122.* 10.0.2.* *.local quickemu vm-*" = {
+          extraOptions = {
+            StrictHostKeyChecking = "no";
             UserKnownHostsFile = "/dev/null";
           };
-          forwardAgent = true;
-          forwardX11 = true;
         };
         "github.com" = {
           hostname = "github.com";

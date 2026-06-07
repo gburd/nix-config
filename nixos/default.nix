@@ -218,7 +218,9 @@
     # Making legacy nix commands consistent as well, awesome!
     nixPath = lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry;
 
-    optimise.automatic = true;
+    # Store hard-linking is done inline after every build via
+    # settings.auto-optimise-store below — the separate optimise.automatic
+    # timer would just re-scan the same store redundantly, so it's dropped.
     package = pkgs.unstable.nix;
     settings = {
       auto-optimise-store = true;
