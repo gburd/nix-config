@@ -83,6 +83,21 @@ in
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       warn-dirty = false;
+      # Binary caches for user-level nix commands (~/.config/nix/nix.conf).
+      # On NixOS (floki/meh) the system-level /etc/nix/nix.conf already has
+      # cache.nixos.org and (via nixos/default.nix) nix-community.cachix.org;
+      # this `extra-*` adds them again at user scope so non-NixOS hosts
+      # (arnold/Fedora, where the Determinate-installed system nix.conf only
+      # carries FlakeHub + Determinate's substituters) also reach the same
+      # caches without touching their system file.
+      extra-substituters = [
+        "https://cache.nixos.org"
+        "https://nix-community.cachix.org"
+      ];
+      extra-trusted-public-keys = [
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      ];
     };
   };
 }

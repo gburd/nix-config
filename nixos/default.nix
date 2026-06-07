@@ -45,6 +45,19 @@
 
   nix.settings.download-buffer-size = 524288000;
 
+  # Binary caches at the system level (in addition to the NixOS default,
+  # which is cache.nixos.org). nix-community.cachix.org has prebuilt
+  # closures for many overlay/community packages we use. The flake's
+  # nixConfig.extra-substituters covers flake commands when the user is
+  # trusted; this entry covers everything else (rebuilds, system-level
+  # nix-build, sandboxed builds for users not in trusted-users, etc.).
+  nix.settings.extra-substituters = [
+    "https://nix-community.cachix.org"
+  ];
+  nix.settings.extra-trusted-public-keys = [
+    "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+  ];
+
   i18n = {
     defaultLocale = lib.mkDefault "en_US.UTF-8";
     extraLocaleSettings = {
