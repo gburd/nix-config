@@ -36,6 +36,13 @@ in
         # Pause between restarts so a transient crash doesn't burn through the
         # default 5-fast-restarts-in-10s limit and end up permanently failed.
         RestartSec = 5;
+        # Light sandbox only — Vorta is a Qt GUI that needs the display,
+        # the secret-service, and (via borg) broad home access, so the
+        # strict filesystem/namespace protections used on daemon services
+        # would break it. These three are safe and free.
+        NoNewPrivileges = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
       };
       Install = {
         # Tie lifecycle to the graphical session: Vorta starts when GNOME

@@ -199,6 +199,27 @@ in
       ExecStartPost = "${pkgs.borgmatic}/bin/borgmatic prune --list";
       IOSchedulingClass = "idle";
       CPUSchedulingPolicy = "idle";
+
+      # --- sandboxing ---------------------------------------------------
+      # borgmatic reads the repo passphrase + rsync.net SSH key and walks
+      # all of $HOME. It must READ the entire home (it's backing it up) so
+      # ProtectHome/ProtectSystem=strict can't apply, but the
+      # non-filesystem protections are all safe and meaningfully shrink
+      # the blast radius of a borg/ssh/borgmatic compromise.
+      NoNewPrivileges = true;
+      ProtectKernelTunables = true;
+      ProtectKernelModules = true;
+      ProtectKernelLogs = true;
+      ProtectControlGroups = true;
+      ProtectClock = true;
+      ProtectHostname = true;
+      RestrictNamespaces = true;
+      RestrictRealtime = true;
+      RestrictSUIDSGID = true;
+      LockPersonality = true;
+      # ssh to rsync.net (IPv4/IPv6) + unix sockets.
+      RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+      UMask = "0077";
     };
   };
 
