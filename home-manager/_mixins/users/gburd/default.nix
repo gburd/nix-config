@@ -1,4 +1,4 @@
-{ lib, hostname, inputs, platform, config, pkgs, ... }:
+{ lib, hostname, inputs, platform, config, pkgs, desktop ? null, ... }:
 let
   systemInfo = lib.splitString "-" platform;
   systemType = builtins.elemAt systemInfo 1;
@@ -120,7 +120,13 @@ in
   # To declaratively enable and configure, use of modules like home-manager you
   # are required to configure dconf settings. (HINT: use `dconf watch /` to
   # discover what to put here)
-  dconf = {
+  #
+  # Only enable on desktop hosts — on headless hosts (meh, servers) the
+  # session bus that activates ca.desrt.dconf doesn't exist and home-manager's
+  # `dconfSettings` activation step would abort the entire activate run
+  # mid-way (silently dropping every step after it: setupLitellm,
+  # installHermesAgent, sops-nix, …). Guard with the `desktop` specialArg.
+  dconf = lib.mkIf (builtins.isString desktop) {
     enable = true;
     settings = {
       "org/gnome/shell" = {

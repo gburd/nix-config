@@ -1,5 +1,11 @@
-{ username, ... }: {
-  imports = [
+{ desktop ? null, lib, username, ... }: {
+  # Desktop-app modules (tilix, audio-recorder, celluloid, etc.) bring in
+  # dconf settings that require the GNOME session bus at activation time.
+  # On headless hosts (meh, servers) those activations abort the entire
+  # home-manager activate run mid-way, dropping every step after
+  # `dconfSettings` (setupLitellm, installHermesAgent, sops-nix, …). Gate
+  # all desktop imports on `desktop` being set.
+  imports = lib.optionals (builtins.isString desktop) [
     ../../../desktop/audio-recorder.nix
     ../../../desktop/celluloid.nix
     ../../../desktop/dconf-editor.nix

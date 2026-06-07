@@ -104,14 +104,16 @@ let
       exit 78
     fi
 
-    # Make pipx-installed C++ extensions (tokenizers, numpy, etc.) find
-    # their shared libs via nix-ld on NixOS. On non-NixOS hosts (arnold,
-    # Fedora + Determinate Nix), libstdc++ is in /usr/lib64 already and the
-    # standard linker path resolves it; LD_LIBRARY_PATH stays unset to
-    # avoid shadowing the system libs.
-    if [ -d /run/current-system/sw/share/nix-ld/lib ]; then
-      export LD_LIBRARY_PATH="''${NIX_LD_LIBRARY_PATH:-/run/current-system/sw/share/nix-ld/lib}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-    fi
+    # pipx-installed extensions (tokenizers, numpy, ...) need libstdc++.
+    # Bake the Nix-store path at eval time so this works uniformly:
+    #   - on NixOS the system has libstdc++ at /run/current-system/... too,
+    #     but using the eval-time path avoids depending on it,
+    #   - on non-NixOS (arnold, Fedora + Determinate Nix) the Nix-built
+    #     pipx Python doesn't search /usr/lib64, so we MUST point at the
+    #     Nix-store libstdc++ explicitly (the `if [ -d nix-ld ]` guard
+    #     would otherwise leave LD_LIBRARY_PATH unset and tokenizers
+    #     fails to import).
+    export LD_LIBRARY_PATH="${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib pkgs.zlib ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     export AWS_BEARER_TOKEN_BEDROCK="$(${pkgs.coreutils}/bin/cat "$BEARER_FILE")"
     export AWS_REGION="${cfg.region}"
     export LITELLM_MASTER_KEY="$(${pkgs.coreutils}/bin/cat "$MASTER_FILE")"
