@@ -41,34 +41,78 @@ let
   #     these inference profiles regardless of the request shape.
   defaultModels = [
     # Adaptive-thinking models (Opus 4.6+, Sonnet 4.6, Haiku 4.5+)
-    { name = "claude-opus-4-8";   bedrock = "us.anthropic.claude-opus-4-8";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; }
-    { name = "claude-opus-4-7";   bedrock = "us.anthropic.claude-opus-4-7";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; }
-    { name = "claude-opus-4-6";   bedrock = "us.anthropic.claude-opus-4-6-v1";           converse = true; thinkingMode = "adaptive"; effort = "xhigh"; }
-    { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6";            converse = true; thinkingMode = "adaptive"; }
+    #
+    # maxInput  = context window (input-token ceiling on Bedrock)
+    # maxOutput = output-token ceiling. We set max_tokens to maxOutput so
+    #             agents get the model's full generation budget rather
+    #             than a flat 32000. budget_tokens (legacy thinking) still
+    #             fits because it's carved out of maxOutput, not on top.
+    { name = "claude-opus-4-8";   bedrock = "us.anthropic.claude-opus-4-8";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-opus-4-7";   bedrock = "us.anthropic.claude-opus-4-7";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-opus-4-6";   bedrock = "us.anthropic.claude-opus-4-6-v1";           converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6";            converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 64000; }
 
     # Legacy-thinking models (Opus 4.5/4.1, Sonnet 4.5, Haiku 4.5)
-    { name = "claude-opus-4-5";   bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; }
-    { name = "claude-opus-4-1";   bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; }
-    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; }
-    { name = "claude-haiku-4-5";  bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0";  converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; }
+    { name = "claude-opus-4-5";   bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-opus-4-1";   bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 32000; }
+    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-haiku-4-5";  bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0";  converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
 
     # DeepSeek
     { name = "deepseek-r1";       bedrock = "us.deepseek.r1-v1:0";                       converse = false; }
 
+    # DeepSeek
+    { name = "deepseek-r1";       bedrock = "us.deepseek.r1-v1:0";                       converse = false; maxInput = 128000; maxOutput = 32000; }
+
     # Meta Llama 3.x and 4.x
-    { name = "llama3-3-70b";      bedrock = "us.meta.llama3-3-70b-instruct-v1:0";        converse = false; }
-    { name = "llama4-maverick";   bedrock = "us.meta.llama4-maverick-17b-instruct-v1:0"; converse = false; }
-    { name = "llama4-scout";      bedrock = "us.meta.llama4-scout-17b-instruct-v1:0";    converse = false; }
+    { name = "llama3-3-70b";      bedrock = "us.meta.llama3-3-70b-instruct-v1:0";        converse = false; maxInput = 128000; maxOutput = 8192; }
+    { name = "llama4-maverick";   bedrock = "us.meta.llama4-maverick-17b-instruct-v1:0"; converse = false; maxInput = 1000000; maxOutput = 8192; }
+    { name = "llama4-scout";      bedrock = "us.meta.llama4-scout-17b-instruct-v1:0";    converse = false; maxInput = 3500000; maxOutput = 8192; }
 
     # Amazon Nova
-    { name = "nova-premier";      bedrock = "us.amazon.nova-premier-v1:0";               converse = false; }
-    { name = "nova-pro";          bedrock = "us.amazon.nova-pro-v1:0";                   converse = false; }
-    { name = "nova-lite";         bedrock = "us.amazon.nova-lite-v1:0";                  converse = false; }
-    { name = "nova-micro";        bedrock = "us.amazon.nova-micro-v1:0";                 converse = false; }
+    { name = "nova-premier";      bedrock = "us.amazon.nova-premier-v1:0";               converse = false; maxInput = 1000000; maxOutput = 32000; }
+    { name = "nova-pro";          bedrock = "us.amazon.nova-pro-v1:0";                   converse = false; maxInput = 300000; maxOutput = 5120; }
+    { name = "nova-lite";         bedrock = "us.amazon.nova-lite-v1:0";                  converse = false; maxInput = 300000; maxOutput = 5120; }
+    { name = "nova-micro";        bedrock = "us.amazon.nova-micro-v1:0";                 converse = false; maxInput = 128000; maxOutput = 5120; }
 
     # Mistral
-    { name = "mistral-pixtral-large"; bedrock = "us.mistral.pixtral-large-2502-v1:0";    converse = false; }
+    { name = "mistral-pixtral-large"; bedrock = "us.mistral.pixtral-large-2502-v1:0";    converse = false; maxInput = 128000; maxOutput = 8192; }
   ];
+
+  # ---------- thinking-policy map ----------------------------------------
+  # Per-model thinking policy, derived from the SAME cfg.models list that
+  # builds model_list (so the two can never drift). The pre-call hook
+  # (thinking_normalizer.py, below) reads this JSON and *rewrites* any
+  # incoming `thinking` block to whatever the target model actually
+  # accepts on Bedrock today. This protects ALL clients, not just the
+  # ones we configured with the right thinking level:
+  #
+  #   - A client (e.g. Pi's context-overflow recovery summarizer) that
+  #     blindly sends the legacy `thinking={type:enabled,budget_tokens:N}`
+  #     to claude-opus-4-8 would otherwise get a hard 400 from Bedrock:
+  #       '"thinking.type.enabled" is not supported for this model. Use
+  #        "thinking.type.adaptive" and "output_config.effort"…'
+  #     The hook silently maps enabled->adaptive for adaptive-only models.
+  #   - Conversely a client sending adaptive to an enabled-only model
+  #     (opus 4.5/4.1, sonnet 4.5, haiku 4.5) gets it mapped back to
+  #     enabled+budget.
+  #   - effort is stripped for models that reject output_config.
+  #
+  # policy mode values: "adaptive" | "adaptive+effort" | "enabled" | "none"
+  thinkingPolicy = builtins.listToAttrs (map
+    (m: {
+      inherit (m) name;
+      value = {
+        mode =
+          if (m.thinkingMode or null) == "adaptive" then
+            (if m ? effort then "adaptive+effort" else "adaptive")
+          else if (m.thinkingMode or null) == "enabled" then "enabled"
+          else "none";
+        effort = m.effort or null;
+        budget = m.thinkingBudget or 16000;
+      };
+    })
+    cfg.models);
 
   # The actual config for LiteLLM's proxy. Built as an attrset and emitted
   # as JSON, which is valid YAML — bypasses the indent hazards of
@@ -80,7 +124,10 @@ let
         litellm_params = {
           model = (if m.converse then "bedrock/converse/" else "bedrock/") + m.bedrock;
           aws_region_name = "os.environ/AWS_REGION";
-          max_tokens = 32000;
+          # Give each agent the model's full output-token budget rather
+          # than a flat 32000. Falls back to 32000 for any model without
+          # an explicit maxOutput.
+          max_tokens = m.maxOutput or 32000;
         } // (lib.optionalAttrs (m ? effort) {
           output_config = { inherit (m) effort; };
         }) // (lib.optionalAttrs (m ? thinkingMode) (
@@ -90,6 +137,17 @@ let
             { thinking = { type = "enabled"; budget_tokens = m.thinkingBudget or 16000; }; }
           else { }
         ));
+        # model_info overrides LiteLLM's built-in price/context DB so the
+        # /model/info and /v1/models endpoints advertise the *true*
+        # Bedrock context window + output ceiling for each alias. Clients
+        # that size their context budget from the proxy (Pi reads this)
+        # then won't trigger premature context-overflow recovery on the
+        # 1M-token Opus/Sonnet 4.6+ models.
+        model_info = {
+          max_input_tokens = m.maxInput or 200000;
+          max_output_tokens = m.maxOutput or 32000;
+          max_tokens = m.maxOutput or 32000;
+        };
       })
       cfg.models;
 
@@ -97,6 +155,10 @@ let
       drop_params = true;
       modify_params = true;
       request_timeout = 600;
+      # Custom pre-call hook that normalises the `thinking` param per
+      # model. Module path is resolved from config.yaml's dir (we drop
+      # thinking_normalizer.py alongside it at activation).
+      callbacks = [ "thinking_normalizer.normalizer_instance" ];
     };
 
     general_settings = {
@@ -148,6 +210,13 @@ let
     # No DB — keep it stateless on disk. Virtual keys are minted by the
     # mint-keys helper after the proxy is up and stored in
     # ~/.config/litellm/keys/<agent>.key (mode 600).
+    #
+    # cd into the config dir + add it to PYTHONPATH so LiteLLM can import
+    # the `thinking_normalizer` pre-call hook (referenced by
+    # litellm_settings.callbacks) as a top-level module.
+    CONFIG_DIR=${config.home.homeDirectory}/.config/litellm
+    cd "$CONFIG_DIR"
+    export PYTHONPATH="$CONFIG_DIR''${PYTHONPATH:+:$PYTHONPATH}"
     exec "$PIPX_BIN" --config "$CONFIG" --host 127.0.0.1 --port ${toString cfg.port}
   '';
 
@@ -192,6 +261,78 @@ let
   '';
 
   pipxBin = "${pkgs.pipx}/bin/pipx";
+
+  # ---------- thinking-normalizer pre-call hook --------------------------
+  # A LiteLLM CustomLogger whose async_pre_call_hook rewrites the request
+  # `thinking` block (and strips/keeps output_config.effort) to match the
+  # target model's policy from thinkingPolicy above. Registered via
+  # litellm_settings.callbacks. The policy map is injected as a JSON
+  # literal so the .py file is self-contained (no runtime file reads).
+  thinkingHookPy = ''
+    # Auto-generated by modules/home-manager/ai/litellm.nix. Do not edit.
+    #
+    # Normalises the per-request `thinking` parameter so that whatever a
+    # client sends, the proxy forwards only what the target Bedrock model
+    # accepts. Prevents hard 400s like:
+    #   '"thinking.type.enabled" is not supported for this model. Use
+    #    "thinking.type.adaptive" and "output_config.effort" ...'
+    # which e.g. Pi's context-overflow recovery summarizer triggers when
+    # it blindly sends legacy enabled-thinking to claude-opus-4-8.
+    import json
+    from litellm.integrations.custom_logger import CustomLogger
+
+    POLICY = json.loads(r"""${builtins.toJSON thinkingPolicy}""")
+
+    def _apply(model_name, data):
+        pol = POLICY.get(model_name)
+        if pol is None:
+            return  # unknown model (e.g. nova/llama) -> leave untouched
+        mode = pol.get("mode", "none")
+        if mode == "none":
+            # Model takes no thinking at all: strip both keys.
+            data.pop("thinking", None)
+            data.pop("output_config", None)
+            return
+        if mode in ("adaptive", "adaptive+effort"):
+            data["thinking"] = {"type": "adaptive"}
+            if mode == "adaptive+effort" and pol.get("effort"):
+                oc = data.get("output_config")
+                if not isinstance(oc, dict):
+                    oc = {}
+                oc["effort"] = pol["effort"]
+                data["output_config"] = oc
+            else:
+                # adaptive-only models (e.g. sonnet 4.6) reject effort.
+                data.pop("output_config", None)
+            return
+        if mode == "enabled":
+            # enabled-only models reject adaptive AND output_config.effort.
+            # Bedrock also requires max_tokens > thinking.budget_tokens,
+            # so if the client asked for a small max_tokens we cap the
+            # budget to leave at least 1024 tokens of headroom for the
+            # response (and never go below 1024 of thinking budget).
+            budget = int(pol.get("budget", 16000))
+            mt = data.get("max_tokens")
+            if isinstance(mt, int) and mt > 0:
+                budget = min(budget, max(1024, mt - 1024))
+            data["thinking"] = {"type": "enabled", "budget_tokens": budget}
+            data.pop("output_config", None)
+            return
+
+    class ThinkingNormalizer(CustomLogger):
+        async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type):
+            try:
+                model = data.get("model")
+                if isinstance(model, str):
+                    _apply(model, data)
+            except Exception:
+                # Never block a request because of normalisation; if the
+                # shape is unexpected, fall through and let Bedrock decide.
+                pass
+            return data
+
+    normalizer_instance = ThinkingNormalizer()
+  '';
 in
 {
   options.programs.ai.litellm = {
@@ -275,6 +416,15 @@ in
 ${configJson}
 LITELLM_CONFIG
       ${pkgs.coreutils}/bin/chmod 600 "$DIR/config.yaml"
+
+      # thinking_normalizer.py — the pre-call hook referenced by
+      # litellm_settings.callbacks. Lives next to config.yaml; the proxy
+      # is launched with cwd=$DIR (and $DIR on PYTHONPATH) so LiteLLM can
+      # import it as the top-level module `thinking_normalizer`.
+      ${pkgs.coreutils}/bin/cat > "$DIR/thinking_normalizer.py" <<'LITELLM_HOOK'
+${thinkingHookPy}
+LITELLM_HOOK
+      ${pkgs.coreutils}/bin/chmod 600 "$DIR/thinking_normalizer.py"
 
       # Install / upgrade litellm[proxy] via pipx, pinned to our commit.
       export PATH="${pkgs.pipx}/bin:${pkgs.coreutils}/bin:$HOME/.nix-profile/bin:$PATH"

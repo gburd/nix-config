@@ -33,7 +33,12 @@ const supportsImage = (id: string) =>
   id.includes("nova-premier") ||
   id.includes("pixtral") ||
   id.includes("llama4");
-const contextFor = (id: string) => {
+
+// Fallback context/output sizes used only when the proxy's /model/info
+// doesn't carry explicit values for a model. The proxy (litellm.nix) sets
+// model_info.max_input_tokens / max_output_tokens for every model, so these
+// are last-resort defaults to keep the extension from ever under-sizing.
+const fallbackContextFor = (id: string) => {
   if (isClaude(id)) return 200_000;
   if (id.includes("nova")) return 300_000;
   if (id.includes("llama")) return 128_000;
@@ -64,6 +69,39 @@ export default async function (pi: ExtensionAPI) {
     return;
   }
 
+  // Pull the authoritative per-model context + output ceilings from the
+  // proxy's /model/info (litellm.nix sets model_info.max_input_tokens /
+  // max_output_tokens for every alias). /v1/models only lists ids, so we
+  // join the two by model_name. If /model/info is unreachable we fall
+  // back to the heuristic sizes below.
+  const infoByName = new Map<
+    string,
+    { maxInput?: number; maxOutput?: number }
+  >();
+  try {
+    const infoResp = await fetch(`${LITELLM_URL.replace(/\/v1$/, "")}/model/info`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (infoResp.ok) {
+      const infoJson = (await infoResp.json()) as {
+        data?: Array<{
+          model_name?: string;
+          model_info?: { max_input_tokens?: number; max_output_tokens?: number };
+        }>;
+      };
+      for (const row of infoJson.data ?? []) {
+        if (row.model_name) {
+          infoByName.set(row.model_name, {
+            maxInput: row.model_info?.max_input_tokens,
+            maxOutput: row.model_info?.max_output_tokens,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    pi.log?.(`litellm-extension: /model/info unreachable (${(err as Error).message}); using heuristic context sizes`);
+  }
+
   pi.registerProvider("litellm", {
     baseUrl: LITELLM_URL,
     // `!command` form: pi runs cat each time it needs the key, so a
@@ -71,17 +109,23 @@ export default async function (pi: ExtensionAPI) {
     // restart. Cheap (cat is fast, file is mode 600).
     apiKey: `!cat ${KEY_FILE}`,
     api: "openai-completions",
-    models: payload.data.map((m) => ({
-      id: m.id,
-      name: m.id,
-      reasoning: isReasoning(m.id),
-      input: supportsImage(m.id) ? ["text", "image"] : ["text"],
-      // Cost is 0 because we pay AWS directly for Bedrock; the proxy is local.
-      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-      contextWindow: contextFor(m.id),
-      // Matches litellm.nix's max_tokens; LiteLLM clamps to model ceiling.
-      maxTokens: 32_000,
-    })),
+    models: payload.data.map((m) => {
+      const info = infoByName.get(m.id);
+      return {
+        id: m.id,
+        name: m.id,
+        reasoning: isReasoning(m.id),
+        input: supportsImage(m.id) ? ["text", "image"] : ["text"],
+        // Cost is 0 because we pay AWS directly for Bedrock; the proxy is local.
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        // True context window from the proxy (1M for Opus/Sonnet 4.6+,
+        // 200K for legacy Claude, etc.), falling back to a heuristic.
+        contextWindow: info?.maxInput ?? fallbackContextFor(m.id),
+        // Full output budget from the proxy; the proxy itself also caps
+        // max_tokens per model, so this just lets pi plan accurately.
+        maxTokens: info?.maxOutput ?? 32_000,
+      };
+    }),
   });
 
   pi.log?.(`litellm-extension: registered ${payload.data.length} models from ${LITELLM_URL}`);
