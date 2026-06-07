@@ -486,6 +486,42 @@ LITELLM_HOOK
         # Keep stderr/stdout in the journal under the user manager.
         StandardOutput = "journal";
         StandardError = "journal";
+
+        # --- sandboxing -------------------------------------------------
+        # The proxy is a long-running, network-listening Python process
+        # that holds the AWS bearer token + LiteLLM master key in memory.
+        # Lock it down with systemd's sandbox so a compromise can't
+        # escalate or rummage through the wider system. We can't use
+        # ProtectHome (it reads ~/.config/litellm and the pipx venv in
+        # ~/.local), but everything else applies:
+        NoNewPrivileges = true;
+        ProtectSystem = "strict"; # whole FS read-only…
+        ReadWritePaths = [
+          # …except the bits it genuinely writes: per-agent keyfiles
+          # (ExecStartPost) and any litellm runtime state/cache.
+          "%h/.config/litellm"
+          "%h/.cache"
+        ];
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectKernelLogs = true;
+        ProtectControlGroups = true;
+        ProtectClock = true;
+        ProtectHostname = true;
+        ProtectProc = "invisible";
+        RestrictNamespaces = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        LockPersonality = true;
+        MemoryDenyWriteExecute = false; # CPython JITs/compiles; needs W^X off
+        # Only the address families the proxy actually uses (loopback +
+        # outbound HTTPS to Bedrock over IPv4/IPv6 + unix sockets).
+        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
+        SystemCallErrorNumber = "EPERM";
+        # Soft resource ceiling so a runaway request can't OOM the box.
+        MemoryMax = "4G";
+        UMask = "0077";
       };
       Install = {
         # Start with the user's session (default.target). Doesn't need a
