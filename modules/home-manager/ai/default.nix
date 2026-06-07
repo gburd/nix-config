@@ -1,7 +1,7 @@
 { ... }:
 {
   imports = [
-    ./bedrock.nix
+    ./claude.nix
     ./codex.nix
     ./hermes.nix
     ./litellm.nix

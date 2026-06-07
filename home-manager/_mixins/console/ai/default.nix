@@ -1,15 +1,11 @@
 { config, pkgs, ... }:
 {
-  # Amazon Bedrock and MCP Server configuration
+  # All AI agents route through the local LiteLLM proxy
+  # (modules/home-manager/ai/litellm.nix). The proxy is the single
+  # consumer of the AWS Bedrock bearer token from sops-nix; agents
+  # talk to it on 127.0.0.1:4000 with per-agent virtual keys minted at
+  # activation in ~/.config/litellm/keys/<agent>.key.
   programs.ai = {
-    bedrock = {
-      enable = true;
-      region = "us-east-1";
-      profile = "default";
-      credentialsFile = config.sops.secrets."aws/credentials".path or null;
-      bearerTokenFile = config.sops.secrets."aws/bearer_token_bedrock".path or null;
-    };
-
     # Steering files (coding standards, Rust conventions, AWS patterns)
     steering = {
       enable = true;
@@ -31,22 +27,22 @@
       };
     };
 
-    # Maki agent configuration
+    # Per-agent enable flags. Each agent's nix module wires it to the
+    # LiteLLM proxy and reads its key from
+    # ~/.config/litellm/keys/<agent>.key. No per-agent AWS env exports
+    # remain.
+    claude.enable = true;
+    codex.enable = true;
+    hermes.enable = true;
     maki.enable = true;
-
-    # Pi coding agent (pi.dev)
     pi.enable = true;
 
-    # OpenAI Codex agent
-    codex.enable = true;
-
-    # Hermes Agent (NousResearch self-improving agent, installed via pipx;
-    # uses the same AWS_BEARER_TOKEN_BEDROCK as the other agents).
-    hermes.enable = true;
-
-    # LiteLLM Bedrock proxy (per-host, loopback only). All agents route
-    # through this; the proxy is the only consumer of the bearer token.
-    # See modules/home-manager/ai/litellm.nix.
+    # LiteLLM Bedrock proxy (per-host, loopback only). Holds the
+    # bearer token from sops-nix at
+    # ~/.config/claude-code/.bearer_token (per-host sops.secrets in
+    # home-manager/_mixins/users/gburd/hosts/<host>.nix); mints
+    # per-agent virtual keys at activation. See
+    # modules/home-manager/ai/litellm.nix.
     litellm.enable = true;
 
     # MCP Server configuration
