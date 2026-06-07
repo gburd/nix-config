@@ -1,5 +1,12 @@
-# Terax AI — built from source with AWS Bedrock bearer-token support patch
-# (GitHub issue #138 tracks adding this upstream; drop the patch once merged)
+# Terax AI - vanilla upstream v0.7.3 with our local Linux blank-screen render
+# fix only. Bedrock connectivity is no longer carried as a fork-patch; agents
+# (incl. Terax) connect to AWS Bedrock through the local LiteLLM proxy on
+# 127.0.0.1:4000 (modules/home-manager/ai/litellm.nix). On first launch,
+# configure Terax once via Settings -> AI -> openai-compatible:
+#   Base URL: http://127.0.0.1:4000/v1
+#   API Key:  (contents of ~/.config/litellm/keys/terax.key)
+# Terax persists this in its own Tauri keystore so the manual step is
+# one-shot.
 #
 # First-time hash bootstrap (pnpmDeps.hash):
 #   nix build .#terax-ai 2>&1 | grep "got:"
@@ -34,7 +41,7 @@ let
     rev = "v${version}";
     hash = "sha256-yy48tMW5XadrDNaqSBApgGl1LgduevqIUXsDiv5ejMk=";
   };
-  patches = [ ./bedrock.patch ./linux-render-fixes.patch ];
+  patches = [ ./linux-render-fixes.patch ];
 in
 rustPlatform.buildRustPackage {
   inherit pname version src patches;
@@ -52,7 +59,7 @@ rustPlatform.buildRustPackage {
   pnpmDeps = pnpm.fetchDeps {
     inherit pname version src patches;
     fetcherVersion = 3;
-    hash = "sha256-VpYFyylvwVqGF5P9bxWFrh5LdDJ0HVk8xuSp03yCsVU=";
+    hash = "sha256-1W/WQN5pfDr/Tqx40iqVNvHTVKvxY3DBT38F3ycuaSc=";
   };
 
   nativeBuildInputs = [
