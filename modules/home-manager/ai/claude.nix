@@ -96,7 +96,7 @@ in
         ${pkgs.coreutils}/bin/mv "$TMP" "$SETTINGS"
 
       ${pkgs.coreutils}/bin/chmod 600 "$SETTINGS"
-      echo "claude: patched $SETTINGS env to route via LiteLLM ($model=${cfg.defaultModel}, fast=${cfg.fastModel})"
+      echo "claude: patched $SETTINGS env to route via LiteLLM (model=${cfg.defaultModel}, fast=${cfg.fastModel})"
     '';
   };
 }
