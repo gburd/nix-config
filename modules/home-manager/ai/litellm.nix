@@ -14,22 +14,43 @@ let
 
   # ---------- model list -------------------------------------------------
   # Curated list of Bedrock cross-region inference profiles useful for our
-  # agents. All Anthropic models go through the Converse API (most reliable
-  # tool-use path) with `output_config.effort: xhigh` so adaptive-thinking
-  # models (Opus 4.x) think at the model's ceiling by default; LiteLLM
-  # silently clamps to whatever the model actually supports.
+  # agents. Anthropic models go through the Converse API (most reliable
+  # tool-use path); per-model `thinking` and `effort` reflect what each
+  # specific model actually accepts on Bedrock today (probed empirically
+  # 2026-06-07). The combinations are NOT interchangeable:
+  #
+  #   - Opus 4.6 / 4.7 / 4.8 → thinking={type:adaptive} +
+  #     output_config.effort=xhigh. Adaptive lets the model decide whether
+  #     to think; xhigh biases it strongly toward thinking on hard
+  #     prompts. Reasoning text is redacted by Anthropic on Bedrock so
+  #     `reasoning_tokens` reads 0 in the OpenAI-compat response, but
+  #     `thinking_blocks` and `provider_specific_fields.reasoningContentBlocks`
+  #     show the model did engage thinking.
+  #
+  #   - Sonnet 4.6 → adaptive WITHOUT effort. The model rejects
+  #     `effort=xhigh` ("is not supported by this model") at the
+  #     LiteLLM-validation layer, so we omit output_config entirely.
+  #
+  #   - Opus 4.5 / 4.1, Sonnet 4.5, Haiku 4.5 → legacy `enabled` thinking
+  #     mode with explicit `budget_tokens`. These reject adaptive
+  #     ("adaptive thinking is not supported"). budget_tokens=16000 with
+  #     max_tokens=32000 leaves headroom for response text.
+  #
+  #   - Haiku 3-5 / Sonnet 4 → dropped: Bedrock returns
+  #     "Access denied. This Model is marked by provider as Legacy" for
+  #     these inference profiles regardless of the request shape.
   defaultModels = [
-    # Anthropic Claude — adaptive-thinking via Converse
-    { name = "claude-opus-4-8";   bedrock = "us.anthropic.claude-opus-4-8";              converse = true; effort = "xhigh"; }
-    { name = "claude-opus-4-7";   bedrock = "us.anthropic.claude-opus-4-7";              converse = true; effort = "xhigh"; }
-    { name = "claude-opus-4-6";   bedrock = "us.anthropic.claude-opus-4-6-v1";           converse = true; effort = "xhigh"; }
-    { name = "claude-opus-4-5";   bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0";converse = true; effort = "xhigh"; }
-    { name = "claude-opus-4-1";   bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0";converse = true; effort = "xhigh"; }
-    { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6";            converse = true; effort = "xhigh"; }
-    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; effort = "xhigh"; }
-    { name = "claude-sonnet-4";   bedrock = "us.anthropic.claude-sonnet-4-20250514-v1:0"; converse = true; effort = "xhigh"; }
-    { name = "claude-haiku-4-5";  bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0"; converse = true; effort = "xhigh"; }
-    { name = "claude-haiku-3-5";  bedrock = "us.anthropic.claude-3-5-haiku-20241022-v1:0"; converse = true; effort = "xhigh"; }
+    # Adaptive-thinking models (Opus 4.6+, Sonnet 4.6, Haiku 4.5+)
+    { name = "claude-opus-4-8";   bedrock = "us.anthropic.claude-opus-4-8";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; }
+    { name = "claude-opus-4-7";   bedrock = "us.anthropic.claude-opus-4-7";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; }
+    { name = "claude-opus-4-6";   bedrock = "us.anthropic.claude-opus-4-6-v1";           converse = true; thinkingMode = "adaptive"; effort = "xhigh"; }
+    { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6";            converse = true; thinkingMode = "adaptive"; }
+
+    # Legacy-thinking models (Opus 4.5/4.1, Sonnet 4.5, Haiku 4.5)
+    { name = "claude-opus-4-5";   bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; }
+    { name = "claude-opus-4-1";   bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; }
+    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; }
+    { name = "claude-haiku-4-5";  bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0";  converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; }
 
     # DeepSeek
     { name = "deepseek-r1";       bedrock = "us.deepseek.r1-v1:0";                       converse = false; }
@@ -62,7 +83,13 @@ let
           max_tokens = 32000;
         } // (lib.optionalAttrs (m ? effort) {
           output_config = { inherit (m) effort; };
-        });
+        }) // (lib.optionalAttrs (m ? thinkingMode) (
+          if m.thinkingMode == "adaptive" then
+            { thinking = { type = "adaptive"; }; }
+          else if m.thinkingMode == "enabled" then
+            { thinking = { type = "enabled"; budget_tokens = m.thinkingBudget or 16000; }; }
+          else { }
+        ));
       })
       cfg.models;
 

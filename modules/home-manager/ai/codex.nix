@@ -103,6 +103,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # codex CLI itself — nixpkgs ships it as `pkgs.codex`. Without this,
+    # the rendered ~/.codex/config.toml is dead bits.
+    home.packages = [ pkgs.codex ];
+
     home.file = {
       ".codex/config.toml".text = configToml;
       # Instructions deployed by steering.nix
