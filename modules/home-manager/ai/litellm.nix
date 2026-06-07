@@ -105,10 +105,13 @@ let
     fi
 
     # Make pipx-installed C++ extensions (tokenizers, numpy, etc.) find
-    # their shared libs via nix-ld. Falls back to the static path if
-    # NIX_LD_LIBRARY_PATH is unset (systemd-user services don't inherit
-    # the user's interactive env).
-    export LD_LIBRARY_PATH="''${NIX_LD_LIBRARY_PATH:-/run/current-system/sw/share/nix-ld/lib}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    # their shared libs via nix-ld on NixOS. On non-NixOS hosts (arnold,
+    # Fedora + Determinate Nix), libstdc++ is in /usr/lib64 already and the
+    # standard linker path resolves it; LD_LIBRARY_PATH stays unset to
+    # avoid shadowing the system libs.
+    if [ -d /run/current-system/sw/share/nix-ld/lib ]; then
+      export LD_LIBRARY_PATH="''${NIX_LD_LIBRARY_PATH:-/run/current-system/sw/share/nix-ld/lib}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    fi
     export AWS_BEARER_TOKEN_BEDROCK="$(${pkgs.coreutils}/bin/cat "$BEARER_FILE")"
     export AWS_REGION="${cfg.region}"
     export LITELLM_MASTER_KEY="$(${pkgs.coreutils}/bin/cat "$MASTER_FILE")"

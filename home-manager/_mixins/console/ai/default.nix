@@ -44,6 +44,11 @@
     # uses the same AWS_BEARER_TOKEN_BEDROCK as the other agents).
     hermes.enable = true;
 
+    # LiteLLM Bedrock proxy (per-host, loopback only). All agents route
+    # through this; the proxy is the only consumer of the bearer token.
+    # See modules/home-manager/ai/litellm.nix.
+    litellm.enable = true;
+
     # MCP Server configuration
     mcps = {
       enable = true;
