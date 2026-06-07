@@ -25,6 +25,16 @@
         kiro = true;
         claude = true;
       };
+      # Codex 0.92+ requires YAML frontmatter (\`---\nname: …\n---\`) at the
+      # top of every SKILL.md and emits a noisy warning per file when
+      # missing. The upstream codex branch of
+      # https://codeberg.org/ddx/skills.git ships plain markdown without
+      # frontmatter (current as of 2026-06-07), so codex flags every
+      # file at startup. Disable the codex branch deployment until
+      # upstream adds frontmatter — codex still has full access to the
+      # operator skills via ~/.codex/skills/.system/ and our local
+      # skills set.
+      skillsGit.branches.codex.enable = false;
     };
 
     # Per-agent enable flags. Each agent's nix module wires it to the

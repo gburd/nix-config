@@ -36,7 +36,7 @@ let
     env_key = "LITELLM_API_KEY"
 
     [mcp_servers.memelord]
-    command = "${pkgs.memelord or pkgs.writeShellScript "memelord-stub" "exec npx -y memelord \"$@\""}/bin/memelord"
+    command = "${pkgs.memelord or (pkgs.writeShellScriptBin "memelord" ''exec ${pkgs.nodejs}/bin/npx -y memelord "$@"'')}/bin/memelord"
     args = ["serve"]
     enabled = true
 
@@ -63,6 +63,18 @@ let
     command = "npx"
     args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
     enabled = true
+
+    # Trust the user's home as a project root. Codex 0.92+ classifies
+    # any directory containing .codex/config.toml as a "project" and
+    # disables that file's settings unless explicitly trusted; with
+    # cwd=$HOME the global ~/.codex/config.toml IS the project file,
+    # so without this entry codex prints a noisy warning at startup
+    # ("Project config.toml files are disabled in the following
+    # folders…") on every plain `codex` invocation from $HOME. Trusting
+    # $HOME silences the warning without enabling any extra capability
+    # since the global config is what we wrote in the first place.
+    [projects."${config.home.homeDirectory}"]
+    trust_level = "trusted"
   '';
 in
 {
@@ -99,6 +111,25 @@ in
       '';
     };
 
+    package = mkOption {
+      type = types.package;
+      default = pkgs.codex;
+      description = ''
+        Codex CLI package. Pinned to nixpkgs-25.11's codex (0.92.0)
+        deliberately: nixpkgs-unstable's codex (0.135.0) ships a
+        `client_metadata` field on every /v1/responses request that
+        Bedrock's Converse API rejects with
+          "client_metadata: Extra inputs are not permitted"
+        and LiteLLM's `drop_params=true` doesn't strip
+        (Bedrock-specific Converse field validation runs after the
+        OpenAI->Anthropic translation). Re-evaluate this pin once
+        either codex stops sending the field or LiteLLM's bedrock
+        adapter learns to drop it server-side. The version banner
+        ("Update available 0.92.0 -> 0.135.0") on startup is the
+        cosmetic price.
+      '';
+    };
+
     litellmUrl = mkOption {
       type = types.str;
       default = "http://127.0.0.1:4000/v1";
@@ -121,7 +152,7 @@ in
           echo "codex: ${litellmKey} not readable; is litellm.service running?" >&2
           exit 78  # EX_CONFIG
         fi
-        exec ${pkgs.codex}/bin/codex "$@"
+        exec ${cfg.package}/bin/codex "$@"
       '')
     ];
 
