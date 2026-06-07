@@ -4,6 +4,7 @@
     ./bedrock.nix
     ./codex.nix
     ./hermes.nix
+    ./litellm.nix
     ./lmstudio.nix
     ./maki.nix
     ./mcps.nix

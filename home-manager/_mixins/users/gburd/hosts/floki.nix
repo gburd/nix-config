@@ -22,6 +22,12 @@ with lib.hm.gvariant;
   # LMStudio NPU-accelerated local models (floki has Intel Arc NPU)
   programs.ai.lmstudio.enable = true;
 
+  # LiteLLM Bedrock proxy (per-host, loopback only). v1: enabled on floki
+  # only for verification. Once we've confirmed agents can route through
+  # it cleanly, this graduates to console/ai/default.nix and lands on meh
+  # + arnold automatically. See modules/home-manager/ai/litellm.nix.
+  programs.ai.litellm.enable = true;
+
   # GNOME configuration
   dconf.settings = {
     # Disable paste warnings in GNOME Console
