@@ -365,8 +365,18 @@ let
             return
 
     class ThinkingNormalizer(CustomLogger):
+        # Fields some clients send that Bedrock's Converse API rejects
+        # with "Extra inputs are not permitted" (validation runs AFTER
+        # LiteLLM's OpenAI->Anthropic translation, so drop_params can't
+        # catch them). codex >= 0.135 sends client_metadata on every
+        # /v1/responses request; strip these unconditionally so we can
+        # track the latest codex without Bedrock 400s.
+        _STRIP_FIELDS = ("client_metadata",)
+
         async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type):
             try:
+                for f in self._STRIP_FIELDS:
+                    data.pop(f, None)
                 model = data.get("model")
                 if isinstance(model, str):
                     _apply(model, data)

@@ -113,20 +113,18 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.codex;
+      default = pkgs.unstable.codex;
       description = ''
-        Codex CLI package. Pinned to nixpkgs-25.11's codex (0.92.0)
-        deliberately: nixpkgs-unstable's codex (0.135.0) ships a
+        Codex CLI package. Defaults to nixpkgs-unstable's codex (0.135+).
+        Earlier we pinned 25.11's 0.92.0 because unstable codex ships a
         `client_metadata` field on every /v1/responses request that
         Bedrock's Converse API rejects with
           "client_metadata: Extra inputs are not permitted"
-        and LiteLLM's `drop_params=true` doesn't strip
-        (Bedrock-specific Converse field validation runs after the
-        OpenAI->Anthropic translation). Re-evaluate this pin once
-        either codex stops sending the field or LiteLLM's bedrock
-        adapter learns to drop it server-side. The version banner
-        ("Update available 0.92.0 -> 0.135.0") on startup is the
-        cosmetic price.
+        and LiteLLM's `drop_params=true` doesn't strip it. That is now
+        handled server-side: the LiteLLM pre-call hook
+        (thinking_normalizer.py, _STRIP_FIELDS) drops client_metadata
+        from every request before it reaches Bedrock, so we can track
+        the latest codex. Override with pkgs.codex to fall back to 0.92.
       '';
     };
 
