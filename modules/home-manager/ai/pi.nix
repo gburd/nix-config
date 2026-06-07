@@ -88,6 +88,22 @@ in
         # extension at startup. The local LiteLLM proxy holds the actual
         # AWS bearer token; pi never sees it.
 
+        # Defensively unset any residual Bedrock / Anthropic plumbing
+        # that could short-circuit our routing or surface stale
+        # built-in providers in pi's TUI. arnold in particular had
+        # `AWS_PROFILE=asbxbedrock` cached in its systemd-user
+        # environment from a past manual setup; pi's built-in
+        # amazon-bedrock provider would then try to initialise and
+        # fail with "Region is missing" — a noisy red error in the TUI
+        # even though the LiteLLM provider was the actual default.
+        unset AWS_BEARER_TOKEN_BEDROCK \
+              AWS_PROFILE AWS_DEFAULT_PROFILE \
+              AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
+              AWS_SDK_LOAD_CONFIG \
+              ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN ANTHROPIC_BASE_URL \
+              CLAUDE_CODE_USE_BEDROCK CLAUDE_CODE_SKIP_BEDROCK_AUTH \
+              ANTHROPIC_BEDROCK_BASE_URL
+
         # Telemetry hardening: disable the anonymous install/update ping
         # to pi.dev (belt-and-suspenders with enableInstallTelemetry=false
         # in settings.json).
