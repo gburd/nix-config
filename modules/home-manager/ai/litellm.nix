@@ -181,12 +181,34 @@ let
       # model. Module path is resolved from config.yaml's dir (we drop
       # thinking_normalizer.py alongside it at activation).
       callbacks = [ "thinking_normalizer.normalizer_instance" ];
+      # litellm module attr (getattr(litellm, ...)): when a custom_auth
+      # function returns a UserAPIKeyAuth, also run the post-auth checks
+      # (expiry + key-level model allowlist). Paired with
+      # general_settings.custom_auth_run_common_checks to enforce the
+      # per-agent .models scoping our custom_auth stamps on.
+      enable_post_custom_auth_checks = true;
     };
 
     general_settings = {
       # Master key is read at runtime from a per-host file via the
       # systemd ExecStart wrapper, not committed to the Nix store or sops.
       master_key = "os.environ/LITELLM_MASTER_KEY";
+      # DB-free per-agent key validation + model scoping. custom_auth.py
+      # (dropped next to config.yaml at activation) reads the live
+      # per-agent keyfiles, validates the presented key, and returns a
+      # UserAPIKeyAuth carrying that agent's allowed-model list so
+      # LiteLLM's can_key_call_model enforces scoping natively — no
+      # PostgreSQL/Prisma needed.
+      custom_auth = "custom_auth.user_auth";
+      # Run LiteLLM's post-auth checks (incl. key-level model allowlist)
+      # on the object our custom_auth returns, so per-key .models scoping
+      # is enforced via can_key_call_model. NOTE: the trigger flag
+      # `enable_post_custom_auth_checks` is a litellm MODULE attribute
+      # (read via getattr(litellm, ...)), so it lives in litellm_settings
+      # below — NOT here. This general_settings flag turns on the
+      # model-access check (_enforce_key_and_fallback_model_access)
+      # inside that post-auth path.
+      custom_auth_run_common_checks = true;
     };
   };
 
@@ -242,43 +264,39 @@ let
     exec "$PIPX_BIN" --config "$CONFIG" --host 127.0.0.1 --port ${toString cfg.port}
   '';
 
-  # ExecStartPost: ensures every agent has a key at
-  # ~/.config/litellm/keys/<agent>.key (mode 600). v1: copies the master
-  # key (LiteLLM's /key/generate needs a DB backend, not yet wired up;
-  # for a single-user loopback proxy with 6 agents the master-as-shared
-  # key is functionally equivalent in security to per-agent virtual keys
-  # since all agents are local processes belonging to the same user).
-  # When we want per-agent budgets/rate-limits we'll add a sqlite/postgres
-  # backend and switch this to /key/generate calls; the agent wrappers
-  # already read from these stable per-agent paths so the migration is
-  # a no-op on the consumer side.
-  mintKeysScript = pkgs.writeShellScript "litellm-mint-keys" ''
+  # ExecStartPost: wait for the proxy to be ready, then self-test that
+  # each agent's distinct key authenticates (and is correctly scoped).
+  # Keys themselves are provisioned at *activation* (see
+  # home.activation.setupLitellm) — DB-free, validated by custom_auth.py.
+  # This just surfaces breakage in the journal; it never blocks startup.
+  mintKeysScript = pkgs.writeShellScript "litellm-verify-keys" ''
     set -eu
     KEYS_DIR=${config.home.homeDirectory}/.config/litellm/keys
-    MASTER_FILE=${cfg.masterKeyFile}
     CURL=${pkgs.curl}/bin/curl
+    BASE="http://127.0.0.1:${toString cfg.port}"
 
-    ${pkgs.coreutils}/bin/mkdir -p "$KEYS_DIR"
-    ${pkgs.coreutils}/bin/chmod 700 "$KEYS_DIR"
-
-    # Wait up to 60s for the proxy to become ready (idempotent on restart).
-    for i in $(${pkgs.coreutils}/bin/seq 1 60); do
-      if "$CURL" -sf "http://127.0.0.1:${toString cfg.port}/health/readiness" >/dev/null 2>&1; then
+    # Wait up to 60s for the proxy to become ready.
+    for _ in $(${pkgs.coreutils}/bin/seq 1 60); do
+      if "$CURL" -sf "$BASE/health/readiness" >/dev/null 2>&1; then
         break
       fi
       sleep 1
     done
 
-    MASTER="$(${pkgs.coreutils}/bin/cat "$MASTER_FILE")"
     for agent in ${lib.concatStringsSep " " cfg.agents}; do
       KEY_FILE="$KEYS_DIR/$agent.key"
-      if [ -s "$KEY_FILE" ]; then
-        # Already provisioned. Don't churn timestamps; idempotent re-runs.
+      if [ ! -s "$KEY_FILE" ]; then
+        echo "litellm-verify-keys: WARN no key for $agent at $KEY_FILE" >&2
         continue
       fi
-      printf '%s' "$MASTER" > "$KEY_FILE"
-      ${pkgs.coreutils}/bin/chmod 600 "$KEY_FILE"
-      echo "litellm-mint-keys: provisioned $KEY_FILE"
+      KEY="$(${pkgs.coreutils}/bin/cat "$KEY_FILE")"
+      # /v1/models is auth-gated; a 200 proves the key is accepted by
+      # custom_auth. (Model-scoping is enforced per-request by LiteLLM.)
+      if "$CURL" -sf "$BASE/v1/models" -H "Authorization: Bearer $KEY" >/dev/null 2>&1; then
+        echo "litellm-verify-keys: $agent key OK"
+      else
+        echo "litellm-verify-keys: WARN $agent key REJECTED by proxy" >&2
+      fi
     done
   '';
 
@@ -360,6 +378,78 @@ let
 
     normalizer_instance = ThinkingNormalizer()
   '';
+
+  # ---------- DB-free per-agent auth + model scoping ---------------------
+  # LiteLLM only natively authenticates the single master key when no DB
+  # is configured. To get DISTINCT per-agent keys (each scoped to a set
+  # of models) WITHOUT standing up PostgreSQL/Prisma, we register a
+  # custom_auth function (general_settings.custom_auth). LiteLLM calls it
+  # with (request, api_key); we look the key up in a map and return a
+  # UserAPIKeyAuth carrying that agent's allowed `models`. LiteLLM's
+  # can_key_call_model check then enforces scoping for us.
+  #
+  # The key *values* are NOT baked into the Nix store: the function reads
+  # the live per-agent keyfiles (~/.config/litellm/keys/<agent>.key) at
+  # import time. Only the agent->models policy (model NAMES, not secrets)
+  # is embedded. The master key still authenticates as full admin.
+  keysDir = "${config.home.homeDirectory}/.config/litellm/keys";
+  # agent -> [models] (empty list / absent => all models allowed)
+  authPolicyJson = builtins.toJSON (lib.listToAttrs (map
+    (a: lib.nameValuePair a (cfg.perAgentModels.${a} or [ ]))
+    cfg.agents));
+  customAuthPy = ''
+    # Auto-generated by modules/home-manager/ai/litellm.nix. Do not edit.
+    # DB-free per-agent key auth + model scoping. Registered via
+    # general_settings.custom_auth = "custom_auth.user_auth".
+    import json, os
+    from litellm.proxy._types import UserAPIKeyAuth
+
+    KEYS_DIR = ${builtins.toJSON keysDir}
+    AGENTS = json.loads(r"""${builtins.toJSON cfg.agents}""")
+    POLICY = json.loads(r"""${authPolicyJson}""")
+    MASTER = os.environ.get("LITELLM_MASTER_KEY", "")
+
+    def _read(path):
+        try:
+            with open(path, "r") as fh:
+                return fh.read().strip()
+        except Exception:
+            return None
+
+    def _resolve(api_key):
+        """Return (agent_name, [allowed_models]) for a presented key, or
+        None if the key is unknown. Keyfiles are read fresh each call so
+        re-provisioned keys take effect without a proxy restart."""
+        if not api_key:
+            return None
+        # Master key => admin, all models.
+        if MASTER and api_key == MASTER:
+            return ("admin", [])
+        for agent in AGENTS:
+            kf = os.path.join(KEYS_DIR, agent + ".key")
+            if _read(kf) == api_key:
+                models = POLICY.get(agent) or []
+                return (agent, models)
+        return None
+
+    async def user_auth(request, api_key):
+        # LiteLLM may pass "Bearer sk-..."; normalise.
+        if isinstance(api_key, str) and api_key.lower().startswith("bearer "):
+            api_key = api_key[7:].strip()
+        resolved = _resolve(api_key)
+        if resolved is None:
+            raise Exception("Invalid LiteLLM API key")
+        agent, models = resolved
+        kwargs = {
+            "api_key": api_key,
+            "key_alias": "agent-" + agent,
+            "metadata": {"agent": agent, "managed_by": "nix-config litellm.nix"},
+        }
+        # Empty list => unrestricted (don't set .models so no scoping).
+        if models:
+            kwargs["models"] = models
+        return UserAPIKeyAuth(**kwargs)
+  '';
 in
 {
   options.programs.ai.litellm = {
@@ -393,8 +483,8 @@ in
       description = ''
         Path to the per-host LiteLLM admin master key. Generated on first
         activation if missing (32-byte random hex, mode 600); never
-        leaves the host. Used only for /key/generate (minting per-agent
-        virtual keys); agents never see this value.
+        leaves the host. Authenticates as full admin (all models). Agents
+        use their own distinct per-agent keys, not this value.
       '';
     };
 
@@ -412,9 +502,43 @@ in
       type = types.listOf types.str;
       default = [ "claude" "pi" "maki" "hermes" "codex" "terax" ];
       description = ''
-        Agent identifiers. One virtual key per identifier is minted by
-        the mint-keys helper and stored at
-        ~/.config/litellm/keys/<agent>.key (mode 600).
+        Agent identifiers. Each gets a DISTINCT API key at
+        ~/.config/litellm/keys/<agent>.key (mode 600). Those keys are
+        validated DB-free by a custom_auth hook (custom_auth.py) that
+        also stamps each key's allowed-model list (perAgentModels) onto
+        the request, so LiteLLM enforces per-agent model scoping
+        natively — no PostgreSQL/Prisma required.
+      '';
+    };
+
+    perAgentModels = mkOption {
+      type = types.attrsOf (types.listOf types.str);
+      default = { };
+      description = ''
+        Optional per-agent model allow-list. Maps an agent identifier to
+        the model_name values its key may call. Agents absent here (or
+        mapped to [ ]) may call ALL models. Enforced by the custom_auth
+        hook + LiteLLM's can_key_call_model check.
+      '';
+    };
+
+    sopsKeyFiles = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      example = lib.literalExpression ''
+        {
+          pi = config.sops.secrets."litellm/pi".path;
+          claude = config.sops.secrets."litellm/claude".path;
+        }
+      '';
+      description = ''
+        Optional map of agent -> path of a sops-managed file containing
+        that agent's API key. When an agent appears here, its keyfile is
+        populated from the sops secret at activation instead of being
+        generated locally. Agents NOT listed get a locally-generated
+        random key (openssl rand). Either way the value never enters the
+        Nix store: the custom_auth hook reads the live keyfiles at
+        request time.
       '';
     };
   };
@@ -437,6 +561,38 @@ in
         echo "litellm: generated new master key at ${cfg.masterKeyFile}"
       fi
 
+      # Per-agent keys. Each agent gets a DISTINCT key at
+      # $DIR/keys/<agent>.key. Sops-backed agents (sopsKeyFiles) copy the
+      # decrypted secret; everyone else gets a locally-generated random
+      # token. Generated once and left stable across switches so we don't
+      # churn agent configs. The custom_auth hook validates these at
+      # request time and applies per-agent model scoping.
+      ${lib.concatMapStringsSep "\n" (agent:
+        let sops = cfg.sopsKeyFiles.${agent} or null; in
+        if sops != null then ''
+          # ${agent}: seed from sops secret (refresh on every switch so
+          # rotating the sops value propagates).
+          if [ -r "${sops}" ]; then
+            ${pkgs.coreutils}/bin/install -m600 /dev/null "$DIR/keys/${agent}.key"
+            ${pkgs.coreutils}/bin/cat "${sops}" | ${pkgs.coreutils}/bin/tr -d '\n' > "$DIR/keys/${agent}.key"
+          elif [ ! -s "$DIR/keys/${agent}.key" ]; then
+            echo "litellm: WARN sops key for ${agent} (${sops}) not readable; generating local key" >&2
+            ${pkgs.openssl}/bin/openssl rand -hex 32 > "$DIR/keys/${agent}.key"
+            ${pkgs.coreutils}/bin/chmod 600 "$DIR/keys/${agent}.key"
+          fi
+        '' else ''
+          # ${agent}: locally-generated random key (sk- prefixed so it
+          # reads like an API key, and so we can detect+migrate the
+          # legacy shared-master-key copies which had no prefix).
+          # (Re)generate if missing, empty, or not yet in sk- form.
+          if [ ! -s "$DIR/keys/${agent}.key" ] || \
+             ! ${pkgs.gnugrep}/bin/grep -q '^sk-' "$DIR/keys/${agent}.key"; then
+            ${pkgs.coreutils}/bin/printf 'sk-%s' "$(${pkgs.openssl}/bin/openssl rand -hex 24)" > "$DIR/keys/${agent}.key"
+            ${pkgs.coreutils}/bin/chmod 600 "$DIR/keys/${agent}.key"
+            echo "litellm: generated distinct key for ${agent}"
+          fi
+        '') cfg.agents}
+
       # config.yaml — generated, overwritten on every switch. JSON is
       # valid YAML, so we emit JSON to bypass any indent hazards.
       ${pkgs.coreutils}/bin/cat > "$DIR/config.yaml" <<'LITELLM_CONFIG'
@@ -452,6 +608,16 @@ LITELLM_CONFIG
 ${thinkingHookPy}
 LITELLM_HOOK
       ${pkgs.coreutils}/bin/chmod 600 "$DIR/thinking_normalizer.py"
+
+      # custom_auth.py — DB-free per-agent key validation + model
+      # scoping, referenced by general_settings.custom_auth. Reads the
+      # live per-agent keyfiles at request time (values never enter the
+      # Nix store). Imported as top-level module `custom_auth` (cwd=$DIR
+      # + $DIR on PYTHONPATH, same as the thinking hook).
+      ${pkgs.coreutils}/bin/cat > "$DIR/custom_auth.py" <<'LITELLM_AUTH'
+${customAuthPy}
+LITELLM_AUTH
+      ${pkgs.coreutils}/bin/chmod 600 "$DIR/custom_auth.py"
 
       # Install / upgrade litellm[proxy] via pipx, pinned to our commit.
       export PATH="${pkgs.pipx}/bin:${pkgs.coreutils}/bin:$HOME/.nix-profile/bin:$PATH"
@@ -479,7 +645,7 @@ LITELLM_HOOK
       Service = {
         Type = "simple";
         ExecStart = "${startWrapper}";
-        # After the proxy is up, mint per-agent virtual keys (idempotent).
+        # After the proxy is up, self-test that each agent key authenticates.
         ExecStartPost = "-${mintKeysScript}";
         Restart = "on-failure";
         RestartSec = 5;
