@@ -265,6 +265,17 @@ in
         default = true;
         description = "Enables the ~/.maki/mcp.toml output config file for Maki";
       };
+      pi = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Enables the ~/.config/mcp/mcp.json output config file for Pi.
+          Pi's MCP support (npm:pi-mcp-adapter) reads the user-global
+          standard MCP config from ~/.config/mcp/mcp.json (NOT ~/.mcp.json,
+          which it never looks at), so the `default` target alone leaves
+          Pi with zero servers.
+        '';
+      };
     };
 
     servers = {
@@ -445,6 +456,11 @@ in
       })
       (lib.mkIf cfg.targets.maki {
         ".maki/mcp.toml".text = makiMcpToml;
+      })
+      (lib.mkIf cfg.targets.pi {
+        # Pi's pi-mcp-adapter reads the user-global standard MCP config
+        # here. Same JSON shape as ~/.mcp.json; pi never reads ~/.mcp.json.
+        ".config/mcp/mcp.json".text = mcpJsonText;
       })
     ];
 

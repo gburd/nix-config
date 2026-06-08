@@ -10,6 +10,7 @@ with lib.hm.gvariant;
     ../../../services/borgmatic.nix
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
+    ../../../desktop/sublime-license.nix
     # Email and productivity services
     ../../../services/protonmail-bridge.nix
     ../../../services/vdirsyncer.nix
@@ -61,9 +62,6 @@ with lib.hm.gvariant;
       "cargo/crates_io_token" = { };
       "jetbrains/clion-key" = {
         path = "${config.home.homeDirectory}/.config/JetBrains/clion.key";
-      };
-      "sublime/merge-license" = {
-        path = "${config.home.homeDirectory}/.config/sublime-merge-license.bin";
       };
 
       # SSH key management (new)
@@ -144,27 +142,8 @@ with lib.hm.gvariant;
     ''
   );
 
-  # Activation script to link Sublime Merge license
-  home.activation.linkSublimeMergeLicense = lib.mkIf (config.sops.secrets ? "sublime/merge-license") (
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      MERGE_LICENSE="${config.sops.secrets."sublime/merge-license".path}"
-      MERGE_TARGET="${config.home.homeDirectory}/.config/sublime-merge/Local/License.sublime_license"
-
-      if [ -f "$MERGE_LICENSE" ]; then
-        # Create Local directory if it doesn't exist
-        mkdir -p "$(dirname "$MERGE_TARGET")"
-        # Remove existing file/symlink if it exists
-        if [ -e "$MERGE_TARGET" ] || [ -L "$MERGE_TARGET" ]; then
-          rm -f "$MERGE_TARGET"
-        fi
-        # Create symlink
-        ln -sf "$MERGE_LICENSE" "$MERGE_TARGET"
-        echo "Linked Sublime Merge license to $MERGE_TARGET"
-      else
-        echo "Warning: Sublime Merge license not found at $MERGE_LICENSE"
-      fi
-    ''
-  );
+  # Sublime Text + Merge licenses are deployed by
+  # ../../../desktop/sublime-license.nix (shared with arnold).
 
   # SSH key management with rotation support (replaces GPG signing with SSH)
   services.ssh-management = {

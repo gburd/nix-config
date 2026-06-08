@@ -63,6 +63,7 @@
         claude = true;
         kiro = true;
         maki = true;
+        pi = true;
       };
 
       servers = {

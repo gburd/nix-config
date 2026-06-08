@@ -6,6 +6,10 @@ with lib.hm.gvariant;
     # console and cli are imported by users/gburd/default.nix for all hosts
     ../../../console/ai         # AI tools (opt-in; sops `or null` fallbacks safe without sops)
     ../../../services/borgmatic.nix
+    # Sublime Text + Merge (GUI; arnold forwards X11) and their licenses
+    ../../../desktop/sublime.nix
+    ../../../desktop/sublime-merge.nix
+    ../../../desktop/sublime-license.nix
   ];
 
   # Sops secrets — reuses floki's secrets.yaml (encrypted to gburd-user age key)
