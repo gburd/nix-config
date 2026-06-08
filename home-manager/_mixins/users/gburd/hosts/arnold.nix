@@ -47,17 +47,23 @@ with lib.hm.gvariant;
 
   # arnold runs Fedora, whose /etc/ssh/ssh_config Includes
   # /etc/crypto-policies/back-ends/openssh.config. That file sets
-  # GSSAPIKexAlgorithms, which the Nix-built OpenSSH (10.3p1, compiled
-  # WITHOUT GSSAPI/Kerberos) does not recognise — so any git over SSH that
-  # uses the Nix ssh dies with "Bad configuration option:
-  # gssapikexalgorithms ... terminating" before it can connect, surfacing
-  # as the confusing "Could not read from remote repository". Fedora's own
-  # system ssh (/usr/bin/ssh, 10.2p1) is built WITH GSSAPI and parses the
-  # file fine, so point git at it. (This is NOT a 1Password problem; the
-  # 1P SSH agent at ~/.1password/agent.sock — already wired via
-  # IdentityAgent in ~/.ssh/config — signs fine once the desktop app is
+  # GSSAPIKexAlgorithms — GSSAPI *key exchange*, a Debian/Fedora downstream
+  # patch that is NOT in upstream OpenSSH. nixpkgs' default openssh is
+  # built without it (withKerberos defaults to false, and even with it the
+  # KexAlgorithms patch is absent), so the Nix ssh that git uses from its
+  # own closure fatals with "Bad configuration option: gssapikexalgorithms
+  # ... terminating" before it can connect — surfacing as the confusing
+  # "Could not read from remote repository".
+  #
+  # nixpkgs ships pkgs.openssh_gssapi (10.3p1 + Debian gssapi.patch), which
+  # DOES understand GSSAPIKexAlgorithms and parses Fedora's crypto-policies
+  # file fine. Point git at it (pure-Nix, no dependency on Fedora's
+  # /usr/bin/ssh) and make it the interactive ssh too. (This was never a
+  # 1Password fault; the 1P SSH agent at ~/.1password/agent.sock — wired
+  # via IdentityAgent in ~/.ssh/config — signs fine once the app is
   # unlocked.)
-  programs.git.extraConfig.core.sshCommand = "/usr/bin/ssh";
+  programs.ssh.package = pkgs.openssh_gssapi;
+  programs.git.extraConfig.core.sshCommand = "${pkgs.openssh_gssapi}/bin/ssh";
 
   # Arnold-specific SSH hosts
   programs.ssh.matchBlocks = {
