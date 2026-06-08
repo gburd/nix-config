@@ -90,6 +90,7 @@ with lib.hm.gvariant;
     # gcc / gdb / gnumake / pkg-config / ripgrep / tig / tree / cmake / autoconf / libtool provided by console
     # clang-tools / pyright / gopls / nixd / lldb / strace / ltrace / valgrind etc. provided by console/neovim
     # awscli2 / ssm-session-manager-plugin / flyctl provided by console/ai and console
+    _1password-cli  # `op` — headless 1Password CLI (desktop-app integration for SSH agent unlock)
     bash
     bison
     cfssl
