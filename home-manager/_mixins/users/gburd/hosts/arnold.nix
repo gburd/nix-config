@@ -45,6 +45,20 @@ with lib.hm.gvariant;
     AWS_PROFILE = "asbxbedrock";
   };
 
+  # arnold runs Fedora, whose /etc/ssh/ssh_config Includes
+  # /etc/crypto-policies/back-ends/openssh.config. That file sets
+  # GSSAPIKexAlgorithms, which the Nix-built OpenSSH (10.3p1, compiled
+  # WITHOUT GSSAPI/Kerberos) does not recognise — so any git over SSH that
+  # uses the Nix ssh dies with "Bad configuration option:
+  # gssapikexalgorithms ... terminating" before it can connect, surfacing
+  # as the confusing "Could not read from remote repository". Fedora's own
+  # system ssh (/usr/bin/ssh, 10.2p1) is built WITH GSSAPI and parses the
+  # file fine, so point git at it. (This is NOT a 1Password problem; the
+  # 1P SSH agent at ~/.1password/agent.sock — already wired via
+  # IdentityAgent in ~/.ssh/config — signs fine once the desktop app is
+  # unlocked.)
+  programs.git.extraConfig.core.sshCommand = "/usr/bin/ssh";
+
   # Arnold-specific SSH hosts
   programs.ssh.matchBlocks = {
     "agora-deploy" = lib.hm.dag.entryBefore [ "*" ] {
