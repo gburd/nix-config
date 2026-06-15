@@ -42,11 +42,24 @@ const supportsImage = (id: string) =>
 const isLegacyBedrockId = (id: string) => id.includes(".");
 
 // Fallback context/output sizes used only when the proxy's /model/info
-// doesn't carry explicit values for a model. The proxy (litellm.nix) sets
+// doesn't carry explicit values for a model (e.g. the proxy was restarting
+// when pi started and the fetch errored). The proxy (litellm.nix) sets
 // model_info.max_input_tokens / max_output_tokens for every model, so these
 // are last-resort defaults to keep the extension from ever under-sizing.
+//
+// IMPORTANT: the big-context Claudes we actually use (Opus 4.6+, Sonnet 4.6)
+// have a 1M window. A flat 200k Claude fallback caused perpetual
+// compaction (trigger = window - reserveTokens ≈ 184k) whenever the proxy
+// info fetch missed — deep sessions blew 184k constantly and each
+// summarization on that context took minutes ("last 5% takes hours").
+// Size the Claude fallback to the model's real window.
 const fallbackContextFor = (id: string) => {
-  if (isClaude(id)) return 200_000;
+  if (isClaude(id)) {
+    // opus 4.6/4.7/4.8 + sonnet 4.6 are 1M; opus 4.5/4.1, sonnet 4.5,
+    // haiku 4.5 are 200k.
+    if (/opus-4-(6|7|8)|sonnet-4-6/.test(id)) return 1_000_000;
+    return 200_000;
+  }
   if (id.includes("nova")) return 300_000;
   if (id.includes("llama")) return 128_000;
   return 128_000;
@@ -86,10 +99,23 @@ export default async function (pi: ExtensionAPI) {
     { maxInput?: number; maxOutput?: number }
   >();
   try {
-    const infoResp = await fetch(`${LITELLM_URL.replace(/\/v1$/, "")}/model/info`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    if (infoResp.ok) {
+    // Retry a couple times with a short timeout: the proxy may be mid-restart
+    // when pi launches, and silently falling back to the heuristic window
+    // (previously a flat 200k for Claude) caused perpetual compaction.
+    let infoResp: Response | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        infoResp = await fetch(`${LITELLM_URL.replace(/\/v1$/, "")}/model/info`, {
+          headers: { Authorization: `Bearer ${key}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (infoResp.ok) break;
+      } catch {
+        // network error / timeout — wait briefly and retry
+        await new Promise((r) => setTimeout(r, 750));
+      }
+    }
+    if (infoResp && infoResp.ok) {
       const infoJson = (await infoResp.json()) as {
         data?: Array<{
           model_name?: string;
