@@ -1,7 +1,14 @@
-{ config, lib, inputs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 let
   cfg = config.programs.ai.skills;
   inherit (lib) mkEnableOption mkOption types;
+
+  ###
+  # Skill source trees that SkillSpector scans at switch time (Part 4) and
+  # that ponytail/asm draw from. Each is a pinned flake input.
+  ###
+  ponytailSrc = inputs.ponytail or null;
+  skillspectorSrc = inputs.skillspector or null;
 
   ###
   # In-tree operator skills
@@ -132,6 +139,154 @@ let
       recursive = false;
     })
     enabledSkillsGitBranches;
+
+  ###
+  # ponytail (Part 3) — cross-agent "lazy senior dev" skill/ruleset.
+  #
+  # The repo ships per-agent pieces; we deploy the ones our agents read:
+  #   - skills/<name>/ → each agent's skills dir (claude/codex/maki + the
+  #     kiro tree that Pi also reads)
+  #   - .kiro/steering/ponytail.md → ~/.kiro/steering/ (kiro steering)
+  #   - pi-extension/ → ~/.pi/agent/extensions/ponytail/ (Pi extension)
+  # Mirrors how the skills.git branches are blended.
+  ###
+  # Deploy ponytail's skill set into one agent skills root as a recursive
+  # symlink subdir (can't collide with operator skills).
+  ponytailFilesFor = root:
+    lib.optionalAttrs (cfg.ponytail.enable && ponytailSrc != null) {
+      "${root}/ponytail".source = ponytailSrc + "/skills";
+    };
+
+  ponytailFiles = lib.mkMerge [
+    (lib.mkIf (cfg.ponytail.enable && ponytailSrc != null && cfg.targets.claude)
+      (ponytailFilesFor ".claude/skills"))
+    (lib.mkIf (cfg.ponytail.enable && ponytailSrc != null && cfg.targets.kiro) (
+      # kiro skills dir (also read by Pi) + kiro steering + Pi extension
+      (ponytailFilesFor ".kiro/skills") // {
+        ".kiro/steering/ponytail.md".source = ponytailSrc + "/.kiro/steering/ponytail.md";
+        ".pi/agent/extensions/ponytail".source = ponytailSrc + "/pi-extension";
+      }
+    ))
+    # codex + maki always get ponytail when enabled (no per-target toggle,
+    # mirroring how the skills.git codex/maki branches deploy).
+    (lib.mkIf (cfg.ponytail.enable && ponytailSrc != null)
+      ((ponytailFilesFor ".codex/skills") // (ponytailFilesFor ".maki/skills")))
+  ];
+
+  ###
+  # asm (Part 2) — agent-skill-manager as the cross-agent management layer.
+  #
+  # asm is installed as a CLI (npm wrapper, like memelord) and its config is
+  # deployed declaratively. We point its providers at the SAME skill dirs Nix
+  # deploys into, and add the two providers asm lacks/mis-points:
+  #   - kiro (not a built-in asm provider) → ~/.kiro/skills
+  #   - pi: built-in default is ~/.pi/skills, but our Pi reads ~/.kiro/skills
+  #     (see pi.nix), so repoint it.
+  # Nix remains the deployer of record; asm is for interactive curation,
+  # search, audit, dedup, and `asm audit security` across all agents.
+  ###
+  asmWrapper = pkgs.writeShellApplication {
+    name = "asm";
+    runtimeInputs = [ pkgs.nodejs pkgs.git pkgs.gh ];
+    text = ''
+      export NPM_CONFIG_PREFIX="''${HOME}/.npm-global"
+      mkdir -p "$NPM_CONFIG_PREFIX"
+      exec npx -y agent-skill-manager@latest "$@"
+    '';
+  };
+
+  asmConfig = {
+    version = 1;
+    providers = [
+      { name = "claude"; label = "Claude Code"; global = "~/.claude/skills"; project = ".claude/skills"; enabled = cfg.targets.claude; }
+      { name = "kiro"; label = "Kiro CLI"; global = "~/.kiro/skills"; project = ".kiro/skills"; enabled = cfg.targets.kiro; }
+      # Pi reads ~/.kiro/skills (pi.nix), NOT asm's default ~/.pi/skills.
+      { name = "pi"; label = "Pi"; global = "~/.kiro/skills"; project = ".kiro/skills"; enabled = true; }
+      { name = "codex"; label = "Codex"; global = "~/.codex/skills"; project = ".codex/skills"; enabled = true; }
+      { name = "maki"; label = "Maki"; global = "~/.maki/skills"; project = ".maki/skills"; enabled = true; }
+    ];
+    customPaths = { };
+    preferences = {
+      # Run a security audit before installing any skill (defence in depth
+      # alongside the SkillSpector switch-time gate).
+      auditOnInstall = true;
+    };
+  };
+
+  asmFiles = lib.optionalAttrs cfg.asm.enable {
+    ".config/agent-skill-manager/config.json".text = builtins.toJSON asmConfig;
+  };
+
+  ###
+  # SkillSpector gate (Part 4) — run NVIDIA SkillSpector in static (--no-llm)
+  # mode against every skill source tree we're about to deploy, and FAIL the
+  # `home-manager switch` (exit 1) if any scores HIGH/CRITICAL (risk > 50,
+  # which is skillspector's own non-zero exit). Static mode is offline and
+  # needs no API key, so it's safe to run on every switch.
+  #
+  # We scan the SOURCE trees in the nix store (the operator skills, the
+  # skills.git branches, and ponytail) BEFORE home.file links them into the
+  # agent dirs — a failing scan aborts activation before anything is linked.
+  ###
+  # Directories to scan. We separate TRUSTED in-tree operator skills (which
+  # you authored — the static scanner false-positives on their legitimate
+  # sudo/AWS/benchmark shell, so they're warned-but-not-blocked) from
+  # UNTRUSTED external sources (ponytail + skills.git branches) which are the
+  # actual supply-chain risk and DO block the switch on a finding.
+  skillSpectorTrusted = [
+    (toString ./files/kiro-skills)
+    (toString ./files/claude-skills)
+  ];
+  skillSpectorUntrusted = lib.filter (p: p != null) (
+    lib.optional (cfg.ponytail.enable && ponytailSrc != null) (toString (ponytailSrc + "/skills"))
+    ++ map (spec: toString spec.input) (lib.attrValues enabledSkillsGitBranches)
+  );
+
+  # one scan loop, parameterised by whether findings block (untrusted) or
+  # just warn (trusted in-tree).
+  scanLoop = block: roots: ''
+    for tgt in ${lib.escapeShellArgs roots}; do
+      [ -e "$tgt" ] || continue
+      for skill in "$tgt"/*; do
+        [ -d "$skill" ] || continue
+        if ! find "$skill" -name SKILL.md -print -quit | grep -q .; then continue; fi
+        scanned=$((scanned+1))
+        out=$(${pkgs.uv}/bin/uvx --python 3.13 --from "$SPEC_SRC" \
+                skillspector scan "$skill" --no-llm --format json 2>/dev/null)
+        rc=$?
+        score=$(printf '%s' "$out" | ${pkgs.jq}/bin/jq -r '.risk_assessment.score // "?"' 2>/dev/null || echo '?')
+        sev=$(printf '%s' "$out" | ${pkgs.jq}/bin/jq -r '.risk_assessment.severity // "?"' 2>/dev/null || echo '?')
+        if [ "$rc" -ne 0 ]; then
+          ${if block then ''
+            echo "  skillspector: BLOCKED $skill — risk $score ($sev), rc=$rc" >&2
+            fail=1
+          '' else ''
+            echo "  skillspector: WARN (trusted in-tree) $skill — risk $score ($sev), rc=$rc" >&2
+          ''}
+        fi
+      done
+    done
+  '';
+
+  skillSpectorScript = pkgs.writeShellScript "skillspector-gate" ''
+    set -uo pipefail
+    SPEC_SRC=${lib.escapeShellArg (toString skillspectorSrc)}
+    fail=0
+    scanned=0
+    # Pin Python 3.13: skillspector's yara-python dep has no cp314 wheel, so
+    # letting uv pick 3.14 is a spurious build failure. Static (--no-llm)
+    # mode is offline + needs no API key. EXIT CODE is the verdict:
+    # 0 = pass, 1 = risk>50 (HIGH/CRITICAL), 2 = error.
+    # --- trusted in-tree operator skills: warn only ---
+    ${scanLoop false skillSpectorTrusted}
+    # --- untrusted external skills (ponytail, skills.git): block ---
+    ${scanLoop true skillSpectorUntrusted}
+    if [ "$fail" -ne 0 ]; then
+      echo "❌ SkillSpector flagged an EXTERNAL skill about to be installed; aborting switch." >&2
+      exit 1
+    fi
+    echo "✓ SkillSpector: $scanned skill(s) scanned, no external skill flagged."
+  '';
 in
 {
   options.programs.ai.skills = {
@@ -159,8 +314,7 @@ in
           https://codeberg.org/ddx/skills.git as a blend over the in-tree
           operator skills. Per-branch toggles below.
         '';
-      };
-      branches = {
+      };      branches = {
         claude.enable = mkOption {
           type = types.bool;
           default = true;
@@ -188,15 +342,71 @@ in
         };
       };
     };
+
+    # Part 2: asm (agent-skill-manager) as the cross-agent management layer.
+    asm = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Install the `asm` CLI (agent-skill-manager) and deploy its config
+          (~/.config/agent-skill-manager/config.json) with providers pointed
+          at our actual per-agent skill dirs (incl. a custom kiro provider
+          and pi repointed to ~/.kiro/skills). asm is the interactive
+          management/curation/audit layer; Nix remains the deployer.
+        '';
+      };
+    };
+
+    # Part 3: ponytail cross-agent ruleset/skill.
+    ponytail = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Deploy the ponytail (DietrichGebert/ponytail) skill set + kiro
+          steering file + Pi extension to all agents.
+        '';
+      };
+    };
+
+    # Part 4: SkillSpector switch-time security gate.
+    skillSpector = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Run NVIDIA SkillSpector (static, --no-llm) against every skill
+          source tree about to be deployed on each home-manager switch, and
+          FAIL the switch if SkillSpector flags any skill (its own exit code
+          1 = risk score > 50 = HIGH/CRITICAL). Offline, no API key required.
+          Python is pinned to 3.13 (the yara-python dep has no cp314 wheel).
+        '';
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
+    home.packages = lib.optional cfg.asm.enable asmWrapper;
+
     home.file = lib.mkMerge [
       (lib.mkIf cfg.targets.kiro kiroSkillFiles)
       (lib.mkIf cfg.targets.kiro kiroSkillDeepDirFiles)
       (lib.mkIf cfg.targets.claude claudeSkillFiles)
       (lib.mkIf cfg.targets.claude claudeSkillDirFiles)
       (lib.mkIf cfg.skillsGit.enable skillsGitFiles)
+      ponytailFiles
+      asmFiles
     ];
+
+    # Part 4: gate the switch on SkillSpector. entryBefore writeBoundary so
+    # the scan runs BEFORE any skill files are linked into the agent dirs;
+    # a non-zero exit aborts activation, leaving the previous generation.
+    home.activation.skillSpectorGate =
+      lib.mkIf (cfg.skillSpector.enable && skillspectorSrc != null)
+        (lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+          echo "Running SkillSpector security gate on skills…"
+          ${skillSpectorScript}
+        '');
   };
 }

@@ -80,6 +80,22 @@
       flake = false;
     };
 
+    # ponytail — cross-agent "lazy senior dev" skill/ruleset (YAGNI). Ships
+    # per-agent plugins, skills/, and a Pi extension; deployed to all agents
+    # by modules/home-manager/ai/skills.nix. Pinned for reproducibility.
+    ponytail = {
+      url = "github:DietrichGebert/ponytail";
+      flake = false;
+    };
+
+    # NVIDIA SkillSpector — static+LLM security scanner for agent skills.
+    # Run in --no-llm static mode at home-manager switch to gate skill
+    # installation (exit 1 => fail the switch). Python (flake-packaged).
+    skillspector = {
+      url = "github:NVIDIA/SkillSpector";
+      flake = false;
+    };
+
     # TODO... review below here
     impermanence.url = "github:nix-community/impermanence";
 
