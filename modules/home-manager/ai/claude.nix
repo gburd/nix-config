@@ -61,12 +61,13 @@ in
       TMP=$(${pkgs.coreutils}/bin/mktemp)
 
       # Drop every Bedrock / AWS env var; set the LiteLLM-routing trio.
-      # Both ANTHROPIC_AUTH_TOKEN and ANTHROPIC_API_KEY are written
-      # because different claude-code versions read different ones (the
-      # SDK's auth resolver tries AUTH_TOKEN first, falls back to
-      # API_KEY). ANTHROPIC_MODEL + ANTHROPIC_SMALL_FAST_MODEL pin the
-      # model so claude-code doesn't try to fetch an inference-profile
-      # id from anthropic.com's catalog.
+      # Use ONLY ANTHROPIC_AUTH_TOKEN (sent as `Authorization: Bearer`,
+      # which the LiteLLM proxy accepts). Setting ANTHROPIC_API_KEY too
+      # makes recent claude-code versions warn "Auth conflict: Both a
+      # token and an API key are set", so we explicitly delete it.
+      # ANTHROPIC_MODEL + ANTHROPIC_SMALL_FAST_MODEL pin the model so
+      # claude-code doesn't try to fetch an inference-profile id from
+      # anthropic.com's catalog.
       ${pkgs.jq}/bin/jq \
         --arg base   "${cfg.litellmUrl}" \
         --arg key    "$KEY" \
@@ -85,11 +86,11 @@ in
               .AWS_ACCESS_KEY_ID,
               .AWS_SECRET_ACCESS_KEY,
               .AWS_SESSION_TOKEN,
+              .ANTHROPIC_API_KEY,
               ._ANTHROPIC_MODEL
             )
           | .ANTHROPIC_BASE_URL          = $base
           | .ANTHROPIC_AUTH_TOKEN        = $key
-          | .ANTHROPIC_API_KEY           = $key
           | .ANTHROPIC_MODEL             = $model
           | .ANTHROPIC_SMALL_FAST_MODEL  = $fast)' \
         "$SETTINGS" > "$TMP" && \

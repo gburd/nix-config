@@ -67,14 +67,31 @@ in
           (steeringFiles // cfg.extraFiles)
       ))
 
-      # Claude global CLAUDE.md — full steering content
-      (lib.mkIf cfg.targets.claude {
-        ".claude/CLAUDE.md".text = allSteeringContent + ''
+      # Claude global CLAUDE.md — a small index that @imports the
+      # individual steering files from ~/.claude/steering/. Inlining all
+      # nine files produced a 40.5k-char CLAUDE.md, tripping Claude
+      # Code's "Large CLAUDE.md will impact performance (>40k chars)"
+      # warning (the check measures the top-level file on disk). Claude
+      # resolves @imports recursively, so it still sees every rule while
+      # the index file itself stays tiny.
+      (lib.mkIf cfg.targets.claude (lib.mkMerge [
+        (lib.mapAttrs'
+          (name: path: lib.nameValuePair ".claude/steering/${name}" { source = path; })
+          (steeringFiles // cfg.extraFiles))
+        {
+          ".claude/CLAUDE.md".text = ''
+            # Steering
 
-          See AGENTS.md for project-specific instructions.
-          These standards apply equally in Claude Code, Kiro CLI, Pi, Maki, and Codex.
-        '';
-      })
+            These standards apply equally in Claude Code, Kiro CLI, Pi, Maki,
+            and Codex. The detailed rules live in ~/.claude/steering/ and are
+            imported below; read AGENTS.md for project-specific instructions.
+
+          '' + builtins.concatStringsSep "\n"
+            (map (name: "@~/.claude/steering/${name}")
+              (builtins.attrNames (steeringFiles // cfg.extraFiles)))
+          + "\n";
+        }
+      ]))
 
       # Pi prompts — all steering files as individual prompts
       (lib.mkIf cfg.targets.pi (
