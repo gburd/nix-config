@@ -40,7 +40,12 @@ in
       enableDefaultConfig = false;
       matchBlocks = {
         "*" = {
-          identityAgent = "~/.1password/agent.sock";
+          # No global IdentityAgent: SSH auth + git signing now use the
+          # sops-deployed on-disk keys (~/.ssh/id_auth_ed25519 /
+          # id_signing_ed25519) via the standard ssh-agent
+          # (modules/home-manager/ssh-management). 1Password's agent socket
+          # required an unlocked, non-auto-locked GUI app to sign — unusable
+          # headless/over-SSH — so it's no longer wired here.
           compression = true;
           extraOptions = {
             ConnectTimeout = "5";

@@ -178,7 +178,12 @@ in
       };
       init.defaultBranch = "main";
       gpg.format = "ssh";
-      "gpg.ssh".program = lib.mkDefault "/opt/1Password/op-ssh-sign";
+      # Sign with the sops-deployed on-disk signing key via OpenSSH's own
+      # ssh-keygen signer — no dependency on 1Password's op-ssh-sign (which
+      # needed an unlocked GUI app). On hosts running the ssh-management
+      # module (floki/meh) this is overridden with mkForce to the rotating
+      # key + the matching program; the default here covers any other host.
+      "gpg.ssh".program = lib.mkDefault "${pkgs.openssh}/bin/ssh-keygen";
       commit.gpgsign = true;
       tag.gpgsign = true;
 
