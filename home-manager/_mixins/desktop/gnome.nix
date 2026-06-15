@@ -41,8 +41,8 @@ with lib.hm.gvariant;
 
     "org/gnome/desktop/peripherals/keyboard" = {
       repeat = true;
-      repeat-interval = mkUint32 17;  # ~60 keys/sec (fast)
-      delay = mkUint32 200;           # 200ms initial delay
+      repeat-interval = mkUint32 17; # ~60 keys/sec (fast)
+      delay = mkUint32 200; # 200ms initial delay
     };
 
     "org/gnome/desktop/interface" = {

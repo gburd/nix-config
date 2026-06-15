@@ -82,98 +82,98 @@ in
       # the path/url/etc. into the file at build time; bash runs the result
       # at activation time.
       seedScript = pkgs.writeShellScript "vorta-seed" ''
-        set -eu
-        SQLITE=${pkgs.sqlite}/bin/sqlite3
-        VORTA_DIR=${config.home.homeDirectory}/.local/share/Vorta
-        DB="$VORTA_DIR/settings.db"
-        PASS_FILE=${borgPassFile}
-        SCHEMA=${./vorta-schema.sql}
+                set -eu
+                SQLITE=${pkgs.sqlite}/bin/sqlite3
+                VORTA_DIR=${config.home.homeDirectory}/.local/share/Vorta
+                DB="$VORTA_DIR/settings.db"
+                PASS_FILE=${borgPassFile}
+                SCHEMA=${./vorta-schema.sql}
 
-        ${pkgs.coreutils}/bin/mkdir -p "$VORTA_DIR"
-        ${pkgs.coreutils}/bin/chmod 700 "$VORTA_DIR"
+                ${pkgs.coreutils}/bin/mkdir -p "$VORTA_DIR"
+                ${pkgs.coreutils}/bin/chmod 700 "$VORTA_DIR"
 
-        # Create the DB with Vorta's v23 schema if it doesn't exist yet.
-        if [ ! -f "$DB" ]; then
-          "$SQLITE" "$DB" < "$SCHEMA"
-          "$SQLITE" "$DB" "INSERT INTO schemaversion (version, changed_at) VALUES (23, datetime('now'));"
-          ${pkgs.coreutils}/bin/chmod 600 "$DB"
-          echo "vorta-seed: created $DB with schema v23"
-        fi
+                # Create the DB with Vorta's v23 schema if it doesn't exist yet.
+                if [ ! -f "$DB" ]; then
+                  "$SQLITE" "$DB" < "$SCHEMA"
+                  "$SQLITE" "$DB" "INSERT INTO schemaversion (version, changed_at) VALUES (23, datetime('now'));"
+                  ${pkgs.coreutils}/bin/chmod 600 "$DB"
+                  echo "vorta-seed: created $DB with schema v23"
+                fi
 
-        # Read the borg passphrase from the sops-deployed file. If sops hasn't
-        # run yet (first activation order), skip the password seed; the next
-        # switch picks it up. Escape single quotes for SQL by doubling them.
-        ESC_PASS=""
-        if [ -r "$PASS_FILE" ]; then
-          PASS=$(${pkgs.coreutils}/bin/cat "$PASS_FILE")
-          ESC_PASS=$(printf '%s' "$PASS" | ${pkgs.gnused}/bin/sed "s/'/'''/g")
-        else
-          echo "vorta-seed: $PASS_FILE not yet readable; skipping passphrase seed"
-        fi
+                # Read the borg passphrase from the sops-deployed file. If sops hasn't
+                # run yet (first activation order), skip the password seed; the next
+                # switch picks it up. Escape single quotes for SQL by doubling them.
+                ESC_PASS=""
+                if [ -r "$PASS_FILE" ]; then
+                  PASS=$(${pkgs.coreutils}/bin/cat "$PASS_FILE")
+                  ESC_PASS=$(printf '%s' "$PASS" | ${pkgs.gnused}/bin/sed "s/'/'''/g")
+                else
+                  echo "vorta-seed: $PASS_FILE not yet readable; skipping passphrase seed"
+                fi
 
-        # Idempotent seed: repo, profile, source directory.
-        "$SQLITE" "$DB" <<SQL
-        BEGIN TRANSACTION;
+                # Idempotent seed: repo, profile, source directory.
+                "$SQLITE" "$DB" <<SQL
+                BEGIN TRANSACTION;
 
-        -- 1. Repository (url is UNIQUE).
-        INSERT OR IGNORE INTO repomodel
-          (url, added_at, encryption, create_backup_cmd, extra_borg_arguments, name)
-          VALUES ('${repoUrl}', datetime('now'), 'key file BLAKE2b', ''', '--remote-path borg1', '${repoName}');
+                -- 1. Repository (url is UNIQUE).
+                INSERT OR IGNORE INTO repomodel
+                  (url, added_at, encryption, create_backup_cmd, extra_borg_arguments, name)
+                  VALUES ('${repoUrl}', datetime('now'), 'key file BLAKE2b', ''', '--remote-path borg1', '${repoName}');
 
-        -- 2. Default profile linked to that repo. Mirrors floki's working
-        --    config (lz4 compression, schedule disabled, archive-name format).
-        --    Idempotent via WHERE NOT EXISTS keyed on repo_id.
-        INSERT INTO backupprofilemodel
-          (name, added_at, repo_id, ssh_key, compression,
-           exclude_patterns, exclude_if_present,
-           schedule_mode, schedule_interval_count, schedule_interval_unit,
-           schedule_fixed_hour, schedule_fixed_minute,
-           schedule_interval_hours, schedule_interval_minutes,
-           schedule_make_up_missed,
-           validation_on, validation_weeks,
-           prune_on, prune_hour, prune_day, prune_week, prune_month, prune_year,
-           prune_keep_within, new_archive_name, prune_prefix,
-           pre_backup_cmd, post_backup_cmd,
-           dont_run_on_metered_networks, compaction_on, compaction_weeks)
-        SELECT 'Default', datetime('now'), r.id, '${borgKey}', 'lz4',
-               NULL, ''',
-               'off', 3, 'hours',
-               3, 42,
-               3, 42,
-               1,
-               1, 3,
-               0, 2, 7, 4, 6, 2,
-               '10H', '{hostname}-{now:%Y-%m-%d-%H%M%S}', '{hostname}-',
-               ''', ''',
-               1, 1, 3
-          FROM repomodel r
-          WHERE r.url = '${repoUrl}'
-            AND NOT EXISTS (SELECT 1 FROM backupprofilemodel WHERE repo_id = r.id);
+                -- 2. Default profile linked to that repo. Mirrors floki's working
+                --    config (lz4 compression, schedule disabled, archive-name format).
+                --    Idempotent via WHERE NOT EXISTS keyed on repo_id.
+                INSERT INTO backupprofilemodel
+                  (name, added_at, repo_id, ssh_key, compression,
+                   exclude_patterns, exclude_if_present,
+                   schedule_mode, schedule_interval_count, schedule_interval_unit,
+                   schedule_fixed_hour, schedule_fixed_minute,
+                   schedule_interval_hours, schedule_interval_minutes,
+                   schedule_make_up_missed,
+                   validation_on, validation_weeks,
+                   prune_on, prune_hour, prune_day, prune_week, prune_month, prune_year,
+                   prune_keep_within, new_archive_name, prune_prefix,
+                   pre_backup_cmd, post_backup_cmd,
+                   dont_run_on_metered_networks, compaction_on, compaction_weeks)
+                SELECT 'Default', datetime('now'), r.id, '${borgKey}', 'lz4',
+                       NULL, ''',
+                       'off', 3, 'hours',
+                       3, 42,
+                       3, 42,
+                       1,
+                       1, 3,
+                       0, 2, 7, 4, 6, 2,
+                       '10H', '{hostname}-{now:%Y-%m-%d-%H%M%S}', '{hostname}-',
+                       ''', ''',
+                       1, 1, 3
+                  FROM repomodel r
+                  WHERE r.url = '${repoUrl}'
+                    AND NOT EXISTS (SELECT 1 FROM backupprofilemodel WHERE repo_id = r.id);
 
-        -- 3. Source directory (\$HOME) for the profile.
-        INSERT INTO sourcedirmodel
-          (dir, dir_size, dir_files_count, path_isdir, profile_id, added_at)
-        SELECT '${config.home.homeDirectory}', 0, 0, 1, p.id, datetime('now')
-          FROM backupprofilemodel p
-          JOIN repomodel r ON p.repo_id = r.id
-          WHERE r.url = '${repoUrl}'
-            AND NOT EXISTS (
-              SELECT 1 FROM sourcedirmodel
-                WHERE profile_id = p.id AND dir = '${config.home.homeDirectory}'
-            );
+                -- 3. Source directory (\$HOME) for the profile.
+                INSERT INTO sourcedirmodel
+                  (dir, dir_size, dir_files_count, path_isdir, profile_id, added_at)
+                SELECT '${config.home.homeDirectory}', 0, 0, 1, p.id, datetime('now')
+                  FROM backupprofilemodel p
+                  JOIN repomodel r ON p.repo_id = r.id
+                  WHERE r.url = '${repoUrl}'
+                    AND NOT EXISTS (
+                      SELECT 1 FROM sourcedirmodel
+                        WHERE profile_id = p.id AND dir = '${config.home.homeDirectory}'
+                    );
 
-        COMMIT;
-SQL
+                COMMIT;
+        SQL
 
-        # Passphrase as a separate statement: the password value goes in
-        # SQL via single-argument quoting rather than a heredoc, which
-        # avoids any heredoc-substitution surprises in the passphrase. url
-        # is UNIQUE, so this is idempotent.
-        if [ -n "$ESC_PASS" ]; then
-          "$SQLITE" "$DB" "INSERT OR IGNORE INTO repopassword (url, password) VALUES ('${repoUrl}', '$ESC_PASS');"
-        fi
+                # Passphrase as a separate statement: the password value goes in
+                # SQL via single-argument quoting rather than a heredoc, which
+                # avoids any heredoc-substitution surprises in the passphrase. url
+                # is UNIQUE, so this is idempotent.
+                if [ -n "$ESC_PASS" ]; then
+                  "$SQLITE" "$DB" "INSERT OR IGNORE INTO repopassword (url, password) VALUES ('${repoUrl}', '$ESC_PASS');"
+                fi
 
-        ${pkgs.coreutils}/bin/chmod 600 "$DB"
+                ${pkgs.coreutils}/bin/chmod 600 "$DB"
       '';
     in
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''

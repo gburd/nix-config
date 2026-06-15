@@ -41,10 +41,10 @@ with lib.hm.gvariant;
 
     # Power management: Performance profile on AC, never auto-suspend
     "org/gnome/settings-daemon/plugins/power" = {
-      power-profile-on-ac = "performance";      # max performance when plugged in
+      power-profile-on-ac = "performance"; # max performance when plugged in
       power-profile-on-battery = "power-saver"; # conservative when on battery
-      sleep-inactive-ac-type = "nothing";       # don't suspend on AC when idle
-      sleep-inactive-ac-timeout = 0;            # 0 = never
+      sleep-inactive-ac-type = "nothing"; # don't suspend on AC when idle
+      sleep-inactive-ac-timeout = 0; # 0 = never
     };
   };
 
@@ -274,15 +274,15 @@ with lib.hm.gvariant;
       xclip
 
       # AI tools
-      kiro-cli      # Kiro CLI agent for the terminal
+      kiro-cli # Kiro CLI agent for the terminal
       # kiro-ide    # Kiro IDE (download URLs return 404 — not yet publicly available)
-      bitnet        # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
-      lmstudio      # Local LLM runner (LM Studio)
+      bitnet # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
+      lmstudio # Local LLM runner (LM Studio)
       # maki installed (wrapped) by modules/home-manager/ai/maki.nix
-      terax-ai      # AI assistant UI (Bedrock support pending upstream issue #138)
+      terax-ai # AI assistant UI (Bedrock support pending upstream issue #138)
 
       # PostgreSQL community
-      pan           # GTK NNTP newsreader (pg.ddx.io PostgreSQL mailing lists)
+      pan # GTK NNTP newsreader (pg.ddx.io PostgreSQL mailing lists)
     ];
 
     # http://rski.github.io/2021/09/05/nix-debugging.html

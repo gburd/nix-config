@@ -4,7 +4,7 @@ with lib.hm.gvariant;
   # Arnold is a Fedora system running home-manager via Nix (not NixOS)
   imports = [
     # console and cli are imported by users/gburd/default.nix for all hosts
-    ../../../console/ai         # AI tools (opt-in; sops `or null` fallbacks safe without sops)
+    ../../../console/ai # AI tools (opt-in; sops `or null` fallbacks safe without sops)
     ../../../services/borgmatic.nix
     # Sublime Text + Merge (GUI; arnold forwards X11) and their licenses
     ../../../desktop/sublime.nix
@@ -85,8 +85,8 @@ with lib.hm.gvariant;
   dconf.settings = {
     "org/gnome/desktop/peripherals/keyboard" = {
       repeat = true;
-      repeat-interval = mkUint32 17;  # ~60 keys/sec
-      delay = mkUint32 200;           # 200ms initial delay
+      repeat-interval = mkUint32 17; # ~60 keys/sec
+      delay = mkUint32 200; # 200ms initial delay
     };
   };
 
@@ -110,7 +110,7 @@ with lib.hm.gvariant;
     # gcc / gdb / gnumake / pkg-config / ripgrep / tig / tree / cmake / autoconf / libtool provided by console
     # clang-tools / pyright / gopls / nixd / lldb / strace / ltrace / valgrind etc. provided by console/neovim
     # awscli2 / ssm-session-manager-plugin / flyctl provided by console/ai and console
-    _1password-cli  # `op` — headless 1Password CLI (desktop-app integration for SSH agent unlock)
+    _1password-cli # `op` — headless 1Password CLI (desktop-app integration for SSH agent unlock)
     bash
     bison
     cfssl
@@ -124,7 +124,7 @@ with lib.hm.gvariant;
     htop
     lsof
     lua5_1
-    luajitPackages.luarocks  # for neovim (LuaJIT) and standalone use
+    luajitPackages.luarocks # for neovim (LuaJIT) and standalone use
     m4
     ninja
     openssl
@@ -137,8 +137,8 @@ with lib.hm.gvariant;
     zlib
 
     # AI tools
-    bitnet        # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
-    lmstudio      # Local LLM runner (LM Studio)
+    bitnet # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
+    lmstudio # Local LLM runner (LM Studio)
     # maki installed (wrapped) by modules/home-manager/ai/maki.nix
     # terax-ai   # Disabled: pnpm fetch OOMs on arnold (8GB RAM)
   ];

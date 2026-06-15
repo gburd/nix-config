@@ -80,7 +80,7 @@
 
   services = {
     hardware.openrgb = {
-      enable = false;  # Mac Pro doesn't support OpenRGB
+      enable = false; # Mac Pro doesn't support OpenRGB
     };
 
     # Disable all power-saving features on desktop
@@ -90,7 +90,7 @@
       HandleHibernateKey = "ignore";
       HandleLidSwitch = "ignore";
       IdleAction = "ignore";
-      IdleActionSec = "0";  # Never trigger idle action
+      IdleActionSec = "0"; # Never trigger idle action
     };
   };
 

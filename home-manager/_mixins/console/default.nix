@@ -91,11 +91,11 @@
       coccinelle
 
       # Data format tools
-      dasel   # Query/modify JSON/YAML/TOML/XML/CSV
-      fx      # Interactive JSON viewer
-      htmlq   # HTML query (like jq for HTML)
-      miller  # CSV/TSV/JSON/NIDX swiss army knife
-      qsv     # Fast CSV processor
+      dasel # Query/modify JSON/YAML/TOML/XML/CSV
+      fx # Interactive JSON viewer
+      htmlq # HTML query (like jq for HTML)
+      miller # CSV/TSV/JSON/NIDX swiss army knife
+      qsv # Fast CSV processor
       xmlstarlet # XML processor
 
       # Cloud tools

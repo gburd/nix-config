@@ -18,9 +18,17 @@ let
   # pg.ddx.io URL while skills.git still uses postgr.esq).
   ###
   kiroSkillNames = [
-    "btw" "checkpoint" "coccinelle" "dream"
-    "flex-bison-to-lime" "maintain-docs" "memelord-init"
-    "pg-numa-benchmark" "postgresq" "review-diff" "think-hard"
+    "btw"
+    "checkpoint"
+    "coccinelle"
+    "dream"
+    "flex-bison-to-lime"
+    "maintain-docs"
+    "memelord-init"
+    "pg-numa-benchmark"
+    "postgresq"
+    "review-diff"
+    "think-hard"
     "watchdog"
   ];
 
@@ -30,9 +38,16 @@ let
   };
 
   claudeSkillNames = [
-    "btw" "checkpoint" "coccinelle" "dream" "maintain-docs"
-    "memelord-init" "pg-numa-benchmark" "review-diff"
-    "think-hard" "watchdog"
+    "btw"
+    "checkpoint"
+    "coccinelle"
+    "dream"
+    "maintain-docs"
+    "memelord-init"
+    "pg-numa-benchmark"
+    "review-diff"
+    "think-hard"
+    "watchdog"
   ];
 
   # Claude skills deployed as directories (multiple files per skill)
@@ -47,44 +62,59 @@ let
       entries = builtins.readDir dir;
       names = builtins.attrNames entries;
     in
-    builtins.concatMap (name:
-      if entries.${name} == "directory"
-      then collectFiles "${prefix}/${name}" (dir + "/${name}")
-      else [{ path = "${prefix}/${name}"; source = dir + "/${name}"; }]
-    ) names;
+    builtins.concatMap
+      (name:
+        if entries.${name} == "directory"
+        then collectFiles "${prefix}/${name}" (dir + "/${name}")
+        else [{ path = "${prefix}/${name}"; source = dir + "/${name}"; }]
+      )
+      names;
 
-  claudeSkillDirFiles = builtins.listToAttrs (builtins.concatMap (name:
-    let files = collectFiles ".claude/skills/${name}" claudeSkillDirs.${name};
-    in
-    map (f: { name = f.path; value = { inherit (f) source; }; }) files
-  ) (builtins.attrNames claudeSkillDirs));
+  claudeSkillDirFiles = builtins.listToAttrs (builtins.concatMap
+    (name:
+      let files = collectFiles ".claude/skills/${name}" claudeSkillDirs.${name};
+      in
+      map (f: { name = f.path; value = { inherit (f) source; }; }) files
+    )
+    (builtins.attrNames claudeSkillDirs));
 
-  kiroSkillDeepDirFiles = builtins.listToAttrs (builtins.concatMap (name:
-    let files = collectFiles ".kiro/skills/${name}" kiroSkillDeepDirs.${name};
-    in
-    map (f: { name = f.path; value = { inherit (f) source; }; }) files
-  ) (builtins.attrNames kiroSkillDeepDirs));
+  kiroSkillDeepDirFiles = builtins.listToAttrs (builtins.concatMap
+    (name:
+      let files = collectFiles ".kiro/skills/${name}" kiroSkillDeepDirs.${name};
+      in
+      map (f: { name = f.path; value = { inherit (f) source; }; }) files
+    )
+    (builtins.attrNames kiroSkillDeepDirs));
 
-  kiroSkillFiles = builtins.listToAttrs (builtins.concatMap (name:
-    let
-      skillDir = ./files/kiro-skills/${name};
-      hasRefs = builtins.pathExists (skillDir + "/references");
-      refFiles = if hasRefs
-        then builtins.attrNames (builtins.readDir (skillDir + "/references"))
-        else [];
-    in
-    [{ name = ".kiro/skills/${name}/SKILL.md";
-       value = { source = skillDir + "/SKILL.md"; }; }]
-    ++ map (ref: {
-      name = ".kiro/skills/${name}/references/${ref}";
-      value = { source = skillDir + "/references/${ref}"; };
-    }) refFiles
-  ) kiroSkillNames);
+  kiroSkillFiles = builtins.listToAttrs (builtins.concatMap
+    (name:
+      let
+        skillDir = ./files/kiro-skills/${name};
+        hasRefs = builtins.pathExists (skillDir + "/references");
+        refFiles =
+          if hasRefs
+          then builtins.attrNames (builtins.readDir (skillDir + "/references"))
+          else [ ];
+      in
+      [{
+        name = ".kiro/skills/${name}/SKILL.md";
+        value = { source = skillDir + "/SKILL.md"; };
+      }]
+      ++ map
+        (ref: {
+          name = ".kiro/skills/${name}/references/${ref}";
+          value = { source = skillDir + "/references/${ref}"; };
+        })
+        refFiles
+    )
+    kiroSkillNames);
 
-  claudeSkillFiles = builtins.listToAttrs (map (name: {
-    name = ".claude/skills/${name}.md";
-    value = { source = ./files/claude-skills/${name}.md; };
-  }) claudeSkillNames);
+  claudeSkillFiles = builtins.listToAttrs (map
+    (name: {
+      name = ".claude/skills/${name}.md";
+      value = { source = ./files/claude-skills/${name}.md; };
+    })
+    claudeSkillNames);
 
   ###
   # Upstream skills.git blend
@@ -205,7 +235,7 @@ let
       { name = "codex"; label = "Codex"; global = "~/.codex/skills"; project = ".codex/skills"; enabled = true; }
       { name = "maki"; label = "Maki"; global = "~/.maki/skills"; project = ".maki/skills"; enabled = true; }
     ];
-    customPaths = { };
+    customPaths = [ ];
     preferences = {
       # Run a security audit before installing any skill (defence in depth
       # alongside the SkillSpector switch-time gate).
@@ -316,7 +346,8 @@ in
           https://codeberg.org/ddx/skills.git as a blend over the in-tree
           operator skills. Per-branch toggles below.
         '';
-      };      branches = {
+      };
+      branches = {
         claude.enable = mkOption {
           type = types.bool;
           default = true;

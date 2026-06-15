@@ -126,7 +126,7 @@
 
         # Workstations
         "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
-        "gburd@meh" = libx.mkHome { hostname = "meh"; username = "gburd"; };  # headless
+        "gburd@meh" = libx.mkHome { hostname = "meh"; username = "gburd"; }; # headless
         "gburd@arnold" = libx.mkHome { hostname = "arnold"; username = "gburd"; };
 
         # Servers

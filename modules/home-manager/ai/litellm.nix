@@ -47,33 +47,33 @@ let
     #             agents get the model's full generation budget rather
     #             than a flat 32000. budget_tokens (legacy thinking) still
     #             fits because it's carved out of maxOutput, not on top.
-    { name = "claude-opus-4-8";   bedrock = "us.anthropic.claude-opus-4-8";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-opus-4-8" ]; }
-    { name = "claude-opus-4-7";   bedrock = "us.anthropic.claude-opus-4-7";              converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
-    { name = "claude-opus-4-6";   bedrock = "us.anthropic.claude-opus-4-6-v1";           converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
-    { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6";            converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 64000; }
+    { name = "claude-opus-4-8"; bedrock = "us.anthropic.claude-opus-4-8"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-opus-4-8" ]; }
+    { name = "claude-opus-4-7"; bedrock = "us.anthropic.claude-opus-4-7"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-opus-4-6"; bedrock = "us.anthropic.claude-opus-4-6-v1"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6"; converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 64000; }
 
     # Legacy-thinking models (Opus 4.5/4.1, Sonnet 4.5, Haiku 4.5)
-    { name = "claude-opus-4-5";   bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
-    { name = "claude-opus-4-1";   bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0";   converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 32000; }
+    { name = "claude-opus-4-5"; bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-opus-4-1"; bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 32000; }
     { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; aliases = [ "us.anthropic.claude-sonnet-4-5-20250929-v1:0" ]; }
-    { name = "claude-haiku-4-5";  bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0";  converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-haiku-4-5"; bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
 
     # DeepSeek
-    { name = "deepseek-r1";       bedrock = "us.deepseek.r1-v1:0";                       converse = false; maxInput = 128000; maxOutput = 32000; }
+    { name = "deepseek-r1"; bedrock = "us.deepseek.r1-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
     # Meta Llama 3.x and 4.x
-    { name = "llama3-3-70b";      bedrock = "us.meta.llama3-3-70b-instruct-v1:0";        converse = false; maxInput = 128000; maxOutput = 8192; }
-    { name = "llama4-maverick";   bedrock = "us.meta.llama4-maverick-17b-instruct-v1:0"; converse = false; maxInput = 1000000; maxOutput = 8192; }
-    { name = "llama4-scout";      bedrock = "us.meta.llama4-scout-17b-instruct-v1:0";    converse = false; maxInput = 3500000; maxOutput = 8192; }
+    { name = "llama3-3-70b"; bedrock = "us.meta.llama3-3-70b-instruct-v1:0"; converse = false; maxInput = 128000; maxOutput = 8192; }
+    { name = "llama4-maverick"; bedrock = "us.meta.llama4-maverick-17b-instruct-v1:0"; converse = false; maxInput = 1000000; maxOutput = 8192; }
+    { name = "llama4-scout"; bedrock = "us.meta.llama4-scout-17b-instruct-v1:0"; converse = false; maxInput = 3500000; maxOutput = 8192; }
 
     # Amazon Nova
-    { name = "nova-premier";      bedrock = "us.amazon.nova-premier-v1:0";               converse = false; maxInput = 1000000; maxOutput = 32000; }
-    { name = "nova-pro";          bedrock = "us.amazon.nova-pro-v1:0";                   converse = false; maxInput = 300000; maxOutput = 5120; }
-    { name = "nova-lite";         bedrock = "us.amazon.nova-lite-v1:0";                  converse = false; maxInput = 300000; maxOutput = 5120; }
-    { name = "nova-micro";        bedrock = "us.amazon.nova-micro-v1:0";                 converse = false; maxInput = 128000; maxOutput = 5120; }
+    { name = "nova-premier"; bedrock = "us.amazon.nova-premier-v1:0"; converse = false; maxInput = 1000000; maxOutput = 32000; }
+    { name = "nova-pro"; bedrock = "us.amazon.nova-pro-v1:0"; converse = false; maxInput = 300000; maxOutput = 5120; }
+    { name = "nova-lite"; bedrock = "us.amazon.nova-lite-v1:0"; converse = false; maxInput = 300000; maxOutput = 5120; }
+    { name = "nova-micro"; bedrock = "us.amazon.nova-micro-v1:0"; converse = false; maxInput = 128000; maxOutput = 5120; }
 
     # Mistral
-    { name = "mistral-pixtral-large"; bedrock = "us.mistral.pixtral-large-2502-v1:0";    converse = false; maxInput = 128000; maxOutput = 8192; }
+    { name = "mistral-pixtral-large"; bedrock = "us.mistral.pixtral-large-2502-v1:0"; converse = false; maxInput = 128000; maxOutput = 8192; }
   ];
 
   # ---------- thinking-policy map ----------------------------------------
@@ -110,8 +110,8 @@ let
         };
       in
       # Key the policy under the primary name AND every legacy alias, so
-      # the normalizer hook applies identically whether a client sends
-      # "claude-opus-4-8" or the legacy "us.anthropic.claude-opus-4-8".
+        # the normalizer hook applies identically whether a client sends
+        # "claude-opus-4-8" or the legacy "us.anthropic.claude-opus-4-8".
       [{ inherit (m) name; value = pol; }]
       ++ map (alias: { name = alias; value = pol; }) (m.aliases or [ ]))
     cfg.models);
@@ -559,91 +559,91 @@ in
     # Activation: ensure config dir exists, master key exists, config.yaml
     # is up-to-date, litellm pipx install matches our pin.
     home.activation.setupLitellm = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      DIR=${config.home.homeDirectory}/.config/litellm
-      ${pkgs.coreutils}/bin/mkdir -p "$DIR" "$DIR/keys"
-      ${pkgs.coreutils}/bin/chmod 700 "$DIR" "$DIR/keys"
+            DIR=${config.home.homeDirectory}/.config/litellm
+            ${pkgs.coreutils}/bin/mkdir -p "$DIR" "$DIR/keys"
+            ${pkgs.coreutils}/bin/chmod 700 "$DIR" "$DIR/keys"
 
-      # Master key (per-host, never in sops, never in nix store).
-      if [ ! -s "${cfg.masterKeyFile}" ]; then
-        ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname ${cfg.masterKeyFile})"
-        ${pkgs.openssl}/bin/openssl rand -hex 32 > "${cfg.masterKeyFile}"
-        ${pkgs.coreutils}/bin/chmod 600 "${cfg.masterKeyFile}"
-        echo "litellm: generated new master key at ${cfg.masterKeyFile}"
-      fi
+            # Master key (per-host, never in sops, never in nix store).
+            if [ ! -s "${cfg.masterKeyFile}" ]; then
+              ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname ${cfg.masterKeyFile})"
+              ${pkgs.openssl}/bin/openssl rand -hex 32 > "${cfg.masterKeyFile}"
+              ${pkgs.coreutils}/bin/chmod 600 "${cfg.masterKeyFile}"
+              echo "litellm: generated new master key at ${cfg.masterKeyFile}"
+            fi
 
-      # Per-agent keys. Each agent gets a DISTINCT key at
-      # $DIR/keys/<agent>.key. Sops-backed agents (sopsKeyFiles) copy the
-      # decrypted secret; everyone else gets a locally-generated random
-      # token. Generated once and left stable across switches so we don't
-      # churn agent configs. The custom_auth hook validates these at
-      # request time and applies per-agent model scoping.
-      ${lib.concatMapStringsSep "\n" (agent:
-        let sops = cfg.sopsKeyFiles.${agent} or null; in
-        if sops != null then ''
-          # ${agent}: seed from sops secret (refresh on every switch so
-          # rotating the sops value propagates).
-          if [ -r "${sops}" ]; then
-            ${pkgs.coreutils}/bin/install -m600 /dev/null "$DIR/keys/${agent}.key"
-            ${pkgs.coreutils}/bin/cat "${sops}" | ${pkgs.coreutils}/bin/tr -d '\n' > "$DIR/keys/${agent}.key"
-          elif [ ! -s "$DIR/keys/${agent}.key" ]; then
-            echo "litellm: WARN sops key for ${agent} (${sops}) not readable; generating local key" >&2
-            ${pkgs.openssl}/bin/openssl rand -hex 32 > "$DIR/keys/${agent}.key"
-            ${pkgs.coreutils}/bin/chmod 600 "$DIR/keys/${agent}.key"
-          fi
-        '' else ''
-          # ${agent}: locally-generated random key (sk- prefixed so it
-          # reads like an API key, and so we can detect+migrate the
-          # legacy shared-master-key copies which had no prefix).
-          # (Re)generate if missing, empty, or not yet in sk- form.
-          if [ ! -s "$DIR/keys/${agent}.key" ] || \
-             ! ${pkgs.gnugrep}/bin/grep -q '^sk-' "$DIR/keys/${agent}.key"; then
-            ${pkgs.coreutils}/bin/printf 'sk-%s' "$(${pkgs.openssl}/bin/openssl rand -hex 24)" > "$DIR/keys/${agent}.key"
-            ${pkgs.coreutils}/bin/chmod 600 "$DIR/keys/${agent}.key"
-            echo "litellm: generated distinct key for ${agent}"
-          fi
-        '') cfg.agents}
+            # Per-agent keys. Each agent gets a DISTINCT key at
+            # $DIR/keys/<agent>.key. Sops-backed agents (sopsKeyFiles) copy the
+            # decrypted secret; everyone else gets a locally-generated random
+            # token. Generated once and left stable across switches so we don't
+            # churn agent configs. The custom_auth hook validates these at
+            # request time and applies per-agent model scoping.
+            ${lib.concatMapStringsSep "\n" (agent:
+              let sops = cfg.sopsKeyFiles.${agent} or null; in
+              if sops != null then ''
+                # ${agent}: seed from sops secret (refresh on every switch so
+                # rotating the sops value propagates).
+                if [ -r "${sops}" ]; then
+                  ${pkgs.coreutils}/bin/install -m600 /dev/null "$DIR/keys/${agent}.key"
+                  ${pkgs.coreutils}/bin/cat "${sops}" | ${pkgs.coreutils}/bin/tr -d '\n' > "$DIR/keys/${agent}.key"
+                elif [ ! -s "$DIR/keys/${agent}.key" ]; then
+                  echo "litellm: WARN sops key for ${agent} (${sops}) not readable; generating local key" >&2
+                  ${pkgs.openssl}/bin/openssl rand -hex 32 > "$DIR/keys/${agent}.key"
+                  ${pkgs.coreutils}/bin/chmod 600 "$DIR/keys/${agent}.key"
+                fi
+              '' else ''
+                # ${agent}: locally-generated random key (sk- prefixed so it
+                # reads like an API key, and so we can detect+migrate the
+                # legacy shared-master-key copies which had no prefix).
+                # (Re)generate if missing, empty, or not yet in sk- form.
+                if [ ! -s "$DIR/keys/${agent}.key" ] || \
+                   ! ${pkgs.gnugrep}/bin/grep -q '^sk-' "$DIR/keys/${agent}.key"; then
+                  ${pkgs.coreutils}/bin/printf 'sk-%s' "$(${pkgs.openssl}/bin/openssl rand -hex 24)" > "$DIR/keys/${agent}.key"
+                  ${pkgs.coreutils}/bin/chmod 600 "$DIR/keys/${agent}.key"
+                  echo "litellm: generated distinct key for ${agent}"
+                fi
+              '') cfg.agents}
 
-      # config.yaml — generated, overwritten on every switch. JSON is
-      # valid YAML, so we emit JSON to bypass any indent hazards.
-      ${pkgs.coreutils}/bin/cat > "$DIR/config.yaml" <<'LITELLM_CONFIG'
-${configJson}
-LITELLM_CONFIG
-      ${pkgs.coreutils}/bin/chmod 600 "$DIR/config.yaml"
+            # config.yaml — generated, overwritten on every switch. JSON is
+            # valid YAML, so we emit JSON to bypass any indent hazards.
+            ${pkgs.coreutils}/bin/cat > "$DIR/config.yaml" <<'LITELLM_CONFIG'
+      ${configJson}
+      LITELLM_CONFIG
+            ${pkgs.coreutils}/bin/chmod 600 "$DIR/config.yaml"
 
-      # thinking_normalizer.py — the pre-call hook referenced by
-      # litellm_settings.callbacks. Lives next to config.yaml; the proxy
-      # is launched with cwd=$DIR (and $DIR on PYTHONPATH) so LiteLLM can
-      # import it as the top-level module `thinking_normalizer`.
-      ${pkgs.coreutils}/bin/cat > "$DIR/thinking_normalizer.py" <<'LITELLM_HOOK'
-${thinkingHookPy}
-LITELLM_HOOK
-      ${pkgs.coreutils}/bin/chmod 600 "$DIR/thinking_normalizer.py"
+            # thinking_normalizer.py — the pre-call hook referenced by
+            # litellm_settings.callbacks. Lives next to config.yaml; the proxy
+            # is launched with cwd=$DIR (and $DIR on PYTHONPATH) so LiteLLM can
+            # import it as the top-level module `thinking_normalizer`.
+            ${pkgs.coreutils}/bin/cat > "$DIR/thinking_normalizer.py" <<'LITELLM_HOOK'
+      ${thinkingHookPy}
+      LITELLM_HOOK
+            ${pkgs.coreutils}/bin/chmod 600 "$DIR/thinking_normalizer.py"
 
-      # custom_auth.py — DB-free per-agent key validation + model
-      # scoping, referenced by general_settings.custom_auth. Reads the
-      # live per-agent keyfiles at request time (values never enter the
-      # Nix store). Imported as top-level module `custom_auth` (cwd=$DIR
-      # + $DIR on PYTHONPATH, same as the thinking hook).
-      ${pkgs.coreutils}/bin/cat > "$DIR/custom_auth.py" <<'LITELLM_AUTH'
-${customAuthPy}
-LITELLM_AUTH
-      ${pkgs.coreutils}/bin/chmod 600 "$DIR/custom_auth.py"
+            # custom_auth.py — DB-free per-agent key validation + model
+            # scoping, referenced by general_settings.custom_auth. Reads the
+            # live per-agent keyfiles at request time (values never enter the
+            # Nix store). Imported as top-level module `custom_auth` (cwd=$DIR
+            # + $DIR on PYTHONPATH, same as the thinking hook).
+            ${pkgs.coreutils}/bin/cat > "$DIR/custom_auth.py" <<'LITELLM_AUTH'
+      ${customAuthPy}
+      LITELLM_AUTH
+            ${pkgs.coreutils}/bin/chmod 600 "$DIR/custom_auth.py"
 
-      # Install / upgrade litellm[proxy] via pipx, pinned to our commit.
-      export PATH="${pkgs.pipx}/bin:${pkgs.coreutils}/bin:$HOME/.nix-profile/bin:$PATH"
-      export PIPX_HOME="$HOME/.local/share/pipx"
-      export PIPX_BIN_DIR="$HOME/.local/bin"
-      ${pkgs.coreutils}/bin/mkdir -p "$PIPX_BIN_DIR" "$PIPX_HOME"
+            # Install / upgrade litellm[proxy] via pipx, pinned to our commit.
+            export PATH="${pkgs.pipx}/bin:${pkgs.coreutils}/bin:$HOME/.nix-profile/bin:$PATH"
+            export PIPX_HOME="$HOME/.local/share/pipx"
+            export PIPX_BIN_DIR="$HOME/.local/bin"
+            ${pkgs.coreutils}/bin/mkdir -p "$PIPX_BIN_DIR" "$PIPX_HOME"
 
-      INSTALLED_REF="$(${pipxBin} list --short 2>/dev/null | ${pkgs.gnugrep}/bin/grep '^litellm ' || true)"
-      EXPECTED_REF="${litellmPin}"
-      # We can't easily query the installed git ref; pipx upgrade is idempotent
-      # and respects --pip-args. Force-reinstall when nothing's installed yet.
-      if [ -z "$INSTALLED_REF" ]; then
-        echo "litellm: installing pinned $EXPECTED_REF via pipx..."
-        ${pipxBin} install --quiet "${litellmSpec}" || \
-          echo "litellm: install failed — run 'pipx install \"${litellmSpec}\"' manually" >&2
-      fi
+            INSTALLED_REF="$(${pipxBin} list --short 2>/dev/null | ${pkgs.gnugrep}/bin/grep '^litellm ' || true)"
+            EXPECTED_REF="${litellmPin}"
+            # We can't easily query the installed git ref; pipx upgrade is idempotent
+            # and respects --pip-args. Force-reinstall when nothing's installed yet.
+            if [ -z "$INSTALLED_REF" ]; then
+              echo "litellm: installing pinned $EXPECTED_REF via pipx..."
+              ${pipxBin} install --quiet "${litellmSpec}" || \
+                echo "litellm: install failed — run 'pipx install \"${litellmSpec}\"' manually" >&2
+            fi
     '';
 
     systemd.user.services.litellm = {

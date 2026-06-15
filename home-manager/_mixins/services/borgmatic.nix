@@ -17,8 +17,8 @@ let
   # host fires (and far enough apart that even a long initial run on one
   # host won't push later hosts past the morning window).
   borgmaticSchedule = {
-    floki  = { onCalendar = "02:00"; randomizedDelaySec = "15min"; };
-    meh    = { onCalendar = "03:30"; randomizedDelaySec = "15min"; };
+    floki = { onCalendar = "02:00"; randomizedDelaySec = "15min"; };
+    meh = { onCalendar = "03:30"; randomizedDelaySec = "15min"; };
     arnold = { onCalendar = "05:00"; randomizedDelaySec = "15min"; };
   }.${hostname} or { onCalendar = "02:30"; randomizedDelaySec = "30min"; };
 
@@ -50,11 +50,12 @@ let
           # don't end with `/`, so the trailing slash would silently match
           # nothing.
           s = lib.removeSuffix "/" (lib.strings.trim l);
-        in if lib.hasPrefix "/" s
-           then "${h}${s}"
-           else "sh:${h}/**/${s}";
+        in
+        if lib.hasPrefix "/" s
+        then "${h}${s}"
+        else "sh:${h}/**/${s}";
     in
-      map toBorg patterns;
+    map toBorg patterns;
 
   borgmaticConfig = {
     source_directories = [ config.home.homeDirectory ];

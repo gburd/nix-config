@@ -23,8 +23,12 @@ let
   # ~/.claude/steering/ so a project CLAUDE.md can @import them on demand;
   # the `claude-steering` helper (for .envrc) writes that project file.
   universalSteering = [
-    "must-rules.md" "coding-standards.md" "workflow.md"
-    "tools.md" "voice.md" "mcp-config.md"
+    "must-rules.md"
+    "coding-standards.md"
+    "workflow.md"
+    "tools.md"
+    "voice.md"
+    "mcp-config.md"
   ];
   domainSteering = {
     postgresql = [ "postgresql-workflow.md" ];

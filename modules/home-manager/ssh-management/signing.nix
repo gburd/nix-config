@@ -32,16 +32,18 @@ in
 
     # Create allowed_signers file for signature verification
     home.file.".ssh/allowed_signers" = {
-      text = let
-        # Get user email from git config
-        userEmail = config.programs.git.settings.user.email or "greg@burd.me";
-        # Get hostname for comment
-        hostname = let h = builtins.getEnv "HOSTNAME"; in if h == "" then "unknown" else h;
-      in ''
-        # SSH allowed signers file for git signature verification
-        # Format: email namespaces="git" ssh-key [comment]
-        ${userEmail} namespaces="git" ${cfg.signingKey.publicKey} ${hostname}-signing-${builtins.substring 0 6 (builtins.hashString "sha256" cfg.signingKey.publicKey)}
-      '';
+      text =
+        let
+          # Get user email from git config
+          userEmail = config.programs.git.settings.user.email or "greg@burd.me";
+          # Get hostname for comment
+          hostname = let h = builtins.getEnv "HOSTNAME"; in if h == "" then "unknown" else h;
+        in
+        ''
+          # SSH allowed signers file for git signature verification
+          # Format: email namespaces="git" ssh-key [comment]
+          ${userEmail} namespaces="git" ${cfg.signingKey.publicKey} ${hostname}-signing-${builtins.substring 0 6 (builtins.hashString "sha256" cfg.signingKey.publicKey)}
+        '';
       onChange = ''
         echo "✓ Git SSH signing configured with key: ${cfg.signingKey.publicKey}"
         echo "  Allowed signers: ${cfg.allowedSignersFile}"

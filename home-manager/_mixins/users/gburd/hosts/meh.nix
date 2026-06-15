@@ -152,7 +152,7 @@
       _1password-gui
       autoconf
       bash
-      bitnet        # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
+      bitnet # BitNet b1.58 2B-4T 1-bit LLM inference (CPU-optimized)
       cfssl
       cmake
       dig

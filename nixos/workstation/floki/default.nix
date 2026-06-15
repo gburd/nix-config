@@ -58,11 +58,11 @@
   };
 
   environment.systemPackages = with pkgs; [
-    intel-gpu-tools            # intel_gpu_top, intel_reg, etc.
-    intel-npu-driver           # Level Zero backend for NPU inference
-    libva-utils                # vainfo — VA-API codec diagnostics
+    intel-gpu-tools # intel_gpu_top, intel_reg, etc.
+    intel-npu-driver # Level Zero backend for NPU inference
+    libva-utils # vainfo — VA-API codec diagnostics
     nvtopPackages.intel
-    openvino                   # OpenVINO runtime with CPU/GPU/NPU plugins
+    openvino # OpenVINO runtime with CPU/GPU/NPU plugins
   ];
 
   networking.hostName = "floki";
