@@ -234,18 +234,20 @@ let
   # UNTRUSTED external sources (ponytail + skills.git branches) which are the
   # actual supply-chain risk and DO block the switch on a finding.
   skillSpectorTrusted = [
-    (toString ./files/kiro-skills)
-    (toString ./files/claude-skills)
+    ./files/kiro-skills
+    ./files/claude-skills
   ];
   skillSpectorUntrusted = lib.filter (p: p != null) (
-    lib.optional (cfg.ponytail.enable && ponytailSrc != null) (toString (ponytailSrc + "/skills"))
-    ++ map (spec: toString spec.input) (lib.attrValues enabledSkillsGitBranches)
+    lib.optional (cfg.ponytail.enable && ponytailSrc != null) (ponytailSrc + "/skills")
+    ++ map (spec: spec.input) (lib.attrValues enabledSkillsGitBranches)
   );
 
   # one scan loop, parameterised by whether findings block (untrusted) or
-  # just warn (trusted in-tree).
+  # just warn (trusted in-tree). Paths are interpolated with ${} so Nix
+  # preserves the store-path context (the writeShellScript then correctly
+  # depends on the scanned source trees).
   scanLoop = block: roots: ''
-    for tgt in ${lib.escapeShellArgs roots}; do
+    for tgt in ${lib.concatMapStringsSep " " (p: ''"${p}"'') roots}; do
       [ -e "$tgt" ] || continue
       for skill in "$tgt"/*; do
         [ -d "$skill" ] || continue
@@ -270,7 +272,7 @@ let
 
   skillSpectorScript = pkgs.writeShellScript "skillspector-gate" ''
     set -uo pipefail
-    SPEC_SRC=${lib.escapeShellArg (toString skillspectorSrc)}
+    SPEC_SRC="${skillspectorSrc}"
     fail=0
     scanned=0
     # Pin Python 3.13: skillspector's yara-python dep has no cp314 wheel, so
