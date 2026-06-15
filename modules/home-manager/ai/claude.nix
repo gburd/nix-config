@@ -26,6 +26,24 @@ in
       '';
     };
 
+    maxMcpOutputTokens = mkOption {
+      type = types.int;
+      default = 10000;
+      description = ''
+        Cap (MAX_MCP_OUTPUT_TOKENS) on the size of a SINGLE MCP tool result
+        injected into context. Claude Code's default is 25000 per call — a
+        few large results (github search, postgresq archive, context7 docs)
+        can blow the window and trigger autocompact thrashing. 10k keeps any
+        one result bounded while still useful.
+      '';
+    };
+
+    maxOutputTokens = mkOption {
+      type = types.int;
+      default = 32000;
+      description = "CLAUDE_CODE_MAX_OUTPUT_TOKENS — per-response output cap.";
+    };
+
     litellmUrl = mkOption {
       type = types.str;
       # claude-code appends /v1/messages itself, so this must be the
@@ -68,11 +86,24 @@ in
       # ANTHROPIC_MODEL + ANTHROPIC_SMALL_FAST_MODEL pin the model so
       # claude-code doesn't try to fetch an inference-profile id from
       # anthropic.com's catalog.
+      # Patch the env block. Beyond the LiteLLM-routing trio we set:
+      #   (a) MAX_MCP_OUTPUT_TOKENS — cap any single MCP tool result so a big
+      #       github/postgresq/context7 result can't gulp the window and
+      #       trigger autocompact thrashing (CC default is 25000/call).
+      #   (b) {ANTHROPIC,CLAUDE_CODE}_CONTEXT_WINDOW_TOKENS=1000000 — the
+      #       bedrock inference-profile id isn't in Claude Code's built-in
+      #       context-window table, so without this CC assumes a small
+      #       (~200k) default and compacts far too early. Tell it the proxy
+      #       serves Opus's true 1M window.
+      # NOTE: keep the jq program free of apostrophes/comments — it lives in
+      # a single-quoted shell string, so a stray ' would terminate it.
       ${pkgs.jq}/bin/jq \
         --arg base   "${cfg.litellmUrl}" \
         --arg key    "$KEY" \
         --arg model  "${cfg.defaultModel}" \
         --arg fast   "${cfg.fastModel}" \
+        --argjson mcpcap ${toString cfg.maxMcpOutputTokens} \
+        --argjson outcap ${toString cfg.maxOutputTokens} \
         '.env = ((.env // {})
           | del(
               .CLAUDE_CODE_USE_BEDROCK,
@@ -92,7 +123,12 @@ in
           | .ANTHROPIC_BASE_URL          = $base
           | .ANTHROPIC_AUTH_TOKEN        = $key
           | .ANTHROPIC_MODEL             = $model
-          | .ANTHROPIC_SMALL_FAST_MODEL  = $fast)' \
+          | .ANTHROPIC_SMALL_FAST_MODEL  = $fast
+          | .MAX_MCP_OUTPUT_TOKENS       = ($mcpcap|tostring)
+          | .CLAUDE_CODE_MAX_OUTPUT_TOKENS = ($outcap|tostring)
+          | .MAX_THINKING_TOKENS         = "32000"
+          | .ANTHROPIC_CONTEXT_WINDOW_TOKENS = "1000000"
+          | .CLAUDE_CODE_CONTEXT_WINDOW_TOKENS = "1000000")' \
         "$SETTINGS" > "$TMP" && \
         ${pkgs.coreutils}/bin/mv "$TMP" "$SETTINGS"
 
