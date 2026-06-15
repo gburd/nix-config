@@ -44,8 +44,10 @@
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    # nixos-generators for sdcard and raw disk install generation
-    nixos-generators.url = "github:tcarrio/nixos-generators";
+    # nixos-generators for sdcard and raw disk install generation.
+    # Upstream nix-community (the tcarrio fork was ~930d stale; upstream is
+    # actively maintained and provides the same nixosGenerate interface).
+    nixos-generators.url = "github:nix-community/nixos-generators";
     nixos-generators.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     sops-nix.url = "github:mic92/sops-nix";
@@ -195,7 +197,13 @@
       packages = libx.forAllSystems
         (system:
           let
-            pkgs = nixpkgs.legacyPackages.${system};
+            # allowUnfree so unfree custom pkgs (e.g. kiro-cli) evaluate —
+            # otherwise `nix flake check` fails on packages.<sys>.kiro-cli
+            # with "has an unfree license, refusing to evaluate".
+            pkgs = import nixpkgs {
+              inherit system;
+              config.allowUnfree = true;
+            };
           in
           (import ./pkgs { inherit pkgs; })
           //
