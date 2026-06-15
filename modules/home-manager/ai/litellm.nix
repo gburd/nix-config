@@ -56,7 +56,7 @@ let
     { name = "claude-opus-4-5"; bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
     { name = "claude-opus-4-1"; bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 32000; }
     { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; aliases = [ "us.anthropic.claude-sonnet-4-5-20250929-v1:0" ]; }
-    { name = "claude-haiku-4-5"; bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-haiku-4-5"; bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; aliases = [ "claude-haiku-4-5-20251001" "claude-haiku-4-5-20251001-v1" "us.anthropic.claude-haiku-4-5-20251001-v1:0" ]; }
 
     # DeepSeek
     { name = "deepseek-r1"; bedrock = "us.deepseek.r1-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
