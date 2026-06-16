@@ -158,32 +158,6 @@ let
     };
   };
 
-  # Per-model fallback chains for litellm_settings.fallbacks. On a retryable
-  # error (e.g. Bedrock 503), LiteLLM tries the listed model(s) in order.
-  # Built from the model catalog so it tracks the available models:
-  #   - Anthropic Claude: opus-4-8 -> opus-4-7 -> sonnet-4-6 (all 1M-context
-  #     coders); each opus tier falls to the next; haiku/sonnet -> sonnet-4-6.
-  #   - Everything else falls back to claude-sonnet-4-6 as a safe default.
-  # Only emit a fallback entry when the target model actually exists in the
-  # catalog, and never make a model fall back to itself.
-  modelNames = map (m: m.name) cfg.models;
-  has = n: builtins.elem n modelNames;
-  fallbackFor = name:
-    let
-      chain =
-        if name == "claude-opus-4-8" then [ "claude-opus-4-7" "claude-sonnet-4-6" "claude-opus-4-6" ]
-        else if name == "claude-opus-4-7" then [ "claude-opus-4-8" "claude-sonnet-4-6" ]
-        else if name == "claude-opus-4-6" then [ "claude-opus-4-8" "claude-sonnet-4-6" ]
-        else if name == "claude-sonnet-4-6" then [ "claude-opus-4-8" "claude-sonnet-4-5" ]
-        else if lib.hasPrefix "claude-" name then [ "claude-sonnet-4-6" "claude-opus-4-8" ]
-        else [ "claude-sonnet-4-6" ];
-    in
-    builtins.filter (n: has n && n != name) chain;
-  # One {model = [fallbacks];} entry per model that has at least one
-  # available fallback target.
-  fallbackChain = builtins.filter (e: (builtins.length (builtins.head (builtins.attrValues e))) > 0)
-    (map (m: { ${m.name} = fallbackFor m.name; }) cfg.models);
-
   configJson = builtins.toJSON {
     model_list =
       (map (m: mkModelRow m m.name) cfg.models)
@@ -205,16 +179,15 @@ let
       request_timeout = 600;
       # Resilience against transient Bedrock 503s ("Bedrock is unable to
       # process your request" / "system encountered an unexpected error").
-      # These are AWS-side outages on a model/region; retry the same model a
-      # few times (exponential backoff), then fall back to the next-best
-      # model so an agent keeps working instead of failing after 3 tries
-      # with "Available Model Group Fallbacks=None".
+      # Retry the SAME model a few times with exponential backoff — a 503 is
+      # usually a momentary AWS capacity blip that clears within a second or
+      # two. We deliberately do NOT configure cross-model `fallbacks`: a
+      # sustained outage should fail LOUDLY with the 503 rather than
+      # silently downgrading e.g. opus-4-8 -> a weaker model behind the
+      # user's back. (There's also no same-quality fallback to add: the
+      # `us.` inference profiles already load-balance across us-east/west,
+      # so a 503 means AWS's whole us fleet for that model is unavailable.)
       num_retries = 3;
-      # Per-model fallback chains. Keys/values are model_name(s) from
-      # model_list. Opus 4.8 -> 4.7 -> Sonnet 4.6 (all strong 1M-context
-      # coding models); haiku falls to sonnet; nova/llama/etc. fall to a
-      # Claude. Built from cfg.models so it can't drift from the catalog.
-      fallbacks = fallbackChain;
       # Custom pre-call hook that normalises the `thinking` param per
       # model. Module path is resolved from config.yaml's dir (we drop
       # thinking_normalizer.py alongside it at activation).
