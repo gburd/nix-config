@@ -225,9 +225,14 @@ in
           (steeringFiles // cfg.extraFiles)
       ))
 
-      # Maki global instructions (all steering concatenated)
+      # Maki global instructions (all steering concatenated). Maki prefers
+      # the ~/.maki/ FALLBACK_DIR (which always exists — the dynamic
+      # provider script lives there) over ~/.config/maki/, so write BOTH to
+      # guarantee the voice/steering content is seen regardless of which
+      # dir maki reads (same precedence trap as config.toml in maki.nix).
       (lib.mkIf cfg.targets.maki {
         ".config/maki/instructions.md".text = allSteeringContent;
+        ".maki/instructions.md".text = allSteeringContent;
       })
 
       # Codex instructions (all steering concatenated)
