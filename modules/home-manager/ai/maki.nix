@@ -192,11 +192,18 @@ in
     home.file = {
       # Note: maki uses `~/.maki/` (the FALLBACK_DIR) when that directory
       # exists, even though XDG dirs are otherwise honoured. The dynamic
-      # provider script must live there so maki's discovery picks it up.
+      # provider script must live there so maki's discovery picks it up —
+      # and because ~/.maki/ exists, maki reads ~/.maki/config.toml with
+      # HIGHER precedence than ~/.config/maki/config.toml. So manage the
+      # config in BOTH places: writing ~/.maki/config.toml (nix symlink)
+      # prevents a stale hand-edited copy there from shadowing the correct
+      # litellm-routed config (which previously made maki talk to Bedrock
+      # directly via leftover ~/.maki/.env creds).
       ".maki/providers/litellm" = {
         source = litellmProviderScript;
         executable = true;
       };
+      ".maki/config.toml".text = configToml;
       ".config/maki/config.toml".text = configToml;
       ".config/maki/permissions.toml".text = permissionsToml;
     };

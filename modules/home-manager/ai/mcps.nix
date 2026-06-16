@@ -376,28 +376,46 @@ in
         ".kiro/settings/mcp.json".text = mcpJsonText;
         # Agent config: trust all safe tools, deny destructive ones via hooks
         ".kiro/agents/default.json".text = builtins.toJSON {
+          "$schema" = "https://raw.githubusercontent.com/aws/amazon-q-developer-cli/refs/heads/main/schemas/agent-v1.json";
           name = "default";
           description = "Default agent with broad tool trust (safety enforced via hooks)";
-          allowedTools = [
-            # All built-in tools
-            "read"
-            "write"
-            "shell"
-            "glob"
-            "grep"
-            "code"
-            "web_search"
-            "web_fetch"
-            "knowledge"
-            "subagent"
-            "introspect"
-            "todo_list"
-            "use_aws"
-            # Aliases
+          # kiro 2.x split the schema: `tools` ENABLES tools (without it the
+          # agent gets a no-op \"dummy\" tool and can't run shell/anything);
+          # `allowedTools` only marks which enabled tools are auto-approved
+          # (no prompt). The old config put everything in allowedTools with
+          # no `tools`, so kiro 2.2.0 enabled NOTHING. List the real built-in
+          # tool names + all MCP servers here to enable them.
+          tools = [
             "fs_read"
             "fs_write"
             "execute_bash"
-            "fs_search"
+            "use_aws"
+            "knowledge"
+            "thinking"
+            "todo_list"
+            # All MCP server tools (@server = include every tool it exposes)
+            "@context7"
+            "@filesystem"
+            "@git"
+            "@github"
+            "@memelord"
+            "@memory"
+            "@postgresq"
+            "@sequential-thinking"
+            "@nix"
+            "@rust"
+            "@python"
+            "@home-manager"
+          ];
+          allowedTools = [
+            # auto-approved (no prompt) subset of the enabled tools above
+            "fs_read"
+            "fs_write"
+            "execute_bash"
+            "use_aws"
+            "knowledge"
+            "thinking"
+            "todo_list"
             # All MCP server tools
             "@context7"
             "@filesystem"
@@ -447,7 +465,10 @@ in
           };
           hooks = {
             preToolUse = [{
-              matcher = "shell";
+              # kiro 2.x's shell tool is named execute_bash (was "shell");
+              # the matcher must use the current tool name or the rm -rf
+              # guard never fires.
+              matcher = "execute_bash";
               command = "CMD=$(cat | jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qE 'rm[[:space:]]+-[^[:space:]]*r[^[:space:]]*f'; then echo 'BLOCKED: Use trash instead of rm -rf' >&2; exit 2; fi";
             }];
           };
