@@ -53,9 +53,6 @@
     sops-nix.url = "github:mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
-    bitnet-flake.url = "github:general-intelligence-systems/bitnet-flake";
-    bitnet-flake.inputs.nixpkgs.follows = "nixpkgs";
-
     # PostgreSQL community agent skills (https://codeberg.org/ddx/skills.git).
     # One input per agent branch — content overlaps but each branch ships its
     # own per-agent extras (claude/, pi/, kiro/, codex/, maki/ subdirs).

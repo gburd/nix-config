@@ -215,8 +215,8 @@ let
   # Wrapper script that reads the bearer token + master key at *runtime*
   # (not build time) and execs litellm. Lets us avoid baking secrets into
   # the systemd unit file. Also configures LD_LIBRARY_PATH so the pipx-
-  # installed tokenizers C++ extension can find libstdc++ on NixOS — the
-  # same nix-ld trick used by overlays/default.nix's bitnet wrapper.
+  # installed tokenizers C++ extension can find libstdc++ on NixOS via the
+  # nix-ld library path.
   startWrapper = pkgs.writeShellScript "litellm-start" ''
     set -eu
     PIPX_BIN="$HOME/.local/bin/litellm"
