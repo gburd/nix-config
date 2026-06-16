@@ -136,6 +136,10 @@ let
   })
     // (optionalAttrs cfg.servers.postgresq.enable {
     postgresq = {
+      # type=http is required by the current MCP config schema for a
+      # URL-based server; without it `claude doctor` (which validates
+      # ~/.mcp.json) rejects it: "expected string received undefined".
+      type = "http";
       inherit (cfg.servers.postgresq) url;
     };
   })

@@ -9,16 +9,19 @@ let
     # (modules/home-manager/ai/litellm.nix); the litellm pi-extension
     # below registers all models the proxy exposes as one provider.
     inherit (cfg) defaultProvider defaultModel;
-    # Pi's own thinking-level toggle. With LiteLLM in front, thinking is
-    # driven entirely by the proxy's server-side `output_config.effort`
-    # (xhigh by default for all Anthropic models in litellm.nix). Pi must
-    # NOT send the legacy `thinking.type.enabled` payload field that
-    # LiteLLM maps `xhigh` to client-side — Opus 4.7+ rejects it with
-    # 400 "thinking.type.enabled is not supported for this model. Use
-    # thinking.type.adaptive and output_config.effort". So we set pi's
-    # client-side level to "off"; the server-side adaptive thinking still
-    # applies and we get max-effort by default.
-    defaultThinkingLevel = "off";
+    # Pi's client-side thinking toggle. The ACTUAL thinking is driven
+    # server-side by the proxy's thinking_normalizer.py, which
+    # unconditionally rewrites every request to each model's policy
+    # (adaptive + output_config.effort=xhigh for Opus 4.6+/4.8) — so
+    # whatever level Pi sends is overridden to max effort anyway.
+    #
+    # We set this to "xhigh" (not the old "off") so Pi's UI honestly
+    # reflects that thinking is on at max. The old reason for "off" — that
+    # Pi's legacy `thinking.type.enabled` payload made Opus 4.7+ 400 — no
+    # longer applies: the normalizer now CONVERTS that legacy shape into
+    # `thinking.type.adaptive` + effort before it reaches Bedrock (verified
+    # HTTP 200), so sending a real level is safe.
+    defaultThinkingLevel = "xhigh";
     theme = "dark";
     quietStartup = false;
     enableInstallTelemetry = false;

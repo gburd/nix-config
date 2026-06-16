@@ -21,7 +21,7 @@ let
   # context in unrelated repos (e.g. an OS-kernel project pulling in
   # Postgres steering). Domain files are still deployed to
   # ~/.claude/steering/ so a project CLAUDE.md can @import them on demand;
-  # the `claude-steering` helper (for .envrc) writes that project file.
+  # the `project-steering` helper (for .envrc) writes that project file.
   universalSteering = [
     "must-rules.md"
     "coding-standards.md"
@@ -47,7 +47,7 @@ let
   #   - Claude + Pi  -> ./.claude/CLAUDE.md  @imports ./.claude/steering-domains.md
   #   - Codex + Maki + Pi -> ./AGENTS.md     references ./.agent-steering-domains.md
   #   - Kiro         -> ./.kiro/steering/<domain-file> (symlinks)
-  # With no args it lists domains. `claude-steering` is kept as an alias.
+  # With no args it lists domains.
   #
   # NON-DESTRUCTIVE: never clobbers a hand-written CLAUDE.md/AGENTS.md — only
   # appends a single include line if absent (idempotent). The two generated
@@ -133,11 +133,6 @@ let
       echo "project-steering: layered [$*] into CLAUDE.md, AGENTS.md, .kiro/steering" >&2
     '';
   };
-
-  # Back-compat shim: the old name.
-  claudeSteeringHelper = pkgs.writeShellScriptBin "claude-steering" ''
-    exec ${projectSteeringHelper}/bin/project-steering "$@"
-  '';
 in
 {
   options.programs.ai.steering = {
@@ -180,10 +175,10 @@ in
 
   config = lib.mkIf cfg.enable {
     # claude-steering helper for per-project domain opt-in (used from .envrc).
-    # project-steering (cross-agent per-project domain scoping) + the
-    # claude-steering back-compat alias. Gated on the claude target since
-    # the global steering files it sources live under ~/.claude/steering/.
-    home.packages = lib.optionals cfg.targets.claude [ projectSteeringHelper claudeSteeringHelper ];
+    # project-steering: cross-agent per-project domain scoping (used from
+    # .envrc). Gated on the claude target since the global steering files it
+    # sources live under ~/.claude/steering/.
+    home.packages = lib.optional cfg.targets.claude projectSteeringHelper;
 
     home.file = lib.mkMerge [
       # Kiro steering files (individual files in ~/.kiro/steering/)
@@ -214,7 +209,7 @@ in
 
             Domain-specific steering (PostgreSQL, AWS, Rust) is NOT imported
             globally — it's opt-in per project. In a project's .envrc run
-            `eval "$(claude-steering postgresql)"` (or `aws`, `rust`) to add
+            `eval "$(project-steering postgresql)"` (or `aws`, `rust`) to add
             it via a project-local .claude/CLAUDE.md.
 
           '' + builtins.concatStringsSep "\n"
