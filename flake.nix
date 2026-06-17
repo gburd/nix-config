@@ -135,6 +135,10 @@
       # - darwin-rebuild build --flake .#80a99738d7e2
       darwinConfigurations = {
         "80a99738d7e2" = libx.mkDarwin { username = "gregburd"; hostname = "80a99738d7e2"; stateVersion = 4; };
+        # Work-issued macOS laptop (host named "aws"). Starting point matching
+        # the other hosts; an agent on the host will tune it further.
+        # - darwin-rebuild switch --flake .#aws
+        aws = libx.mkDarwin { username = "gregburd"; hostname = "aws"; stateVersion = 4; };
       };
 
       # Expose the package set, including overlays, for convenience.
