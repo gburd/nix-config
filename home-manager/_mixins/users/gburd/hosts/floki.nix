@@ -11,6 +11,7 @@ with lib.hm.gvariant;
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
     ../../../desktop/sublime-license.nix
+    ../../../desktop/proton-apps.nix
     # Email and productivity services
     ../../../services/protonmail-bridge.nix
     ../../../services/vdirsyncer.nix
@@ -22,6 +23,9 @@ with lib.hm.gvariant;
   ];
   # LMStudio NPU-accelerated local models (floki has Intel Arc NPU)
   programs.ai.lmstudio.enable = true;
+
+  # Proton Drive (rclone native protondrive backend; on-demand FUSE mount).
+  services.protonDrive.enable = true;
 
   # GNOME configuration
   dconf.settings = {

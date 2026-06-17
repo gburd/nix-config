@@ -91,6 +91,10 @@
   # (Sublime Merge is a GUI app; meh is headless, so this is intentionally
   # a no-op: the sops secret is no longer declared on this host.)
 
+  # Proton Drive (rclone native protondrive backend; on-demand FUSE mount,
+  # fine on a headless host — it's just a filesystem).
+  services.protonDrive.enable = true;
+
   # SSH key management with rotation support (replaces 1Password SSH agent)
   services.ssh-management = {
     enable = true;
