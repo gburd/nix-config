@@ -5,7 +5,12 @@
   # home-manager activate run mid-way, dropping every step after
   # `dconfSettings` (setupLitellm, installHermesAgent, sops-nix, …). Gate
   # all desktop imports on `desktop` being set.
-  imports = lib.optionals (builtins.isString desktop) [
+  imports = [
+    # Keybase service + KBFS on every Linux host (CLI/TUI everywhere); the
+    # GUI is opted in per-host via services.keybaseClient.gui (floki/arnold
+    # = true, meh = headless/false).
+    ../../../services/keybase.nix
+  ] ++ lib.optionals (builtins.isString desktop) [
     ../../../desktop/audio-recorder.nix
     ../../../desktop/celluloid.nix
     ../../../desktop/dconf-editor.nix
@@ -13,6 +18,15 @@
     ../../../desktop/tilix.nix
     # ../../../desktop/emote.nix  # Disabled - user doesn't want emoticons
   ];
+
+  # Keybase on every Linux host. TUI/CLI + KBFS everywhere; GUI only where
+  # there's a graphical session. Defaults gui to (desktop != null), which
+  # covers floki (gnome). arnold has desktop=null but runs GUI apps over
+  # X11, so it overrides gui=true in its host file.
+  services.keybaseClient = {
+    enable = true;
+    gui = builtins.isString desktop;
+  };
 
   home = {
     file."Quickemu/nixos-console.conf".text = ''

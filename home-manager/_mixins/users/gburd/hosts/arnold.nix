@@ -45,6 +45,11 @@ with lib.hm.gvariant;
     AWS_PROFILE = "asbxbedrock";
   };
 
+  # arnold has no GNOME (desktop=null) but runs GUI apps over X11, so opt
+  # the Keybase GUI in explicitly (linux.nix defaults gui to desktop!=null,
+  # i.e. false here — mkForce to override that normal-priority default).
+  services.keybaseClient.gui = lib.mkForce true;
+
   # arnold runs Fedora, whose /etc/ssh/ssh_config Includes
   # /etc/crypto-policies/back-ends/openssh.config. That file sets
   # GSSAPIKexAlgorithms — GSSAPI *key exchange*, a Debian/Fedora downstream
