@@ -18,8 +18,12 @@
 let
   inherit (lib) mkEnableOption mkOption types mkIf;
   c = config.services.protonDrive;
-  confDir = "%t/rclone";
-  conf = "${confDir}/rclone.conf";
+  # Persist rclone.conf under ~/.config/rclone so the cached login session
+  # (obtained via the one-time interactive CAPTCHA/2FA login) SURVIVES
+  # REBOOTS — otherwise you'd have to re-solve Proton's CAPTCHA every boot.
+  # The file is mode 600 and holds only a Drive session token, not the
+  # account password in cleartext.
+  conf = "${config.xdg.configHome}/rclone/rclone.conf";
 in
 {
   options.services.protonDrive = {
@@ -45,15 +49,13 @@ in
         Type = "notify";
         Environment = [ "RCLONE_CONFIG=${conf}" ];
         ExecStartPre = [
-          "${pkgs.coreutils}/bin/mkdir -p ${c.mountPoint} ${confDir}"
-          # Render the rclone.conf from sops creds into the runtime dir
-          # (tmpfs, mode 600). rclone will append cached session tokens here
-          # on first login so later starts reuse the session.
+          "${pkgs.coreutils}/bin/mkdir -p ${c.mountPoint} ${config.xdg.configHome}/rclone"
+          # Render the rclone.conf from sops creds if absent. rclone appends
+          # cached session tokens here on first (interactive) login so later
+          # automatic starts reuse the session.
           (toString (pkgs.writeShellScript "proton-drive-render-conf" ''
             set -eu
-            CONF="${conf}"
-            # Preserve an existing conf (it holds the cached session tokens);
-            # only seed a fresh one if absent.
+            CONF=${lib.escapeShellArg conf}
             if [ ! -f "$CONF" ]; then
               USER_VAL="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."drive/proton/user".path})"
               PASS_RAW="$(${pkgs.coreutils}/bin/cat ${config.sops.secrets."drive/proton/pass".path})"
