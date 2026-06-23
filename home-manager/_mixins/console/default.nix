@@ -225,9 +225,12 @@
         prompt = "enabled";
       };
     };
+    # delta (the side-by-side TUI diff pager) is disabled — `git diff` now
+    # uses git's normal pager (plain colored diff). Flip enable back to true
+    # to restore it.
     delta = {
-      enable = true;
-      enableGitIntegration = true;
+      enable = false;
+      enableGitIntegration = false;
       options = {
         features = "decorations";
         navigate = true;

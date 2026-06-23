@@ -209,9 +209,9 @@ in
       core = {
         editor = "nvim";
         quotepath = false;
-        # NB: core.pager is owned by programs.delta (enableGitIntegration);
-        # the old ~/.gitconfig's `less -FMRiX` is intentionally dropped in
-        # favor of delta.
+        # core.pager is left to git's default (delta is disabled — see
+        # programs.delta in console/default.nix). `git diff` shows a plain
+        # colored diff through the normal pager, not the side-by-side TUI.
         # Route all repos through the global dump + gitleaks guard. It
         # chains to any repo-local .git/hooks/pre-commit, so project
         # hooks still run.
