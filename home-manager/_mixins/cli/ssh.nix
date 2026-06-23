@@ -44,6 +44,20 @@ in
           RemoteCommand = "wsl.exe -d NixOS --user gburd";
         };
       };
+      # PostgreSQL build-farm animal hosts (not NixOS, so not covered by `net`).
+      # Force publickey auth with our standard key and disable the password
+      # fallback so a missing/empty agent fails loudly instead of silently
+      # prompting for a password. forwardAgent lets the inner `ssh pgbf@host`
+      # hop reuse the (now non-empty) agent.
+      buildfarm = lib.hm.dag.entryBefore [ "net" ] {
+        host = "sun rv";
+        forwardAgent = true;
+        identitiesOnly = true;
+        identityFile = "~/.ssh/id_ed25519";
+        extraOptions = {
+          PreferredAuthentications = "publickey";
+        };
+      };
       net = {
         host = builtins.concatStringsSep " " hostnames;
         forwardAgent = true;
