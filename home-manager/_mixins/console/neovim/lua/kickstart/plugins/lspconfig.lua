@@ -280,18 +280,31 @@ return {
       require('mason-lspconfig').setup {
         ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
         automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-             vim.lsp.config(server_name, server)
-             vim.lsp.enable(server_name)
-          end,
-        },
+        -- NOTE: mason-lspconfig's `handlers` ONLY fire for servers Mason
+        -- itself installed. On NixOS we provide every LSP via Nix
+        -- (default.nix extraPackages) and install NOTHING through Mason, so
+        -- the handler never ran for clangd/etc. — they were configured but
+        -- never `vim.lsp.enable`d, so neovim never started them (clangd was
+        -- on PATH but silently unused). Configure + enable the servers
+        -- ourselves instead, independent of Mason.
       }
+
+      for server_name, server in pairs(servers) do
+        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+        vim.lsp.config(server_name, server)
+        -- Only enable a server whose executable is actually present (Nix
+        -- provides most; a few — e.g. autotools_ls, flake8, sqlls, lua_ls —
+        -- aren't installed on every host). vim.lsp.config() resolves the
+        -- default cmd from nvim-lspconfig; skip enabling when its binary is
+        -- missing so one absent tool can't error out the whole loop
+        -- (previously 'cmd: ...got nil' for rust_analyzer/sqlls in lsp.log).
+        local resolved = vim.lsp.config[server_name] or {}
+        local cmd = server.cmd or resolved.cmd
+        local exe = type(cmd) == 'table' and cmd[1] or nil
+        if exe == nil or vim.fn.executable(exe) == 1 then
+          vim.lsp.enable(server_name)
+        end
+      end
     end,
   },
 }
