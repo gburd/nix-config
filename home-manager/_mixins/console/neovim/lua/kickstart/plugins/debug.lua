@@ -214,12 +214,22 @@ return {
     -- Language-specific adapter configurations
     -- =====================================================
 
-    -- Rust & C/C++: lldb-vscode adapter
-    -- Note: Provided by Nix via lldb package
+    -- Rust & C/C++: lldb-dap adapter (Nix-provided by the `lldb` package).
+    -- NOTE: modern LLVM ships the DAP binary as `lldb-dap` (the old name
+    -- `lldb-vscode` no longer exists — that's why C/Rust debugging silently
+    -- failed to start).
     dap.adapters.lldb = {
       type = 'executable',
-      command = 'lldb-vscode',
+      command = 'lldb-dap',
       name = 'lldb',
+    }
+
+    -- gdb adapter (Nix-provided by `gdb`, which has a built-in DAP server
+    -- since gdb 14). Use type='gdb' configs to debug with gdb instead of lldb.
+    dap.adapters.gdb = {
+      type = 'executable',
+      command = 'gdb',
+      args = { '--interpreter=dap', '--eval-command', 'set print pretty on' },
     }
 
     -- Rust configuration
@@ -247,7 +257,7 @@ return {
     -- C/C++ configuration
     dap.configurations.c = {
       {
-        name = 'Launch',
+        name = 'Launch (lldb)',
         type = 'lldb',
         request = 'launch',
         program = function()
@@ -256,6 +266,16 @@ return {
         cwd = '${workspaceFolder}',
         stopOnEntry = false,
         args = {},
+      },
+      {
+        name = 'Launch (gdb)',
+        type = 'gdb',
+        request = 'launch',
+        program = function()
+          return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+        end,
+        cwd = '${workspaceFolder}',
+        stopAtBeginningOfMainSubprogram = false,
       },
       {
         name = 'Attach to process',

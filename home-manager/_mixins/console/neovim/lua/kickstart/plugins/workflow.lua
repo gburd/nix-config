@@ -8,15 +8,34 @@ return {
   -- We use lazy.nvim's init function to run code before plugin loading
   dir = vim.fn.stdpath 'config', -- Point to config dir (not a real plugin)
   init = function()
-    -- Quick compile/build keybindings
+    -- Run a shell build/command via overseer (installed), streaming output
+    -- and parsing compiler errors into the QUICKFIX list so [q / ]q /
+    -- <leader>qn jump straight to each error/warning. (overseer gives a
+    -- proper task list + diagnostics; the bare `:AsyncRun` plugin is still
+    -- available for one-off ad-hoc commands.) overseer opens its window on
+    -- completion.
+    local function build(cmd)
+      local overseer = require 'overseer'
+      local task = overseer.new_task {
+        cmd = cmd,
+        components = {
+          { 'on_output_quickfix', open = true, set_diagnostics = true },
+          'on_result_diagnostics',
+          'default',
+        },
+      }
+      task:start()
+    end
+
+    -- Quick compile/check keybindings
     vim.keymap.set('n', '<leader>cc', function()
       local ft = vim.bo.filetype
       if ft == 'rust' then
-        vim.cmd 'AsyncRun cargo check'
+        build 'cargo check'
       elseif ft == 'c' or ft == 'cpp' then
-        vim.cmd 'AsyncRun cmake --build build'
+        build 'cmake --build build'
       elseif ft == 'python' then
-        vim.cmd 'AsyncRun python3 -m py_compile %'
+        build('python3 -m py_compile ' .. vim.fn.expand '%')
       else
         vim.notify('No compile command for filetype: ' .. ft, vim.log.levels.WARN)
       end
@@ -26,9 +45,9 @@ return {
     vim.keymap.set('n', '<leader>cb', function()
       local ft = vim.bo.filetype
       if ft == 'rust' then
-        vim.cmd 'AsyncRun cargo build --release'
+        build 'cargo build --release'
       elseif ft == 'c' or ft == 'cpp' then
-        vim.cmd 'AsyncRun cmake --build build --config Release'
+        build 'cmake --build build --config Release'
       else
         vim.notify('No build command for filetype: ' .. ft, vim.log.levels.WARN)
       end
@@ -38,11 +57,11 @@ return {
     vim.keymap.set('n', '<leader>cr', function()
       local ft = vim.bo.filetype
       if ft == 'rust' then
-        vim.cmd 'AsyncRun cargo run'
+        build 'cargo run'
       elseif ft == 'python' then
-        vim.cmd('AsyncRun python3 ' .. vim.fn.expand '%')
+        build('python3 ' .. vim.fn.expand '%')
       elseif ft == 'sh' or ft == 'bash' then
-        vim.cmd('AsyncRun bash ' .. vim.fn.expand '%')
+        build('bash ' .. vim.fn.expand '%')
       else
         vim.notify('No run command for filetype: ' .. ft, vim.log.levels.WARN)
       end
@@ -96,7 +115,7 @@ return {
       if vim.bo.filetype == 'sql' then
         local query = vim.fn.input 'Database connection string: '
         if query ~= '' then
-          vim.cmd('AsyncRun psql ' .. query .. ' -f ' .. vim.fn.expand '%')
+          build('psql ' .. query .. ' -f ' .. vim.fn.expand '%')
         end
       else
         vim.notify('Not a SQL file', vim.log.levels.WARN)
