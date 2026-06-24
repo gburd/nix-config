@@ -57,6 +57,11 @@
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Colmena: declarative deploy/management of a fleet of NixOS hosts
+    # (the EC2 perf-test instances).
+    colmena.url = "github:zhaofengli/colmena";
+    colmena.inputs.nixpkgs.follows = "nixpkgs";
+
     # PostgreSQL community agent skills (https://codeberg.org/ddx/skills.git).
     # One input per agent branch — content overlaps but each branch ships its
     # own per-agent extras (claude/, pi/, kiro/, codex/, maki/ subdirs).
@@ -119,6 +124,7 @@
       stateVersion = "25.11";
 
       inherit (self) outputs;
+      sshMatrix = import ./lib/ssh-matrix.nix { };
       libx = import ./lib { inherit self inputs outputs stateVersion; };
     in
     {
@@ -173,6 +179,52 @@
         #  - nixos-rebuild switch --fast --flake .#${HOST} \
         #      --target-host ${USERNAME}@${HOST}.${TAILNET} \
         #      --build-host  ${USERNAME}@${HOST}.${TAILNET}
+
+        # EC2 PostgreSQL performance-test hosts (managed via Colmena; AMIs
+        # built via packages.<platform>.ec2-pgperf-{arm,x86} below).
+        pgperf-arm = libx.mkHost { systemType = "server"; hostname = "pgperf-arm"; username = "gburd"; };
+        pgperf-x86 = libx.mkHost { systemType = "server"; hostname = "pgperf-x86"; username = "gburd"; };
+      };
+
+      # Colmena: declarative fleet deploy for the EC2 perf-test hosts.
+      #   colmena apply --on @perf            # deploy all perf hosts
+      #   colmena apply switch --on pgperf-arm # one host
+      # Reuses the same nixos/ modules as nixosConfigurations. Set each
+      # node's deployment.targetHost to the instance's address (Tailscale
+      # name or public DNS) once the AMIs are launched.
+      colmenaHive = inputs.colmena.lib.makeHive {
+        meta = {
+          nixpkgs = import nixpkgs { system = "x86_64-linux"; };
+          # aarch64 node needs its own pkgs (Graviton).
+          nodeNixpkgs = {
+            pgperf-arm = import nixpkgs { system = "aarch64-linux"; };
+          };
+          specialArgs = {
+            inherit inputs outputs stateVersion sshMatrix;
+            desktop = null;
+            username = "gburd";
+          };
+        };
+
+        pgperf-arm = { ... }: {
+          deployment = {
+            targetHost = "pgperf-arm"; # set to the live instance addr/Tailscale name
+            targetUser = "root";
+            tags = [ "perf" "db" "arm" ];
+          };
+          imports = [ ./nixos ];
+          _module.args = { hostname = "pgperf-arm"; systemType = "server"; };
+        };
+
+        pgperf-x86 = { ... }: {
+          deployment = {
+            targetHost = "pgperf-x86";
+            targetUser = "root";
+            tags = [ "perf" "db" "x86" ];
+          };
+          imports = [ ./nixos ];
+          _module.args = { hostname = "pgperf-x86"; systemType = "server"; };
+        };
       };
 
       # nixOnDroidConfigurations removed along with the nix-on-droid input
