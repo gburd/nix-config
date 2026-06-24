@@ -25,6 +25,22 @@ in
     ] ++ (inputs.nixpkgs.lib.optionals (installer != null) [ installer ]);
   };
 
+  # NixOS running as a WSL2 distro. Same nixos/ tree as mkHost, plus the
+  # nixos-wsl module (which provides the WSL boot/interop layer in place of
+  # real hardware-configuration). systemType is fixed to "wsl" so the host
+  # config lives under nixos/wsl/<hostname>/.
+  mkWslHost = { hostname, username }: inputs.nixpkgs.lib.nixosSystem {
+    specialArgs = {
+      inherit inputs outputs hostname username stateVersion sshMatrix;
+      systemType = "wsl";
+      desktop = null;
+    };
+    modules = [
+      ../nixos
+      inputs.nixos-wsl.nixosModules.default
+    ];
+  };
+
   mkDarwin = { hostname, username, stateVersion ? 4, platform ? "aarch64-darwin" }: inputs.nix-darwin.lib.darwinSystem {
     specialArgs = {
       inherit self inputs outputs hostname username platform stateVersion sshMatrix;

@@ -6,6 +6,7 @@ in
   inherit (helpers)
     mkHome
     mkHost
+    mkWslHost
     mkDarwin
     mkRawImage
     mkSdImage

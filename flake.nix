@@ -53,6 +53,10 @@
     sops-nix.url = "github:mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
+    # NixOS-WSL: run NixOS as a WSL2 distro (santorini host).
+    nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
+    nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
+
     # PostgreSQL community agent skills (https://codeberg.org/ddx/skills.git).
     # One input per agent branch — content overlaps but each branch ships its
     # own per-agent extras (claude/, pi/, kiro/, codex/, maki/ subdirs).
@@ -156,6 +160,10 @@
         # GPU compute via the AMD FirePro D700s is preserved via
         # nixos/_mixins/hardware/gpu-compute.nix imported from the host).
         meh = libx.mkHost { systemType = "workstation"; hostname = "meh"; username = "gburd"; };
+
+        # NixOS as a WSL2 distro on the Windows host "santorini".
+        # Inside the distro: sudo nixos-rebuild switch --flake ~/ws/nix-config#santorini
+        santorini = libx.mkWslHost { hostname = "santorini"; username = "gburd"; };
 
         # Servers
         # Can be executed locally:
