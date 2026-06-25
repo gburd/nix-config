@@ -8,12 +8,6 @@
 return {
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
-    -- Pin to the stable release: telescope master moved to a neovim-0.12-only
-    -- API (utils.if_nil = vim.nonnil or vim.F.if_nil), which is nil on 0.11.7
-    -- and crashed the grep/file previewers ("attempt to call field 'if_nil'").
-    -- v0.2.2 is the last release that works on 0.11. Drop the pin once neovim
-    -- is bumped to 0.12+.
-    version = '0.2.2',
     event = 'VimEnter',
     dependencies = {
       'nvim-lua/plenary.nvim',

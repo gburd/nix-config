@@ -2,6 +2,11 @@
 {
   programs.neovim = {
     enable = true;
+    # Use neovim 0.12.x from nixpkgs-unstable (stable 25.11 is still on
+    # 0.11.7). 0.12 unlocks the current plugin ecosystem (e.g. telescope
+    # master, which moved to the 0.12-only vim.nonnil API) and the native
+    # vim.lsp / vim.pack improvements.
+    package = pkgs.unstable.neovim-unwrapped;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
