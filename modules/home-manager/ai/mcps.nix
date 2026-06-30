@@ -100,21 +100,6 @@ let
     inherit mcpServers;
   };
 
-  # Maki uses a different TOML format: [mcp.name] with command=[] or url=""
-  makiMcpToml =
-    let
-      renderServer = name: server:
-        if server ? url then
-          "[mcp.${name}]\nurl = \"${server.url}\"\n"
-        else
-          "[mcp.${name}]\ncommand = [${
-            builtins.concatStringsSep ", "
-              (map (s: "\"${s}\"") ([ server.command ] ++ (server.args or [])))
-          }]\n";
-    in
-    builtins.concatStringsSep "\n"
-      (lib.mapAttrsToList renderServer mcpServers);
-
   mcpServers = { }
     // (optionalAttrs cfg.servers.filesystem.enable {
     filesystem = {
@@ -234,7 +219,75 @@ let
     };
   });
 
-  claudeUserMcpJson = builtins.toJSON claudeUserMcpServers;
+  ###
+  # Per-project MCP gating (context-window optimization).
+  #
+  # github / postgresq / context7 / the llms-docs wrappers inject LARGE
+  # tool schemas into every session's system prompt up front (github alone
+  # is ~10-20k tokens). Loading all of them globally on Claude/Kiro/Codex
+  # burns 20-40k tokens before you type anything — the main cause of
+  # context overruns. So we split servers into a small CORE set (loaded
+  # globally) and HEAVY servers (opt-in per project via `project-mcp`).
+  #
+  # CORE (global): filesystem, git, memory, sequential-thinking, memelord.
+  # HEAVY (opt-in): github, postgresq, context7, + the llms-docs wrappers.
+  #
+  # Pi already mitigates this via pi-mcp-adapter (one proxy tool, on-demand
+  # discovery), so Pi keeps the full set; only the schema-eager agents
+  # (claude/kiro/default/maki) get the core-only global config.
+  ###
+  heavyNames = [ "github" "postgresq" "context7" ]
+    ++ lib.optionals cfg.servers.llms-docs.enable (lib.attrNames llmWrappers);
+  coreMcpServers = removeAttrs mcpServers heavyNames;
+  coreClaudeMcpServers = removeAttrs claudeUserMcpServers heavyNames;
+  # Heavy servers, in the same JSON shape ~/.mcp.json uses — written into a
+  # project's ./.mcp.json by the project-mcp helper.
+  heavyMcpServers = lib.filterAttrs (n: _: builtins.elem n heavyNames) mcpServers;
+
+  coreMcpJsonText = builtins.toJSON { mcpServers = coreMcpServers; };
+  coreClaudeMcpJson = builtins.toJSON coreClaudeMcpServers;
+  coreMakiMcpToml = builtins.concatStringsSep "\n"
+    (lib.mapAttrsToList
+      (name: server:
+        if server ? url then "[mcp.${name}]\nurl = \"${server.url}\"\n"
+        else "[mcp.${name}]\ncommand = [${
+          builtins.concatStringsSep ", " (map (s: "\"${s}\"") ([ server.command ] ++ (server.args or [ ])))
+        }]\n")
+      coreMcpServers);
+
+  # `project-mcp` helper: in a project's .envrc, run e.g.
+  #   use project_mcp github postgresq
+  # to add the heavy server(s) to ./.mcp.json (which Claude + Pi read from
+  # the project dir, merging with the user-scoped core set). Non-destructive:
+  # merges into an existing ./.mcp.json rather than clobbering it. With no
+  # args it lists the available heavy servers.
+  projectMcpHelper = pkgs.writeShellApplication {
+    name = "project-mcp";
+    runtimeInputs = [ pkgs.jq pkgs.coreutils ];
+    text = ''
+      avail=${lib.escapeShellArg (lib.concatStringsSep " " heavyNames)}
+      defs=${lib.escapeShellArg (builtins.toJSON heavyMcpServers)}
+      if [ "$#" -eq 0 ]; then
+        echo "usage: project-mcp <server>...   (heavy/opt-in: $avail)" >&2
+        echo "adds the named MCP server(s) to ./.mcp.json for this project" >&2
+        exit 0
+      fi
+      # Build the requested subset from the definitions.
+      want='{}'
+      for s in "$@"; do
+        case " $avail " in
+          *" $s "*) want=$(printf '%s' "$want" | jq --argjson d "$defs" --arg k "$s" '. + {($k): $d[$k]}') ;;
+          *) echo "project-mcp: unknown heavy server '$s' (have: $avail)" >&2 ;;
+        esac
+      done
+      # Merge into ./.mcp.json (create if absent), preserving any existing
+      # mcpServers entries.
+      existing='{"mcpServers":{}}'
+      [ -f .mcp.json ] && existing=$(cat .mcp.json)
+      printf '%s' "$existing" | jq --argjson w "$want" '.mcpServers = ((.mcpServers // {}) + $w)' > .mcp.json
+      echo "project-mcp: added [$*] to $(pwd)/.mcp.json" >&2
+    '';
+  };
 
   # kiro-cli execute_bash.allowedCommands (anchored ^...$ regex). Single
   # source of truth shared with maki (and mirroring Claude Code's
@@ -366,14 +419,20 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = packages;
+    # project-mcp helper for adding heavy MCP servers per project (used from
+    # .envrc); core servers are loaded globally, heavy ones opt-in.
+    home.packages = packages ++ [ projectMcpHelper ];
 
     home.file = lib.mkMerge [
       (lib.mkIf cfg.targets.default {
-        ".mcp.json".text = mcpJsonText;
+        # CORE servers only — heavy ones (github/postgresq/context7/llms-docs)
+        # are opt-in per project via `project-mcp` to keep the session floor
+        # small. (Pi reads the FULL set from ~/.config/mcp/mcp.json below;
+        # pi-mcp-adapter loads it on demand without the schema cost.)
+        ".mcp.json".text = coreMcpJsonText;
       })
       (lib.mkIf cfg.targets.kiro {
-        ".kiro/settings/mcp.json".text = mcpJsonText;
+        ".kiro/settings/mcp.json".text = coreMcpJsonText;
         # Agent config: trust all safe tools, deny destructive ones via hooks
         ".kiro/agents/default.json".text = builtins.toJSON {
           "$schema" = "https://raw.githubusercontent.com/aws/amazon-q-developer-cli/refs/heads/main/schemas/agent-v1.json";
@@ -480,11 +539,14 @@ in
         };
       })
       (lib.mkIf cfg.targets.maki {
-        ".maki/mcp.toml".text = makiMcpToml;
+        # CORE only (maki loads schemas eagerly like claude/kiro).
+        ".maki/mcp.toml".text = coreMakiMcpToml;
       })
       (lib.mkIf cfg.targets.pi {
-        # Pi's pi-mcp-adapter reads the user-global standard MCP config
-        # here. Same JSON shape as ~/.mcp.json; pi never reads ~/.mcp.json.
+        # Pi's pi-mcp-adapter reads the user-global standard MCP config here
+        # and discovers servers ON DEMAND (one ~200-token proxy tool, not
+        # all schemas), so Pi keeps the FULL set — no context penalty.
+        # Same JSON shape as ~/.mcp.json; pi never reads ~/.mcp.json.
         ".config/mcp/mcp.json".text = mcpJsonText;
       })
     ];
@@ -494,7 +556,7 @@ in
     home.activation.claudeMcpServers = lib.mkIf cfg.targets.claude (
       lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         CLAUDE_JSON="${config.home.homeDirectory}/.claude.json"
-        MCP_PAYLOAD='${claudeUserMcpJson}'
+        MCP_PAYLOAD='${coreClaudeMcpJson}'
 
         if [ -f "$CLAUDE_JSON" ]; then
           # Merge mcpServers into existing ~/.claude.json

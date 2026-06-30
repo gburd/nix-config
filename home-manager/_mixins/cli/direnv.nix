@@ -28,6 +28,17 @@
           watch_file .claude/CLAUDE.md AGENTS.md
         fi
       }
+
+      # Per-project HEAVY MCP servers (github/postgresq/context7/llms-docs)
+      # are opt-in to keep the global session context small. In .envrc:
+      #   use project_mcp github postgresq
+      # writes ./.mcp.json which Claude + Pi read from the project dir.
+      use_project_mcp() {
+        if has project-mcp; then
+          project-mcp "$@" >/dev/null 2>&1 || true
+          watch_file .mcp.json
+        fi
+      }
     '';
   };
 }
