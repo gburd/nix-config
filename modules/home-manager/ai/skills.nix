@@ -28,6 +28,7 @@ let
     "pg-numa-benchmark"
     "postgresq"
     "review-diff"
+    "stop-slop"
     "think-hard"
     "watchdog"
   ];
@@ -54,6 +55,7 @@ let
   claudeSkillDirs = {
     hegel = ./files/claude-skills/hegel;
     postgresq = ./files/claude-skills/postgresq;
+    stop-slop = ./files/claude-skills/stop-slop;
   };
 
   # Recursively collect all files from a directory tree

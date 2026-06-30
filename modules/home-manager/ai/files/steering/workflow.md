@@ -28,21 +28,16 @@ Describe what the code does now — not discarded approaches or prior iterations
 
 ## Release Tagging
 
-This repo (and the maintainer's other personal repos) use date-based annotated tags:
-
-- Format: `vYYYY.MM.DD`. For a second+ release on the same day, append `.N`:
-  `v2026.05.29`, `v2026.05.29.1`, `v2026.05.29.2`.
-- Always **annotated** tags (`git tag -a vYYYY.MM.DD[.N] -m "..."`), never lightweight.
-- Tag **after** the fixes are merged to `main`. Order of operations:
-  1. merge/fast-forward to `main`, 2. `git push origin main`, 3. create the tag,
-  4. `git push origin <tag>`.
-- The tag message is a one-line summary of what shipped in that release.
-- Pushing a tag triggers the `Build 🏗️ and Publish 📀` workflow (drafts a GitHub
-  release, builds any defined ISOs, then un-drafts). Check the run after tagging.
-- Note: "never push to main / never force-push" still holds for shared/team repos.
-  The direct-to-main + tag flow above is the maintainer's deliberate process for
-  these personal single-author repos, and force-pushing a mirror (see below) is a
-  maintainer-directed exception — do it only when explicitly asked.
+Date-based annotated tags (this repo + the maintainer's other personal repos):
+- Format `vYYYY.MM.DD`; append `.N` for same-day re-releases (`v2026.05.29.1`).
+- Always annotated (`git tag -a ... -m`), never lightweight.
+- Order: merge to `main` → `git push origin main` → create tag → push tag.
+  Tag message = one-line summary of what shipped.
+- Pushing a tag triggers the Build & Publish workflow (drafts a release, builds
+  ISOs, un-drafts) — check the run after tagging.
+- "Never push to main / never force-push" still holds for shared/team repos;
+  the direct-to-main+tag flow and force-pushing a mirror are deliberate
+  maintainer exceptions for these single-author repos — only when asked.
 
 ## Lessons: Nix-managed AI Agent Configs
 
@@ -103,36 +98,20 @@ Use teams of coordinated sub-agents when possible to parallelize work and avoid 
 
 ### Sub-Agent Model Selection (Bedrock specifics)
 
-When calling the Agent tool, **omit the `model` parameter unless
-you have a specific reason to override it.** Sub-agents that
-inherit the parent's model are guaranteed to work because the
-parent's invocation already proved the model is dispatchable.
+When calling the Agent tool, **omit the `model` parameter unless you must
+override it** — inherited-model sub-agents are guaranteed dispatchable (the
+parent already proved it). Bedrock model IDs come in two forms:
+- **Bare ID** (`anthropic.claude-...`) needs provisioned throughput; on-demand
+  calls fail ("on-demand throughput isn't supported") and the sub-agent dies in
+  ~1s with "completed: 0 tool uses".
+- **Cross-region inference profile** (`us.`/`eu.`/`apac.` prefix) supports
+  on-demand — this is what `enabledModels` in pi's settings should contain.
 
-Bedrock model IDs come in two forms:
-
-- **Bare model ID** (`anthropic.claude-haiku-4-5-20251001-v1:0`) —
-  requires *provisioned* throughput. On-demand calls fail with
-  `Invocation of model ID ... with on-demand throughput isn't
-  supported.` The sub-agent dies after ~1 second with no usable
-  output; the parent sees only "completed: 0 tool uses".
-- **Cross-region inference profile** (`us.anthropic.claude-...`,
-  `eu.anthropic.claude-...`, `apac.anthropic.claude-...`) —
-  supports on-demand throughput. This is what `enabledModels`
-  in `~/.pi/agent/settings.json` should contain.
-
-If you must pass a `model:` parameter explicitly:
-
-- ✅ Use a full inference-profile ID with the `us.` / `eu.` /
-  `apac.` prefix.
-- ❌ Do **not** use a bare `anthropic.*` model ID.
-- ⚠️ Fuzzy names (`sonnet`, `haiku`, `opus`) work *most* of the
-  time but the resolver can land on a bare ID. The safety hooks
-  in `pi-extensions/safety-hooks.ts` warn on fuzzy names and
-  block bare IDs.
-
-**If a sub-agent completes in under 2 seconds with 0 tool uses,
-assume it failed at model dispatch.** Verify the model ID, drop
-the `model:` override, and re-dispatch.
+If you must pass `model:`, use a full `us.`/`eu.`/`apac.` profile ID, never a
+bare `anthropic.*`. Fuzzy names (sonnet/haiku/opus) usually work but can resolve
+to a bare ID; `pi-extensions/safety-hooks.ts` warns on fuzzy and blocks bare IDs.
+**A sub-agent finishing in <2s with 0 tool uses = model-dispatch failure** —
+verify the ID, drop the `model:` override, re-dispatch.
 
 ## Project Layout Conventions
 
