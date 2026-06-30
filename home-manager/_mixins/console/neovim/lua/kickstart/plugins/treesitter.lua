@@ -1,6 +1,17 @@
 return {
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    -- Pin to the master branch + commit-style config. lazy.nvim's default
+    -- has drifted toward the incompatible `main`-branch rewrite (which drops
+    -- nvim-treesitter.configs and the highlight/indent module API used
+    -- below); without this pin a plugin update silently breaks the whole
+    -- spec. `master` keeps the configs API.
+    branch = 'master',
+    -- :TSUpdate recompiles parsers against the running neovim. Stale `.so`
+    -- parsers compiled for an OLDER neovim ABI cause
+    -- `attempt to call method 'range' (a nil value)` crashes after a neovim
+    -- upgrade. If that ever recurs after bumping neovim, run :TSUpdate (or
+    -- wipe ~/.local/share/nvim/lazy/nvim-treesitter/parser/*.so and reopen).
     build = ':TSUpdate',
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
