@@ -303,6 +303,14 @@ let
     export LD_LIBRARY_PATH="${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib pkgs.zlib ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     export AWS_BEARER_TOKEN_BEDROCK="$(${pkgs.coreutils}/bin/cat "$BEARER_FILE")"
     export AWS_REGION="${cfg.region}"
+    # Bearer token is the ONLY intended auth path. Clear any AWS_PROFILE /
+    # static-credential env that leaks in from the login session (e.g.
+    # arnold's systemd --user manager imports AWS_PROFILE=asbxbedrock from
+    # a shell profile). botocore prefers AWS_PROFILE over the bearer token,
+    # so a stale/undefined profile makes every Bedrock call 500 with
+    # ProfileNotFound. Unsetting these guarantees the bearer token wins on
+    # every host regardless of what the session environment carries.
+    unset AWS_PROFILE AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_DEFAULT_PROFILE
     export LITELLM_MASTER_KEY="$(${pkgs.coreutils}/bin/cat "$MASTER_FILE")"
 
     # No DB — keep it stateless on disk. Virtual keys are minted by the
