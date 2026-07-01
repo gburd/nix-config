@@ -60,6 +60,11 @@ let
 
     # DeepSeek
     { name = "deepseek-r1"; bedrock = "us.deepseek.r1-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
+    # V3.2 / V3.1 are ON_DEMAND (no us. cross-region profile yet), so we
+    # invoke the bare modelId region-pinned. V3.2 is in us-east-1 +
+    # us-west-2; V3.1 (deepseek.v3-v1:0) is us-west-2 only.
+    { name = "deepseek-v3-2"; bedrock = "deepseek.v3.2"; converse = false; maxInput = 128000; maxOutput = 32000; }
+    { name = "deepseek-v3-1"; bedrock = "deepseek.v3-v1:0"; converse = false; region = "us-west-2"; maxInput = 128000; maxOutput = 32000; }
 
     # Meta Llama 3.x and 4.x
     { name = "llama3-3-70b"; bedrock = "us.meta.llama3-3-70b-instruct-v1:0"; converse = false; maxInput = 128000; maxOutput = 8192; }
@@ -74,6 +79,41 @@ let
 
     # Mistral
     { name = "mistral-pixtral-large"; bedrock = "us.mistral.pixtral-large-2502-v1:0"; converse = false; maxInput = 128000; maxOutput = 8192; }
+    # Devstral 2 is Mistral's agentic-coding model; Large 3 is the flagship.
+    { name = "mistral-devstral-2"; bedrock = "mistral.devstral-2-123b"; converse = false; maxInput = 256000; maxOutput = 8192; }
+    { name = "mistral-large-3"; bedrock = "mistral.mistral-large-3-675b-instruct"; converse = false; maxInput = 256000; maxOutput = 8192; }
+
+    # Qwen3 (Alibaba). Coder variants are code-specialized. The 480B coder
+    # and 235B flagship are us-west-2 ONLY on Bedrock, so region-pin them.
+    { name = "qwen3-coder-480b"; bedrock = "qwen.qwen3-coder-480b-a35b-v1:0"; converse = false; region = "us-west-2"; maxInput = 256000; maxOutput = 32000; }
+    { name = "qwen3-coder-30b"; bedrock = "qwen.qwen3-coder-30b-a3b-v1:0"; converse = false; maxInput = 256000; maxOutput = 32000; }
+    { name = "qwen3-coder-next"; bedrock = "qwen.qwen3-coder-next"; converse = false; maxInput = 256000; maxOutput = 32000; }
+    { name = "qwen3-235b"; bedrock = "qwen.qwen3-235b-a22b-2507-v1:0"; converse = false; region = "us-west-2"; maxInput = 256000; maxOutput = 32000; }
+    { name = "qwen3-next-80b"; bedrock = "qwen.qwen3-next-80b-a3b"; converse = false; maxInput = 256000; maxOutput = 32000; }
+
+    # OpenAI open-weight (gpt-oss). ON_DEMAND, multi-region.
+    { name = "gpt-oss-120b"; bedrock = "openai.gpt-oss-120b-1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
+    { name = "gpt-oss-20b"; bedrock = "openai.gpt-oss-20b-1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
+
+    # Google Gemma 3 (open weights; largest is 27B).
+    { name = "gemma-3-27b"; bedrock = "google.gemma-3-27b-it"; converse = false; maxInput = 128000; maxOutput = 8192; }
+
+    # Moonshot Kimi (strong agentic/coding MoE).
+    { name = "kimi-k2-5"; bedrock = "moonshotai.kimi-k2.5"; converse = false; maxInput = 256000; maxOutput = 32000; }
+    { name = "kimi-k2-thinking"; bedrock = "moonshot.kimi-k2-thinking"; converse = false; maxInput = 256000; maxOutput = 32000; }
+
+    # Zhipu GLM (flagship GLM-5; strong coding/agentic).
+    { name = "glm-5"; bedrock = "zai.glm-5"; converse = false; maxInput = 128000; maxOutput = 32000; }
+    { name = "glm-4-7"; bedrock = "zai.glm-4.7"; converse = false; maxInput = 128000; maxOutput = 32000; }
+
+    # MiniMax M2.x (agentic/coding).
+    { name = "minimax-m2-5"; bedrock = "minimax.minimax-m2.5"; converse = false; maxInput = 200000; maxOutput = 32000; }
+
+    # NVIDIA Nemotron (largest reasoning model).
+    { name = "nemotron-super-120b"; bedrock = "nvidia.nemotron-super-3-120b"; converse = false; maxInput = 128000; maxOutput = 32000; }
+
+    # Writer Palmyra X5 (enterprise; has a us. inference profile).
+    { name = "palmyra-x5"; bedrock = "us.writer.palmyra-x5-v1:0"; converse = false; maxInput = 1000000; maxOutput = 8192; }
   ];
 
   # ---------- thinking-policy map ----------------------------------------
@@ -127,7 +167,10 @@ let
     model_name = rowName;
     litellm_params = {
       model = (if m.converse then "bedrock/converse/" else "bedrock/") + m.bedrock;
-      aws_region_name = "os.environ/AWS_REGION";
+      # Per-model region override (some models are single-region on
+      # Bedrock, e.g. Qwen3-Coder-480B is us-west-2 only). Falls back to
+      # the proxy-wide AWS_REGION for the (majority) multi-region models.
+      aws_region_name = m.region or "os.environ/AWS_REGION";
       # Give each agent the model's full output-token budget rather
       # than a flat 32000. Falls back to 32000 for any model without
       # an explicit maxOutput.

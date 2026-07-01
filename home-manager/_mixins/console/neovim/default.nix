@@ -67,4 +67,16 @@
     "nvim/init.lua".source = ./init.lua;
     "nvim/lua".source = ./lua;
   };
+  # Global markdownlint config (nvim-lint runs markdownlint on .md buffers).
+  # markdownlint's prose defaults are noisy: MD010 flags every leading hard
+  # tab ("Hard tabs [Column: 1]"), MD013 flags long lines, MD041 demands an
+  # H1 first. Silence the ones that fight normal note-taking; a repo-local
+  # .markdownlint.json still overrides this if a project wants stricter rules.
+  home.file.".markdownlint.json".text = builtins.toJSON {
+    MD010 = false; # no-hard-tabs — allow tab indentation
+    MD013 = false; # line-length — don't wrap prose
+    MD041 = false; # first-line-h1 — not every doc starts with #
+    MD024 = false; # duplicate headings (common in changelogs)
+    MD033 = false; # inline HTML — allowed
+  };
 }
