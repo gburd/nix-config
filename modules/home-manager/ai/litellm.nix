@@ -40,16 +40,15 @@ let
   #     "Access denied. This Model is marked by provider as Legacy" for
   #     these inference profiles regardless of the request shape.
   defaultModels = [
-    # Gen-5 Anthropic. Sonnet 5 is the newest usable Anthropic model on
-    # Bedrock (adaptive thinking + effort, like Opus 4.6+; cross-region
-    # INFERENCE_PROFILE us.anthropic.claude-sonnet-5). NOTE: Opus 5 does
-    # NOT exist on Bedrock (line tops out at opus-4-8). Fable 5 exists
-    # (us.anthropic.claude-fable-5) but is BLOCKED: every request 400s with
-    # "data retention mode 'default' is not available for this model" — an
-    # account/agreement-level Bedrock retention gate that can't be set via
-    # a LiteLLM request param. Re-add fable-5 here once that's enabled in
-    # the Bedrock console.
+    # Gen-5 Anthropic. Sonnet 5 + Fable 5 are the newest usable Anthropic
+    # models on Bedrock (adaptive thinking + effort, like Opus 4.6+;
+    # cross-region INFERENCE_PROFILE us.anthropic.claude-{sonnet,fable}-5).
+    # NOTE: Opus 5 does NOT exist on Bedrock (line tops out at opus-4-8).
+    # Fable 5 previously 400'd ("data retention mode 'default' is not
+    # available") until the account's data-retention/AI-opt-out posture was
+    # set; verified working 2026-07-02.
     { name = "claude-sonnet-5"; bedrock = "us.anthropic.claude-sonnet-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-sonnet-5" ]; }
+    { name = "claude-fable-5"; bedrock = "us.anthropic.claude-fable-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-fable-5" ]; }
 
     # Adaptive-thinking models (Opus 4.6+, Sonnet 4.6, Haiku 4.5+)
     #
