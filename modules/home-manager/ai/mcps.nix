@@ -568,16 +568,16 @@ in
           echo "$MCP_PAYLOAD" | ${pkgs.jq}/bin/jq '{mcpServers: .}' > "$CLAUDE_JSON"
         fi
 
-        # Update Claude Code settings model to opus-4-8 (latest Bedrock
-        # inference profile as of 2026-05-29). Also writes
-        # CLAUDE_THINKING_EFFORT=high into the env block so any tool
-        # launched via Claude Code's spawn surface picks it up.
-        # Also injects permissions.deny rules for destructive git/shell
-        # ops (force-push, hard-reset, rm -rf, pipe-to-shell, mkfs/dd).
+        # Keep Claude Code's selected model in sync with claude.nix's
+        # ANTHROPIC_MODEL (both write ~/.claude/settings.json). Default is
+        # claude-fable-5 (routes via the LiteLLM proxy to
+        # us.anthropic.claude-fable-5). Also writes CLAUDE_THINKING_EFFORT
+        # into the env block, and permissions.deny rules for destructive
+        # git/shell ops.
         CLAUDE_SETTINGS="${config.home.homeDirectory}/.claude/settings.json"
         if [ -f "$CLAUDE_SETTINGS" ]; then
           ${pkgs.jq}/bin/jq '
-            .model = "us.anthropic.claude-opus-4-8"
+            .model = "claude-fable-5"
             | .env.CLAUDE_THINKING_EFFORT = "high"
             | .env.ANTHROPIC_THINKING_EFFORT = "high"
             | .env.CLAUDE_CODE_ENABLE_TELEMETRY = "false"

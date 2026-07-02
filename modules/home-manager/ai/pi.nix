@@ -63,10 +63,10 @@ in
     defaultModel = mkOption {
       type = types.str;
       # LiteLLM alias (see modules/home-manager/ai/litellm.nix). Resolves
-      # to bedrock/converse/us.anthropic.claude-opus-4-8 on the proxy
+      # to bedrock/converse/us.anthropic.claude-fable-5 on the proxy
       # side with output_config.effort=xhigh. Pi's defaultModel is
-      # provider-scoped (no `provider:` prefix), so just "claude-opus-4-8".
-      default = "claude-opus-4-8";
+      # provider-scoped (no `provider:` prefix), so just "claude-fable-5".
+      default = "claude-fable-5";
       description = "Default model id for Pi (resolved within defaultProvider).";
     };
 

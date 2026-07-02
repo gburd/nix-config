@@ -13,9 +13,9 @@ in
     defaultModel = mkOption {
       type = types.str;
       # LiteLLM alias (modules/home-manager/ai/litellm.nix). The proxy
-      # resolves it to bedrock/converse/us.anthropic.claude-opus-4-8 with
+      # resolves it to bedrock/converse/us.anthropic.claude-fable-5 with
       # adaptive thinking + output_config.effort=xhigh server-side.
-      default = "claude-opus-4-8";
+      default = "claude-fable-5";
       description = "Default LiteLLM-aliased model for Hermes.";
     };
 

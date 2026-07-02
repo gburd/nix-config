@@ -13,7 +13,7 @@ in
       # LiteLLM alias from modules/home-manager/ai/litellm.nix; resolves
       # to bedrock/converse/us.anthropic.claude-opus-4-8 with adaptive
       # thinking + output_config.effort=xhigh server-side.
-      default = "claude-opus-4-8";
+      default = "claude-fable-5";
       description = "Default LiteLLM-aliased model id for claude-code (ANTHROPIC_MODEL).";
     };
 
