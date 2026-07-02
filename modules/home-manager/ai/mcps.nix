@@ -570,14 +570,14 @@ in
 
         # Keep Claude Code's selected model in sync with claude.nix's
         # ANTHROPIC_MODEL (both write ~/.claude/settings.json). Default is
-        # claude-fable-5 (routes via the LiteLLM proxy to
-        # us.anthropic.claude-fable-5). Also writes CLAUDE_THINKING_EFFORT
-        # into the env block, and permissions.deny rules for destructive
-        # git/shell ops.
+        # claude-opus-4-8 (routes via the LiteLLM proxy). The fast/small
+        # tier (ANTHROPIC_SMALL_FAST_MODEL) is claude-sonnet-5, set by
+        # claude.nix. Also writes CLAUDE_THINKING_EFFORT into the env
+        # block, and permissions.deny rules for destructive git/shell ops.
         CLAUDE_SETTINGS="${config.home.homeDirectory}/.claude/settings.json"
         if [ -f "$CLAUDE_SETTINGS" ]; then
           ${pkgs.jq}/bin/jq '
-            .model = "claude-fable-5"
+            .model = "claude-opus-4-8"
             | .env.CLAUDE_THINKING_EFFORT = "high"
             | .env.ANTHROPIC_THINKING_EFFORT = "high"
             | .env.CLAUDE_CODE_ENABLE_TELEMETRY = "false"

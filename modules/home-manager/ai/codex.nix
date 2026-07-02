@@ -84,9 +84,9 @@ in
     defaultModel = mkOption {
       type = types.str;
       # LiteLLM alias (see modules/home-manager/ai/litellm.nix). Resolves
-      # to bedrock/converse/us.anthropic.claude-fable-5 with adaptive
+      # to bedrock/converse/us.anthropic.claude-opus-4-8 with adaptive
       # thinking + output_config.effort=xhigh on the proxy side.
-      default = "claude-fable-5";
+      default = "claude-opus-4-8";
       description = "Default LiteLLM model alias for codex.";
     };
 
