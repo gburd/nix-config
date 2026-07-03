@@ -21,9 +21,17 @@ let
     exec ${pkgs.nodejs}/bin/npx -y ${pkg} "$@"
   '';
 
-  gnhf = npxTool "gnhf" "gnhf@latest";
   gh-axi = npxTool "gh-axi" "gh-axi@latest";
   lavish = npxTool "lavish-axi" "lavish-axi@latest";
+
+  # gnhf drives an agent in an UNATTENDED overnight loop, so default it to a
+  # cheaper/faster tier (sonnet-5) rather than the interactive opus-4-8
+  # default — override with GNHF_MODEL. The agent (claude) reads
+  # ANTHROPIC_MODEL, so we set it for the child unless already set.
+  gnhf = pkgs.writeShellScriptBin "gnhf" ''
+    export ANTHROPIC_MODEL="''${GNHF_MODEL:-''${ANTHROPIC_MODEL:-claude-sonnet-5}}"
+    exec ${pkgs.nodejs}/bin/npx -y gnhf@latest "$@"
+  '';
 
   # no-mistakes: Go binary from the flake input (buildGoModule). The daemon
   # is started on demand by the binary itself; we don't run it as a service.

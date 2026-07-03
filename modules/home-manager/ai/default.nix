@@ -12,5 +12,6 @@
     ./steering.nix
     ./skills.nix
     ./kun-tools.nix
+    ./agent-sandbox.nix
   ];
 }

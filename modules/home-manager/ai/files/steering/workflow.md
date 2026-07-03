@@ -30,58 +30,15 @@ em-dashes, avoid the inflated register).
 
 ## Release Tagging
 
-Date-based annotated tags (this repo + the maintainer's other personal repos):
-- Format `vYYYY.MM.DD`; append `.N` for same-day re-releases (`v2026.05.29.1`).
-- Always annotated (`git tag -a ... -m`), never lightweight.
-- Order: merge to `main` → `git push origin main` → create tag → push tag.
-  Tag message = one-line summary of what shipped.
-- Pushing a tag triggers the Build & Publish workflow (drafts a release, builds
-  ISOs, un-drafts) — check the run after tagging.
-- "Never push to main / never force-push" still holds for shared/team repos;
-  the direct-to-main+tag flow and force-pushing a mirror are deliberate
-  maintainer exceptions for these single-author repos — only when asked.
+See the **release-tagging** skill for the date-based tag conventions
+(vYYYY.MM.DD, commit→push→tag→push-tag, dual-remote, maintainer exceptions).
+Load it when actually cutting a release.
 
 ## Lessons: Nix-managed AI Agent Configs
 
-When working on `modules/home-manager/ai/` (Bedrock-backed agents: pi, claude,
-maki, hermes, codex; plus kiro-cli):
-
-- **Telemetry ships ON by default.** Disable it declaratively, don't assume:
-  kiro-cli (`telemetry.enabled = false` in `~/.kiro/settings/cli.json`),
-  Claude Code (`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=true` +
-  `DISABLE_TELEMETRY/ERROR_REPORTING/BUG_COMMAND`), pi
-  (`enableInstallTelemetry=false` and `PI_TELEMETRY=0`). For tools whose state
-  file is mutable, enforce via a `home.activation` `jq` patch (create-if-missing).
-- **"Ultra" thinking == pi's `xhigh`** (off/minimal/low/medium/high/xhigh).
-  The env-var efforts (`CLAUDE_THINKING_EFFORT`, codex `model_reasoning_effort`,
-  hermes `reasoning_effort`) top out at `high` — don't invent higher values.
-- **Bedrock auth has two paths.** The bearer token (`AWS_BEARER_TOKEN_BEDROCK`)
-  works for `InvokeModel`/Converse and Bedrock's HTTPS endpoint accepts
-  `Authorization: Bearer <token>` directly. The Anthropic SDK's `AnthropicBedrock`
-  client is **SigV4-only** and fails with "could not resolve credentials from
-  session" on a bearer-only host. kiro-cli does **not** use Bedrock at all — it
-  authenticates with its own subscription/credits.
-- **Verify model reachability before claiming it works.** A direct InvokeModel
-  probe (or `curl` to `/model/<id>/invoke`) proving HTTP 200 does not prove a
-  given agent's code path works — agents route through different SDKs.
-- **Patching pipx/venv tools:** ship an idempotent Python patcher in-repo and run
-  it from `home.activation` **after** the pipx install/upgrade (pipx upgrade can
-  overwrite the venv). Guard with a sentinel marker, and locate code by parsing
-  (e.g. balance parens to find a signature end) rather than matching exact lines,
-  so the patch survives upstream version drift. Wrap the agent binary in a
-  `writeShellScriptBin` shim that exports the bearer token, mirroring pi/maki.
-- **Flakes only see git-tracked files.** A new file referenced by a module won't
-  build until `git add`-ed.
-
-## CI Expectations (this repo)
-
-- `deadnix --fail .` and `statix check .` are blocking in the Lint workflow — no
-  unused bindings/args (prefix intentionally-unused lambda args with `_`).
-  `nixpkgs-fmt --check` is `continue-on-error`, so format your touched files but
-  it won't block. Run all three locally before pushing.
-- Tag-only workflows must **skip gracefully** when a referenced flake attribute
-  doesn't exist (e.g. the ISO build checks `nix eval ...drvPath` first), so a
-  missing optional output never fails a release.
+See the **nix-agent-configs** skill (telemetry-off, Bedrock auth paths,
+AWS_PROFILE gotcha, pipx patching, this repo's CI expectations). Load it when
+editing `modules/home-manager/ai/` or debugging agent auth/model routing.
 
 ## Cross-Tool Compatibility
 
@@ -93,27 +50,9 @@ After any code change, run the project's build or compile step. If the build doe
 
 ## Sub-Agent Teams
 
-Use teams of coordinated sub-agents when possible to parallelize work and avoid single-agent bottlenecks. Follow the three-step verdict pattern:
-1. **Worker** agent implements the change
-2. **Reviewer** agent analyzes architecture and finds issues
-3. **Re-reviewer** verifies the fix — catches lead-level errors
-
-### Sub-Agent Model Selection (Bedrock specifics)
-
-When calling the Agent tool, **omit the `model` parameter unless you must
-override it** — inherited-model sub-agents are guaranteed dispatchable (the
-parent already proved it). Bedrock model IDs come in two forms:
-- **Bare ID** (`anthropic.claude-...`) needs provisioned throughput; on-demand
-  calls fail ("on-demand throughput isn't supported") and the sub-agent dies in
-  ~1s with "completed: 0 tool uses".
-- **Cross-region inference profile** (`us.`/`eu.`/`apac.` prefix) supports
-  on-demand — this is what `enabledModels` in pi's settings should contain.
-
-If you must pass `model:`, use a full `us.`/`eu.`/`apac.` profile ID, never a
-bare `anthropic.*`. Fuzzy names (sonnet/haiku/opus) usually work but can resolve
-to a bare ID; `pi-extensions/safety-hooks.ts` warns on fuzzy and blocks bare IDs.
-**A sub-agent finishing in <2s with 0 tool uses = model-dispatch failure** —
-verify the ID, drop the `model:` override, re-dispatch.
+See the **subagent-teams** skill (worker→reviewer→re-reviewer pattern +
+Bedrock model-dispatch rules). Load it when spawning/dispatching sub-agents or
+debugging a sub-agent that dies instantly.
 
 ## Project Layout Conventions
 

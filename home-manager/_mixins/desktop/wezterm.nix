@@ -56,10 +56,14 @@
       -- Cursor: steady block (Alacritty default is a block cursor).
       config.default_cursor_style = "SteadyBlock"
 
-      -- Window: on GNOME/Wayland, integrated buttons give a proper titlebar
-      -- (the window controls live in WezTerm's tab bar) instead of a bare
-      -- client-side-decoration look. Opaque background.
-      config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
+      -- Window: ONE title bar only — WezTerm's own fancy tab bar, which hosts
+      -- the window controls (integrated buttons). "RESIZE" alone means no
+      -- server-side (WM) titlebar, so GNOME/Wayland won't draw a SECOND bar
+      -- on top; the integrated buttons in the tab bar are the title bar.
+      -- (INTEGRATED_BUTTONS|RESIZE previously produced two bars because the
+      -- WM still drew its own.)
+      config.window_decorations = "RESIZE"
+      config.integrated_title_button_style = "Gnome"
       config.window_background_opacity = 1.0
       config.window_padding = { left = 2, right = 2, top = 2, bottom = 2 }
       config.audible_bell = "Disabled"
@@ -71,11 +75,14 @@
       config.max_fps = 120
       config.scrollback_lines = 10000
       config.enable_scroll_bar = false
-      -- Keep the tab bar always visible: it hosts the integrated window
-      -- buttons (hiding it on a single tab would remove the titlebar).
+      -- The fancy tab bar IS the title bar: keep it always visible and put
+      -- the integrated window buttons (min/max/close) on it.
       config.enable_tab_bar = true
       config.hide_tab_bar_if_only_one_tab = false
       config.use_fancy_tab_bar = true
+      config.show_close_tab_button_in_tabs = true
+      config.tab_bar_at_bottom = false
+      config.integrated_title_buttons = { "Hide", "Maximize", "Close" }
 
       return config
     '';

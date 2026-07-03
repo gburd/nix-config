@@ -59,6 +59,11 @@
     # GitHub CLI), lavish-axi (interactive planning), no-mistakes (validate
     # -> clean PR pipeline), firstmate (multi-agent orchestration launcher).
     kunTools.enable = true;
+
+    # agent-sandbox: run agents isolated (bwrap default / docker / microvm)
+    # so a rogue agent can't reach SSH keys / secrets / other projects, and
+    # a runaway child is memory-capped + killed alone (no OOM cascade).
+    sandbox.enable = true;
     # MCP Server configuration
     mcps = {
       enable = true;

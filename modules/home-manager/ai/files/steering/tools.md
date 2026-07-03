@@ -10,6 +10,7 @@ Prefer these over their slower counterparts:
 | `shellcheck` | — | `shellcheck script.sh` — shell script linter |
 | `shfmt` | — | `shfmt -i 2 -w script.sh` — shell formatter |
 | `trash` | rm | `trash file` — moves to macOS Trash (recoverable). **Never use `rm -rf`** |
+| `gh-axi` | github MCP / gh | `gh-axi <op>` — agent-ergonomic, low-token GitHub CLI (PRs, issues, code search). ~3x cheaper + ~2x faster than the GitHub MCP; prefer it for GitHub ops. |
 
 Prefer `ast-grep` over ripgrep when searching for code structure (function calls, class definitions, imports). Use ripgrep for literal strings and log messages.
 

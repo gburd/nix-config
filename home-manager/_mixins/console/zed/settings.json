@@ -233,6 +233,38 @@
     "default_model": {
       "provider": "openai_compatible",
       "model": "claude-opus-4-8"
+    },
+    // "yolo" mode: auto-approve agent tool actions without prompting
+    // (default "allow"), so the agent runs end-to-end unattended — EXCEPT
+    // the destructive patterns below still require confirmation or are
+    // denied outright, matching the global must-rules (no force-push, no
+    // hard reset, trash-not-rm, don't touch secrets). Loosen freely; keep
+    // the guards.
+    "tool_permissions": {
+      "default": "allow",
+      "tools": {
+        "terminal": {
+          "default": "allow",
+          "always_confirm": [
+            { "pattern": "git\\s+push\\s+(-f|--force|--force-with-lease)" },
+            { "pattern": "git\\s+(reset|clean)\\s+--hard" },
+            { "pattern": "git\\s+rebase" },
+            { "pattern": "git\\s+commit\\s+--amend" },
+            { "pattern": "\\brm\\s+-rf?\\b" },
+            { "pattern": "\\b(mkfs|dd)\\b" },
+            { "pattern": "\\|\\s*(sudo\\s+)?(sh|bash)\\b" }
+          ]
+        },
+        "edit_file": {
+          "default": "allow",
+          "always_deny": [
+            { "pattern": "\\.env($|\\.)" },
+            { "pattern": "secrets?/" },
+            { "pattern": "\\.pem$" },
+            { "pattern": "\\.key$" }
+          ]
+        }
+      }
     }
   },
   // Edit predictions also go through the local gateway; keep them on.

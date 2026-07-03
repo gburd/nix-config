@@ -31,6 +31,11 @@ let
     "stop-slop"
     "think-hard"
     "watchdog"
+    # workflow.md progressive-disclosure skills (conditional operational
+    # knowledge moved out of always-on steering to cut global context).
+    "release-tagging"
+    "nix-agent-configs"
+    "subagent-teams"
   ];
 
   # Kiro skills with nested reference directories (subdirs under references/)
@@ -56,6 +61,10 @@ let
     hegel = ./files/claude-skills/hegel;
     postgresq = ./files/claude-skills/postgresq;
     stop-slop = ./files/claude-skills/stop-slop;
+    # workflow.md progressive-disclosure skills (see kiroSkillNames).
+    release-tagging = ./files/claude-skills/release-tagging;
+    nix-agent-configs = ./files/claude-skills/nix-agent-configs;
+    subagent-teams = ./files/claude-skills/subagent-teams;
   };
 
   # Recursively collect all files from a directory tree
