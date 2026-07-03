@@ -11,6 +11,8 @@ with lib.hm.gvariant;
     ../../../desktop/sublime-merge.nix
     ../../../desktop/sublime-license.nix
     ../../../desktop/proton-apps.nix
+    ../../../desktop/typora.nix
+    ../../../desktop/wezterm.nix
   ];
 
   # Sops secrets — reuses floki's secrets.yaml (encrypted to gburd-user age key)

@@ -220,32 +220,37 @@
 
   // AI / LLM configuration
   //
-  // Telemetry is OFF (see "telemetry" below). The AI panel + edit
-  // predictions are disabled by default so Zed does NOT auto-connect to
-  // zed.dev on startup (that was the failed network call). If you DO want
-  // to use AI in Zed, it is pre-wired to our per-host LiteLLM gateway via
-  // the `openai_compatible` provider below: open the agent panel, pick
-  // provider "OpenAI Compatible", and paste any per-agent LiteLLM key
-  // (Zed stores it in the OS keychain, never in this file). Nothing here
-  // reaches Anthropic/OpenAI/zed.dev directly.
+  // AI is ENABLED and routed exclusively through our per-host LiteLLM
+  // gateway (the same Bedrock proxy the CLI agents use) — nothing reaches
+  // Anthropic/OpenAI/zed.dev directly. Telemetry is OFF on every channel
+  // (see "telemetry" below). The first time you open the agent panel, pick
+  // provider "LiteLLM" (OpenAI Compatible) and paste a per-agent LiteLLM
+  // key; Zed stores it in the OS keychain, never in this file.
   "disable_ai": false,
   "agent": {
-    "enabled": false,
-    "button": false
+    "enabled": true,
+    "button": true,
+    "default_model": {
+      "provider": "openai_compatible",
+      "model": "claude-opus-4-8"
+    }
   },
-  "show_edit_predictions": false,
+  // Edit predictions also go through the local gateway; keep them on.
+  "show_edit_predictions": true,
   "edit_predictions": {
-    // Keep the provider local-only; the agent panel above is disabled so
-    // this never fires unless you explicitly turn AI features back on.
     "provider": "zed"
   },
-  // Point Zed's OpenAI-compatible LLM provider at the loopback LiteLLM
-  // gateway (same proxy the CLI agents use). api_url only — the key is
-  // entered via Zed's UI and kept in the OS keychain.
+  // OpenAI-compatible provider -> loopback LiteLLM gateway. api_url only;
+  // key is entered via Zed's UI and kept in the OS keychain.
   "language_models": {
     "openai_compatible": {
       "LiteLLM": {
-        "api_url": "http://127.0.0.1:4000/v1"
+        "api_url": "http://127.0.0.1:4000/v1",
+        "available_models": [
+          { "name": "claude-opus-4-8", "max_tokens": 200000 },
+          { "name": "claude-sonnet-5", "max_tokens": 200000 },
+          { "name": "claude-fable-5", "max_tokens": 200000 }
+        ]
       }
     }
   },

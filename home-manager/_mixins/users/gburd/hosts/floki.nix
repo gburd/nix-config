@@ -12,7 +12,8 @@ with lib.hm.gvariant;
     ../../../desktop/sublime-merge.nix
     ../../../desktop/sublime-license.nix
     ../../../desktop/proton-apps.nix
-    # Email and productivity services
+    ../../../desktop/typora.nix
+    ../../../desktop/wezterm.nix
     ../../../services/protonmail-bridge.nix
     ../../../services/vdirsyncer.nix
     ../../../services/proton-drive.nix

@@ -1,1 +1,0 @@
-run-shell "/bin/bash -c {{theme.path}}"
