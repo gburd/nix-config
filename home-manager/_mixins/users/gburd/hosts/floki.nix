@@ -281,7 +281,7 @@ with lib.hm.gvariant;
       # AI tools
       kiro-cli # Kiro CLI agent for the terminal
       # kiro-ide    # Kiro IDE (download URLs return 404 — not yet publicly available)
-      lmstudio # Local LLM runner (LM Studio)
+      unstable.lmstudio # LM Studio (unstable: near-current; stable is stuck on 0.4.1)
       # maki installed (wrapped) by modules/home-manager/ai/maki.nix
       terax-ai # AI assistant UI (Bedrock support pending upstream issue #138)
 
