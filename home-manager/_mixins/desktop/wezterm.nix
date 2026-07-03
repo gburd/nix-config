@@ -1,59 +1,67 @@
 { ... }:
 # WezTerm — GPU-accelerated terminal + multiplexer. GUI hosts (floki, arnold).
-# Appearance matched to the Alacritty config
-# (home-manager/_mixins/users/gburd/alacritty.yml): the "Tomorrow" (light)
-# base16 palette, FiraCode Nerd Font Mono size 14, block cursor with custom
-# colors, opaque background. tmux is the multiplexer (see console/tmux.nix),
-# so WezTerm's own multiplexing keys stay at defaults — tmux owns splits/tabs.
+# Appearance matched to what Alacritty ACTUALLY renders: the legacy
+# alacritty.yml is dead (modern Alacritty reads alacritty.toml, which sets no
+# colors/font), so Alacritty runs with its built-in DARK defaults + full
+# window decorations. This config mirrors that: dark background (#1d1f21),
+# light foreground, full titlebar/borders, FiraCode Nerd Font. tmux is the
+# multiplexer (see console/tmux.nix).
+#
+# NOTE: home-manager's programs.wezterm wraps extraConfig as:
+#   local wezterm = require 'wezterm';
+#   <extraConfig>
+# so `wezterm` is already in scope; extraConfig just builds and returns config.
 {
   programs.wezterm = {
     enable = true;
     extraConfig = ''
-      local wezterm = require("wezterm")
       local config = wezterm.config_builder()
 
-      -- Font: match Alacritty (FiraCode Nerd Font Mono, size 14).
-      config.font = wezterm.font("FiraCode Nerd Font Mono")
+      -- Font: FiraCode Nerd Font (installed), size 14 to match prior setup.
+      config.font = wezterm.font("FiraCode Nerd Font")
       config.font_size = 14.0
 
-      -- Colors: the "Tomorrow" (light) base16 scheme from alacritty.yml.
+      -- Colors: dark, matching Alacritty's actual runtime look (its built-in
+      -- dark defaults ~ base16 "Tomorrow Night").
       config.colors = {
-        foreground = "#4d4d4c",
-        background = "#ffffff",
-        cursor_fg = "#ffffff",
-        cursor_bg = "#4d4d4c",
-        cursor_border = "#4d4d4c",
-        -- normal
+        foreground = "#c5c8c6",
+        background = "#1d1f21",
+        cursor_fg = "#1d1f21",
+        cursor_bg = "#c5c8c6",
+        cursor_border = "#c5c8c6",
+        selection_fg = "#1d1f21",
+        selection_bg = "#c5c8c6",
         ansi = {
-          "#ffffff", -- black
-          "#c82829", -- red
-          "#718c00", -- green
-          "#eab700", -- yellow
-          "#4271ae", -- blue
-          "#8959a8", -- magenta
-          "#3e999f", -- cyan
-          "#4d4d4c", -- white
+          "#1d1f21", -- black
+          "#cc6666", -- red
+          "#b5bd68", -- green
+          "#f0c674", -- yellow
+          "#81a2be", -- blue
+          "#b294bb", -- magenta
+          "#8abeb7", -- cyan
+          "#c5c8c6", -- white
         },
-        -- bright
         brights = {
-          "#8e908c", -- black
-          "#f5871f", -- red
-          "#e0e0e0", -- green
-          "#d6d6d6", -- yellow
-          "#969896", -- blue
-          "#282a2e", -- magenta
-          "#a3685a", -- cyan
-          "#1d1f21", -- white
+          "#969896", -- black
+          "#de935f", -- red
+          "#b5bd68", -- green
+          "#f0c674", -- yellow
+          "#81a2be", -- blue
+          "#b294bb", -- magenta
+          "#8abeb7", -- cyan
+          "#ffffff", -- white
         },
       }
 
-      -- Cursor: block (Alacritty style = Block, no blink).
+      -- Cursor: steady block (Alacritty default is a block cursor).
       config.default_cursor_style = "SteadyBlock"
 
-      -- Window: opaque, native decorations (Alacritty opacity 1.0).
+      -- Window: on GNOME/Wayland, integrated buttons give a proper titlebar
+      -- (the window controls live in WezTerm's tab bar) instead of a bare
+      -- client-side-decoration look. Opaque background.
+      config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
       config.window_background_opacity = 1.0
-      config.window_decorations = "TITLE|RESIZE"
-      config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
+      config.window_padding = { left = 2, right = 2, top = 2, bottom = 2 }
       config.audible_bell = "Disabled"
 
       -- fish is the interactive shell on these hosts.
@@ -63,7 +71,11 @@
       config.max_fps = 120
       config.scrollback_lines = 10000
       config.enable_scroll_bar = false
-      config.hide_tab_bar_if_only_one_tab = true
+      -- Keep the tab bar always visible: it hosts the integrated window
+      -- buttons (hiding it on a single tab would remove the titlebar).
+      config.enable_tab_bar = true
+      config.hide_tab_bar_if_only_one_tab = false
+      config.use_fancy_tab_bar = true
 
       return config
     '';
