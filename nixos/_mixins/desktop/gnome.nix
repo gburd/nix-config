@@ -23,13 +23,14 @@
     gnomeExtensions.appindicator
     gnomeExtensions.blur-my-shell
     gnomeExtensions.pop-shell
-    # Local voice dictation for agents (Kun Chen's workflow uses macOS
-    # OpenSuperWhisper; this is the GNOME/Wayland equivalent). Push-to-talk
-    # via a keyboard shortcut; runs whisper.cpp locally (bundled), no cloud.
-    # Enable in GNOME Extensions + set a hotkey after switching.
-    gnomeExtensions.speech2text-with-whispercpp
     gnome-tweaks
-  ];
+  ]
+  # Local voice dictation for agents (Kun Chen's workflow uses macOS
+  # OpenSuperWhisper; this is the GNOME/Wayland equivalent). Push-to-talk
+  # via a keyboard shortcut; runs whisper.cpp locally (bundled), no cloud.
+  # Enable in GNOME Extensions + set a hotkey after switching. From STABLE
+  # pkgs — it's absent in nixpkgs-unstable.
+  ++ [ pkgs.gnomeExtensions.speech2text-with-whispercpp ];
 
   # Exclude packages
   environment.gnome.excludePackages = with pkgs; [
