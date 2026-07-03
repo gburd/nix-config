@@ -65,7 +65,14 @@
       config.window_decorations = "RESIZE"
       config.integrated_title_button_style = "Gnome"
       config.window_background_opacity = 1.0
-      config.window_padding = { left = 2, right = 2, top = 2, bottom = 2 }
+      -- Bottom clipping when maximized: on GNOME/Wayland CSD the maximized
+      -- surface height isn't an exact multiple of the cell height, so the
+      -- last text row is drawn past the visible edge and clipped. A larger
+      -- bottom pad absorbs the partial cell so the last row stays visible.
+      config.window_padding = { left = 2, right = 2, top = 2, bottom = 12 }
+      -- Don't resize the window on font-size changes (avoids re-triggering
+      -- the partial-cell mismatch).
+      config.adjust_window_size_when_changing_font_size = false
       config.audible_bell = "Disabled"
 
       -- fish is the interactive shell on these hosts.

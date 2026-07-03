@@ -6,6 +6,7 @@
     ./_mixins/sops.nix
     ./_mixins/optin-persistence.nix
     ./_mixins/services/firewall.nix
+    ./_mixins/services/firejail.nix
     ./_mixins/services/fwupd.nix
     ./_mixins/services/kmscon.nix
     ./_mixins/services/oomd.nix
