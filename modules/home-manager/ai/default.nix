@@ -11,5 +11,6 @@
     ./pi.nix
     ./steering.nix
     ./skills.nix
+    ./kun-tools.nix
   ];
 }

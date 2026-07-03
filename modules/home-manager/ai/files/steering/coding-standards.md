@@ -11,6 +11,7 @@
 - **Verify at every level** — Set up automated guardrails (linters, type checkers, pre-commit hooks, tests) as the first step
 - **Bias toward action** — Decide and move for anything easily reversed; ask before committing to interfaces, data models, architecture
 - **Finish the job** — Handle edge cases you can see, clean up what you touched, flag adjacent breakage. Don't invent new scope.
+- **Don't over-weight development cost in technical decisions** — Models inherit human effort estimates from training and so assume options are far more expensive to build than they are for an agent, biasing toward cheap, low-quality, unscalable choices. When weighing options, discount build cost heavily; favor the higher-quality, more maintainable design.
 
 ## Hard Limits
 
@@ -36,6 +37,7 @@ Code should be self-documenting. No commented-out code — delete it. If you nee
 
 ## Testing
 
+- **Reproduce bugs end-to-end first.** Before fixing a bug, reproduce it in an end-to-end setting as close to how an end user experiences it as possible. Unit tests alone are often insufficient — they pass while the product behavior stays broken. Lead into e2e/integration coverage that guards the actual behavior, then fix.
 - **Test behavior, not implementation.** If a refactor breaks your tests but not your code, the tests were wrong.
 - **Test edges and errors, not just the happy path.** Empty inputs, boundaries, malformed data, missing files, network failures.
 - **Mock boundaries, not logic.** Only mock things that are slow, non-deterministic, or external.

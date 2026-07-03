@@ -104,6 +104,22 @@
       flake = false;
     };
 
+    # treehouse (Kun Chen) — reusable git-worktree pool for parallel agents
+    # (worktrees preserved with deps + build cache intact). Go program with
+    # a proper flake exposing packages.default.
+    treehouse = {
+      url = "github:kunchenguid/treehouse";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
+    # no-mistakes (Kun Chen) — git push-proxy that validates changes via an
+    # AI pipeline and opens a clean PR. Go module (no upstream flake), built
+    # via buildGoModule in modules/home-manager/ai/kun-tools.nix.
+    no-mistakes = {
+      url = "github:kunchenguid/no-mistakes";
+      flake = false;
+    };
+
     # TODO... review below here
     impermanence.url = "github:nix-community/impermanence";
 

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }: {
+{ config, pkgs, inputs, platform, ... }: {
   imports = [
     ../cli # CLI tools (git, gh, gpg, fish, etc.)
     ./neovim
@@ -33,6 +33,10 @@
       entr # Modern Unix `watch`
       fd # Modern Unix `find`
       ffmpeg-headless # Terminal video encoder
+      # treehouse (Kun Chen): reusable git-worktree pool for parallel agents
+      # — worktrees preserved with deps + build cache intact. Go binary from
+      # the treehouse flake.
+      inputs.treehouse.packages.${platform}.default
       # fortune-mod: the classic BSD `fortune` (Keith Bostic lineage), the
       # complete curated jokes/quotes collection. withOffensive=true pulls in
       # the off-color datfiles that the default nixpkgs build strips, for the

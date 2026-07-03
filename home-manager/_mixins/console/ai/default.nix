@@ -55,6 +55,10 @@
     # modules/home-manager/ai/litellm.nix.
     litellm.enable = true;
 
+    # Kun Chen's agentic tools: gnhf (overnight loops), gh-axi (low-token
+    # GitHub CLI), lavish-axi (interactive planning), no-mistakes (validate
+    # -> clean PR pipeline), firstmate (multi-agent orchestration launcher).
+    kunTools.enable = true;
     # MCP Server configuration
     mcps = {
       enable = true;
@@ -133,7 +137,6 @@
   };
 
   programs.gh-dash.enable = true;
-
   home.packages = with pkgs; [
     awscli2
     aws-vault

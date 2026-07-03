@@ -24,7 +24,9 @@
 
 ## Pull Requests
 
-Describe what the code does now — not discarded approaches or prior iterations. Use plain, factual language. Avoid: critical, crucial, essential, significant, comprehensive, robust, elegant.
+Describe what the code does now, not discarded approaches or prior iterations.
+See opinions.md for prose/language preferences (plain factual language, no
+em-dashes, avoid the inflated register).
 
 ## Release Tagging
 

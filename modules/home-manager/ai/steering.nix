@@ -9,6 +9,7 @@ let
     "rust-conventions.md" = ./files/steering/rust-conventions.md;
     "workflow.md" = ./files/steering/workflow.md;
     "tools.md" = ./files/steering/tools.md;
+    "opinions.md" = ./files/steering/opinions.md;
     "aws-builder.md" = ./files/steering/aws-builder.md;
     "mcp-config.md" = ./files/steering/mcp-config.md;
     "postgresql-workflow.md" = ./files/steering/postgresql-workflow.md;
@@ -27,6 +28,7 @@ let
     "coding-standards.md"
     "workflow.md"
     "tools.md"
+    "opinions.md"
     "voice.md"
     "mcp-config.md"
   ];

@@ -553,6 +553,22 @@
         "type": "gitlab"
       }
     },
+    "no-mistakes": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783066502,
+        "narHash": "sha256-SqbKRJBI0Fk+AZDXrC5atgKwqMjUi+G2J7b2EPGDNlE=",
+        "owner": "kunchenguid",
+        "repo": "no-mistakes",
+        "rev": "02009a8535761eb41f8dea07118e71f86c9f0644",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kunchenguid",
+        "repo": "no-mistakes",
+        "type": "github"
+      }
+    },
     "ponytail": {
       "flake": false,
       "locked": {
@@ -670,6 +686,7 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-trunk": "nixpkgs-trunk",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "no-mistakes": "no-mistakes",
         "ponytail": "ponytail",
         "postgresq-skills-claude": "postgresq-skills-claude",
         "postgresq-skills-codex": "postgresq-skills-codex",
@@ -678,6 +695,7 @@
         "postgresq-skills-pi": "postgresq-skills-pi",
         "skillspector": "skillspector",
         "sops-nix": "sops-nix",
+        "treehouse": "treehouse",
         "vscode-server": "vscode-server"
       }
     },
@@ -775,6 +793,26 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "treehouse": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782318452,
+        "narHash": "sha256-G9NqwTzwqgr8rt+HlhXAFtR6ajYjZ6LfHdNKhaPfEls=",
+        "owner": "kunchenguid",
+        "repo": "treehouse",
+        "rev": "68fa3d2556542add76bf80255787b8625a5041a6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kunchenguid",
+        "repo": "treehouse",
         "type": "github"
       }
     },
