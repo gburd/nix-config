@@ -48,4 +48,12 @@ in
   #kubo.enable = true;
   # a location service `where-am-i`
   services.geoclue2.enable = true;
+
+  # Silence fish's default "Welcome to fish, the friendly interactive shell"
+  # greeting. fish is gburd's login shell (programs.fish.enable is on), but
+  # home-manager's fish module is disabled, so fish uses its embedded default
+  # greeting function. Setting the universal var empty here overrides it.
+  programs.fish.interactiveShellInit = ''
+    set -g fish_greeting
+  '';
 }
