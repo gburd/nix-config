@@ -11,14 +11,14 @@
 
       // Find
       "ctrl-p": "file_finder::Toggle",
-      "ctrl-shift-f": "workspace::NewSearch",
+      "ctrl-shift-f": "pane::DeploySearch",
 
       // Panels
       "ctrl-b": "workspace::ToggleLeftDock",
       "ctrl-j": "workspace::ToggleBottomDock",
 
       // Terminal
-      "ctrl-`": "terminal_panel::ToggleFocus"
+      "ctrl-`": "terminal_panel::Toggle"
     }
   },
 
@@ -29,23 +29,23 @@
       // Leader key mappings (space as leader)
       // File operations
       "space f f": "file_finder::Toggle",
-      "space f r": "pane::OpenRecent",
+      "space f r": "projects::OpenRecent",
       "space f s": "workspace::Save",
 
       // Search
       "space s f": "file_finder::Toggle",
-      "space s g": "workspace::NewSearch",
+      "space s g": "pane::DeploySearch",
       "space s r": "search::SelectNextMatch",
 
       // Git
-      "space g s": "editor::ToggleGitBlame",
-      "space g d": "editor::ToggleHunkDiff",
+      "space g s": "git::Blame",
+      "space g d": "editor::ToggleSelectedDiffHunks",
 
       // LSP
       "space l r": "editor::Rename",
       "space l a": "editor::ToggleCodeActions",
       "space l d": "editor::GoToDefinition",
-      "space l D": "editor::GoToDeclaration",
+      "space l D": "editor::GoToDefinition",
       "space l i": "editor::GoToImplementation",
       "space l t": "editor::GoToTypeDefinition",
       "space l f": "editor::Format",
@@ -53,21 +53,21 @@
       // Diagnostics
       "space d d": "diagnostics::Deploy",
       "space d n": "editor::GoToDiagnostic",
-      "space d p": "editor::GoToPrevDiagnostic",
+      "space d p": "editor::GoToPreviousDiagnostic",
 
       // Buffer/Pane management
       "space b d": "pane::CloseActiveItem",
       "space b n": "pane::ActivateNextItem",
-      "space b p": "pane::ActivatePrevItem",
+      "space b p": "pane::ActivatePreviousItem",
 
       // Window navigation (matching nvim's Ctrl-hjkl)
-      "ctrl-h": "workspace::ActivatePaneInDirection(Left)",
-      "ctrl-j": "workspace::ActivatePaneInDirection(Down)",
-      "ctrl-k": "workspace::ActivatePaneInDirection(Up)",
-      "ctrl-l": "workspace::ActivatePaneInDirection(Right)",
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-l": "workspace::ActivatePaneRight",
 
       // Terminal
-      "space t t": "terminal_panel::ToggleFocus",
+      "space t t": "terminal_panel::Toggle",
 
       // Project tree
       "space e": "workspace::ToggleLeftDock",
@@ -80,7 +80,7 @@
       "g r n": "editor::Rename",
       "g r a": "editor::ToggleCodeActions",
       "g r d": "editor::GoToDefinition",
-      "g r D": "editor::GoToDeclaration",
+      "g r D": "editor::GoToDefinition",
       "g r i": "editor::GoToImplementation",
       "g r t": "editor::GoToTypeDefinition",
 

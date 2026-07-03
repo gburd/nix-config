@@ -41,10 +41,6 @@
 
   // Cursor
   "cursor_blink": false,
-  "show_cursor_names": true,
-
-  // Selections
-  "show_selections": true,
 
   // Terminal
   "terminal": {
@@ -222,13 +218,38 @@
     "Shell Script": ["*.sh", "*.bash", "*.zsh"]
   },
 
-  // Features
-  "assistant": {
-    "enabled": false
+  // AI / LLM configuration
+  //
+  // Telemetry is OFF (see "telemetry" below). The AI panel + edit
+  // predictions are disabled by default so Zed does NOT auto-connect to
+  // zed.dev on startup (that was the failed network call). If you DO want
+  // to use AI in Zed, it is pre-wired to our per-host LiteLLM gateway via
+  // the `openai_compatible` provider below: open the agent panel, pick
+  // provider "OpenAI Compatible", and paste any per-agent LiteLLM key
+  // (Zed stores it in the OS keychain, never in this file). Nothing here
+  // reaches Anthropic/OpenAI/zed.dev directly.
+  "disable_ai": false,
+  "agent": {
+    "enabled": false,
+    "button": false
   },
-  "chat_panel": {
-    "enabled": false
+  "show_edit_predictions": false,
+  "edit_predictions": {
+    // Keep the provider local-only; the agent panel above is disabled so
+    // this never fires unless you explicitly turn AI features back on.
+    "provider": "zed"
   },
+  // Point Zed's OpenAI-compatible LLM provider at the loopback LiteLLM
+  // gateway (same proxy the CLI agents use). api_url only — the key is
+  // entered via Zed's UI and kept in the OS keychain.
+  "language_models": {
+    "openai_compatible": {
+      "LiteLLM": {
+        "api_url": "http://127.0.0.1:4000/v1"
+      }
+    }
+  },
+  // Telemetry: OFF, all channels.
   "telemetry": {
     "diagnostics": false,
     "metrics": false
