@@ -56,22 +56,17 @@
       -- Cursor: steady block (Alacritty default is a block cursor).
       config.default_cursor_style = "SteadyBlock"
 
-      -- Window: ONE title bar only — WezTerm's own fancy tab bar, which hosts
-      -- the window controls (integrated buttons). "RESIZE" alone means no
-      -- server-side (WM) titlebar, so GNOME/Wayland won't draw a SECOND bar
-      -- on top; the integrated buttons in the tab bar are the title bar.
-      -- (INTEGRATED_BUTTONS|RESIZE previously produced two bars because the
-      -- WM still drew its own.)
-      config.window_decorations = "RESIZE"
+      -- Window: ONE bar only — WezTerm's fancy tab bar (with integrated
+      -- window buttons) is the title bar. "NONE" makes WezTerm own the whole
+      -- surface with NO client-side decorations, so GNOME/Wayland can't (a)
+      -- draw a second server-side titlebar, nor (b) clip the last text row
+      -- when maximized (the CSD inset miscalculation that "RESIZE" caused).
+      config.window_decorations = "NONE"
       config.integrated_title_button_style = "Gnome"
       config.window_background_opacity = 1.0
-      -- Bottom clipping when maximized: on GNOME/Wayland CSD the maximized
-      -- surface height isn't an exact multiple of the cell height, so the
-      -- last text row is drawn past the visible edge and clipped. A larger
-      -- bottom pad absorbs the partial cell so the last row stays visible.
-      config.window_padding = { left = 2, right = 2, top = 2, bottom = 12 }
-      -- Don't resize the window on font-size changes (avoids re-triggering
-      -- the partial-cell mismatch).
+      -- Belt-and-suspenders against a partial last cell when maximized: pad
+      -- the bottom by ~one line height (font 14 -> ~28px).
+      config.window_padding = { left = 2, right = 2, top = 2, bottom = 28 }
       config.adjust_window_size_when_changing_font_size = false
       config.audible_bell = "Disabled"
 
