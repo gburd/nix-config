@@ -33,6 +33,11 @@
       entr # Modern Unix `watch`
       fd # Modern Unix `find`
       ffmpeg-headless # Terminal video encoder
+      # fortune-mod: the classic BSD `fortune` (Keith Bostic lineage), the
+      # complete curated jokes/quotes collection. withOffensive=true pulls in
+      # the off-color datfiles that the default nixpkgs build strips, for the
+      # full historical set. Provides fortune/strfile/rot/unstr.
+      (fortune.override { withOffensive = true; })
       fzf # Command-line fuzzy finder
       glow # Terminal Markdown renderer
       gping # Modern Unix `ping`
