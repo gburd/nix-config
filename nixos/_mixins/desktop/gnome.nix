@@ -21,7 +21,8 @@
 
   environment.systemPackages = with pkgs.unstable; [
     gnomeExtensions.appindicator
-    gnomeExtensions.blur-my-shell
+    # blur-my-shell removed — caused semi-transparent ghost content at screen
+    # edges after closing windows on GNOME 49 (blur actors miss repaints).
     gnomeExtensions.pop-shell
     gnome-tweaks
   ];

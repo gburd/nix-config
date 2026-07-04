@@ -149,15 +149,10 @@ in
     settings = {
       "org/gnome/shell" = {
         disabled-user-extensions = false; # enables user extensions (disabled by default)
-        enabled-extensions = [
-          "blur-my-shell@aunetx"
-        ];
-      };
-
-      # Configure individual extensions
-      "org/gnome/shell/extensions/blur-my-shell" = {
-        brightness = 0.75;
-        noise-amount = 0;
+        # blur-my-shell removed: on GNOME 49 / new Mutter its blur actors
+        # don't get damage/repaint events, leaving semi-transparent ghost
+        # content around screen edges after a window closes.
+        enabled-extensions = [ ];
       };
     };
   };

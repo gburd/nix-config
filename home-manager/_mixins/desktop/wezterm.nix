@@ -61,7 +61,13 @@
       -- surface with NO client-side decorations, so GNOME/Wayland can't (a)
       -- draw a second server-side titlebar, nor (b) clip the last text row
       -- when maximized (the CSD inset miscalculation that "RESIZE" caused).
-      config.window_decorations = "NONE"
+      -- Window: ONE bar — WezTerm's fancy tab bar hosts the window buttons
+      -- (min/maximize/close), Gnome-style. INTEGRATED_BUTTONS makes WezTerm
+      -- draw its own buttons AND skip server-side decorations, so there's a
+      -- single bar (no double titlebar) that still HAS the buttons. RESIZE
+      -- keeps resize borders. The maximize bottom-row clip is handled by the
+      -- bottom padding below, not by dropping decorations.
+      config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
       config.integrated_title_button_style = "Gnome"
       config.window_background_opacity = 1.0
       -- Belt-and-suspenders against a partial last cell when maximized: pad

@@ -16,8 +16,10 @@
 #   docker — container isolation. Host agents need the host /nix + ~/.npm +
 #     PATH, which this mounts read-only (best-effort); heavier, use for
 #     untrusted/containerized toolchains rather than the native agents.
-#   microvm — full QEMU microVM (kernel isolation). NOT yet auto-provisioned
-#     (needs microvm.nix); the tier errors with guidance until wired.
+#   vm — full QEMU VM (hardware-virtualised kernel isolation, strongest
+#     tier). Boots a minimal NixOS guest (nixosConfigurations.agent-vm) with
+#     the project shared in + the host LiteLLM gateway reachable at
+#     10.0.2.2:4000; runs the command, powers off.
 #
 # --aws is intentionally NOT how gateway-routed agents reach AWS: they use the
 # host LiteLLM gateway (127.0.0.1:4000), and --aws's private netns can't see
@@ -123,14 +125,14 @@ let
   '';
 
   usage = ''
-    agent-sandbox — run a command isolated (firejail/docker/microvm).
+    agent-sandbox — run a command isolated (firejail/docker/vm).
 
     USAGE:
       agent-sandbox [OPTIONS] <cmd> [args...]
       agent-sandbox [OPTIONS] -- <cmd> [args...]
 
     OPTIONS:
-      --tier <t>   firejail (default) | docker | microvm
+      --tier <t>   firejail (default) | docker | vm
       --mem <size> memory cap, e.g. 8G / 512M (default: ${cfg.defaultMemMax})
       --aws        DIRECT-AWS mode: private netns + DNS/HTTPS-only egress.
                    BREAKS gateway-routed agents (pi/claude/codex/maki/hermes)
@@ -285,7 +287,7 @@ let
             -e PATH="$PATH" \
             "${cfg.dockerImage}" "$@"
           ;;
-        microvm)
+        vm)
           # Strongest tier: boot the prebuilt agent-vm guest in QEMU (via its
           # NixOS `vm` runner, which sets up the host /nix/store overlay + net
           # correctly). The guest is a clean rootfs (no host $HOME/secrets).
@@ -294,7 +296,7 @@ let
           # LiteLLM gateway at 10.0.2.2:4000. The guest runs /cmd/run, powers off.
           RUNNER="${cfg.guestToplevel}"
           if [ -z "$RUNNER" ] || [ ! -x "$RUNNER/bin/run-agent-vm-vm" ]; then
-            echo "agent-sandbox: microvm guest runner not built. Build it once with:" >&2
+            echo "agent-sandbox: vm guest runner not built. Build it once with:" >&2
             echo "  nix build ~/ws/nix-config#nixosConfigurations.agent-vm.config.system.build.vm" >&2
             echo "  (it's normally prebuilt via the flake default). Use --tier firejail meanwhile." >&2
             exit 3
@@ -315,7 +317,7 @@ let
           export QEMU_OPTS="-m $MEMMB"
           exec "$RUNNER/bin/run-agent-vm-vm"
           ;;
-        *) echo "agent-sandbox: unknown tier '$TIER' (firejail|docker|microvm)" >&2; exit 2 ;;
+        *) echo "agent-sandbox: unknown tier '$TIER' (firejail|docker|vm)" >&2; exit 2 ;;
       esac
     '';
   };
@@ -323,7 +325,7 @@ let
   # Shell completion (fish: the interactive shell here).
   fishCompletion = pkgs.writeText "agent-sandbox.fish" ''
     complete -c agent-sandbox -f
-    complete -c agent-sandbox -l tier -x -a "firejail docker microvm" -d "isolation tier"
+    complete -c agent-sandbox -l tier -x -a "firejail docker vm" -d "isolation tier"
     complete -c agent-sandbox -l mem -x -d "memory cap e.g. 8G"
     complete -c agent-sandbox -l aws -d "direct-AWS netns (breaks gateway agents)"
     complete -c agent-sandbox -l ssh -d "forward ssh-agent socket (SSH out; keys stay blocked)"
@@ -334,7 +336,7 @@ let
 in
 {
   options.programs.ai.sandbox = {
-    enable = mkEnableOption "agent-sandbox: run agents isolated (firejail/docker/microvm)";
+    enable = mkEnableOption "agent-sandbox: run agents isolated (firejail/docker/vm)";
     defaultMemMax = mkOption {
       type = types.str;
       default = "12G";
@@ -361,8 +363,8 @@ in
       description = ''
         Store path of the built agent-vm QEMU runner
         (nixosConfigurations.agent-vm.config.system.build.vm), used by the
-        microvm tier. Defaults to the flake's agent-vm output. Empty =>
-        microvm tier errors with build instructions.
+        vm tier. Defaults to the flake's agent-vm output. Empty =>
+        vm tier errors with build instructions.
       '';
     };
   };
