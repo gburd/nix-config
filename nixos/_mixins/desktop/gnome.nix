@@ -24,13 +24,11 @@
     gnomeExtensions.blur-my-shell
     gnomeExtensions.pop-shell
     gnome-tweaks
-  ]
-  # Local voice dictation for agents (Kun Chen's workflow uses macOS
-  # OpenSuperWhisper; this is the GNOME/Wayland equivalent). Push-to-talk
-  # via a keyboard shortcut; runs whisper.cpp locally (bundled), no cloud.
-  # Enable in GNOME Extensions + set a hotkey after switching. From STABLE
-  # pkgs — it's absent in nixpkgs-unstable.
-  ++ [ pkgs.gnomeExtensions.speech2text-with-whispercpp ];
+  ];
+  # Voice dictation is NOT a GNOME extension (the whisper extensions lag the
+  # shell version and broke on GNOME 49). It's the version-independent
+  # `dictate` script instead — see home-manager/_mixins/desktop/voice.nix +
+  # nixos/_mixins/desktop/ydotool.nix.
 
   # Exclude packages
   environment.gnome.excludePackages = with pkgs; [

@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 # agent-sandbox — run a coding agent (or any command) in an isolated
 # environment, TRANSPARENT to the agent (no agent flags/cooperation, not
 # vendor-specific). A rogue/confused agent can't touch things it shouldn't
@@ -166,7 +166,7 @@ let
     name = "agent-sandbox";
     # firejail must be the SUID wrapper at /run/wrappers/bin/firejail
     # (programs.firejail.enable), NOT the non-SUID nixpkgs store binary.
-    runtimeInputs = [ pkgs.coreutils pkgs.docker_29 pkgs.iproute2 ];
+    runtimeInputs = [ pkgs.coreutils pkgs.docker_29 pkgs.iproute2 pkgs.qemu_kvm ];
     text = ''
       set -euo pipefail
       # Preserve the CALLER's PATH: writeShellApplication resets PATH to its
@@ -286,9 +286,34 @@ let
             "${cfg.dockerImage}" "$@"
           ;;
         microvm)
-          echo "agent-sandbox: the microvm tier isn't provisioned yet (needs microvm.nix)." >&2
-          echo "  Use --tier firejail (recommended for host agents) for now." >&2
-          exit 3
+          # Strongest tier: boot the prebuilt agent-vm guest in QEMU (via its
+          # NixOS `vm` runner, which sets up the host /nix/store overlay + net
+          # correctly). The guest is a clean rootfs (no host $HOME/secrets).
+          # We add the CURRENT project (rw) + a command dir (ro) as extra 9p
+          # shares via QEMU_OPTS; slirp user-net lets the guest reach the host
+          # LiteLLM gateway at 10.0.2.2:4000. The guest runs /cmd/run, powers off.
+          RUNNER="${cfg.guestToplevel}"
+          if [ -z "$RUNNER" ] || [ ! -x "$RUNNER/bin/run-agent-vm-vm" ]; then
+            echo "agent-sandbox: microvm guest runner not built. Build it once with:" >&2
+            echo "  nix build ~/ws/nix-config#nixosConfigurations.agent-vm.config.system.build.vm" >&2
+            echo "  (it's normally prebuilt via the flake default). Use --tier firejail meanwhile." >&2
+            exit 3
+          fi
+          CMDDIR=$(mktemp -d "''${XDG_RUNTIME_DIR:-/tmp}/agent-vm-cmd.XXXXXX")
+          trap 'rm -rf "$CMDDIR"' EXIT
+          MEMMB=$(( $(mem_bytes "$MEM") / 1024 / 1024 ))
+          [ "$MEMMB" -ge 512 ] || MEMMB=4096
+          echo "agent-sandbox: booting agent-vm (QEMU, ''${MEMMB}M)… gateway at 10.0.2.2:4000" >&2
+          # Project is shared via the runner's built-in 'shared' 9p
+          # (SHARED_DIR -> guest /tmp/shared, symlinked to /project). The
+          # command is appended to the kernel cmdline via the runner's
+          # supported QEMU_KERNEL_PARAMS (agentcmd=<base64>) — this appends,
+          # so it doesn't clobber the boot params. -m overrides guest default.
+          CMD_B64=$(printf '%s ' "$@" | base64 -w0)
+          export SHARED_DIR="$PROJECT"
+          export QEMU_KERNEL_PARAMS="agentcmd=$CMD_B64"
+          export QEMU_OPTS="-m $MEMMB"
+          exec "$RUNNER/bin/run-agent-vm-vm"
           ;;
         *) echo "agent-sandbox: unknown tier '$TIER' (firejail|docker|microvm)" >&2; exit 2 ;;
       esac
@@ -326,6 +351,18 @@ in
       description = ''
         Fallback uplink for the --aws private netns when the default route
         can't be auto-detected. The launcher normally auto-detects it.
+      '';
+    };
+    guestToplevel = mkOption {
+      type = types.str;
+      default =
+        let vm = inputs.self.nixosConfigurations.agent-vm or null;
+        in if vm == null then "" else "${vm.config.system.build.vm}";
+      description = ''
+        Store path of the built agent-vm QEMU runner
+        (nixosConfigurations.agent-vm.config.system.build.vm), used by the
+        microvm tier. Defaults to the flake's agent-vm output. Empty =>
+        microvm tier errors with build instructions.
       '';
     };
   };

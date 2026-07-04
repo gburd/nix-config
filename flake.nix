@@ -200,6 +200,14 @@
         # built via packages.<platform>.ec2-pgperf-{arm,x86} below).
         pgperf-arm = libx.mkHost { systemType = "server"; hostname = "pgperf-arm"; username = "gburd"; };
         pgperf-x86 = libx.mkHost { systemType = "server"; hostname = "pgperf-x86"; username = "gburd"; };
+
+        # agent-vm: minimal guest for agent-sandbox's microvm tier (strongest
+        # isolation). Built once; booted per-invocation by agent-sandbox with
+        # a dynamic project + command mount. Not a real host.
+        agent-vm = inputs.nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [ ./nixos/vm/agent-vm ];
+        };
       };
 
       # Colmena: declarative fleet deploy for the EC2 perf-test hosts.

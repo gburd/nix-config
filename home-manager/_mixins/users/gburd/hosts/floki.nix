@@ -14,6 +14,7 @@ with lib.hm.gvariant;
     ../../../desktop/proton-apps.nix
     ../../../desktop/typora.nix
     ../../../desktop/wezterm.nix
+    ../../../desktop/voice.nix
     ../../../services/protonmail-bridge.nix
     ../../../services/vdirsyncer.nix
     ../../../services/proton-drive.nix
@@ -24,6 +25,10 @@ with lib.hm.gvariant;
   ];
   # LMStudio NPU-accelerated local models (floki has Intel Arc NPU)
   programs.ai.lmstudio.enable = true;
+
+  # Local voice dictation (whisper.cpp + ydotool). Toggle `dictate` bound to
+  # Super+D: tap to record, tap again to transcribe + type at the cursor.
+  programs.ai.voice.enable = true;
 
   # Proton Drive (rclone native protondrive backend; on-demand FUSE mount).
   services.protonDrive.enable = true;

@@ -25,6 +25,7 @@ in
     ++ ifExists [
       "docker"
       "podman"
+      "ydotool"
       config.services.kubo.group
     ];
 
