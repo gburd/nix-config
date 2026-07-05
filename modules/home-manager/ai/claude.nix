@@ -135,6 +135,27 @@ in
 
       ${pkgs.coreutils}/bin/chmod 600 "$SETTINGS"
       echo "claude: patched $SETTINGS env to route via LiteLLM (model=${cfg.defaultModel}, fast=${cfg.fastModel})"
+
+      # --- Per-project trust (yolo completeness) --------------------------
+      # Claude Code has a per-directory "Do you trust the files in this
+      # folder?" gate in ~/.claude.json that is SEPARATE from
+      # permissions.defaultMode=bypassPermissions in settings.json. Even in
+      # bypass/yolo mode, an untrusted folder prompts. floki's projects were
+      # trust-accepted interactively; a fresh host (arnold) has none, so it
+      # prompts despite yolo. Mark all tracked projects + the global flag
+      # trusted so yolo is actually prompt-free. Idempotent.
+      CJSON="${config.home.homeDirectory}/.claude.json"
+      if [ -f "$CJSON" ]; then
+        CTMP=$(${pkgs.coreutils}/bin/mktemp)
+        ${pkgs.jq}/bin/jq '
+          .hasTrustDialogAccepted = true
+          | if .projects then .projects |= with_entries(
+              .value.hasTrustDialogAccepted = true
+            ) else . end
+        ' "$CJSON" > "$CTMP" && ${pkgs.coreutils}/bin/mv "$CTMP" "$CJSON"
+        ${pkgs.coreutils}/bin/chmod 600 "$CJSON"
+        echo "claude: marked tracked projects trusted in $CJSON (yolo prompt-free)"
+      fi
     '';
   };
 }

@@ -210,6 +210,19 @@ let
 
       case "$TIER" in
         firejail)
+          # Resolve firejail: NixOS provides a SUID wrapper at
+          # /run/wrappers/bin/firejail (required — the store binary can't
+          # create /run/firejail's lockfile); Fedora/other distros use the
+          # system SUID binary on PATH (/usr/bin/firejail on arnold).
+          if [ -x /run/wrappers/bin/firejail ]; then
+            FIREJAIL=/run/wrappers/bin/firejail
+          elif command -v firejail >/dev/null 2>&1; then
+            FIREJAIL=$(command -v firejail)
+          else
+            echo "agent-sandbox: firejail not found (NixOS: programs.firejail.enable;" >&2
+            echo "  Fedora: sudo dnf install firejail)." >&2
+            exit 3
+          fi
           if [ "$AWS" -eq 1 ]; then
             # Warn if --aws is used with a gateway-routed agent (it will lose
             # gateway access in the private netns).
@@ -225,7 +238,7 @@ let
             done
             NETDEV=$(ip -o route show default 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev"){print $(i+1); exit}}')
             NETDEV="''${NETDEV:-${cfg.awsNetDevice}}"
-            exec /run/wrappers/bin/firejail --quiet \
+            exec "$FIREJAIL" --quiet \
               --profile="${home}/.config/firejail/agent-aws.profile" \
               --net="$NETDEV" \
               --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
@@ -250,7 +263,7 @@ let
               echo "  Load keys with 'ssh-add' first; the sandbox uses the agent, not key files." >&2
               exit 2
             fi
-            exec /run/wrappers/bin/firejail --quiet \
+            exec "$FIREJAIL" --quiet \
               --profile="${home}/.config/firejail/agent-ssh.profile" \
               --whitelist="${home}/.nix-profile" \
               --whitelist="${home}/.local/state/nix" \
@@ -261,7 +274,7 @@ let
               --private-cwd="$PROJECT" --whitelist="$PROJECT" \
               env PATH="$CALLER_PATH" SSH_AUTH_SOCK="$SOCK" "$@"
           fi
-          exec /run/wrappers/bin/firejail --quiet \
+          exec "$FIREJAIL" --quiet \
             --profile="${home}/.config/firejail/agent.profile" \
             --whitelist="${home}/.nix-profile" \
             --whitelist="${home}/.local/state/nix" \

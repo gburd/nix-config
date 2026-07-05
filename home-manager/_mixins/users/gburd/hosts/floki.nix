@@ -26,9 +26,12 @@ with lib.hm.gvariant;
   # LMStudio NPU-accelerated local models (floki has Intel Arc NPU)
   programs.ai.lmstudio.enable = true;
 
-  # Local voice dictation (whisper.cpp + ydotool). Toggle `dictate` bound to
-  # Super+D: tap to record, tap again to transcribe + type at the cursor.
-  programs.ai.voice.enable = true;
+  # Local voice dictation — DISABLED. The `dictate` toggle + Super+D +
+  # ydotool auto-typing created a feedback loop: whisper transcribed ambient
+  # noise as "(keyboard clicking) …", ydotool typed it, which generated more
+  # key events -> more transcription -> runaway. Left off until reworked with
+  # push-to-hold (not toggle) + a hard max-record cap + no auto-type loop.
+  programs.ai.voice.enable = false;
 
   # Proton Drive (rclone native protondrive backend; on-demand FUSE mount).
   services.protonDrive.enable = true;
