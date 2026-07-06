@@ -20,6 +20,15 @@
     # A Modern Unix experience
     # https://jvns.ca/blog/2022/04/12/a-list-of-new-ish--command-line-tools/
     packages = with pkgs; [
+      # `heavy <cmd>`: run a memory-hungry command as the OOM killer's FIRST
+      # victim (oom_score_adj=900 via choom, allowed unprivileged). If it
+      # runs the system out of RAM, the kernel reaps IT — not wezterm-gui
+      # (which is one process for ALL terminal windows, so killing it takes
+      # every window down). Use for builds/benchmarks/model runs:
+      #   heavy cargo test        heavy ./run-benchmark
+      (writeShellScriptBin "heavy" ''
+        exec ${util-linux}/bin/choom -n 900 -- "$@"
+      '')
       # Modern CLI tools
       asciinema # Terminal recorder
       breezy # Terminal bzr client

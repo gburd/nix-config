@@ -7,6 +7,17 @@
 # light foreground, full titlebar/borders, FiraCode Nerd Font. tmux is the
 # multiplexer (see console/tmux.nix).
 #
+# OOM protection: WezTerm is a SINGLE process (wezterm-gui) drawing ALL
+# windows/tabs/panes (unlike Alacritty's process-per-window), so if the
+# kernel OOM-kills wezterm-gui, EVERY window dies at once. The user systemd
+# manager sets DefaultOOMScoreAdjust=200, so wezterm-gui + its children all
+# start ~200 and wezterm-gui can be picked as the victim under pressure.
+# Unprivileged processes can only RAISE oom_score_adj (never lower), so we
+# can't protect wezterm directly from user space. Instead: run heavy jobs via
+# the `heavy` wrapper (console/default.nix) — it raises the job's score to
+# +900 so the kernel always reaps THAT process first, sparing the terminal.
+# `agent-sandbox --mem` does the same (--oom=900) for agents/sandboxed work.
+#
 # NOTE: home-manager's programs.wezterm wraps extraConfig as:
 #   local wezterm = require 'wezterm';
 #   <extraConfig>
@@ -56,11 +67,6 @@
       -- Cursor: steady block (Alacritty default is a block cursor).
       config.default_cursor_style = "SteadyBlock"
 
-      -- Window: ONE bar only — WezTerm's fancy tab bar (with integrated
-      -- window buttons) is the title bar. "NONE" makes WezTerm own the whole
-      -- surface with NO client-side decorations, so GNOME/Wayland can't (a)
-      -- draw a second server-side titlebar, nor (b) clip the last text row
-      -- when maximized (the CSD inset miscalculation that "RESIZE" caused).
       -- Window: ONE bar — WezTerm's fancy tab bar hosts the window buttons
       -- (min/maximize/close), Gnome-style. INTEGRATED_BUTTONS makes WezTerm
       -- draw its own buttons AND skip server-side decorations, so there's a

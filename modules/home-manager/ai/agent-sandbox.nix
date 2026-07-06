@@ -168,7 +168,7 @@ let
     name = "agent-sandbox";
     # firejail must be the SUID wrapper at /run/wrappers/bin/firejail
     # (programs.firejail.enable), NOT the non-SUID nixpkgs store binary.
-    runtimeInputs = [ pkgs.coreutils pkgs.docker_29 pkgs.iproute2 pkgs.qemu_kvm ];
+    runtimeInputs = [ pkgs.coreutils pkgs.docker_29 pkgs.iproute2 pkgs.iptables pkgs.qemu_kvm ];
     text = ''
       set -euo pipefail
       # Preserve the CALLER's PATH: writeShellApplication resets PATH to its
@@ -224,16 +224,20 @@ let
             exit 3
           fi
           if [ "$AWS" -eq 1 ]; then
-            # Warn if --aws is used with a gateway-routed agent (it will lose
-            # gateway access in the private netns).
+            # --aws puts the sandbox in a PRIVATE netns for egress filtering.
+            # Gateway-routed agents (pi/claude/…) reach models via the host
+            # LiteLLM gateway at 127.0.0.1:4000, which is UNREACHABLE from a
+            # private netns — so --aws + such an agent can never work. Hard-
+            # block it (a 3s warning that then fails is worse UX).
             for g in ${gatewayRouted}; do
               if [ "$1" = "$g" ]; then
-                echo "agent-sandbox: WARNING --aws puts the sandbox in a private netns;" >&2
-                echo "  '$1' routes through the host LiteLLM gateway (127.0.0.1:4000)," >&2
-                echo "  UNREACHABLE there — it won't reach any model. Use 'agent-sandbox $1'" >&2
-                echo "  (no --aws) for gateway-routed agents. Continuing in 3s (Ctrl-C)..." >&2
-                sleep 3
-                break
+                echo "agent-sandbox: --aws is incompatible with '$1'." >&2
+                echo "  '$1' reaches models through the host LiteLLM gateway" >&2
+                echo "  (127.0.0.1:4000), which a private-netns (--aws) sandbox can't see." >&2
+                echo "  Run 'agent-sandbox $1' (no --aws) — the default tier still blocks" >&2
+                echo "  SSH keys/secrets/AWS creds. --aws is only for tools making DIRECT" >&2
+                echo "  AWS calls with their own credentials." >&2
+                exit 2
               fi
             done
             NETDEV=$(ip -o route show default 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev"){print $(i+1); exit}}')
@@ -241,9 +245,13 @@ let
             exec "$FIREJAIL" --quiet \
               --profile="${home}/.config/firejail/agent-aws.profile" \
               --net="$NETDEV" \
+              --whitelist="${home}/.nix-profile" \
+              --whitelist="${home}/.local/state/nix" \
+              --whitelist="${home}/.npm" \
+              --whitelist="${home}/.pi" \
               --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
               --private-cwd="$PROJECT" --whitelist="$PROJECT" \
-              "$@"
+              env PATH="$CALLER_PATH" "$@"
           fi
           # Default: share host /nix + network; isolate the filesystem + cap
           # memory. --rlimit-as caps RAM; --oom=900 makes a runaway the OOM
