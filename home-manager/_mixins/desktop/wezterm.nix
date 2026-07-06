@@ -29,8 +29,21 @@
       local config = wezterm.config_builder()
 
       -- Font: FiraCode Nerd Font (installed), size 14 to match prior setup.
-      config.font = wezterm.font("FiraCode Nerd Font")
+      -- Font: FiraCode Nerd Font primary, with an explicit fallback chain so
+      -- codepoints FiraCode lacks (broad symbols, CJK, emoji) still render
+      -- instead of logging "No glyph for U+XXXX". These fallback fonts are
+      -- installed system-wide (see nixos/default.nix fonts).
+      config.font = wezterm.font_with_fallback({
+        "FiraCode Nerd Font",
+        "Symbols Nerd Font Mono", -- full Nerd Font symbol/icon set
+        "Noto Sans CJK JP",       -- CJK
+        "Noto Color Emoji",       -- emoji
+        "Noto Sans Mono",         -- broad Unicode mono fallback
+      })
       config.font_size = 14.0
+      -- Don't log a warning when a glyph is still missing after the fallback
+      -- chain (rare now that the chain covers symbols/CJK/emoji).
+      config.warn_about_missing_glyphs = false
 
       -- Colors: dark, matching Alacritty's actual runtime look (its built-in
       -- dark defaults ~ base16 "Tomorrow Night").

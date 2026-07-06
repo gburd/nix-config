@@ -133,11 +133,14 @@
       nerd-fonts.fira-code
       nerd-fonts.sauce-code-pro
       nerd-fonts.ubuntu-mono
+      nerd-fonts.symbols-only # standalone Nerd Font symbol set (universal glyph fallback)
       fira
       fira-go
       joypixels # Emojis
       liberation_ttf
       noto-fonts-color-emoji # Emojis
+      noto-fonts # broad Unicode coverage (Latin/Greek/Cyrillic/symbols)
+      noto-fonts-cjk-sans # CJK glyphs (else CJK codepoints have no glyph)
       source-serif
       ubuntu-classic
       work-sans
@@ -151,7 +154,7 @@
       defaultFonts = {
         serif = [ "Source Serif" ];
         sansSerif = [ "Work Sans" "Fira Sans" "FiraGO" ];
-        monospace = [ "FiraCode Nerd Font Mono" "SauceCodePro Nerd Font Mono" ];
+        monospace = [ "FiraCode Nerd Font Mono" "SauceCodePro Nerd Font Mono" "Symbols Nerd Font Mono" "Noto Sans Mono CJK JP" ];
         emoji = [ "Joypixels" "Noto Color Emoji" ];
       };
       enable = true;
