@@ -226,6 +226,32 @@ in
         ${pkgs.coreutils}/bin/printf '%s' "$DESIRED" > "$MODEL_FILE"
         echo "maki: seeded $MODEL_FILE = $DESIRED"
       fi
+
+      # Self-heal stale session provider pins. Pre-LiteLLM sessions pin
+      # "model":"anthropic/..." or "bedrock/...", so resuming one (-c/-s)
+      # makes maki demand an ANTHROPIC_API_KEY it doesn't have. Rewrite any
+      # such pins to litellm/<model> (the only provider we configure), with a
+      # one-time backup. Idempotent: only rewrites files that still have a
+      # stale pin.
+      SDIR="${config.home.homeDirectory}/.maki/sessions"
+      if [ -d "$SDIR" ]; then
+        BK="$SDIR/_pre-litellm-backup"
+        for f in "$SDIR"/*.jsonl; do
+          [ -f "$f" ] || continue
+          if ${pkgs.gnugrep}/bin/grep -qE '"model":"(anthropic|bedrock)/' "$f"; then
+            ${pkgs.coreutils}/bin/mkdir -p "$BK"
+            [ -f "$BK/$(${pkgs.coreutils}/bin/basename "$f")" ] || ${pkgs.coreutils}/bin/cp "$f" "$BK/"
+            ${pkgs.gnused}/bin/sed -i -E \
+              -e 's#"model":"anthropic/#"model":"litellm/#g' \
+              -e 's#"model":"bedrock/#"model":"litellm/#g' \
+              -e 's#"model":"litellm/us\.anthropic\.#"model":"litellm/#g' \
+              -e 's#"model":"litellm/bedrock\.rs"#"model":"litellm/claude-opus-4-8"#g' \
+              -e 's#"model":"litellm/claude-haiku-4\.5"#"model":"litellm/claude-haiku-4-5"#g' \
+              -e 's#"model":"litellm/claude-opus-4-"#"model":"litellm/claude-opus-4-8"#g' \
+              "$f"
+          fi
+        done
+      fi
     '';
   };
 }
