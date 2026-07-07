@@ -1,4 +1,4 @@
-{ ... }:
+_:
 # firejail — namespace-based sandbox (SUID helper) used by agent-sandbox to
 # isolate coding agents transparently (no agent cooperation, agent-agnostic).
 # Enables the SUID wrapper so `firejail <cmd>` works for the user. Custom

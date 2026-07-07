@@ -1,4 +1,4 @@
-{ ... }:
+_:
 # ydotool — synthetic keyboard input via uinput, for the `dictate` voice
 # script. DISABLED: the voice feature is off (see floki.nix) after the
 # dictate toggle + ydotool auto-typing created a "(keyboard clicking)…"

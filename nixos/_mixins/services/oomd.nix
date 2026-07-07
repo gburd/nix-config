@@ -1,4 +1,4 @@
-{ ... }:
+_:
 # systemd-oomd tuning.
 #
 # Problem: systemd-oomd reclaims memory at CGROUP granularity — when a

@@ -1,4 +1,4 @@
-{ ... }:
+_:
 # tmux — terminal multiplexer, the session backbone for agentic work
 # (persistent sessions that survive disconnects, splits for agent + editor +
 # test-runner, detach/reattach for long-running agent tasks). Configured

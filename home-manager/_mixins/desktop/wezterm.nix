@@ -1,4 +1,4 @@
-{ ... }:
+_:
 # WezTerm — GPU-accelerated terminal + multiplexer. GUI hosts (floki, arnold).
 # Appearance matched to what Alacritty ACTUALLY renders: the legacy
 # alacritty.yml is dead (modern Alacritty reads alacritty.toml, which sets no
