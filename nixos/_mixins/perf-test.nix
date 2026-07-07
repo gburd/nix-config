@@ -30,7 +30,7 @@
     sysbench
     fio # storage benchmarking
     hyperfine
-    linuxPackages.perf
+    perf
     flamegraph
     numactl # NUMA pinning for clock-sweep / buffer-manager tests
     htop

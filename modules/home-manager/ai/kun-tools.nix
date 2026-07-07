@@ -1,4 +1,4 @@
-{ config, lib, pkgs, inputs, platform, ... }:
+{ config, lib, pkgs, inputs, ... }:
 # Kun Chen's agentic-engineering tools (from the "L8 Principal's Agentic
 # Engineering Workflow" video). These are opt-in helpers layered on top of
 # the CLI agents (claude/codex/pi/maki). Terminal + tmux + treehouse are

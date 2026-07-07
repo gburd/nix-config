@@ -30,7 +30,7 @@ in
 
   home = {
     packages = with pkgs; [
-      tig
+      # (tig removed — already provided by console/default.nix)
     ];
   };
 

@@ -147,7 +147,7 @@
           "extensions.experimental.affinity": {
               "asvetliakov.vscode-neovim": 1
           },
-          "vscode-neovim.neovimExecutablePaths.linux": "/home/gburd/.nix-profile/bin/nvim",
+          "vscode-neovim.neovimExecutablePaths.linux": "${config.home.homeDirectory}/.nix-profile/bin/nvim",
       }
     '';
 

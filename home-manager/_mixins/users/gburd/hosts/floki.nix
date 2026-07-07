@@ -240,7 +240,7 @@ with lib.hm.gvariant;
           "extensions.experimental.affinity": {
               "asvetliakov.vscode-neovim": 1
           },
-          "vscode-neovim.neovimExecutablePaths.linux": "/home/gburd/.nix-profile/bin/nvim",
+          "vscode-neovim.neovimExecutablePaths.linux": "${config.home.homeDirectory}/.nix-profile/bin/nvim",
       }
     '';
 
@@ -255,7 +255,6 @@ with lib.hm.gvariant;
       # TODO: Move some of these into ../../../desktop/<app>.nix files
       _1password-cli
       _1password-gui
-      autoconf
       bash
       cfssl
       cmake
@@ -268,7 +267,6 @@ with lib.hm.gvariant;
       # gdb  # Removed: provided by console/gdb
       # gnumake  # Removed: provided by console/default.nix
       htop
-      libtool
       lsof
       luajitPackages.luarocks
       m4

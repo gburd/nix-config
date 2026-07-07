@@ -6,7 +6,7 @@
   ente-photos-desktop = pkgs.callPackage ./ente.nix { };
   charm-freeze = pkgs.callPackage ./charm-freeze.nix { };
   kiro-cli = pkgs.callPackage ./kiro-cli { };
-  kiro-ide = pkgs.callPackage ./kiro-ide { };
+  # kiro-ide = pkgs.callPackage ./kiro-ide { };  # disabled: download URL broken (fakeSha256); re-enable when Amazon restores it
   maki = pkgs.callPackage ./maki { };
   nix-inspect = pkgs.callPackage ./nix-inspect { };
   tly = pkgs.callPackage ./tly { };

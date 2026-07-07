@@ -242,6 +242,11 @@ let
             done
             NETDEV=$(ip -o route show default 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev"){print $(i+1); exit}}')
             NETDEV="''${NETDEV:-${cfg.awsNetDevice}}"
+            if [ -z "$NETDEV" ]; then
+              echo "agent-sandbox: --aws could not auto-detect the uplink device." >&2
+              echo "  Set programs.ai.sandbox.awsNetDevice to your interface (ip link)." >&2
+              exit 3
+            fi
             exec "$FIREJAIL" --quiet \
               --profile="${home}/.config/firejail/agent-aws.profile" \
               --net="$NETDEV" \
@@ -370,10 +375,11 @@ in
     };
     awsNetDevice = mkOption {
       type = types.str;
-      default = "wlp0s20f3";
+      default = "";
       description = ''
-        Fallback uplink for the --aws private netns when the default route
-        can't be auto-detected. The launcher normally auto-detects it.
+        Optional fallback uplink for the --aws private netns. The launcher
+        auto-detects the default-route device; set this only if that fails
+        on a given host.
       '';
     };
     guestToplevel = mkOption {
