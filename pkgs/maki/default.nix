@@ -10,16 +10,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "maki";
-  version = "0.3.9-gburd.1";
+  version = "0.3.26-gburd.1";
 
   src = fetchFromGitHub {
     owner = "gburd";
     repo = "maki";
     rev = "v${version}";
-    hash = "sha256-ih5eKWRkp9JGlhEZc888uHJ231+FR+/GXUME3DAQY0A=";
+    hash = "sha256-FJKi/zTXwYv958vGt8abMP12gXP07mFCLjwFjqxDT3U=";
   };
 
-  cargoHash = "sha256-9nmCoW9q8y5CNrLqbmHqtu5UmpKxbexFvMdmuSXCDcI=";
+  cargoHash = "sha256-dG0MHgIUAHIulVhvAIok4WqGBXrZKytUldHFL2ShMMk=";
 
   nativeBuildInputs = [
     pkg-config
@@ -35,9 +35,12 @@ rustPlatform.buildRustPackage rec {
   OPENSSL_NO_VENDOR = 1;
 
   # monty crate references ../../../README.md from src/ which doesn't
-  # exist in vendored copy — create the file it expects
+  # exist in the vendored copy — create the file it expects. The vendor
+  # layout differs across nixpkgs versions (older: maki-*-vendor/monty-*/src;
+  # newer: maki-*-vendor/source-git-*/monty-*/src), so match monty's src dir
+  # wherever it lands and create the README it include_str!'s.
   preBuild = ''
-    for d in $NIX_BUILD_TOP/maki-*-vendor/monty-*/src; do
+    for d in $(find "$NIX_BUILD_TOP" -type d -path '*monty-*/src' 2>/dev/null); do
       target="$(realpath -m "$d/../../../README.md")"
       mkdir -p "$(dirname "$target")"
       touch "$target"
