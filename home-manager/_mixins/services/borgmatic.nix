@@ -176,7 +176,13 @@ let
     #     explicit).
     #   PreferredAuthentications=publickey — reject password/keyboard-
     #     interactive auth methods entirely.
-    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o PreferredAuthentications=publickey -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
+    #   -F none                      — do NOT read ~/.ssh/config. Under the
+    #     borgmatic systemd sandbox, ssh's strict-modes check on the
+    #     nix-store ~/.ssh/config symlink (root-owned) fails with "Bad owner
+    #     or permissions" and closes the connection (borg exit 81). We pass
+    #     an explicit -i key + all needed options, so the user config is
+    #     unnecessary; -F none sidesteps the perms check entirely.
+    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -F none -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o PreferredAuthentications=publickey -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
   };
 in
 {

@@ -152,31 +152,14 @@
     '';
 
     packages = with pkgs; [
-      _1password-cli
+      # Shared CLI/dev packages are hoisted to users/gburd/default.nix.
+      # Below: meh-specific packages only. (autoconf/libtool dropped — already
+      # in console/default.nix.)
       _1password-gui
-      autoconf
-      bash
-      cfssl
       cmake
-      dig
-      elixir
-      emacs
-      erlang
-      file
-      htop
-      libtool
-      lsof
-      luajitPackages.luarocks
-      m4
-      openssl
-      perl
       plocate
-      python3
-      rebar3
-      tree-sitter
       unstable.element-desktop
       unstable.minio-client
-      xclip
     ];
   };
 }

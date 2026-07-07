@@ -29,8 +29,30 @@ in
   };
 
   home = {
+    # Shared CLI/dev packages wanted on ALL of gburd's Linux hosts
+    # (floki/meh/arnold). Hoisted here to remove per-host duplication
+    # (was repeated verbatim in each host file). Host-unique packages
+    # (GUI apps, kiro-cli/lmstudio/terax-ai/pan on floki, etc.) stay in the
+    # per-host files; CLI basics already in console/default.nix are NOT
+    # repeated here.
     packages = with pkgs; [
-      # (tig removed — already provided by console/default.nix)
+      _1password-cli
+      cfssl
+      dig
+      elixir
+      emacs
+      erlang
+      file
+      htop
+      lsof
+      luajitPackages.luarocks
+      m4
+      openssl
+      perl
+      python3
+      rebar3
+      tree-sitter
+      xclip
     ];
   };
 

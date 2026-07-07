@@ -115,33 +115,19 @@ with lib.hm.gvariant;
   '';
 
   home.packages = with pkgs; [
-    # gcc / gdb / gnumake / pkg-config / ripgrep / tig / tree / cmake / autoconf / libtool provided by console
-    # clang-tools / pyright / gopls / nixd / lldb / strace / ltrace / valgrind etc. provided by console/neovim
-    # awscli2 / ssm-session-manager-plugin / flyctl provided by console/ai and console
-    _1password-cli # `op` — headless 1Password CLI (desktop-app integration for SSH agent unlock)
-    bash
+    # Shared CLI/dev packages (_1password-cli, cfssl, dig, elixir, emacs,
+    # erlang, file, htop, lsof, luarocks, m4, openssl, perl, python3, rebar3,
+    # tree-sitter, xclip) are hoisted to users/gburd/default.nix. gcc / gdb /
+    # gnumake / pkg-config / ripgrep / tig / tree / cmake / autoconf / libtool
+    # provided by console; clang-tools / pyright / gopls / nixd / lldb /
+    # strace / valgrind etc. by console/neovim; awscli2 / flyctl by console/ai.
+    # Below: arnold-specific build deps only.
     bison
-    cfssl
-    dig
-    elixir
-    emacs
-    erlang
-    file
     flex
     go
-    htop
-    lsof
     lua5_1
-    luajitPackages.luarocks # for neovim (LuaJIT) and standalone use
-    m4
     ninja
-    openssl
-    perl
-    python3
     readline
-    rebar3
-    tree-sitter
-    xclip
     zlib
 
     # AI tools

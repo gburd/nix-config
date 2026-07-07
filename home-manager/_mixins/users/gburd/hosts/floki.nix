@@ -252,37 +252,13 @@ with lib.hm.gvariant;
 
 
     packages = with pkgs; [
-      # TODO: Move some of these into ../../../desktop/<app>.nix files
-      _1password-cli
+      # Shared CLI/dev packages are hoisted to users/gburd/default.nix.
+      # Below: floki-specific packages only.
       _1password-gui
-      bash
-      cfssl
       cmake
-      dig
-      elixir
-      emacs
-      erlang
-      file
-      # gcc  # Removed: conflicts with gcc14 from console/default.nix
-      # gdb  # Removed: provided by console/gdb
-      # gnumake  # Removed: provided by console/default.nix
-      htop
-      lsof
-      luajitPackages.luarocks
-      m4
-      openssl
-      perl
-      # pkg-config  # Removed: provided by console/default.nix
       plocate
-      python3
-      rebar3
-      # ripgrep  # Removed: provided by console/default.nix
-      # tig  # Removed: provided by cli mixin
-      # tree  # Removed: provided by cli mixin
-      tree-sitter
       unstable.element-desktop
       unstable.minio-client
-      xclip
 
       # AI tools
       kiro-cli # Kiro CLI agent for the terminal
