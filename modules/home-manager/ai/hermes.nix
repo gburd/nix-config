@@ -67,7 +67,8 @@ in
               AWS_SDK_LOAD_CONFIG \
               ANTHROPIC_API_KEY ANTHROPIC_BASE_URL \
               CLAUDE_CODE_USE_BEDROCK CLAUDE_CODE_SKIP_BEDROCK_AUTH \
-              ANTHROPIC_BEDROCK_BASE_URL
+              ANTHROPIC_BEDROCK_BASE_URL \
+              LD_PRELOAD
 
         exec "$HOME/.local/bin/hermes" "$@"
       '')

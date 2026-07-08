@@ -186,7 +186,8 @@ in
               AWS_BEARER_TOKEN_BEDROCK \
               AWS_PROFILE AWS_DEFAULT_PROFILE \
               AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
-              AWS_SDK_LOAD_CONFIG
+              AWS_SDK_LOAD_CONFIG \
+              LD_PRELOAD
         exec ${cfg.package}/bin/maki "$@"
       '')
     ];

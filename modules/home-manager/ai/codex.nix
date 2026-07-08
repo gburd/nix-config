@@ -150,6 +150,9 @@ in
           echo "codex: ${litellmKey} not readable; is litellm.service running?" >&2
           exit 78  # EX_CONFIG
         fi
+        # Strip any project devshell's LD_PRELOAD (libumem/sanitizer
+        # interposer) — it SIGSEGVs the Node/native agent runtime.
+        unset LD_PRELOAD
         exec ${cfg.package}/bin/codex "$@"
       '')
     ];

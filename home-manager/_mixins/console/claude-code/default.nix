@@ -1,4 +1,20 @@
 { pkgs, ... }:
+let
+  # Wrap claude so it launches with a stock allocator: a project devshell's
+  # LD_PRELOAD (libumem_malloc.so / a sanitizer interposer) SIGSEGVs the
+  # Node/native claude runtime. Strip it before exec. The real binary is
+  # renamed .claude-real and the wrapper keeps the `claude` name.
+  claude-wrapped = pkgs.symlinkJoin {
+    name = "claude-code-nopreload";
+    paths = [ pkgs.claude-code ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      if [ -e "$out/bin/claude" ]; then
+        wrapProgram "$out/bin/claude" --unset LD_PRELOAD
+      fi
+    '';
+  };
+in
 {
   # Import language-specific development tools
   imports = [
@@ -6,7 +22,7 @@
   ];
 
   home.packages = with pkgs; [
-    claude-code
+    claude-wrapped
     bubblewrap
     socat
     nodejs

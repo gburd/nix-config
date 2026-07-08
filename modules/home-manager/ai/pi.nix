@@ -116,6 +116,11 @@ in
         export NPM_CONFIG_PREFIX="''${HOME}/.npm-global"
         mkdir -p "$NPM_CONFIG_PREFIX"
 
+        # Strip any LD_PRELOAD (e.g. a project devshell's libumem_malloc.so /
+        # sanitizer interposer). Preloading a C debug allocator into the Node
+        # runtime SIGSEGVs it — agents must run with the stock allocator.
+        unset LD_PRELOAD
+
         exec ${pkgs.nodejs}/bin/npx -y @earendil-works/pi-coding-agent "$@"
       '')
     ];

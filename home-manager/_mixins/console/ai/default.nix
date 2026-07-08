@@ -142,6 +142,23 @@
   };
 
   programs.gh-dash.enable = true;
+
+  # Agent LD_PRELOAD guard (all hosts). A project devshell — e.g. the
+  # PostgreSQL/libumem shells — exports LD_PRELOAD=libumem_malloc.so, which
+  # SIGSEGVs the Node/native AI agents. pi in particular is launched from an
+  # npx-cached bin that shadows the nix wrapper on PATH, so a wrapper/PATH fix
+  # isn't reliable. Fish functions shadow PATH entirely: define one per agent
+  # that clears LD_PRELOAD before running the real command. (Written to
+  # ~/.config/fish/conf.d/ even though programs.fish.enable is false, same as
+  # scratch.nix/rust.nix.)
+  programs.fish.interactiveShellInit = ''
+    function pi;     env -u LD_PRELOAD command pi $argv;     end
+    function claude; env -u LD_PRELOAD command claude $argv; end
+    function maki;   env -u LD_PRELOAD command maki $argv;   end
+    function codex;  env -u LD_PRELOAD command codex $argv;  end
+    function hermes; env -u LD_PRELOAD command hermes $argv; end
+  '';
+
   home.packages = with pkgs; [
     awscli2
     aws-vault
