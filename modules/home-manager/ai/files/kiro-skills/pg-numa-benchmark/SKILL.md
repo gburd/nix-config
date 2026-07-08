@@ -1,6 +1,6 @@
 ---
 name: pg-numa-benchmark
-description: Run PostgreSQL clock sweep benchmarks on bare-metal EC2 instances. Covers AWS setup, instance launch (r8i.metal-96xl / m6i.metal), OS tuning, PG build (stock + patched), pgbench A/B testing, HammerDB TPC-C, and result collection. Use when benchmarking PostgreSQL buffer manager changes on NUMA hardware.
+description: Run PostgreSQL clock sweep benchmarks on bare-metal EC2 instances. Covers AWS setup, instance launch (r8i.metal-96xl / m6i.metal), OS tuning, PG build (stock + patched), pgbench A/B testing, HammerDB TPC-C, and result collection. Use when benchmarking PostgreSQL buffer manager changes on NUMA hardware. The generic AWS benchmarking substrate (launch/tune/A-B/terminate) is in the aws-benchmark skill; this layers the PostgreSQL specifics on top.
 ---
 
 ## Overview

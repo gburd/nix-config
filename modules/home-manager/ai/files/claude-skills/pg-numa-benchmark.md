@@ -1,6 +1,6 @@
 # PG NUMA Benchmark
 
-Run PostgreSQL clock sweep benchmarks on bare-metal EC2 instances. Use when benchmarking PostgreSQL buffer manager changes on NUMA hardware.
+Run PostgreSQL clock sweep benchmarks on bare-metal EC2 instances. Use when benchmarking PostgreSQL buffer manager changes on NUMA hardware. The generic AWS substrate (launch, OS tuning, A/B methodology, cleanup) is in the **aws-benchmark** skill; this skill layers the PostgreSQL-specific procedure on top.
 
 ## Quick Reference
 

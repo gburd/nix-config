@@ -38,7 +38,8 @@ let
     seccomp
     noroot
     # --- Hard-block sensitive paths (agent must never read these) ---
-    blacklist ${home}/.aws
+    # NOTE: ~/.aws is NOT blocked here — it's added by the profiles below so
+    # the --aws-profile creds profile (agent-aws-creds.profile) can omit it.
     blacklist ${home}/.gnupg
     blacklist ${home}/.config/sops
     blacklist ${home}/.config/sops-nix
@@ -50,17 +51,22 @@ let
     private-dev
   '';
 
-  # Default: no SSH at all — block the entire ~/.ssh dir (private keys +
-  # config + known_hosts) AND the ssh-agent socket (which lives outside
-  # ~/.ssh, under /run/user/<uid>). Without blocking the socket, an agent
-  # could still use your loaded keys via SSH_AUTH_SOCK. --ssh re-enables it.
-  commonProfile = ''
-    ${commonBase}
+  # SSH-blocking fragment shared by the default + aws-creds profiles: no
+  # ~/.ssh, no agent socket, no SSH_AUTH_SOCK env. (--ssh uses sshProfile
+  # instead, which permits the agent socket.)
+  noSshFragment = ''
     blacklist ${home}/.ssh
     blacklist /run/user/*/gcr/ssh
     blacklist /run/user/*/keyring/ssh
     blacklist /run/user/*/ssh-agent*
     rmenv SSH_AUTH_SOCK
+  '';
+
+  # Default: no SSH, and ~/.aws fully blocked.
+  commonProfile = ''
+    ${commonBase}
+    blacklist ${home}/.aws
+    ${noSshFragment}
   '';
 
   # --ssh variant: allow SSH via the forwarded ssh-agent SOCKET only. Block
@@ -70,6 +76,7 @@ let
   # launcher binds $SSH_AUTH_SOCK and keeps the SSH_AUTH_SOCK env var.
   sshProfile = ''
     ${commonBase}
+    blacklist ${home}/.aws
     # Block every private key inside ~/.ssh; the forwarded ssh-agent socket
     # does the auth. We do NOT whitelist ~/.ssh/config or known_hosts: they
     # are nix-store symlinks (root-owned, 0444) that trip SSH's strict
@@ -100,6 +107,16 @@ let
   '';
 
   agentSshProfile = pkgs.writeText "agent-ssh.profile" sshProfile;
+
+  # --aws-profile variant: like the default profile (no SSH) but WITHOUT the
+  # ~/.aws blacklist, so the launcher's --whitelist ~/.aws takes effect (a
+  # cmdline whitelist can't override a profile blacklist). Only used when
+  # --aws-profile <name> is passed; scoped to reading ~/.aws for that account.
+  agentCredsProfile = pkgs.writeText "agent-aws-creds.profile" ''
+    ${commonBase}
+    ${noSshFragment}
+    ignore net none
+  '';
 
   awsNetfilter = pkgs.writeText "agent-aws.net" ''
     *filter
@@ -138,6 +155,12 @@ let
                    BREAKS gateway-routed agents (pi/claude/codex/maki/hermes)
                    because the host LiteLLM gateway is unreachable in a private
                    netns. Use only for tools hitting AWS with their own creds.
+      --aws-profile <name>
+                   Grant the sandbox READ-ONLY access to ~/.aws and set
+                   AWS_PROFILE=<name>, so the agent can use that AWS account
+                   (e.g. numa-bench). Default blocks ~/.aws entirely; this is
+                   opt-in per invocation and scoped to the one named profile.
+                   Works alongside the normal (gateway) tier — unlike --aws.
       --ssh        Allow outbound SSH: forwards the ssh-agent SOCKET into the
                    sandbox so the agent can SSH to LAN hosts / EC2 / etc. using
                    your loaded keys. Private key FILES stay blocked (the agent
@@ -179,12 +202,14 @@ let
       MEM="${cfg.defaultMemMax}"
       AWS=0
       SSH=0
+      AWS_PROFILE_NAME=""
       while [ $# -gt 0 ]; do
         case "$1" in
           -h|--help) printf '%s' ${lib.escapeShellArg usage}; exit 0 ;;
           --tier) TIER="$2"; shift 2 ;;
           --mem)  MEM="$2"; shift 2 ;;
           --aws)  AWS=1; shift ;;
+          --aws-profile) AWS_PROFILE_NAME="$2"; shift 2 ;;
           --ssh)  SSH=1; shift ;;
           --)     shift; break ;;
           -*)     echo "agent-sandbox: unknown flag $1 (try --help)" >&2; exit 2 ;;
@@ -194,6 +219,17 @@ let
       [ $# -gt 0 ] || { printf '%s' ${lib.escapeShellArg usage} >&2; exit 2; }
 
       PROJECT="$PWD"
+
+      # --aws-profile <name>: deliberately grant the sandbox read-only access
+      # to ~/.aws + set AWS_PROFILE, so the agent can use THAT named account
+      # (e.g. numa-bench). Default keeps ~/.aws fully blocked. This is opt-in
+      # per invocation and scoped to the one profile you name.
+      AWS_FJ=()      # extra firejail args (whitelist ~/.aws ro)
+      AWS_ENV=()     # extra env for the agent (AWS_PROFILE=…)
+      if [ -n "$AWS_PROFILE_NAME" ]; then
+        AWS_FJ=(--whitelist="${home}/.aws" --read-only="${home}/.aws")
+        AWS_ENV=("AWS_PROFILE=$AWS_PROFILE_NAME")
+      fi
 
       mem_bytes() {
         local v n unit
@@ -283,19 +319,28 @@ let
               --whitelist="${home}/.npm" \
               --whitelist="${home}/.pi" \
               --whitelist="$SOCK" \
+              "''${AWS_FJ[@]}" \
               --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
               --private-cwd="$PROJECT" --whitelist="$PROJECT" \
-              env PATH="$CALLER_PATH" SSH_AUTH_SOCK="$SOCK" "$@"
+              env "''${AWS_ENV[@]}" PATH="$CALLER_PATH" SSH_AUTH_SOCK="$SOCK" "$@"
+          fi
+          # --aws-profile uses the creds profile (no ~/.aws blacklist) so the
+          # whitelist below actually exposes ~/.aws; otherwise the default
+          # profile keeps ~/.aws blocked.
+          DEFAULT_PROFILE="${home}/.config/firejail/agent.profile"
+          if [ -n "$AWS_PROFILE_NAME" ]; then
+            DEFAULT_PROFILE="${home}/.config/firejail/agent-aws-creds.profile"
           fi
           exec "$FIREJAIL" --quiet \
-            --profile="${home}/.config/firejail/agent.profile" \
+            --profile="$DEFAULT_PROFILE" \
             --whitelist="${home}/.nix-profile" \
             --whitelist="${home}/.local/state/nix" \
             --whitelist="${home}/.npm" \
             --whitelist="${home}/.pi" \
+            "''${AWS_FJ[@]}" \
             --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
             --private-cwd="$PROJECT" --whitelist="$PROJECT" \
-            env PATH="$CALLER_PATH" "$@"
+            env "''${AWS_ENV[@]}" PATH="$CALLER_PATH" "$@"
           ;;
         docker)
           # Host agents (pi/claude/…) are host Nix/npm binaries, so the
@@ -401,6 +446,7 @@ in
     home.file = {
       ".config/firejail/agent.profile".source = agentProfile;
       ".config/firejail/agent-aws.profile".source = agentAwsProfile;
+      ".config/firejail/agent-aws-creds.profile".source = agentCredsProfile;
       ".config/firejail/agent-ssh.profile".source = agentSshProfile;
       ".config/fish/completions/agent-sandbox.fish".source = fishCompletion;
     };
