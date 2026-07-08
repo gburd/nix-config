@@ -148,10 +148,11 @@
   # SIGSEGVs the Node/native AI agents. pi in particular is launched from an
   # npx-cached bin that shadows the nix wrapper on PATH, so a wrapper/PATH fix
   # isn't reliable. Fish functions shadow PATH entirely: define one per agent
-  # that clears LD_PRELOAD before running the real command. (Written to
-  # ~/.config/fish/conf.d/ even though programs.fish.enable is false, same as
-  # scratch.nix/rust.nix.)
-  programs.fish.interactiveShellInit = ''
+  # that clears LD_PRELOAD before running the real command. Written directly
+  # to conf.d via home.file (programs.fish.enable is false here, so
+  # programs.fish.interactiveShellInit would be dropped — same pattern as
+  # cargo.nix / lmstudio.nix).
+  home.file.".config/fish/conf.d/agent-ld-preload-guard.fish".text = ''
     function pi;     env -u LD_PRELOAD command pi $argv;     end
     function claude; env -u LD_PRELOAD command claude $argv; end
     function maki;   env -u LD_PRELOAD command maki $argv;   end
