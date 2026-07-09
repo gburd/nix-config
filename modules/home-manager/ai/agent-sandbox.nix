@@ -198,6 +198,12 @@ let
       # runtimeInputs, which drops ~/.nix-profile/bin (where the agent
       # wrappers live) and ~/.pi/agent/bin etc. Capture it before use.
       CALLER_PATH="''${PATH}"
+      # Re-export PATH into our OWN environment (not via `env PATH=... argv`):
+      # firejail caps any single argv element at 4128 bytes, and a project
+      # devshell's PATH (build-tool bins) can exceed that -> "too long
+      # argument" abort. Env vars ride via envp, not argv, so this has no
+      # such cap; firejail's child inherits it like any other env var.
+      export PATH="$CALLER_PATH"
       TIER=firejail
       MEM="${cfg.defaultMemMax}"
       AWS=0
@@ -292,7 +298,7 @@ let
               --whitelist="${home}/.pi" \
               --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
               --private-cwd="$PROJECT" --whitelist="$PROJECT" \
-              env PATH="$CALLER_PATH" "$@"
+              "$@"
           fi
           # Default: share host /nix + network; isolate the filesystem + cap
           # memory. --rlimit-as caps RAM; --oom=900 makes a runaway the OOM
@@ -322,7 +328,7 @@ let
               "''${AWS_FJ[@]}" \
               --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
               --private-cwd="$PROJECT" --whitelist="$PROJECT" \
-              env "''${AWS_ENV[@]}" PATH="$CALLER_PATH" SSH_AUTH_SOCK="$SOCK" "$@"
+              env "''${AWS_ENV[@]}" SSH_AUTH_SOCK="$SOCK" "$@"
           fi
           # --aws-profile uses the creds profile (no ~/.aws blacklist) so the
           # whitelist below actually exposes ~/.aws; otherwise the default
@@ -340,7 +346,7 @@ let
             "''${AWS_FJ[@]}" \
             --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
             --private-cwd="$PROJECT" --whitelist="$PROJECT" \
-            env "''${AWS_ENV[@]}" PATH="$CALLER_PATH" "$@"
+            env "''${AWS_ENV[@]}" "$@"
           ;;
         docker)
           # Host agents (pi/claude/…) are host Nix/npm binaries, so the
