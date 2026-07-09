@@ -153,11 +153,11 @@
   # programs.fish.interactiveShellInit would be dropped — same pattern as
   # cargo.nix / lmstudio.nix).
   home.file.".config/fish/conf.d/agent-ld-preload-guard.fish".text = ''
-    function pi;     env -u LD_PRELOAD command pi $argv;     end
-    function claude; env -u LD_PRELOAD command claude $argv; end
-    function maki;   env -u LD_PRELOAD command maki $argv;   end
-    function codex;  env -u LD_PRELOAD command codex $argv;  end
-    function hermes; env -u LD_PRELOAD command hermes $argv; end
+    function pi;     env -u LD_PRELOAD (command -s pi) $argv;     end
+    function claude; env -u LD_PRELOAD (command -s claude) $argv; end
+    function maki;   env -u LD_PRELOAD (command -s maki) $argv;   end
+    function codex;  env -u LD_PRELOAD (command -s codex) $argv;  end
+    function hermes; env -u LD_PRELOAD (command -s hermes) $argv; end
   '';
 
   home.packages = with pkgs; [
