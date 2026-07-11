@@ -23,6 +23,25 @@ _:
 #   <extraConfig>
 # so `wezterm` is already in scope; extraConfig just builds and returns config.
 {
+  # systemd scope drop-in: every WezTerm window/tab launch gets an
+  # app-gnome-org.wezfurlong.wezterm-<pid>.scope from gnome-shell. Systemd's
+  # dash-truncation rule (systemd.unit(5)) means a drop-in at the truncated
+  # name "...wezterm-.scope.d/" applies to ALL those scopes regardless of
+  # PID. Without this, the default OOMPolicy (stop) means the kernel OOM
+  # killer reaping ANY one child inside the scope (an agent, firejail, a
+  # test binary someone ran in a pane) tears down the WHOLE scope — killing
+  # wezterm-gui and every window/tab/pane along with it. That kill/respawn
+  # is what shows up as edge "ghosting": the new Wayland surface's first
+  # frame paints over stale compositor buffer content at the borders.
+  # OOMPolicy=continue: log the child's death, keep the terminal running.
+  # (We still can't LOWER wezterm-gui's own oom_score_adj from user space —
+  # this instead stops one dead child from taking the whole terminal with
+  # it, which is what was actually happening per `journalctl -k` history.)
+  home.file."config/systemd/user/app-gnome-org.wezfurlong.wezterm-.scope.d/oom-policy.conf".text = ''
+    [Scope]
+    OOMPolicy=continue
+  '';
+
   programs.wezterm = {
     enable = true;
     extraConfig = ''

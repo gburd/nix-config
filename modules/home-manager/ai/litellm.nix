@@ -124,7 +124,23 @@ let
 
     # Writer Palmyra X5 (enterprise; has a us. inference profile).
     { name = "palmyra-x5"; bedrock = "us.writer.palmyra-x5-v1:0"; converse = false; maxInput = 1000000; maxOutput = 8192; }
+
+    # Claude Max/Pro subscription, direct Anthropic API (NOT Bedrock). Set
+    # programs.ai.litellm.anthropicAuthTokenFile to a sops-deployed file
+    # holding the sk-ant-oat... token from `claude setup-token` to enable.
+    # Distinct model_name (claude-max-*) so agents opt in explicitly — it
+    # never shadows the Bedrock claude-opus-4-8 etc. rows.
+    { name = "claude-max-opus-4-8"; provider = "anthropic"; anthropicModel = "claude-opus-4-8"; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 200000; maxOutput = 32000; }
   ];
+
+  # Anthropic-direct (Claude Max/Pro subscription) rows are only wired in
+  # when a token file is actually configured — otherwise the proxy would
+  # advertise a model whose api_key env var is never set, and every call
+  # to it would 401. Filtered once here; every consumer below reads
+  # usableModels instead of cfg.models.
+  usableModels = lib.filter
+    (m: (m.provider or "bedrock") != "anthropic" || cfg.anthropicAuthTokenFile != null)
+    cfg.models;
 
   # ---------- thinking-policy map ----------------------------------------
   # Per-model thinking policy, derived from the SAME cfg.models list that
@@ -164,7 +180,7 @@ let
         # "claude-opus-4-8" or the legacy "us.anthropic.claude-opus-4-8".
       [{ inherit (m) name; value = pol; }]
       ++ map (alias: { name = alias; value = pol; }) (m.aliases or [ ]))
-    cfg.models);
+    usableModels);
 
   # The actual config for LiteLLM's proxy. Built as an attrset and emitted
   # as JSON, which is valid YAML — bypasses the indent hazards of
@@ -173,47 +189,63 @@ let
   # Build one model_list row for a given public name. Factored out so we
   # can emit both the primary alias (m.name) and any legacy aliases
   # (m.aliases) with identical params — see legacyAliases below.
-  mkModelRow = m: rowName: {
-    model_name = rowName;
-    litellm_params = {
-      model = (if m.converse then "bedrock/converse/" else "bedrock/") + m.bedrock;
-      # Per-model region override (some models are single-region on
-      # Bedrock, e.g. Qwen3-Coder-480B is us-west-2 only). Falls back to
-      # the proxy-wide AWS_REGION for the (majority) multi-region models.
-      aws_region_name = m.region or "os.environ/AWS_REGION";
-      # Give each agent the model's full output-token budget rather
-      # than a flat 32000. Falls back to 32000 for any model without
-      # an explicit maxOutput.
-      max_tokens = m.maxOutput or 32000;
-    };
-    # NOTE: thinking / output_config are deliberately NOT set here.
-    # LiteLLM merges litellm_params into the request *after* the
-    # async_pre_call_hook runs, so a static thinking block here would
-    # re-appear behind the hook's back — e.g. when a client omits
-    # thinking and asks for a tiny max_tokens, the static
-    # budget_tokens=16000 would exceed max_tokens and Bedrock 400s
-    # ("max_tokens must be greater than thinking.budget_tokens").
-    # Instead thinking_normalizer.py is the single source of truth: it
-    # sets the correct thinking shape for EVERY request (the policy map
-    # is derived from the same cfg.models list) and caps/drops the
-    # budget against max_tokens. See thinkingHookPy below.
+  mkModelRow = m: rowName:
+    let
+      isAnthropicDirect = (m.provider or "bedrock") == "anthropic";
+    in
+    {
+      model_name = rowName;
+      litellm_params =
+        if isAnthropicDirect then {
+          # Direct Anthropic API via a Claude subscription (Max/Pro) OAuth
+          # token, NOT Bedrock. `claude setup-token` mints a long-lived
+          # sk-ant-oat... token; LiteLLM's anthropic provider auto-detects
+          # that prefix and swaps in the OAuth Authorization header (see
+          # optionally_handle_anthropic_oauth in litellm's anthropic
+          # common_utils.py) instead of the normal x-api-key header. No AWS
+          # region/creds involved — this bypasses Bedrock entirely.
+          model = "anthropic/" + m.anthropicModel;
+          api_key = "os.environ/ANTHROPIC_AUTH_TOKEN";
+          max_tokens = m.maxOutput or 32000;
+        } else {
+          model = (if m.converse then "bedrock/converse/" else "bedrock/") + m.bedrock;
+          # Per-model region override (some models are single-region on
+          # Bedrock, e.g. Qwen3-Coder-480B is us-west-2 only). Falls back to
+          # the proxy-wide AWS_REGION for the (majority) multi-region models.
+          aws_region_name = m.region or "os.environ/AWS_REGION";
+          # Give each agent the model's full output-token budget rather
+          # than a flat 32000. Falls back to 32000 for any model without
+          # an explicit maxOutput.
+          max_tokens = m.maxOutput or 32000;
+        };
+      # NOTE: thinking / output_config are deliberately NOT set here.
+      # LiteLLM merges litellm_params into the request *after* the
+      # async_pre_call_hook runs, so a static thinking block here would
+      # re-appear behind the hook's back — e.g. when a client omits
+      # thinking and asks for a tiny max_tokens, the static
+      # budget_tokens=16000 would exceed max_tokens and Bedrock 400s
+      # ("max_tokens must be greater than thinking.budget_tokens").
+      # Instead thinking_normalizer.py is the single source of truth: it
+      # sets the correct thinking shape for EVERY request (the policy map
+      # is derived from the same cfg.models list) and caps/drops the
+      # budget against max_tokens. See thinkingHookPy below.
 
-    # model_info overrides LiteLLM's built-in price/context DB so the
-    # /model/info and /v1/models endpoints advertise the *true*
-    # Bedrock context window + output ceiling for each alias. Clients
-    # that size their context budget from the proxy (Pi reads this)
-    # then won't trigger premature context-overflow recovery on the
-    # 1M-token Opus/Sonnet 4.6+ models.
-    model_info = {
-      max_input_tokens = m.maxInput or 200000;
-      max_output_tokens = m.maxOutput or 32000;
-      max_tokens = m.maxOutput or 32000;
+      # model_info overrides LiteLLM's built-in price/context DB so the
+      # /model/info and /v1/models endpoints advertise the *true*
+      # Bedrock context window + output ceiling for each alias. Clients
+      # that size their context budget from the proxy (Pi reads this)
+      # then won't trigger premature context-overflow recovery on the
+      # 1M-token Opus/Sonnet 4.6+ models.
+      model_info = {
+        max_input_tokens = m.maxInput or 200000;
+        max_output_tokens = m.maxOutput or 32000;
+        max_tokens = m.maxOutput or 32000;
+      };
     };
-  };
 
   configJson = builtins.toJSON {
     model_list =
-      (map (m: mkModelRow m m.name) cfg.models)
+      (map (m: mkModelRow m m.name) usableModels)
       # Legacy-id alias rows: extra model_list entries whose model_name is
       # the OLD built-in amazon-bedrock model id (e.g.
       # "us.anthropic.claude-opus-4-8") so that resuming a pre-migration
@@ -224,7 +256,7 @@ let
       # hook (keyed on model_name) also covers them via legacyPolicy below.
       ++ lib.concatMap
         (m: map (alias: mkModelRow m alias) (m.aliases or [ ]))
-        cfg.models;
+        usableModels;
 
     litellm_settings = {
       drop_params = true;
@@ -313,6 +345,15 @@ let
     export LD_LIBRARY_PATH="${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib pkgs.zlib ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     export AWS_BEARER_TOKEN_BEDROCK="$(${pkgs.coreutils}/bin/cat "$BEARER_FILE")"
     export AWS_REGION="${cfg.region}"
+    ${lib.optionalString (cfg.anthropicAuthTokenFile != null) ''
+      # Claude Max/Pro subscription token (claude-max-* model rows). Direct
+      # Anthropic API, entirely separate from the Bedrock bearer token above.
+      if [ ! -r "${cfg.anthropicAuthTokenFile}" ]; then
+        echo "Anthropic auth token file ${cfg.anthropicAuthTokenFile} not readable" >&2
+        exit 78
+      fi
+      export ANTHROPIC_AUTH_TOKEN="$(${pkgs.coreutils}/bin/cat "${cfg.anthropicAuthTokenFile}")"
+    ''}
     # Bearer token is the ONLY intended auth path. Clear any AWS_PROFILE /
     # static-credential env that leaks in from the login session (e.g.
     # arnold's systemd --user manager imports AWS_PROFILE=asbxbedrock from
@@ -556,6 +597,22 @@ in
         Path to the AWS Bedrock bearer token (sops-deployed). Read at
         service start; never written into the systemd unit file or the
         Nix store.
+      '';
+    };
+
+    anthropicAuthTokenFile = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      description = ''
+        Optional path to a Claude subscription (Max/Pro) long-lived OAuth
+        token (the sk-ant-oat... value from `claude setup-token`),
+        sops-deployed like bearerTokenFile. When set, the proxy exposes
+        model rows that call the direct Anthropic API through this
+        subscription instead of Bedrock (see defaultModels' provider =
+        "anthropic" rows). Read at service start; never written into the
+        systemd unit file or the Nix store. Leave null to skip those
+        model rows are then omitted entirely (the token is required, not
+        optional, at the API layer).
       '';
     };
 

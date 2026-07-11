@@ -9,7 +9,7 @@
   # kiro-ide = pkgs.callPackage ./kiro-ide { };  # disabled: download URL broken (fakeSha256); re-enable when Amazon restores it
   # maki 0.3.26+ (monty/ruff) needs rustc >= 1.95; stable nixpkgs is on
   # 1.91, so build it with unstable's rustPlatform (1.95).
-  maki = pkgs.callPackage ./maki { rustPlatform = pkgs.unstable.rustPlatform; };
+  maki = pkgs.callPackage ./maki { inherit (pkgs.unstable) rustPlatform; };
   nix-inspect = pkgs.callPackage ./nix-inspect { };
   tly = pkgs.callPackage ./tly { };
   mailspring = pkgs.callPackage ./mailspring { };
