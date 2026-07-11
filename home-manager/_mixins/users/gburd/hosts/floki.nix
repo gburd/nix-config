@@ -26,6 +26,14 @@ with lib.hm.gvariant;
   # LMStudio NPU-accelerated local models (floki has Intel Arc NPU)
   programs.ai.lmstudio.enable = true;
 
+  # Claude Max/Pro subscription (claude-max-opus-4-8 model row in LiteLLM),
+  # alongside the existing Bedrock rows. Bedrock stays the default for every
+  # agent (claude/pi/maki/codex/hermes' defaultModel = claude-opus-4-8);
+  # this is opt-in per-request by naming the model explicitly. Token from
+  # `claude setup-token`, sops-deployed (see sops.secrets below).
+  programs.ai.litellm.anthropicAuthTokenFile =
+    "${config.home.homeDirectory}/.config/claude-code/.anthropic_oauth_token";
+
   # Local voice dictation — DISABLED. The `dictate` toggle + Super+D +
   # ydotool auto-typing created a feedback loop: whisper transcribed ambient
   # noise as "(keyboard clicking) …", ydotool typed it, which generated more
@@ -70,6 +78,9 @@ with lib.hm.gvariant;
     secrets = {
       "aws/bearer_token_bedrock" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
+      };
+      "anthropic/claude_max_oauth_token" = {
+        path = "${config.home.homeDirectory}/.config/claude-code/.anthropic_oauth_token";
       };
       # Crates.io API token (exposed as $CARGO_REGISTRY_TOKEN by console/cargo.nix)
       "cargo/crates_io_token" = { };

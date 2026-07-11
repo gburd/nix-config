@@ -773,13 +773,33 @@ in
               ${pipxBin} install --quiet "${litellmSpec}" || \
                 echo "litellm: install failed — run 'pipx install \"${litellmSpec}\"' manually" >&2
             fi
+
+            # home-manager's own reloadSystemd activation step runs BEFORE
+            # this one (entryAfter linkGeneration, vs our entryAfter
+            # writeBoundary) — so if it restarts litellm.service, that
+            # restart reads the OLD config.yaml, and our rewrite above lands
+            # too late for the process that's already running. Explicitly
+            # restart here, after config.yaml/keys/hooks are all on disk, so
+            # the proxy that ends up running always matches what we just
+            # wrote. No-op if the unit isn't loaded yet (first-ever switch;
+            # reloadSystemd's own systemctl start handles that case).
+            if ${pkgs.systemd}/bin/systemctl --user is-enabled --quiet litellm.service 2>/dev/null; then
+              ${pkgs.systemd}/bin/systemctl --user restart litellm.service || true
+            fi
     '';
 
     systemd.user.services.litellm = {
       Unit = {
         Description = "LiteLLM proxy (Bedrock bridge, loopback only)";
-        After = [ "network-online.target" ];
-        Wants = [ "network-online.target" ];
+        # sops-nix.service decrypts the bearer token + anthropic OAuth token
+        # symlink targets. Without this ordering, a home-manager switch that
+        # restarts BOTH units can start litellm before sops-nix finishes
+        # writing secrets, so the startup script's readability check fails
+        # ("... not readable", exit 78/CONFIG) and the proxy is down until
+        # systemd's Restart=on-failure retries a few seconds later — a real
+        # outage window every switch, not just a hypothetical.
+        After = [ "network-online.target" "sops-nix.service" ];
+        Wants = [ "network-online.target" "sops-nix.service" ];
       };
       Service = {
         Type = "simple";
