@@ -37,7 +37,7 @@ _:
   # (We still can't LOWER wezterm-gui's own oom_score_adj from user space —
   # this instead stops one dead child from taking the whole terminal with
   # it, which is what was actually happening per `journalctl -k` history.)
-  home.file."config/systemd/user/app-gnome-org.wezfurlong.wezterm-.scope.d/oom-policy.conf".text = ''
+  home.file.".config/systemd/user/app-gnome-org.wezfurlong.wezterm-.scope.d/oom-policy.conf".text = ''
     [Scope]
     OOMPolicy=continue
   '';
