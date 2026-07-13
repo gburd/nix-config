@@ -70,11 +70,11 @@
     ];
   };
 
-  # Nix daemon is auto-managed when nix.enable is on
-  nix.package = pkgs.nix;
-
-  # Necessary for using flakes on this system.
-  nix.settings.experimental-features = "nix-command flakes";
+  # These Macs run Determinate Nix, which owns the daemon and /etc/nix/nix.conf.
+  # nix-darwin must NOT manage Nix or the two conflict at switch time. Determinate
+  # already enables the nix-command and flakes experimental features, so there is
+  # nothing for nix-darwin to configure here.
+  nix.enable = false;
 
   nixpkgs = {
     # You can add overlays here
