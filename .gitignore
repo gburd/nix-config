@@ -20,6 +20,14 @@ result*
 .claude/
 .memelord/
 
+# Amazon/internal overlay — MUST NOT be committed to this public repo.
+# Amazon-internal steering, MCP endpoints, and Q config live outside the repo
+# and are wired in via home.file mkOutOfStoreSymlink to local paths only.
+*.local.nix
+local/
+**/amazon-builder-steering.md
+.aws/amazonq/
+
 # User-specific directories
 arnold-config/
 arnold-nix-setup
