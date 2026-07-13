@@ -142,14 +142,14 @@ let
   '';
 
   usage = ''
-    agent-sandbox — run a command isolated (firejail/docker/vm).
+    agent-sandbox -- run a command isolated (firejail/docker/vm).
 
     USAGE:
       agent-sandbox [OPTIONS] <cmd> [args...]
       agent-sandbox [OPTIONS] -- <cmd> [args...]
 
     OPTIONS:
-      --tier <t>   firejail (default) | docker | vm
+      --tier <t>   firejail (default) | docker | vm | ec2
       --mem <size> memory cap, e.g. 8G / 512M (default: ${cfg.defaultMemMax})
       --aws        DIRECT-AWS mode: private netns + DNS/HTTPS-only egress.
                    BREAKS gateway-routed agents (pi/claude/codex/maki/hermes)
@@ -160,21 +160,43 @@ let
                    AWS_PROFILE=<name>, so the agent can use that AWS account
                    (e.g. numa-bench). Default blocks ~/.aws entirely; this is
                    opt-in per invocation and scoped to the one named profile.
-                   Works alongside the normal (gateway) tier — unlike --aws.
+                   Works alongside the normal (gateway) tier, unlike --aws.
       --ssh        Allow outbound SSH: forwards the ssh-agent SOCKET into the
                    sandbox so the agent can SSH to LAN hosts / EC2 / etc. using
                    your loaded keys. Private key FILES stay blocked (the agent
-                   signs challenges; keys can't be read/exfiltrated). Requires
+                   signs challenges; keys cannot be read/exfiltrated). Requires
                    a running ssh-agent with keys loaded (ssh-add -l). Connect
                    by full hostname / Tailscale name (~/.ssh/config aliases
-                   aren't available in the sandbox); use
+                   are not available in the sandbox); use
                    StrictHostKeyChecking=accept-new on first connect.
       -h, --help   this help.
+
+    --tier ec2 usage:
+      agent-sandbox --tier ec2 [up|connect|down|status] [workspace] [--terminate] [-- cmd...]
+      A real EC2 instance (NixOS AMI), not a local sandbox: the whole VM IS
+      the isolation boundary. State lives in AWS instance tags
+      (Name=agent-sandbox-<workspace>, default workspace = current dir
+      name) so ANY host with the numa AWS profile + your SSH key can
+      reconnect to the SAME box.
+        up       launch (or start, if stopped) the workspace, wait for SSH.
+        connect  (default) up + bidirectional unison sync + ssh in; syncs
+                 back on disconnect. With a -- separator + a command, runs
+                 that command instead of an interactive shell.
+        down     sync back, then STOP the instance (EBS persists, cheap,
+                 resume later). --terminate destroys it (EBS gone too).
+        status   show instance id / state / IP for the workspace, if any.
+      Config: programs.ai.sandbox.ec2.{region,instanceType,volumeSizeGb,awsProfile}.
+      One-time on first up: creates a dedicated key pair + security group
+      (SSH from your current IP only) via the configured AWS profile.
 
     EXAMPLES:
       agent-sandbox pi                 # isolate pi (recommended: firejail)
       agent-sandbox --mem 8G claude    # cap memory
       agent-sandbox -- bash            # inspect the sandbox interactively
+      agent-sandbox --tier ec2 connect             # up+sync+ssh, workspace=$(basename $PWD)
+      agent-sandbox --tier ec2 connect -- pi        # sync, ssh in, run pi, sync back
+      agent-sandbox --tier ec2 down                 # sync back, stop (cheap)
+      agent-sandbox --tier ec2 down --terminate     # sync back, destroy
       agent-sandbox --tier docker mycmd
       agent-sandbox --ssh claude       # allow SSH out (agent socket, not keys)
 
@@ -191,7 +213,11 @@ let
     name = "agent-sandbox";
     # firejail must be the SUID wrapper at /run/wrappers/bin/firejail
     # (programs.firejail.enable), NOT the non-SUID nixpkgs store binary.
-    runtimeInputs = [ pkgs.coreutils pkgs.docker_29 pkgs.iproute2 pkgs.iptables pkgs.qemu_kvm ];
+    runtimeInputs = [ pkgs.coreutils pkgs.docker_29 pkgs.iproute2 pkgs.iptables pkgs.qemu_kvm pkgs.awscli2 pkgs.unison pkgs.openssh pkgs.jq ];
+    # SC2016: fires on the embedded --help/usage TEXT (a literal, static
+    # string passed through lib.escapeShellArg into a single-quoted printf
+    # argument -- correct and intentional, not code expecting expansion).
+    excludeShellChecks = [ "SC2016" ];
     text = ''
       set -euo pipefail
       # Preserve the CALLER's PATH: writeShellApplication resets PATH to its
@@ -411,7 +437,211 @@ let
           export QEMU_OPTS="-m $MEMMB"
           exec "$RUNNER/bin/run-agent-vm-vm"
           ;;
-        *) echo "agent-sandbox: unknown tier '$TIER' (firejail|docker|vm)" >&2; exit 2 ;;
+        ec2)
+          # Ephemeral EC2 dev box: launch (or reuse) a tagged NixOS instance,
+          # bidirectionally sync $PROJECT there with unison, SSH in and run
+          # the command, sync back, and leave the instance stopped (cheap,
+          # reconnect later) or terminate it. State lives entirely in AWS
+          # tags (Name=agent-sandbox-<workspace>) -- no local state file, so
+          # any host with the numa AWS profile + your SSH key can reconnect
+          # to the SAME workspace. Verbs (first positional arg): up, connect
+          # (default if the workspace exists), down, status.
+          #
+          # Why plain AWS CLI instead of Terraform/terranix: terranix compiles
+          # Nix to Terraform JSON and is the right tool for a FLEET of
+          # declarative infra, but brings state-file/backend/locking
+          # machinery that's overkill for one throwaway box discovered by a
+          # tag. aws ec2 describe-instances IS the state store here.
+          REGION="${cfg.ec2.region}"
+          ITYPE="${cfg.ec2.instanceType}"
+          VOLSIZE="${toString cfg.ec2.volumeSizeGb}"
+          AWS_PROFILE_EC2="${cfg.ec2.awsProfile}"
+          KEYNAME="agent-sandbox-ec2"
+          SGNAME="agent-sandbox-ec2"
+          export AWS_PROFILE="$AWS_PROFILE_EC2"
+
+          # agent-sandbox --tier ec2 <verb> [workspace] [--terminate] [-- cmd...]
+          #   verb defaults to 'connect'; workspace defaults to $(basename $PROJECT).
+          #   --terminate (down only): destroy the instance instead of stopping it.
+          #   Everything after a literal -- is the remote command (connect only).
+          VERB="connect"
+          WORKSPACE=""
+          TERMINATE=0
+          case "''${1:-}" in up|connect|down|status) VERB="$1"; shift ;; esac
+          while [ $# -gt 0 ] && [ "$1" != "--" ]; do
+            case "$1" in
+              --terminate) TERMINATE=1 ;;
+              *) WORKSPACE="$1" ;;
+            esac
+            shift
+          done
+          [ $# -gt 0 ] && [ "$1" = "--" ] && shift
+          [ -z "$WORKSPACE" ] && WORKSPACE="$(basename "$PROJECT")"
+          TAGNAME="agent-sandbox-$WORKSPACE"
+          KEYFILE="${home}/.ssh/$KEYNAME.pem"
+          REMOTE_CMD=("$@")
+
+          aws_find_instance() {
+            aws ec2 describe-instances --region "$REGION" \
+              --filters "Name=tag:Name,Values=$TAGNAME" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+              --query 'Reservations[].Instances[0].[InstanceId,State.Name,PublicIpAddress]' \
+              --output text 2>/dev/null | head -1
+          }
+
+          ensure_keypair_and_sg() {
+            if ! aws ec2 describe-key-pairs --region "$REGION" --key-names "$KEYNAME" >/dev/null 2>&1; then
+              echo "agent-sandbox: creating EC2 key pair $KEYNAME..." >&2
+              aws ec2 create-key-pair --region "$REGION" --key-name "$KEYNAME" \
+                --query 'KeyMaterial' --output text > "$KEYFILE"
+              chmod 600 "$KEYFILE"
+            fi
+            if ! aws ec2 describe-security-groups --region "$REGION" --group-names "$SGNAME" >/dev/null 2>&1; then
+              echo "agent-sandbox: creating security group $SGNAME (SSH from your current IP)..." >&2
+              VPCID=$(aws ec2 describe-vpcs --region "$REGION" --filters Name=is-default,Values=true --query 'Vpcs[0].VpcId' --output text)
+              GID=$(aws ec2 create-security-group --region "$REGION" --group-name "$SGNAME" \
+                --description "agent-sandbox ec2 tier: SSH only" --vpc-id "$VPCID" --query 'GroupId' --output text)
+              MYIP=$(curl -s https://checkip.amazonaws.com)
+              aws ec2 authorize-security-group-ingress --region "$REGION" --group-id "$GID" \
+                --protocol tcp --port 22 --cidr "$MYIP/32" >/dev/null
+            fi
+          }
+
+          latest_nixos_ami() {
+            aws ec2 describe-images --region "$REGION" --owners 427812963091 \
+              --filters "Name=name,Values=nixos/25.11*-x86_64-linux" "Name=architecture,Values=x86_64" \
+              --query 'sort_by(Images, &CreationDate)[-1].ImageId' --output text
+          }
+
+          up_instance() {
+            EXISTING=$(aws_find_instance)
+            if [ -n "$EXISTING" ]; then
+              ID=$(echo "$EXISTING" | cut -f1)
+              STATE=$(echo "$EXISTING" | cut -f2)
+              if [ "$STATE" = "stopped" ]; then
+                echo "agent-sandbox: starting existing instance $ID ($TAGNAME)..." >&2
+                aws ec2 start-instances --region "$REGION" --instance-ids "$ID" >/dev/null
+              else
+                echo "agent-sandbox: $TAGNAME already $STATE ($ID)" >&2
+              fi
+              return
+            fi
+            ensure_keypair_and_sg
+            AMI=$(latest_nixos_ami)
+            SGID=$(aws ec2 describe-security-groups --region "$REGION" --group-names "$SGNAME" --query 'SecurityGroups[0].GroupId' --output text)
+            echo "agent-sandbox: launching $ITYPE ($AMI) as $TAGNAME..." >&2
+            aws ec2 run-instances --region "$REGION" \
+              --image-id "$AMI" --instance-type "$ITYPE" \
+              --key-name "$KEYNAME" --security-group-ids "$SGID" \
+              --block-device-mappings "[{\"DeviceName\":\"/dev/xvda\",\"Ebs\":{\"VolumeSize\":$VOLSIZE,\"VolumeType\":\"gp3\"}}]" \
+              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$TAGNAME}]" \
+              --query 'Instances[0].InstanceId' --output text >/dev/null
+          }
+
+          wait_for_ssh() {
+            echo -n "agent-sandbox: waiting for $TAGNAME to be reachable..." >&2
+            for _ in $(seq 1 60); do
+              IP=$(aws_find_instance | cut -f3)
+              if [ -n "$IP" ] && [ "$IP" != "None" ] && \
+                 ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 \
+                     -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" true 2>/dev/null; then
+                echo " up ($IP)" >&2
+                echo "$IP"
+                return 0
+              fi
+              echo -n "." >&2
+              sleep 5
+            done
+            echo " TIMED OUT" >&2
+            return 1
+          }
+
+          ensure_remote_unison() {
+            IP="$1"
+            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" \
+              'command -v unison >/dev/null 2>&1' 2>/dev/null && return 0
+            echo "agent-sandbox: installing unison on $TAGNAME (one-time)..." >&2
+            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" \
+              'nix --extra-experimental-features "nix-command flakes" profile install nixpkgs#unison' \
+              2>&1 | tail -5 || true
+          }
+
+          sync_unison() {
+            IP="$1"; DIR="$2"
+            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" \
+              "mkdir -p '$DIR'" 2>/dev/null || true
+            ensure_remote_unison "$IP"
+            unison "$PROJECT" "ssh://root@$IP/$DIR" \
+              -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
+              -prefer newer -batch -ignore 'Name .direnv' -ignore 'Name .git' \
+              2>&1 | tail -20 || true
+          }
+
+          case "$VERB" in
+            up)
+              up_instance
+              wait_for_ssh >/dev/null
+              echo "agent-sandbox: $TAGNAME is up. 'agent-sandbox --tier ec2 connect $WORKSPACE' to sync + SSH in." >&2
+              ;;
+            status)
+              EXISTING=$(aws_find_instance)
+              if [ -z "$EXISTING" ]; then
+                echo "agent-sandbox: no instance tagged $TAGNAME" >&2; exit 1
+              fi
+              echo "$EXISTING" | awk -F'\t' '{print "instance="$1, "state="$2, "ip="$3}'
+              ;;
+            down)
+              EXISTING=$(aws_find_instance)
+              if [ -z "$EXISTING" ]; then
+                echo "agent-sandbox: no instance tagged $TAGNAME" >&2; exit 1
+              fi
+              ID=$(echo "$EXISTING" | cut -f1)
+              IP=$(echo "$EXISTING" | cut -f3)
+              if [ -n "$IP" ] && [ "$IP" != "None" ]; then
+                echo "agent-sandbox: syncing $WORKSPACE back before shutdown..." >&2
+                sync_unison "$IP" "/root/project"
+              fi
+              MODE="stop"
+              [ "$TERMINATE" -eq 1 ] && MODE="terminate"
+              if [ "$MODE" = "terminate" ]; then
+                echo "agent-sandbox: TERMINATING $TAGNAME ($ID) -- EBS volume is gone after this." >&2
+                aws ec2 terminate-instances --region "$REGION" --instance-ids "$ID" >/dev/null
+              else
+                echo "agent-sandbox: stopping $TAGNAME ($ID) -- reconnect later with 'up'/'connect', EBS persists." >&2
+                aws ec2 stop-instances --region "$REGION" --instance-ids "$ID" >/dev/null
+              fi
+              ;;
+            connect)
+              EXISTING=$(aws_find_instance)
+              if [ -z "$EXISTING" ]; then
+                up_instance
+              elif [ "$(echo "$EXISTING" | cut -f2)" = "stopped" ]; then
+                up_instance
+              fi
+              IP=$(wait_for_ssh)
+              echo "agent-sandbox: syncing $WORKSPACE -> $TAGNAME ($IP)..." >&2
+              sync_unison "$IP" "/root/project"
+              echo "agent-sandbox: connecting. Ctrl-D/exit to disconnect; syncs back after." >&2
+              # ssh with MULTIPLE command-line arguments joins them with a
+              # plain space and sends that as ONE string to the remote's
+              # shell (no quoting at all) -- so an arg containing spaces
+              # (e.g. bash -c "a b") gets silently re-split wrong on the far
+              # end. Build ONE correctly shell-quoted string locally instead
+              # and pass it as a single ssh argv element.
+              if [ ''${#REMOTE_CMD[@]} -eq 0 ]; then
+                REMOTE_LINE='exec "$SHELL" -l'
+              else
+                REMOTE_LINE=$(printf '%q ' "''${REMOTE_CMD[@]}")
+                REMOTE_LINE="exec $REMOTE_LINE"
+              fi
+              ssh -t -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" \
+                "cd project && $REMOTE_LINE" || true
+              echo "agent-sandbox: syncing $WORKSPACE <- $TAGNAME ($IP)..." >&2
+              sync_unison "$IP" "/root/project"
+              ;;
+            *) echo "agent-sandbox: unknown ec2 verb '$VERB' (up|connect|down|status)" >&2; exit 2 ;;
+          esac
+          ;;
+        *) echo "agent-sandbox: unknown tier '$TIER' (firejail|docker|vm|ec2)" >&2; exit 2 ;;
       esac
     '';
   };
@@ -419,7 +649,7 @@ let
   # Shell completion (fish: the interactive shell here).
   fishCompletion = pkgs.writeText "agent-sandbox.fish" ''
     complete -c agent-sandbox -f
-    complete -c agent-sandbox -l tier -x -a "firejail docker vm" -d "isolation tier"
+    complete -c agent-sandbox -l tier -x -a "firejail docker vm ec2" -d "isolation tier"
     complete -c agent-sandbox -l mem -x -d "memory cap e.g. 8G"
     complete -c agent-sandbox -l aws -d "direct-AWS netns (breaks gateway agents)"
     complete -c agent-sandbox -l ssh -d "forward ssh-agent socket (SSH out; keys stay blocked)"
@@ -461,6 +691,28 @@ in
         vm tier. Defaults to the flake's agent-vm output. Empty =>
         vm tier errors with build instructions.
       '';
+    };
+    ec2 = {
+      region = mkOption {
+        type = types.str;
+        default = "us-east-1";
+        description = "AWS region for the ec2 tier's instances.";
+      };
+      instanceType = mkOption {
+        type = types.str;
+        default = "c7i.xlarge";
+        description = "Default EC2 instance type for the ec2 tier.";
+      };
+      volumeSizeGb = mkOption {
+        type = types.int;
+        default = 100;
+        description = "Root EBS volume size (GB) for the ec2 tier's instances.";
+      };
+      awsProfile = mkOption {
+        type = types.str;
+        default = "numa";
+        description = "AWS CLI profile the ec2 tier uses (see programs.ai.sandbox --aws-profile).";
+      };
     };
   };
 
