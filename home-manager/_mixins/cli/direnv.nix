@@ -39,6 +39,27 @@
           watch_file .mcp.json
         fi
       }
+
+      # Per-project git policy overrides. Global default (must-rules.md,
+      # pi's safety-hooks.ts) is: never force-push without explicit
+      # in-session approval. Some projects (e.g. a personal repo where you
+      # own history and rebase workflows are the norm) genuinely need
+      # --force-with-lease routinely. Rather than weaken the global rule
+      # for every project, opt in per-project via .envrc:
+      #   use git_policy allow-force-push
+      # Exports PI_ALLOW_FORCE_PUSH=1 for the direnv-managed shell; pi's
+      # safety-hooks.ts checks it and lets --force-with-lease through (still
+      # blocks bare --force, which discards a concurrent remote change
+      # instead of just checking for one). Scoped to direnv's shell env, so
+      # it only applies inside this project's directory tree.
+      use_git_policy() {
+        for arg in "$@"; do
+          case "$arg" in
+            allow-force-push) export PI_ALLOW_FORCE_PUSH=1 ;;
+            *) echo "use_git_policy: unknown policy '$arg' (known: allow-force-push)" >&2 ;;
+          esac
+        done
+      }
     '';
   };
 }

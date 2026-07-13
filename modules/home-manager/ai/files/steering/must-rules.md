@@ -6,7 +6,7 @@ These are the **non-negotiable** rules every agent must follow. If a request con
 
 - **MUST** run lint + tests before committing. For Rust: `cargo clippy -- -D warnings` then `cargo test` (or the project-relevant subset). For Python: `ruff check`. For shell: `shellcheck`. If a project has a `Justfile`/`Makefile` with `pre-commit` / `check` targets, prefer those.
 - **MUST** use `trash` (not `rm -rf`) for any directory removal. The user's environment has a `trash` command on PATH; if a script must use `rm`, prefer `rm -ri` (interactive) or skip cleanup.
-- **MUST NOT** force-push (`git push --force`, `git push --force-with-lease`, or `git push -f`) to any branch unless the user explicitly authorized this specific push in the current session.
+- **MUST NOT** force-push (`git push --force`, `git push --force-with-lease`, or `git push -f`) to any branch unless the user explicitly authorized this specific push in the current session. Some projects opt into routine `--force-with-lease` via `use git_policy allow-force-push` in `.envrc` (see `home-manager/_mixins/cli/direnv.nix`) — pi's safety-hooks.ts enforces this per-project; bare `--force` stays blocked everywhere regardless.
 - **MUST NOT** rewrite shared/published history (`git rebase -i`, `git commit --amend`, `git reset --hard origin/...`) on `main` or any branch that exists on `origin`.
 - **MUST NOT** push directly to `main`. Use a feature branch + PR. The only exception: tiny fixes to a personal nix-config-style repo where the user has explicitly opted into direct-to-main commits in their CONTRIBUTING/AGENTS.md.
 

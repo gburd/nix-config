@@ -204,6 +204,23 @@ let
       # argument" abort. Env vars ride via envp, not argv, so this has no
       # such cap; firejail's child inherits it like any other env var.
       export PATH="$CALLER_PATH"
+      # Every gateway-routed agent's OWN settings/session dir, plus its
+      # LiteLLM virtual-key file (read-only — an agent must never rotate its
+      # own key). Without these whitelisted, an agent can reach the gateway
+      # over the network but has no key to authenticate with ("No API key
+      # found") and no settings/session state to read or write. Safe to list
+      # unconditionally: firejail --whitelist on a path that doesn't exist
+      # yet is a silent no-op, not an error.
+      AGENT_DIRS=(
+        --whitelist="${home}/.pi"
+        --whitelist="${home}/.claude"
+        --whitelist="${home}/.codex"
+        --whitelist="${home}/.hermes"
+        --whitelist="${home}/.local/share/maki"
+        --whitelist="${home}/.config/maki"
+        --whitelist="${home}/.config/litellm/keys"
+        --read-only="${home}/.config/litellm/keys"
+      )
       TIER=firejail
       MEM="${cfg.defaultMemMax}"
       AWS=0
@@ -295,7 +312,7 @@ let
               --whitelist="${home}/.nix-profile" \
               --whitelist="${home}/.local/state/nix" \
               --whitelist="${home}/.npm" \
-              --whitelist="${home}/.pi" \
+              "''${AGENT_DIRS[@]}" \
               --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
               --private-cwd="$PROJECT" --whitelist="$PROJECT" \
               "$@"
@@ -323,7 +340,7 @@ let
               --whitelist="${home}/.nix-profile" \
               --whitelist="${home}/.local/state/nix" \
               --whitelist="${home}/.npm" \
-              --whitelist="${home}/.pi" \
+              "''${AGENT_DIRS[@]}" \
               --whitelist="$SOCK" \
               "''${AWS_FJ[@]}" \
               --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
@@ -342,7 +359,7 @@ let
             --whitelist="${home}/.nix-profile" \
             --whitelist="${home}/.local/state/nix" \
             --whitelist="${home}/.npm" \
-            --whitelist="${home}/.pi" \
+            "''${AGENT_DIRS[@]}" \
             "''${AWS_FJ[@]}" \
             --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
             --private-cwd="$PROJECT" --whitelist="$PROJECT" \
