@@ -213,7 +213,7 @@ let
     name = "agent-sandbox";
     # firejail must be the SUID wrapper at /run/wrappers/bin/firejail
     # (programs.firejail.enable), NOT the non-SUID nixpkgs store binary.
-    runtimeInputs = [ pkgs.coreutils pkgs.docker_29 pkgs.iproute2 pkgs.iptables pkgs.qemu_kvm pkgs.awscli2 pkgs.unison pkgs.openssh pkgs.jq ];
+    runtimeInputs = [ pkgs.coreutils pkgs.docker_29 pkgs.iproute2 pkgs.iptables pkgs.qemu_kvm pkgs.awscli2 pkgs.unison pkgs.openssh pkgs.jq pkgs.systemd ];
     # SC2016: fires on the embedded --help/usage TEXT (a literal, static
     # string passed through lib.escapeShellArg into a single-quoted printf
     # argument -- correct and intentional, not code expecting expansion).
@@ -332,20 +332,36 @@ let
               echo "  Set programs.ai.sandbox.awsNetDevice to your interface (ip link)." >&2
               exit 3
             fi
-            exec "$FIREJAIL" --quiet \
+            exec systemd-run --user --scope --collect --quiet \
+              -p "MemoryMax=$MEM" -p MemorySwapMax=0 -- \
+              "$FIREJAIL" --quiet \
               --profile="${home}/.config/firejail/agent-aws.profile" \
               --net="$NETDEV" \
               --whitelist="${home}/.nix-profile" \
               --whitelist="${home}/.local/state/nix" \
               --whitelist="${home}/.npm" \
               "''${AGENT_DIRS[@]}" \
-              --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
+              --oom=900 \
               --private-cwd="$PROJECT" --whitelist="$PROJECT" \
               "$@"
           fi
           # Default: share host /nix + network; isolate the filesystem + cap
-          # memory. --rlimit-as caps RAM; --oom=900 makes a runaway the OOM
-          # killer's first victim so it dies here, not taking down terminals.
+          # memory via a REAL cgroup (systemd-run --scope -p MemoryMax=),
+          # not firejail's own --rlimit-as. --rlimit-as limits virtual
+          # ADDRESS SPACE, which Node/V8 (pi/claude/codex/maki/hermes are all
+          # Node) reserves far more of than it ever touches physically --
+          # pi alone needs ~24G of --rlimit-as just to start (a WASM linear-
+          # memory reservation in its HTTP client), well past any cap meant
+          # to catch a runaway. A cgroup MemoryMax tracks actual RSS + page
+          # cache (including tmpfs: /tmp and /dev/shm inside the sandbox are
+          # tmpfs, uncapped by rlimit-as, but DO count against a cgroup) --
+          # verified: pi runs fine at a 1G cgroup cap; a real runaway gets
+          # OOM-killed by the kernel, scoped to just this cgroup (confirmed
+          # via journalctl, no impact outside it). MemorySwapMax=0 keeps a
+          # runaway from just paging out instead of dying. --oom=900 (still
+          # firejail's own flag) is complementary: it raises the process's
+          # oom_score_adj so if the HOST's global OOM killer ever fires for
+          # an unrelated reason, this is the first thing it reaps too.
           # Whitelist the nix-profile dirs so the agent wrappers resolve, and
           # re-export the caller's PATH (writeShellApplication clobbered it).
           #
@@ -361,7 +377,9 @@ let
               echo "  Load keys with 'ssh-add' first; the sandbox uses the agent, not key files." >&2
               exit 2
             fi
-            exec "$FIREJAIL" --quiet \
+            exec systemd-run --user --scope --collect --quiet \
+              -p "MemoryMax=$MEM" -p MemorySwapMax=0 -- \
+              "$FIREJAIL" --quiet \
               --profile="${home}/.config/firejail/agent-ssh.profile" \
               --whitelist="${home}/.nix-profile" \
               --whitelist="${home}/.local/state/nix" \
@@ -369,7 +387,7 @@ let
               "''${AGENT_DIRS[@]}" \
               --whitelist="$SOCK" \
               "''${AWS_FJ[@]}" \
-              --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
+              --oom=900 \
               --private-cwd="$PROJECT" --whitelist="$PROJECT" \
               env "''${AWS_ENV[@]}" SSH_AUTH_SOCK="$SOCK" "$@"
           fi
@@ -380,14 +398,16 @@ let
           if [ -n "$AWS_PROFILE_NAME" ]; then
             DEFAULT_PROFILE="${home}/.config/firejail/agent-aws-creds.profile"
           fi
-          exec "$FIREJAIL" --quiet \
+          exec systemd-run --user --scope --collect --quiet \
+            -p "MemoryMax=$MEM" -p MemorySwapMax=0 -- \
+            "$FIREJAIL" --quiet \
             --profile="$DEFAULT_PROFILE" \
             --whitelist="${home}/.nix-profile" \
             --whitelist="${home}/.local/state/nix" \
             --whitelist="${home}/.npm" \
             "''${AGENT_DIRS[@]}" \
             "''${AWS_FJ[@]}" \
-            --rlimit-as="$(mem_bytes "$MEM")" --oom=900 \
+            --oom=900 \
             --private-cwd="$PROJECT" --whitelist="$PROJECT" \
             env "''${AWS_ENV[@]}" "$@"
           ;;
@@ -664,7 +684,7 @@ in
     defaultMemMax = mkOption {
       type = types.str;
       default = "12G";
-      description = "Default memory cap for the sandbox (firejail --rlimit-as; a runaway is also OOM-first).";
+      description = "Default memory cap for the sandbox (a real cgroup, systemd-run -p MemoryMax=; a runaway is also OOM-first).";
     };
     dockerImage = mkOption {
       type = types.str;
