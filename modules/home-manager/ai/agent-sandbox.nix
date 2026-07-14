@@ -209,6 +209,28 @@ let
 
   gatewayRouted = "pi claude codex maki hermes kiro";
 
+  # NixOS config fragment for the ec2 tier's one-time gburd-user + sudo
+  # bootstrap on a stock NixOS AMI (which only has root). AUTHKEY is
+  # substituted at runtime (sed) -- keeping it out of this static template
+  # avoids Nix-level string-escaping through TWO more layers (a shell
+  # heredoc AND ANOTHER shell over ssh).
+  ec2ConfigTemplate = pkgs.writeText "agent-sandbox-ec2-configuration.nix" ''
+    { modulesPath, ... }: {
+      imports = [ "''${modulesPath}/virtualisation/amazon-image.nix" ];
+      nix.settings.experimental-features = [ "nix-command" "flakes" ];
+      users.users.gburd = {
+        isNormalUser = true;
+        uid = 1001;
+        shell = "/run/current-system/sw/bin/bash";
+        extraGroups = [ "wheel" ];
+        openssh.authorizedKeys.keys = [ "@AUTHKEY@" ];
+      };
+      security.sudo.extraRules = [
+        { users = [ "gburd" ]; commands = [ { command = "ALL"; options = [ "NOPASSWD" ]; } ]; }
+      ];
+    }
+  '';
+
   agent-sandbox = pkgs.writeShellApplication {
     name = "agent-sandbox";
     # firejail must be the SUID wrapper at /run/wrappers/bin/firejail
@@ -480,8 +502,22 @@ let
           SGNAME="agent-sandbox-ec2"
           export AWS_PROFILE="$AWS_PROFILE_EC2"
 
+          # Remember the workspace name used for THIS project directory, so
+          # 'down'/'status' with no explicit workspace find the SAME
+          # instance 'connect' created -- even if connect was given an
+          # explicit name (e.g. a session id) that doesn't match
+          # basename($PWD). Keyed by the project path (pi's own session-dir
+          # convention: '/' -> '-'), not by workspace name, since that's
+          # the one thing that's stable across a connect/down pair. This is
+          # LOCAL-only convenience -- AWS tags remain the real state; a
+          # missing/stale cache file just falls back to the old default.
+          WSCACHE_DIR="${home}/.cache/agent-sandbox/workspaces"
+          WSCACHE_KEY=$(printf '%s' "$PROJECT" | tr '/' '-')
+          WSCACHE_FILE="$WSCACHE_DIR/--$WSCACHE_KEY--"
+
           # agent-sandbox --tier ec2 <verb> [workspace] [--terminate] [-- cmd...]
-          #   verb defaults to 'connect'; workspace defaults to $(basename $PROJECT).
+          #   verb defaults to 'connect'; workspace defaults to the cached
+          #   name for this project dir, else $(basename $PROJECT).
           #   --terminate (down only): destroy the instance instead of stopping it.
           #   Everything after a literal -- is the remote command (connect only).
           VERB="connect"
@@ -496,10 +532,20 @@ let
             shift
           done
           [ $# -gt 0 ] && [ "$1" = "--" ] && shift
-          [ -z "$WORKSPACE" ] && WORKSPACE="$(basename "$PROJECT")"
+          if [ -z "$WORKSPACE" ]; then
+            if [ -r "$WSCACHE_FILE" ]; then
+              WORKSPACE=$(cat "$WSCACHE_FILE")
+            else
+              WORKSPACE="$(basename "$PROJECT")"
+            fi
+          fi
           TAGNAME="agent-sandbox-$WORKSPACE"
           KEYFILE="${home}/.ssh/$KEYNAME.pem"
           REMOTE_CMD=("$@")
+          # Whatever workspace we ended up using, remember it -- so a LATER
+          # 'down'/'status' with no argument finds this same instance.
+          mkdir -p "$WSCACHE_DIR"
+          printf '%s' "$WORKSPACE" > "$WSCACHE_FILE"
 
           aws_find_instance() {
             aws ec2 describe-instances --region "$REGION" \
@@ -524,6 +570,47 @@ let
               aws ec2 authorize-security-group-ingress --region "$REGION" --group-id "$GID" \
                 --protocol tcp --port 22 --cidr "$MYIP/32" >/dev/null
             fi
+          }
+
+          # SSH as root, once, to provision the gburd user + passwordless
+          # sudo + flakes. This has to be a real NixOS config change (not a
+          # bare useradd/sudoers.d drop-in): NixOS generates /etc/sudoers
+          # from security.sudo.extraRules and does NOT include
+          # /etc/sudoers.d/* (unlike Debian/Fedora) -- a dropped-in sudoers
+          # file is silently ignored. Idempotent: skips straight past if
+          # the user already exists (e.g. reconnecting to a stopped/
+          # restarted instance).
+          ssh_root() {
+            IP="$1"; shift
+            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" "$@"
+          }
+          ssh_gburd() {
+            IP="$1"; shift
+            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "gburd@$IP" "$@"
+          }
+
+          provision_gburd_user() {
+            IP="$1"
+            if ssh_root "$IP" 'id gburd >/dev/null 2>&1' 2>/dev/null; then
+              return 0
+            fi
+            echo "agent-sandbox: provisioning gburd user + passwordless sudo on $TAGNAME (one-time)..." >&2
+            AUTHKEY=$(cat "${home}/.ssh/id_auth_ed25519.pub" 2>/dev/null || cat "${home}/.ssh/id_ed25519.pub")
+            sed "s|@AUTHKEY@|$AUTHKEY|" "${ec2ConfigTemplate}" | \
+              ssh_root "$IP" 'cat > /etc/nixos/configuration.nix'
+            ssh_root "$IP" 'nixos-rebuild switch 2>&1 | tail -20'
+          }
+
+          # Deploy this flake's console/ai (agents + LiteLLM client config)
+          # as the gburd user via standalone home-manager. Pulls from
+          # GitHub over the instance's own (unrestricted outbound) network
+          # access -- no need to push the flake source itself over unison.
+          deploy_home_manager() {
+            IP="$1"
+            echo "agent-sandbox: deploying home-manager (gburd@ec2) on $TAGNAME..." >&2
+            ssh_gburd "$IP" \
+              'nix --extra-experimental-features "nix-command flakes" run github:gburd/nix-config#homeConfigurations."gburd@ec2".activationPackage -- switch' \
+              2>&1 | tail -30 || true
           }
 
           latest_nixos_ami() {
@@ -575,31 +662,77 @@ let
             return 1
           }
 
+          # Make sure gburd + home-manager (the agents + LiteLLM client
+          # config) are in place before anything logs in as gburd. Cheap
+          # no-op on a reconnect (both checks are idempotent).
+          ensure_provisioned() {
+            IP="$1"
+            provision_gburd_user "$IP"
+            deploy_home_manager "$IP"
+          }
+
           ensure_remote_unison() {
             IP="$1"
-            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" \
-              'command -v unison >/dev/null 2>&1' 2>/dev/null && return 0
+            ssh_gburd "$IP" 'command -v unison >/dev/null 2>&1' 2>/dev/null && return 0
             echo "agent-sandbox: installing unison on $TAGNAME (one-time)..." >&2
-            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" \
+            ssh_gburd "$IP" \
               'nix --extra-experimental-features "nix-command flakes" profile install nixpkgs#unison' \
               2>&1 | tail -5 || true
           }
 
           sync_unison() {
             IP="$1"; DIR="$2"
-            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" \
-              "mkdir -p '$DIR'" 2>/dev/null || true
+            ssh_gburd "$IP" "mkdir -p '$DIR'" 2>/dev/null || true
             ensure_remote_unison "$IP"
-            unison "$PROJECT" "ssh://root@$IP/$DIR" \
+            unison "$PROJECT" "ssh://gburd@$IP/$DIR" \
               -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
               -prefer newer -batch -ignore 'Name .direnv' -ignore 'Name .git' \
               2>&1 | tail -20 || true
           }
 
+          # Sync ONLY the session-storage root of the agent actually being
+          # started (not all agents' session state, not the rest of
+          # $HOME) -- e.g. running 'pi' syncs ~/.pi/agent/sessions both
+          # ways, so a session started locally can be resumed on the box
+          # (pi --session-id <id> / -r / -c: all keyed by session id, not
+          # by cwd, so this works even though the EC2 project path differs
+          # from the local one). Also syncs that agent's LiteLLM virtual
+          # key, since the EC2 home-manager deploy has litellm.enable =
+          # false (no local gateway there) and never generates one.
+          agentSessionDir() {
+            case "$1" in
+              pi)     echo ".pi/agent/sessions" ;;
+              claude) echo ".claude/projects" ;;
+              codex)  echo ".codex/sessions" ;;
+              maki)   echo ".maki/sessions" ;;
+              hermes) echo ".hermes/sessions" ;;
+              *)      echo "" ;;
+            esac
+          }
+
+          sync_agent_state() {
+            IP="$1"; AGENT="$2"
+            SESSDIR=$(agentSessionDir "$AGENT")
+            KEYSRC="${home}/.config/litellm/keys/$AGENT.key"
+            if [ -n "$SESSDIR" ]; then
+              ssh_gburd "$IP" "mkdir -p '$SESSDIR'" 2>/dev/null || true
+              unison "${home}/$SESSDIR" "ssh://gburd@$IP/$SESSDIR" \
+                -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
+                -prefer newer -batch \
+                2>&1 | tail -10 || true
+            fi
+            if [ -r "$KEYSRC" ]; then
+              ssh_gburd "$IP" 'mkdir -p .config/litellm/keys' 2>/dev/null || true
+              scp -q -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" \
+                "$KEYSRC" "gburd@$IP:.config/litellm/keys/$AGENT.key" 2>/dev/null || true
+            fi
+          }
+
           case "$VERB" in
             up)
               up_instance
-              wait_for_ssh >/dev/null
+              IP=$(wait_for_ssh)
+              ensure_provisioned "$IP"
               echo "agent-sandbox: $TAGNAME is up. 'agent-sandbox --tier ec2 connect $WORKSPACE' to sync + SSH in." >&2
               ;;
             status)
@@ -618,13 +751,19 @@ let
               IP=$(echo "$EXISTING" | cut -f3)
               if [ -n "$IP" ] && [ "$IP" != "None" ]; then
                 echo "agent-sandbox: syncing $WORKSPACE back before shutdown..." >&2
-                sync_unison "$IP" "/root/project"
+                sync_unison "$IP" "project" || true
               fi
+              # Sync failures above must NEVER block the stop/terminate
+              # below -- a stuck/slow sync (e.g. unison's first-ever
+              # dependency fetch on a fresh box) must not leave an
+              # instance running (and billing) indefinitely just because
+              # this script never reached the actual shutdown call.
               MODE="stop"
               [ "$TERMINATE" -eq 1 ] && MODE="terminate"
               if [ "$MODE" = "terminate" ]; then
                 echo "agent-sandbox: TERMINATING $TAGNAME ($ID) -- EBS volume is gone after this." >&2
                 aws ec2 terminate-instances --region "$REGION" --instance-ids "$ID" >/dev/null
+                rm -f "$WSCACHE_FILE"
               else
                 echo "agent-sandbox: stopping $TAGNAME ($ID) -- reconnect later with 'up'/'connect', EBS persists." >&2
                 aws ec2 stop-instances --region "$REGION" --instance-ids "$ID" >/dev/null
@@ -638,8 +777,17 @@ let
                 up_instance
               fi
               IP=$(wait_for_ssh)
+              ensure_provisioned "$IP"
               echo "agent-sandbox: syncing $WORKSPACE -> $TAGNAME ($IP)..." >&2
-              sync_unison "$IP" "/root/project"
+              sync_unison "$IP" "project"
+              # The agent being started (first word of the remote command,
+              # if any) determines which session-state dir + LiteLLM key
+              # to sync -- e.g. 'connect -- pi --session-id X' only syncs
+              # pi's sessions, not claude/codex/maki/hermes's.
+              AGENT="''${REMOTE_CMD[0]:-}"
+              if [ -n "$AGENT" ]; then
+                sync_agent_state "$IP" "$AGENT"
+              fi
               echo "agent-sandbox: connecting. Ctrl-D/exit to disconnect; syncs back after." >&2
               # ssh with MULTIPLE command-line arguments joins them with a
               # plain space and sends that as ONE string to the remote's
@@ -653,10 +801,21 @@ let
                 REMOTE_LINE=$(printf '%q ' "''${REMOTE_CMD[@]}")
                 REMOTE_LINE="exec $REMOTE_LINE"
               fi
-              ssh -t -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" \
+              # -R forwards THIS host's loopback LiteLLM gateway to the
+              # EC2 box's own 127.0.0.1:4000 -- agents there talk to
+              # "127.0.0.1:4000" exactly like they do locally, no idea
+              # they're actually tunneling back over SSH. The gateway
+              # itself is still loopback-only everywhere; this is the same
+              # "reach it through a controlled channel, never expose it to
+              # the internet" posture as every other tier.
+              ssh -t -R "4000:127.0.0.1:${toString config.programs.ai.litellm.port}" \
+                -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "gburd@$IP" \
                 "cd project && $REMOTE_LINE" || true
               echo "agent-sandbox: syncing $WORKSPACE <- $TAGNAME ($IP)..." >&2
-              sync_unison "$IP" "/root/project"
+              sync_unison "$IP" "project"
+              if [ -n "$AGENT" ]; then
+                sync_agent_state "$IP" "$AGENT"
+              fi
               ;;
             *) echo "agent-sandbox: unknown ec2 verb '$VERB' (up|connect|down|status)" >&2; exit 2 ;;
           esac

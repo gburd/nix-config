@@ -153,6 +153,15 @@
         "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
         "gburd@meh" = libx.mkHome { hostname = "meh"; username = "gburd"; }; # headless
         "gburd@arnold" = libx.mkHome { hostname = "arnold"; username = "gburd"; };
+        # gburd@ec2: agent-sandbox's `--tier ec2` guest (see
+        # modules/home-manager/ai/agent-sandbox.nix). NOT a real host --
+        # deployed fresh via `nix run github:gburd/nix-config#homeConfigurations."gburd@ec2".activationPackage -- switch`
+        # on a throwaway NixOS EC2 instance every time one is provisioned.
+        # Headless like meh; hosts/ec2.nix keeps it deliberately minimal
+        # (console/ai only, no sops/backups/desktop -- there's no secrets
+        # file on a fresh box, and litellm.enable=false since agents
+        # there reach the ORIGINATING host's gateway over an SSH tunnel).
+        "gburd@ec2" = libx.mkHome { hostname = "ec2"; username = "gburd"; };
 
         # Servers
       };
