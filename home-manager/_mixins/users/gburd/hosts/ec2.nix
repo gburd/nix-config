@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 # ec2 — the agent-sandbox `--tier ec2` guest. This is NOT a real workstation:
 # it's a throwaway NixOS instance (see modules/home-manager/ai/agent-sandbox.nix,
 # ec2 tier) provisioned with a gburd user + passwordless sudo, then handed
@@ -17,5 +17,5 @@
     ../../../console/ai
   ];
 
-  programs.ai.litellm.enable = false;
+  programs.ai.litellm.enable = lib.mkForce false;
 }
