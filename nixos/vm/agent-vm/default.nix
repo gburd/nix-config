@@ -50,6 +50,17 @@
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
+    # Trigger poweroff.target only AFTER this unit fully transitions to
+    # "inactive" (OnSuccess=/OnFailure= fire on that state change, unlike
+    # calling `systemctl poweroff` from ExecStopPost/ExecStart of THIS SAME
+    # unit, which races systemd's own bookkeeping: the shutdown sequence
+    # starts tearing down units -- including this one, mid status-report --
+    # before systemd finishes recording success, so the console misreports
+    # a verified status=0/SUCCESS run as "FAILED". Confirmed via
+    # `systemctl status` mid-run: ExecStart's own exit code is always 0;
+    # only racing it against poweroff corrupts the reported status).
+    onSuccess = [ "poweroff.target" ];
+    onFailure = [ "poweroff.target" ];
     serviceConfig = {
       Type = "oneshot";
       User = "agent";
@@ -72,7 +83,6 @@
           ${pkgs.bashInteractive}/bin/bash -l
         fi
       '';
-      ExecStopPost = "${pkgs.systemd}/bin/systemctl poweroff";
       StandardOutput = "journal+console";
       StandardError = "journal+console";
     };
