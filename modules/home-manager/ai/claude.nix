@@ -62,6 +62,13 @@ in
     # routing env vars. Idempotent: re-runs are a no-op once the desired
     # state is reached.
     home.activation.claudeLitellmEnv = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      ( # Subshell: an early `exit 0` below must only skip THIS block, not
+        # abort the whole activate script. Confirmed live on a fresh host
+        # (no ~/.claude/settings.json yet): without this wrapping, home-
+        # manager's activate runs under `set -eu`, so a bare `exit 0` here
+        # terminated the ENTIRE activation silently right after printing
+        # "skipping env patch" -- installPackages and everything after it
+        # in the DAG never ran, with no error at all ("successful" exit).
       SETTINGS="${config.home.homeDirectory}/.claude/settings.json"
       KEY_FILE="${litellmKey}"
 
@@ -156,6 +163,7 @@ in
         ${pkgs.coreutils}/bin/chmod 600 "$CJSON"
         echo "claude: marked tracked projects trusted in $CJSON (yolo prompt-free)"
       fi
+      )
     '';
   };
 }

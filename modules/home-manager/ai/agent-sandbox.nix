@@ -215,9 +215,23 @@ let
   # avoids Nix-level string-escaping through TWO more layers (a shell
   # heredoc AND ANOTHER shell over ssh).
   ec2ConfigTemplate = pkgs.writeText "agent-sandbox-ec2-configuration.nix" ''
-    { modulesPath, ... }: {
+    { modulesPath, pkgs, ... }: {
       imports = [ "''${modulesPath}/virtualisation/amazon-image.nix" ];
       nix.settings.experimental-features = [ "nix-command" "flakes" ];
+      # git: needed by home-manager's build itself (programs.ai.skills
+      # fetches a skills repo at eval/build time) -- without it on PATH,
+      # 'home-manager switch' fails evaluating home.activation before it
+      # ever gets to deploying anything. Everything else the agents need
+      # comes in through home-manager/console/ai itself.
+      environment.systemPackages = [ pkgs.git ];
+      # nix-ld: uv/uvx (used by programs.ai.skills' SkillSpector gate) can
+      # download its OWN standalone Python build, a generic dynamically-
+      # linked binary that fails on NixOS without this ("NixOS cannot run
+      # dynamically linked executables... nix.dev/permalink/stub-ld" --
+      # confirmed live: the gate then treats EVERY skill as blocked, since
+      # it can't tell a real risk finding from uvx failing to even run).
+      # Our other hosts already set this (nixos/_mixins/workstations/common.nix).
+      programs.nix-ld.enable = true;
       users.users.gburd = {
         isNormalUser = true;
         uid = 1001;
@@ -608,9 +622,21 @@ let
           deploy_home_manager() {
             IP="$1"
             echo "agent-sandbox: deploying home-manager (gburd@ec2) on $TAGNAME..." >&2
-            ssh_gburd "$IP" \
-              'nix --extra-experimental-features "nix-command flakes" run github:gburd/nix-config#homeConfigurations."gburd@ec2".activationPackage -- switch' \
-              2>&1 | tail -30 || true
+            # activationPackage's default output IS the built generation --
+            # running its own ./activate script performs the switch. (No
+            # 'switch' subcommand: that belongs to the home-manager CLI,
+            # not to a prebuilt generation invoked directly -- confirmed
+            # live: 'nix run ...activationPackage -- switch' fails with
+            # "unknown option 'switch'".) --refresh: always deploy whatever
+            # is CURRENTLY pushed, never a cached-stale flake read.
+            GENPATH=$(ssh_gburd "$IP" \
+              'nix --extra-experimental-features "nix-command flakes" build --refresh --no-link --print-out-paths github:gburd/nix-config#homeConfigurations."gburd@ec2".activationPackage 2>&1' \
+              | tee /dev/stderr | tail -1)
+            case "$GENPATH" in
+              /nix/store/*) ;;
+              *) echo "agent-sandbox: home-manager build failed on $TAGNAME (see above); continuing without it." >&2; return 1 ;;
+            esac
+            ssh_gburd "$IP" "$GENPATH/activate" 2>&1 | tail -30 || true
           }
 
           latest_nixos_ami() {
