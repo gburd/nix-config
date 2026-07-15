@@ -38,3 +38,6 @@ arnold-nvim
 # Linux core dumps (kernel.core_pattern format)
 core.[0-9]*
 core-[0-9]*
+
+# Local-only agent / cutover notes (internal tool names) — never committed
+.agent/
