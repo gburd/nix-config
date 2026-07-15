@@ -75,9 +75,9 @@
   # Add IPs here for any hosts with DHCP reservations or static addresses.
   networking.hosts = {
     "192.168.1.185" = [ "meh" "meh.local" ];
+    "192.168.1.206" = [ "sun" "icarus" ];
     # arnold  — fill in IP when static/reserved (currently resolves via mDNS)
     # greenfly (rv) — fill in IP when connected to LAN
-    # sun (icarus)  — fill in IP when connected to LAN
   };
 
   # Disable sudo lecture message and use_pty (fails in non-TTY contexts)
