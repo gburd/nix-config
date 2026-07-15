@@ -5,6 +5,15 @@ in
 {
   programs.ssh = {
     enable = true;
+    # agent-sandbox's ec2 tier writes/updates per-workspace Host entries
+    # here at runtime (IP changes every launch, so it can't be a
+    # declarative matchBlock rebuilt only on switch) -- lets VSCode's
+    # Remote-SSH / Zed's ssh_connections / a plain `ssh asx-<workspace>`
+    # all use a STABLE name instead of chasing a fresh IP by hand. `!`
+    # sources it as an absolute path outside $HOME/.ssh's usual relative
+    # includes; touch once so a fresh host has an empty-but-valid file
+    # before agent-sandbox ever runs (ssh errors on a missing Include).
+    includes = [ "~/.ssh/agent-sandbox-ec2.conf" ];
     matchBlocks = {
       meh = lib.hm.dag.entryBefore [ "net" ] {
         host = "meh";

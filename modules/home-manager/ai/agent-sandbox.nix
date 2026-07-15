@@ -194,6 +194,12 @@ let
       Config: programs.ai.sandbox.ec2.{region,instanceTypeX86,instanceTypeArm,volumeSizeGb,awsProfile}.
       One-time on first up: creates a dedicated key pair + security group
       (SSH from your current IP only) via the configured AWS profile.
+      Every up/connect also refreshes a stable ssh alias (asx-<workspace>,
+      in ~/.ssh/agent-sandbox-ec2.conf) pointed at the box's CURRENT IP
+      (EC2 assigns a new one on every start) -- use it for a plain
+      `ssh asx-<workspace>`, VSCode's `code --remote ssh-remote+asx-<workspace>
+      <path>`, or Zed's ssh_connections (host: asx-<workspace>), instead of
+      chasing the IP by hand.
 
     EXAMPLES:
       agent-sandbox pi                 # isolate pi (recommended: firejail)
@@ -825,6 +831,47 @@ let
               git config --global tag.gpgsign true" 2>&1 | tail -5 || true
           }
 
+          # Keep a STABLE ssh alias (asx-<workspace>) pointed at whatever IP
+          # the box currently has -- EC2 gives it a fresh public IP on every
+          # start, so "ssh <the box>" would otherwise mean re-discovering
+          # the IP by hand every time. This is what makes
+          # `code --remote ssh-remote+asx-<workspace> ~/ws/...` or Zed's
+          # ssh_connections (host: asx-<workspace>) work without babysitting
+          # -- point either editor's remote-SSH feature at the alias, not a
+          # raw IP. Lives in ~/.ssh/agent-sandbox-ec2.conf, Include'd from
+          # the main config (cli/ssh.nix) -- NOT written into
+          # ~/.ssh/config directly, since home-manager owns that whole
+          # file and would clobber a runtime-written block on the next
+          # switch. One Host block per workspace, replaced wholesale each
+          # call (simplest correct way to "update in place" in a flat file).
+          ALIASFILE="${home}/.ssh/agent-sandbox-ec2.conf"
+          remove_ssh_alias_block() {
+            [ -f "$ALIASFILE" ] || return 0
+            TMPFILE=$(mktemp)
+            awk -v tag="$TAGNAME" '
+              $0 == "Host " tag { skip=1 }
+              skip && $0 == "" { skip=0; next }
+              !skip { print }
+            ' "$ALIASFILE" > "$TMPFILE"
+            mv "$TMPFILE" "$ALIASFILE"
+          }
+          sync_ssh_alias() {
+            IP="$1"
+            remove_ssh_alias_block
+            {
+              cat "$ALIASFILE" 2>/dev/null || true
+              printf 'Host %s\n' "$TAGNAME"
+              printf '  HostName %s\n' "$IP"
+              printf '  User gburd\n'
+              printf '  IdentityFile %s\n' "$KEYFILE"
+              printf '  IdentitiesOnly yes\n'
+              printf '  StrictHostKeyChecking accept-new\n'
+              printf '  ForwardAgent yes\n\n'
+            } > "$ALIASFILE.new"
+            mv "$ALIASFILE.new" "$ALIASFILE"
+            echo "agent-sandbox: ssh alias '$TAGNAME' -> $IP (ssh $TAGNAME / code --remote ssh-remote+$TAGNAME / Zed ssh_connections)" >&2
+          }
+
           # Deploy this flake's console/ai (agents + LiteLLM client config)
           # as the gburd user via standalone home-manager. Pulls from
           # GitHub over the instance's own (unrestricted outbound) network
@@ -991,6 +1038,7 @@ let
               up_instance
               IP=$(wait_for_ssh)
               ensure_provisioned "$IP"
+              sync_ssh_alias "$IP"
               echo "agent-sandbox: $TAGNAME is up. 'agent-sandbox --tier ec2 connect $WORKSPACE' to sync + SSH in." >&2
               ;;
             status)
@@ -1023,6 +1071,7 @@ let
                 echo "agent-sandbox: TERMINATING $TAGNAME ($ID) -- EBS volume is gone after this." >&2
                 aws ec2 terminate-instances --region "$REGION" --instance-ids "$ID" >/dev/null
                 rm -f "$WSCACHE_FILE"
+                remove_ssh_alias_block
               else
                 echo "agent-sandbox: stopping $TAGNAME ($ID) -- reconnect later with 'up'/'connect', EBS persists." >&2
                 aws ec2 stop-instances --region "$REGION" --instance-ids "$ID" >/dev/null
@@ -1037,6 +1086,7 @@ let
               fi
               IP=$(wait_for_ssh)
               ensure_provisioned "$IP"
+              sync_ssh_alias "$IP"
               sync_git_identity "$IP"
               echo "agent-sandbox: syncing $WORKSPACE -> $TAGNAME ($IP)..." >&2
               sync_unison "$IP" "$REMOTE_REL"
