@@ -215,79 +215,12 @@ let
 
   gatewayRouted = "pi claude codex maki hermes kiro";
 
-  # Format (if needed) + mount the instance's local NVMe instance-store at
-  # /mnt/nvme, symlink ~/ws there, and point Nix's build-dir at it -- see
-  # the ec2ConfigTemplate systemd unit below for why. A plain
-  # writeShellScript (its OWN top-level file, not text nested three levels
-  # deep inside ec2ConfigTemplate's already-templated Nix source): nesting
-  # a raw '' ... '' shell script inside the '' ... '' text that BECOMES a
-  # NixOS module's source, inside THIS file's own '' ... '', hits Nix's
-  # "'' inside '' terminates the OUTER string early" rule at the second
-  # nesting level -- confirmed the hard way (nix fmt then "reformats" what
-  # is left, which is a corrupted parse of leftover text as real Nix,
-  # producing garbage like "set - eu"). Referencing this by its real
-  # /nix/store path (a genuine Nix interpolation, one level, no nesting
-  # problem) in ec2ConfigTemplate's ExecStart sidesteps the whole issue.
-  #
-  # A FUNCTION of pkgs, not a plain value: this script's own store path is
-  # baked into ec2ConfigTemplate's generated text, which gets pushed to
-  # and evaluated on the EC2 box. If the box is aarch64 but this were built
-  # once with FLOKI's (x86_64) pkgs, the resulting configuration.nix would
-  # reference an x86_64 binary that can't run there. mkEc2ConfigTemplate
-  # below calls this with the RIGHT arch's pkgs (pkgsFor.${arch}).
-  mkMountInstanceNvmeScript = p: p.writeShellScript "agent-sandbox-mount-nvme" ''
-    set -eu
-    export PATH=${lib.makeBinPath [ pkgs.util-linux pkgs.e2fsprogs pkgs.gnugrep pkgs.coreutils ]}:$PATH
-    DEV=""
-    for d in /sys/class/nvme/*/; do
-      [ -r "$d/model" ] || continue
-      model=$(cat "$d/model" 2>/dev/null || true)
-      case "$model" in
-        *"Instance Storage"*)
-          ns=$(ls "$d" | grep -m1 '^nvme[0-9]*n[0-9]*$' || true)
-          [ -n "$ns" ] && DEV="/dev/$ns"
-          ;;
-      esac
-      [ -n "$DEV" ] && break
-    done
-    if [ -z "$DEV" ]; then
-      echo "mount-instance-nvme: no local NVMe instance-store found; /mnt/nvme will not exist." >&2
-      exit 0
-    fi
-    mkdir -p /mnt/nvme
-    if ! blkid "$DEV" >/dev/null 2>&1; then
-      echo "mount-instance-nvme: formatting $DEV (ext4)..."
-      mkfs.ext4 -F -L nvme-scratch "$DEV"
-    fi
-    mountpoint -q /mnt/nvme || mount "$DEV" /mnt/nvme
-    mkdir -p /mnt/nvme/ws /mnt/nvme/nix-build-tmp
-    chown gburd:users /mnt/nvme/ws
-    # /mnt/nvme itself stays root:root 0755 (mount's own default), NOT
-    # world-writable -- nix.settings.build-dir walks the whole parent
-    # chain and REFUSES a world-writable ancestor ("not allowed for
-    # security"), confirmed live. Only the two subdirs anyone actually
-    # writes to need their own ownership: ws (gburd's project tree) and
-    # nix-build-tmp (root, since only the nix-daemon writes there).
-    chown root:root /mnt/nvme/nix-build-tmp
-    chmod 0755 /mnt/nvme/nix-build-tmp
-    # ~/ws -> /mnt/nvme/ws. gburd's home dir exists by now (user creation
-    # happens during system activation, before services start). gburd is
-    # always a freshly-created user, so there's never real content at
-    # ~/ws to protect; ln -sfn just replaces any prior symlink (idempotent
-    # across reboots) or, if something unexpected is already a real
-    # directory there, leaves it alone rather than deleting anything.
-    if [ -d /home/gburd ] && [ ! -d /home/gburd/ws ]; then
-      ln -sfn /mnt/nvme/ws /home/gburd/ws
-    fi
-  '';
-
   # pkgs set for each arch the ec2 tier supports. aarch64 needs its OWN
   # nixpkgs evaluation (not floki's native x86_64 one) so
-  # mkEc2ConfigTemplate's store-path references (git, nix-ld's closure, the
-  # mount script above) are real aarch64 binaries the EC2 box can actually
-  # run/build against -- confirmed the hard way: without this, the
-  # generated configuration.nix embeds an x86_64 ExecStart path on an
-  # arm64 box.
+  # mkEc2ConfigTemplate's store-path references (git, nix-ld's closure)
+  # are real aarch64 binaries the EC2 box can actually run/build against --
+  # confirmed the hard way: without this, the generated configuration.nix
+  # embeds an x86_64 ExecStart path on an arm64 box.
   pkgsFor = {
     x86_64 = pkgs;
     aarch64 = inputs.nixpkgs.legacyPackages.aarch64-linux;
@@ -298,6 +231,31 @@ let
   # substituted at runtime (sed) -- keeping it out of this static template
   # avoids Nix-level string-escaping through TWO more layers (a shell
   # heredoc AND ANOTHER shell over ssh).
+  #
+  # The mount-instance-nvme script is INLINED as a real script = '' ... ''
+  # in the generated module (built with the box's OWN pkgs when THAT
+  # config gets evaluated by nixos-rebuild, not floki's) rather than
+  # referenced as a separate writeShellScript by /nix/store path. Tried
+  # the separate-derivation approach first and hit two real problems live:
+  # (1) a path built on floki doesn't exist in the BOX's store, and 'nix
+  # copy'-ing it over there works but isn't a tracked dependency of
+  # anything on the box, so a routine `nix-collect-garbage -d` (e.g. to
+  # free disk after a too-small EBS root) reaps it -- the unit then fails
+  # with "Unable to locate executable" on the NEXT boot; (2) it needed a
+  # SEPARATE per-arch pkgs set threaded through just to get the right-arch
+  # binary, doubling the plumbing. Inlining it means it's built ON the
+  # box, from the box's own nixpkgs, as a normal part of its own system
+  # closure -- a real GC root, no copy step, no cross-arch concern at all
+  # (the whole point of generating x86_64/aarch64 variants HERE is just so
+  # the generated Nix SOURCE embeds the right nixpkgs channel/config,
+  # which matters for other packages like pkgs.git).
+  #
+  # Nix's escape for a literal '' inside an outer '' ... '' is ${"''"} (two
+  # single quotes, NOT escaped with a backslash) -- used below for the
+  # inner script = ''...''; delimiters. Nesting them unescaped hits Nix's
+  # "inner '' terminates the outer string early" rule (confirmed the hard
+  # way: nix fmt then "reformats" the corrupted leftover parse into
+  # garbage like "set - eu").
   mkEc2ConfigTemplate = arch:
     let p = pkgsFor.${arch}; in
     p.writeText "agent-sandbox-ec2-configuration-${arch}.nix" ''
@@ -329,16 +287,20 @@ let
           { users = [ "gburd" ]; commands = [ { command = "ALL"; options = [ "NOPASSWD" ]; } ]; }
         ];
 
-        # Local NVMe instance-store: format + mount at /mnt/nvme (via the
-        # script below), then relocate gburd's $HOME/ws (the project tree)
-        # and Nix's build scratch onto it -- project I/O and Nix builds run
-        # on fast, free-with-the-instance local SSD, not the (deliberately
-        # tiny, EBS) root volume. A systemd service, not fileSystems=: the
-        # disk doesn't exist until the instance actually boots on NVMe-
-        # capable hardware, and formatting must happen before the FIRST
-        # mount, not on every boot of a stopped/restarted instance (the
-        # script is idempotent: skips mkfs if a filesystem is already there,
-        # skips the symlink if ~/ws already resolves correctly).
+        # Local NVMe instance-store: format + mount at /mnt/nvme, then
+        # relocate gburd's $HOME/ws (the project tree) and Nix's build
+        # scratch onto it -- project I/O and Nix builds run on fast,
+        # free-with-the-instance local SSD, not the (much smaller) EBS
+        # root volume. A systemd service, not fileSystems=: the disk
+        # doesn't exist until the instance actually boots on NVMe-capable
+        # hardware, and formatting must happen before the FIRST mount, not
+        # on every boot of a stopped/restarted instance (idempotent: skips
+        # mkfs if a filesystem is already there, skips the symlink if
+        # ~/ws already resolves correctly). Detected by NVMe model string
+        # "Amazon EC2 NVMe Instance Storage", the same method Amazon's own
+        # udev rules (amazon-ec2-utils) use to tell it apart from the EBS
+        # root -- robust across instance families/generations, unlike
+        # hardcoding a /dev/nvme?n1 index (varies by boot order).
         systemd.services.mount-instance-nvme = {
           description = "Format (if needed) and mount local NVMe instance-store at /mnt/nvme";
           wantedBy = [ "multi-user.target" ];
@@ -347,8 +309,54 @@ let
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
-            ExecStart = "${mkMountInstanceNvmeScript p}";
           };
+          path = [ pkgs.util-linux pkgs.e2fsprogs pkgs.gnugrep pkgs.coreutils ];
+          script = ${"''"}
+            set -eu
+            DEV=""
+            for d in /sys/class/nvme/*/; do
+              [ -r "$d/model" ] || continue
+              model=$(cat "$d/model" 2>/dev/null || true)
+              case "$model" in
+                *"Instance Storage"*)
+                  ns=$(ls "$d" | grep -m1 '^nvme[0-9]*n[0-9]*$' || true)
+                  [ -n "$ns" ] && DEV="/dev/$ns"
+                  ;;
+              esac
+              [ -n "$DEV" ] && break
+            done
+            if [ -z "$DEV" ]; then
+              echo "mount-instance-nvme: no local NVMe instance-store found; /mnt/nvme will not exist." >&2
+              exit 0
+            fi
+            mkdir -p /mnt/nvme
+            if ! blkid "$DEV" >/dev/null 2>&1; then
+              echo "mount-instance-nvme: formatting $DEV (ext4)..."
+              mkfs.ext4 -F -L nvme-scratch "$DEV"
+            fi
+            mountpoint -q /mnt/nvme || mount "$DEV" /mnt/nvme
+            mkdir -p /mnt/nvme/ws /mnt/nvme/nix-build-tmp
+            chown gburd:users /mnt/nvme/ws
+            # /mnt/nvme itself stays root:root 0755 (mount's own default),
+            # NOT world-writable -- nix.settings.build-dir (below) walks
+            # the whole parent chain and REFUSES a world-writable ancestor
+            # ("not allowed for security"), confirmed live. Only the two
+            # subdirs anyone actually writes to need their own ownership:
+            # ws (gburd's project tree) and nix-build-tmp (root, since
+            # only the nix-daemon writes there).
+            chown root:root /mnt/nvme/nix-build-tmp
+            chmod 0755 /mnt/nvme/nix-build-tmp
+            # ~/ws -> /mnt/nvme/ws. gburd's home dir exists by now (user
+            # creation happens during system activation, before services
+            # start). gburd is always a freshly-created user, so there's
+            # never real content at ~/ws to protect; ln -sfn just replaces
+            # any prior symlink (idempotent across reboots) or, if
+            # something unexpected is already a real directory there,
+            # leaves it alone rather than deleting anything.
+            if [ -d /home/gburd ] && [ ! -d /home/gburd/ws ]; then
+              ln -sfn /mnt/nvme/ws /home/gburd/ws
+            fi
+          ${"''"};
         };
 
         # Nix builds (git.nix's cargo/rustc, home-manager's own derivations,
@@ -783,18 +791,9 @@ let
             echo "agent-sandbox: provisioning gburd user + passwordless sudo on $TAGNAME (one-time)..." >&2
             AUTHKEY=$(cat "${home}/.ssh/id_auth_ed25519.pub" 2>/dev/null || cat "${home}/.ssh/id_ed25519.pub")
             case "$ARCH" in
-              x86_64) TEMPLATE="${ec2ConfigTemplateX86}"; MOUNTSCRIPT="${mkMountInstanceNvmeScript pkgsFor.x86_64}" ;;
-              aarch64) TEMPLATE="${ec2ConfigTemplateArm}"; MOUNTSCRIPT="${mkMountInstanceNvmeScript pkgsFor.aarch64}" ;;
+              x86_64) TEMPLATE="${ec2ConfigTemplateX86}" ;;
+              aarch64) TEMPLATE="${ec2ConfigTemplateArm}" ;;
             esac
-            # TEMPLATE's ExecStart references MOUNTSCRIPT by /nix/store path,
-            # but that path was built HERE (floki/meh/arnold), not on a
-            # public cache -- confirmed live: nixos-rebuild switch on the
-            # box failed with "Unable to locate executable" because the
-            # path simply didn't exist in the box's own store yet. Copy the
-            # whole closure over before the rebuild that references it.
-            echo "agent-sandbox: copying NVMe-mount script to $TAGNAME..." >&2
-            NIX_SSHOPTS="-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-              nix copy --to "ssh://root@$IP" "$MOUNTSCRIPT" 2>&1 | tail -10 || true
             sed "s|@AUTHKEY@|$AUTHKEY|" "$TEMPLATE" | \
               ssh_root "$IP" 'cat > /etc/nixos/configuration.nix'
             ssh_root "$IP" 'nixos-rebuild switch 2>&1 | tail -20'
@@ -1168,11 +1167,18 @@ in
       };
       volumeSizeGb = mkOption {
         type = types.int;
-        default = 20;
+        default = 60;
         description = ''
-          Root EBS volume size (GB) for the ec2 tier's instances. Small:
-          this is only OS + Nix store now, project/build data lives on the
-          instance's local NVMe (see instanceTypeX86/instanceTypeArm).
+          Root EBS volume size (GB) for the ec2 tier's instances. This is
+          OS + the FULL Nix store (all 6 agents, their runtimes, neovim +
+          plugins, zed-editor, cargo/rustc for from-source builds like
+          maki/terax-ai, etc.) -- measured at ~15GB for just the built
+          home-manager closure, before build-time scratch/GC headroom, so
+          20GB (this option's old default) reliably ran out of space
+          mid-deploy on a fresh instance. Project/build DATA still lives
+          on the instance's local NVMe, not here (see
+          instanceTypeX86/instanceTypeArm) -- this is Nix-store headroom,
+          not workload storage.
         '';
       };
       awsProfile = mkOption {

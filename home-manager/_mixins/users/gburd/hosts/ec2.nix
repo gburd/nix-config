@@ -21,15 +21,11 @@
 
   # agent-sandbox is the CLIENT-side tool that manages this box's own
   # lifecycle (agent-sandbox --tier ec2 up/connect/down, run from floki/
-  # meh/arnold) -- the guest itself never invokes it. Disabling it here
-  # isn't just tidiness: agent-sandbox.nix's derivation embeds BOTH the
-  # x86_64 AND aarch64 ec2-tier config templates as literal store-path
-  # strings (so an operator on either arch host can launch either arch
-  # guest), which forces Nix to build/substitute BOTH unconditionally as
-  # part of evaluating the derivation -- confirmed live: a fresh x86_64
-  # EC2 guest's own home-manager deploy failed hard trying to build the
-  # aarch64 template, because (unlike floki/meh) this guest's nix.conf has
-  # no aarch64 in extra-platforms/binfmt (that's set by
-  # nixos/_mixins/workstations/common.nix, never deployed here).
+  # meh/arnold) -- the guest itself never invokes it, so there's no reason
+  # to deploy it here (it also can't reach the same numa AWS profile
+  # without sops, and this host has none). Not required for correctness
+  # (the ec2-tier config templates are plain writeText -- arch-neutral
+  # text generation, not a derivation needing cross-arch build/emulation)
+  # but there's no reason to build/carry a tool this box never runs.
   programs.ai.sandbox.enable = lib.mkForce false;
 }
