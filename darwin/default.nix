@@ -39,10 +39,41 @@
         di = "diff";
         dc = "diff --cached";
         aa = "add --all";
-        lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
+        amend = "commit --amend";
+        mend = "commit --amend --no-edit";
+        head = "!git l -1";
+        h = "!git head";
+        r = "!git --no-pager l -20";
+        ra = "!git r --all";
+        ff = "merge --ff-only";
+        pullff = "pull --ff-only";
+        l = "log --graph --abbrev-commit --date=relative";
+        la = "!git l --all";
+        div = "divergence";
+        gn = "goodness";
+        gnc = "goodness --cached";
+        fa = "fetch --all";
+        pom = "push origin master";
+        files = "show --oneline";
+        graph = "log --graph --decorate --all";
         lol = "log --graph --decorate --pretty=oneline --abbrev-commit";
         lola = "log --graph --decorate --pretty=oneline --abbrev-commit --all";
+        lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
+        unadd = "reset --";
+        unedit = "checkout --";
+        unstage = "reset HEAD";
+        unrm = "checkout --";
+        unstash = "stash pop";
+        lastchange = "log -n 1 -p";
+        subdate = "submodule update --init --recursive";
         sync = "pull --rebase";
+        update = "merge --ff-only origin/master";
+      };
+      # Mirrors ~/.gitconfig [core] excludesFile. NOTE: the credential helper in
+      # ~/.gitconfig (a plaintext PAT echo) is deliberately NOT codified — it is
+      # a secret and this repo is public; `gh auth git-credential` handles auth.
+      extraConfig = {
+        core.excludesFile = "~/.gitignore";
       };
     };
 
