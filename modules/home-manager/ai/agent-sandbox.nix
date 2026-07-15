@@ -172,12 +172,15 @@ let
       -h, --help   this help.
 
     --tier ec2 usage:
-      agent-sandbox --tier ec2 [up|connect|down|status] [workspace] [--terminate] [-- cmd...]
+      agent-sandbox --tier ec2 [up|connect|down|status] [workspace] [--terminate]
+        [--arch x86_64|aarch64] [--instance-type TYPE] [-- cmd...]
       A real EC2 instance (NixOS AMI), not a local sandbox: the whole VM IS
       the isolation boundary. State lives in AWS instance tags
-      (Name=agent-sandbox-<workspace>, default workspace = current dir
-      name) so ANY host with the numa AWS profile + your SSH key can
-      reconnect to the SAME box.
+      (Name=asx-<workspace>, default workspace = current dir name) so ANY
+      host with the numa AWS profile + your SSH key can reconnect to the
+      SAME box. Project data + Nix builds live on the instance's local
+      NVMe instance-store (fast, free with the instance), not the small
+      EBS root volume.
         up       launch (or start, if stopped) the workspace, wait for SSH.
         connect  (default) up + bidirectional unison sync + ssh in; syncs
                  back on disconnect. With a -- separator + a command, runs
@@ -185,7 +188,10 @@ let
         down     sync back, then STOP the instance (EBS persists, cheap,
                  resume later). --terminate destroys it (EBS gone too).
         status   show instance id / state / IP for the workspace, if any.
-      Config: programs.ai.sandbox.ec2.{region,instanceType,volumeSizeGb,awsProfile}.
+      --arch (up/connect only, default x86_64): aarch64 launches a Graviton
+        instance instead. --instance-type overrides the arch's configured
+        default entirely (must still match --arch's actual architecture).
+      Config: programs.ai.sandbox.ec2.{region,instanceTypeX86,instanceTypeArm,volumeSizeGb,awsProfile}.
       One-time on first up: creates a dedicated key pair + security group
       (SSH from your current IP only) via the configured AWS profile.
 
@@ -209,41 +215,143 @@ let
 
   gatewayRouted = "pi claude codex maki hermes kiro";
 
+  # Format (if needed) + mount the instance's local NVMe instance-store at
+  # /mnt/nvme, symlink ~/ws there, and point Nix's build-dir at it -- see
+  # the ec2ConfigTemplate systemd unit below for why. A plain
+  # writeShellScript (its OWN top-level file, not text nested three levels
+  # deep inside ec2ConfigTemplate's already-templated Nix source): nesting
+  # a raw '' ... '' shell script inside the '' ... '' text that BECOMES a
+  # NixOS module's source, inside THIS file's own '' ... '', hits Nix's
+  # "'' inside '' terminates the OUTER string early" rule at the second
+  # nesting level -- confirmed the hard way (nix fmt then "reformats" what
+  # is left, which is a corrupted parse of leftover text as real Nix,
+  # producing garbage like "set - eu"). Referencing this by its real
+  # /nix/store path (a genuine Nix interpolation, one level, no nesting
+  # problem) in ec2ConfigTemplate's ExecStart sidesteps the whole issue.
+  #
+  # A FUNCTION of pkgs, not a plain value: this script's own store path is
+  # baked into ec2ConfigTemplate's generated text, which gets pushed to
+  # and evaluated on the EC2 box. If the box is aarch64 but this were built
+  # once with FLOKI's (x86_64) pkgs, the resulting configuration.nix would
+  # reference an x86_64 binary that can't run there. mkEc2ConfigTemplate
+  # below calls this with the RIGHT arch's pkgs (pkgsFor.${arch}).
+  mkMountInstanceNvmeScript = p: p.writeShellScript "agent-sandbox-mount-nvme" ''
+    set -eu
+    export PATH=${lib.makeBinPath [ pkgs.util-linux pkgs.e2fsprogs pkgs.gnugrep pkgs.coreutils ]}:$PATH
+    DEV=""
+    for d in /sys/class/nvme/*/; do
+      [ -r "$d/model" ] || continue
+      model=$(cat "$d/model" 2>/dev/null || true)
+      case "$model" in
+        *"Instance Storage"*)
+          ns=$(ls "$d" | grep -m1 '^nvme[0-9]*n[0-9]*$' || true)
+          [ -n "$ns" ] && DEV="/dev/$ns"
+          ;;
+      esac
+      [ -n "$DEV" ] && break
+    done
+    if [ -z "$DEV" ]; then
+      echo "mount-instance-nvme: no local NVMe instance-store found; /mnt/nvme will not exist." >&2
+      exit 0
+    fi
+    mkdir -p /mnt/nvme
+    if ! blkid "$DEV" >/dev/null 2>&1; then
+      echo "mount-instance-nvme: formatting $DEV (ext4)..."
+      mkfs.ext4 -F -L nvme-scratch "$DEV"
+    fi
+    mountpoint -q /mnt/nvme || mount "$DEV" /mnt/nvme
+    mkdir -p /mnt/nvme/ws /mnt/nvme/nix-build-tmp
+    chown gburd:users /mnt/nvme/ws
+    chmod 1777 /mnt/nvme /mnt/nvme/nix-build-tmp
+    # ~/ws -> /mnt/nvme/ws. gburd's home dir exists by now (user creation
+    # happens during system activation, before services start). gburd is
+    # always a freshly-created user, so there's never real content at
+    # ~/ws to protect; ln -sfn just replaces any prior symlink (idempotent
+    # across reboots) or, if something unexpected is already a real
+    # directory there, leaves it alone rather than deleting anything.
+    if [ -d /home/gburd ] && [ ! -d /home/gburd/ws ]; then
+      ln -sfn /mnt/nvme/ws /home/gburd/ws
+    fi
+  '';
+
+  # pkgs set for each arch the ec2 tier supports. aarch64 needs its OWN
+  # nixpkgs evaluation (not floki's native x86_64 one) so
+  # mkEc2ConfigTemplate's store-path references (git, nix-ld's closure, the
+  # mount script above) are real aarch64 binaries the EC2 box can actually
+  # run/build against -- confirmed the hard way: without this, the
+  # generated configuration.nix embeds an x86_64 ExecStart path on an
+  # arm64 box.
+  pkgsFor = {
+    x86_64 = pkgs;
+    aarch64 = inputs.nixpkgs.legacyPackages.aarch64-linux;
+  };
+
   # NixOS config fragment for the ec2 tier's one-time gburd-user + sudo
   # bootstrap on a stock NixOS AMI (which only has root). AUTHKEY is
   # substituted at runtime (sed) -- keeping it out of this static template
   # avoids Nix-level string-escaping through TWO more layers (a shell
   # heredoc AND ANOTHER shell over ssh).
-  ec2ConfigTemplate = pkgs.writeText "agent-sandbox-ec2-configuration.nix" ''
-    { modulesPath, pkgs, ... }: {
-      imports = [ "''${modulesPath}/virtualisation/amazon-image.nix" ];
-      nix.settings.experimental-features = [ "nix-command" "flakes" ];
-      # git: needed by home-manager's build itself (programs.ai.skills
-      # fetches a skills repo at eval/build time) -- without it on PATH,
-      # 'home-manager switch' fails evaluating home.activation before it
-      # ever gets to deploying anything. Everything else the agents need
-      # comes in through home-manager/console/ai itself.
-      environment.systemPackages = [ pkgs.git ];
-      # nix-ld: uv/uvx (used by programs.ai.skills' SkillSpector gate) can
-      # download its OWN standalone Python build, a generic dynamically-
-      # linked binary that fails on NixOS without this ("NixOS cannot run
-      # dynamically linked executables... nix.dev/permalink/stub-ld" --
-      # confirmed live: the gate then treats EVERY skill as blocked, since
-      # it can't tell a real risk finding from uvx failing to even run).
-      # Our other hosts already set this (nixos/_mixins/workstations/common.nix).
-      programs.nix-ld.enable = true;
-      users.users.gburd = {
-        isNormalUser = true;
-        uid = 1001;
-        shell = "/run/current-system/sw/bin/bash";
-        extraGroups = [ "wheel" ];
-        openssh.authorizedKeys.keys = [ "@AUTHKEY@" ];
-      };
-      security.sudo.extraRules = [
-        { users = [ "gburd" ]; commands = [ { command = "ALL"; options = [ "NOPASSWD" ]; } ]; }
-      ];
-    }
-  '';
+  mkEc2ConfigTemplate = arch:
+    let p = pkgsFor.${arch}; in
+    p.writeText "agent-sandbox-ec2-configuration-${arch}.nix" ''
+      { modulesPath, pkgs, ... }: {
+        imports = [ "''${modulesPath}/virtualisation/amazon-image.nix" ];
+        nix.settings.experimental-features = [ "nix-command" "flakes" ];
+        # git: needed by home-manager's build itself (programs.ai.skills
+        # fetches a skills repo at eval/build time) -- without it on PATH,
+        # 'home-manager switch' fails evaluating home.activation before it
+        # ever gets to deploying anything. Everything else the agents need
+        # comes in through home-manager/console/ai itself.
+        environment.systemPackages = [ pkgs.git ];
+        # nix-ld: uv/uvx (used by programs.ai.skills' SkillSpector gate) can
+        # download its OWN standalone Python build, a generic dynamically-
+        # linked binary that fails on NixOS without this ("NixOS cannot run
+        # dynamically linked executables... nix.dev/permalink/stub-ld" --
+        # confirmed live: the gate then treats EVERY skill as blocked, since
+        # it can't tell a real risk finding from uvx failing to even run).
+        # Our other hosts already set this (nixos/_mixins/workstations/common.nix).
+        programs.nix-ld.enable = true;
+        users.users.gburd = {
+          isNormalUser = true;
+          uid = 1001;
+          shell = "/run/current-system/sw/bin/bash";
+          extraGroups = [ "wheel" ];
+          openssh.authorizedKeys.keys = [ "@AUTHKEY@" ];
+        };
+        security.sudo.extraRules = [
+          { users = [ "gburd" ]; commands = [ { command = "ALL"; options = [ "NOPASSWD" ]; } ]; }
+        ];
+
+        # Local NVMe instance-store: format + mount at /mnt/nvme (via the
+        # script below), then relocate gburd's $HOME/ws (the project tree)
+        # and Nix's build scratch onto it -- project I/O and Nix builds run
+        # on fast, free-with-the-instance local SSD, not the (deliberately
+        # tiny, EBS) root volume. A systemd service, not fileSystems=: the
+        # disk doesn't exist until the instance actually boots on NVMe-
+        # capable hardware, and formatting must happen before the FIRST
+        # mount, not on every boot of a stopped/restarted instance (the
+        # script is idempotent: skips mkfs if a filesystem is already there,
+        # skips the symlink if ~/ws already resolves correctly).
+        systemd.services.mount-instance-nvme = {
+          description = "Format (if needed) and mount local NVMe instance-store at /mnt/nvme";
+          wantedBy = [ "multi-user.target" ];
+          before = [ "multi-user.target" ];
+          unitConfig.DefaultDependencies = false;
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = "${mkMountInstanceNvmeScript p}";
+          };
+        };
+
+        # Nix builds (git.nix's cargo/rustc, home-manager's own derivations,
+        # etc.) land on NVMe too, not the small EBS root. mkForce: amazon-
+        # image.nix may set its own default.
+        nix.settings.build-dir = pkgs.lib.mkForce "/mnt/nvme/nix-build-tmp";
+      }
+    '';
+  ec2ConfigTemplateX86 = mkEc2ConfigTemplate "x86_64";
+  ec2ConfigTemplateArm = mkEc2ConfigTemplate "aarch64";
 
   agent-sandbox = pkgs.writeShellApplication {
     name = "agent-sandbox";
@@ -498,9 +606,9 @@ let
           # bidirectionally sync $PROJECT there with unison, SSH in and run
           # the command, sync back, and leave the instance stopped (cheap,
           # reconnect later) or terminate it. State lives entirely in AWS
-          # tags (Name=agent-sandbox-<workspace>) -- no local state file, so
-          # any host with the numa AWS profile + your SSH key can reconnect
-          # to the SAME workspace. Verbs (first positional arg): up, connect
+          # tags (Name=asx-<workspace>) -- no local state file, so any host
+          # with the numa AWS profile + your SSH key can reconnect to the
+          # SAME workspace. Verbs (first positional arg): up, connect
           # (default if the workspace exists), down, status.
           #
           # Why plain AWS CLI instead of Terraform/terranix: terranix compiles
@@ -509,12 +617,21 @@ let
           # machinery that's overkill for one throwaway box discovered by a
           # tag. aws ec2 describe-instances IS the state store here.
           REGION="${cfg.ec2.region}"
-          ITYPE="${cfg.ec2.instanceType}"
           VOLSIZE="${toString cfg.ec2.volumeSizeGb}"
           AWS_PROFILE_EC2="${cfg.ec2.awsProfile}"
           KEYNAME="agent-sandbox-ec2"
           SGNAME="agent-sandbox-ec2"
           export AWS_PROFILE="$AWS_PROFILE_EC2"
+
+          # --arch (default x86_64) selects the instance family, AMI arch,
+          # and which arch's pkgs the gburd-provisioning config template is
+          # built against (see mkEc2ConfigTemplate/pkgsFor above -- an
+          # x86_64-built template embeds x86_64 store paths that can't run
+          # on an arm64 box). --instance-type overrides the arch's default
+          # entirely, for anyone who wants a specific size/family. Both are
+          # parsed in the verb/workspace loop below (with everything else).
+          ARCH="x86_64"
+          ITYPE=""
 
           # Remember the workspace name used for THIS project directory, so
           # 'down'/'status' with no explicit workspace find the SAME
@@ -541,11 +658,24 @@ let
           while [ $# -gt 0 ] && [ "$1" != "--" ]; do
             case "$1" in
               --terminate) TERMINATE=1 ;;
+              --arch) ARCH="$2"; shift ;;
+              --instance-type) ITYPE="$2"; shift ;;
               *) WORKSPACE="$1" ;;
             esac
             shift
           done
           [ $# -gt 0 ] && [ "$1" = "--" ] && shift
+          case "$ARCH" in
+            x86_64) NIXARCH="x86_64-linux"; AWSARCH="x86_64" ;;
+            aarch64|arm64) ARCH="aarch64"; NIXARCH="aarch64-linux"; AWSARCH="arm64" ;;
+            *) echo "agent-sandbox: --arch must be x86_64 or aarch64 (got '$ARCH')" >&2; exit 2 ;;
+          esac
+          if [ -z "$ITYPE" ]; then
+            case "$ARCH" in
+              x86_64) ITYPE="${cfg.ec2.instanceTypeX86}" ;;
+              aarch64) ITYPE="${cfg.ec2.instanceTypeArm}" ;;
+            esac
+          fi
           if [ -z "$WORKSPACE" ]; then
             if [ -r "$WSCACHE_FILE" ]; then
               WORKSPACE=$(cat "$WSCACHE_FILE")
@@ -553,9 +683,44 @@ let
               WORKSPACE="$(basename "$PROJECT")"
             fi
           fi
-          TAGNAME="agent-sandbox-$WORKSPACE"
+          TAGNAME="asx-$WORKSPACE"
           KEYFILE="${home}/.ssh/$KEYNAME.pem"
           REMOTE_CMD=("$@")
+
+          # Project lands at the SAME path relative to $HOME on the box as
+          # it has locally (e.g. ~/ws/postgres/bcs here -> ~/ws/postgres/bcs
+          # there), not a fixed 'project' dir -- so relative paths, direnv,
+          # anything path-sensitive behaves the same on both sides. Falls
+          # back to 'project' only if $PWD isn't under $HOME at all.
+          case "$PROJECT" in
+            "${home}"/*) REMOTE_REL="''${PROJECT#"${home}"/}" ;;
+            *) REMOTE_REL="project" ;;
+          esac
+
+          # A tmux session PERSISTS on the box across ssh disconnects (the
+          # agent keeps running if the connection drops) and lets a LATER
+          # 'connect' to the same workspace re-attach to the exact same
+          # session instead of starting a new one -- named after the
+          # workspace, so it's stable across reconnects. tmux's -s allows
+          # most characters but not ':' or '.'; sanitize defensively.
+          TMUX_SESSION=$(printf '%s' "$WORKSPACE" | tr -c 'A-Za-z0-9_-' '-')
+
+          # If $PROJECT is a git WORKTREE (e.g. ~/ws/postgres/bcs, where the
+          # real repo data lives in ~/ws/postgres/.git/worktrees/bcs, itself
+          # inside the BARE ~/ws/postgres/.git), only syncing $PROJECT
+          # leaves git broken on the box: .git there is a one-line pointer
+          # file to a path that doesn't exist remotely. Detect the common
+          # git dir (same for a worktree or a plain repo -- --git-common-dir
+          # is just .git for a plain repo) and sync IT too, at its own
+          # matching relative-to-$HOME path, whenever it's outside $PROJECT.
+          GIT_COMMON_DIR=""
+          if command -v git >/dev/null 2>&1 && git -C "$PROJECT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            GCD=$(git -C "$PROJECT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+            case "$GCD" in
+              "$PROJECT"/.git|"$PROJECT") ;; # inside $PROJECT already -- unison syncs it as part of the project
+              "${home}"/*) GIT_COMMON_DIR="$GCD" ;;
+            esac
+          fi
           # Whatever workspace we ended up using, remember it -- so a LATER
           # 'down'/'status' with no argument finds this same instance.
           mkdir -p "$WSCACHE_DIR"
@@ -610,9 +775,39 @@ let
             fi
             echo "agent-sandbox: provisioning gburd user + passwordless sudo on $TAGNAME (one-time)..." >&2
             AUTHKEY=$(cat "${home}/.ssh/id_auth_ed25519.pub" 2>/dev/null || cat "${home}/.ssh/id_ed25519.pub")
-            sed "s|@AUTHKEY@|$AUTHKEY|" "${ec2ConfigTemplate}" | \
+            case "$ARCH" in
+              x86_64) TEMPLATE="${ec2ConfigTemplateX86}" ;;
+              aarch64) TEMPLATE="${ec2ConfigTemplateArm}" ;;
+            esac
+            sed "s|@AUTHKEY@|$AUTHKEY|" "$TEMPLATE" | \
               ssh_root "$IP" 'cat > /etc/nixos/configuration.nix'
             ssh_root "$IP" 'nixos-rebuild switch 2>&1 | tail -20'
+          }
+
+          # Push THIS connecting host's git-signing PUBLIC key into the
+          # box's gitconfig (never a private key -- see the -A ssh-agent
+          # forward in 'connect' below, which is what actually signs).
+          # Dynamic per connecting host, not baked into ec2.nix: floki/meh/
+          # arnold each rotate their OWN distinct signing key
+          # (ssh-management/signing.nix), so there's no single static key
+          # that would be correct here. git's gpg.format=ssh + a literal
+          # user.signingKey string writes that string to a temp file and
+          # invokes 'ssh-keygen -Y sign -f <tempfile>' itself, which
+          # resolves the private half via the FORWARDED agent (confirmed
+          # via GIT_TRACE=1) -- so only the public key string needs to land
+          # in gitconfig, no .pub file to deploy separately.
+          sync_git_identity() {
+            IP="$1"
+            SIGNPUB="${home}/.ssh/id_signing_ed25519.pub"
+            [ -r "$SIGNPUB" ] || return 0
+            if [ -z "''${SSH_AUTH_SOCK:-}" ]; then
+              echo "agent-sandbox: warning: no local ssh-agent (SSH_AUTH_SOCK unset) -- git signing on $TAGNAME will fail without one." >&2
+            fi
+            SIGNKEY=$(cat "$SIGNPUB")
+            ssh_gburd "$IP" "git config --global gpg.format ssh && \
+              git config --global user.signingKey '$SIGNKEY' && \
+              git config --global commit.gpgsign true && \
+              git config --global tag.gpgsign true" 2>&1 | tail -5 || true
           }
 
           # Deploy this flake's console/ai (agents + LiteLLM client config)
@@ -645,7 +840,7 @@ let
 
           latest_nixos_ami() {
             aws ec2 describe-images --region "$REGION" --owners 427812963091 \
-              --filters "Name=name,Values=nixos/25.11*-x86_64-linux" "Name=architecture,Values=x86_64" \
+              --filters "Name=name,Values=nixos/25.11*-$NIXARCH" "Name=architecture,Values=$AWSARCH" \
               --query 'sort_by(Images, &CreationDate)[-1].ImageId' --output text
           }
 
@@ -716,7 +911,25 @@ let
             ensure_remote_unison "$IP"
             unison "$PROJECT" "ssh://gburd@$IP/$DIR" \
               -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-              -prefer newer -batch -ignore 'Name .direnv' -ignore 'Name .git' \
+              -prefer newer -batch -ignore 'Name .direnv' \
+              2>&1 | tail -20 || true
+          }
+
+          # For a git WORKTREE, $PROJECT/.git is just a one-line pointer
+          # file -- the real repo data (refs, index, HEAD, and the shared
+          # object store) lives in GIT_COMMON_DIR, OUTSIDE $PROJECT (e.g.
+          # ~/ws/postgres/.git for a ~/ws/postgres/bcs worktree). Synced
+          # separately, at the SAME path relative to $HOME on both sides,
+          # so the pointer file (synced as part of $PROJECT above) resolves
+          # correctly and git commands work on the box.
+          sync_git_common_dir() {
+            IP="$1"
+            [ -n "$GIT_COMMON_DIR" ] || return 0
+            GCD_REL="''${GIT_COMMON_DIR#"${home}"/}"
+            ssh_gburd "$IP" "mkdir -p '$(dirname "$GCD_REL")'" 2>/dev/null || true
+            unison "$GIT_COMMON_DIR" "ssh://gburd@$IP/$GCD_REL" \
+              -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
+              -prefer newer -batch \
               2>&1 | tail -20 || true
           }
 
@@ -781,7 +994,8 @@ let
               IP=$(echo "$EXISTING" | cut -f3)
               if [ -n "$IP" ] && [ "$IP" != "None" ]; then
                 echo "agent-sandbox: syncing $WORKSPACE back before shutdown..." >&2
-                sync_unison "$IP" "project" || true
+                sync_unison "$IP" "$REMOTE_REL" || true
+                sync_git_common_dir "$IP" || true
               fi
               # Sync failures above must NEVER block the stop/terminate
               # below -- a stuck/slow sync (e.g. unison's first-ever
@@ -808,8 +1022,10 @@ let
               fi
               IP=$(wait_for_ssh)
               ensure_provisioned "$IP"
+              sync_git_identity "$IP"
               echo "agent-sandbox: syncing $WORKSPACE -> $TAGNAME ($IP)..." >&2
-              sync_unison "$IP" "project"
+              sync_unison "$IP" "$REMOTE_REL"
+              sync_git_common_dir "$IP"
               # The agent being started (first word of the remote command,
               # if any) determines which session-state dir + LiteLLM key
               # to sync -- e.g. 'connect -- pi --session-id X' only syncs
@@ -818,31 +1034,37 @@ let
               if [ -n "$AGENT" ]; then
                 sync_agent_state "$IP" "$AGENT"
               fi
-              echo "agent-sandbox: connecting. Ctrl-D/exit to disconnect; syncs back after." >&2
-              # ssh with MULTIPLE command-line arguments joins them with a
-              # plain space and sends that as ONE string to the remote's
-              # shell (no quoting at all) -- so an arg containing spaces
-              # (e.g. bash -c "a b") gets silently re-split wrong on the far
-              # end. Build ONE correctly shell-quoted string locally instead
-              # and pass it as a single ssh argv element.
+              echo "agent-sandbox: connecting (tmux session '$TMUX_SESSION', persists across disconnects). Ctrl-D/exit to disconnect; syncs back after." >&2
+              # Wrapped in tmux new-session -A (attach-or-create): the
+              # session survives an ssh drop, and reconnecting later re-
+              # attaches to the SAME session (same running agent, same
+              # scrollback) instead of starting a new one. Built as one
+              # shell-quoted argv (printf '%q') for the same reason as
+              # REMOTE_LINE below: ssh sends whatever we pass as ONE string
+              # to the remote shell, so anything with embedded spaces must
+              # already be correctly quoted before it gets there.
               if [ ''${#REMOTE_CMD[@]} -eq 0 ]; then
-                REMOTE_LINE='exec "$SHELL" -l'
+                TMUX_CMD=(bash -l)
               else
-                REMOTE_LINE=$(printf '%q ' "''${REMOTE_CMD[@]}")
-                REMOTE_LINE="exec $REMOTE_LINE"
+                TMUX_CMD=("''${REMOTE_CMD[@]}")
               fi
-              # -R forwards THIS host's loopback LiteLLM gateway to the
-              # EC2 box's own 127.0.0.1:4000 -- agents there talk to
-              # "127.0.0.1:4000" exactly like they do locally, no idea
-              # they're actually tunneling back over SSH. The gateway
-              # itself is still loopback-only everywhere; this is the same
-              # "reach it through a controlled channel, never expose it to
-              # the internet" posture as every other tier.
-              ssh -t -R "4000:127.0.0.1:${toString config.programs.ai.litellm.port}" \
+              REMOTE_LINE=$(printf '%q ' tmux new-session -A -s "$TMUX_SESSION" -c "$REMOTE_REL" "''${TMUX_CMD[@]}")
+              # -A: forward THIS host's ssh-agent, so git commit/tag signing
+              # on the box resolves the private key via the agent (never a
+              # copied key file -- sync_git_identity above only pushed the
+              # PUBLIC key string into gitconfig). -R forwards THIS host's
+              # loopback LiteLLM gateway to the EC2 box's own 127.0.0.1:4000
+              # -- agents there talk to "127.0.0.1:4000" exactly like they
+              # do locally, no idea they're actually tunneling over SSH. The
+              # gateway itself is still loopback-only everywhere; this is
+              # the same "reach it through a controlled channel, never
+              # expose it to the internet" posture as every other tier.
+              ssh -t -A -R "4000:127.0.0.1:${toString config.programs.ai.litellm.port}" \
                 -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "gburd@$IP" \
-                "cd project && $REMOTE_LINE" || true
+                "exec $REMOTE_LINE" || true
               echo "agent-sandbox: syncing $WORKSPACE <- $TAGNAME ($IP)..." >&2
-              sync_unison "$IP" "project"
+              sync_unison "$IP" "$REMOTE_REL"
+              sync_git_common_dir "$IP"
               if [ -n "$AGENT" ]; then
                 sync_agent_state "$IP" "$AGENT"
               fi
@@ -907,15 +1129,35 @@ in
         default = "us-east-1";
         description = "AWS region for the ec2 tier's instances.";
       };
-      instanceType = mkOption {
+      instanceTypeX86 = mkOption {
         type = types.str;
-        default = "c7i.xlarge";
-        description = "Default EC2 instance type for the ec2 tier.";
+        default = "m6id.8xlarge";
+        description = ''
+          Default x86_64 EC2 instance type for the ec2 tier. Must be an
+          instance-store ("d" suffix) family -- the tier mounts local NVMe
+          at /mnt/nvme and relocates $HOME/ws + Nix's build-dir onto it,
+          skipping the slow EBS root entirely for project/build I/O.
+          m6id.8xlarge: 32 vCPU / 128 GiB RAM / 1900 GB NVMe.
+        '';
+      };
+      instanceTypeArm = mkOption {
+        type = types.str;
+        default = "m7gd.8xlarge";
+        description = ''
+          Default aarch64 (Graviton) EC2 instance type for the ec2 tier,
+          used when --arch aarch64 is passed. Same instance-store
+          requirement as instanceTypeX86. m7gd.8xlarge: 32 vCPU / 128 GiB
+          RAM / 1900 GB NVMe.
+        '';
       };
       volumeSizeGb = mkOption {
         type = types.int;
-        default = 100;
-        description = "Root EBS volume size (GB) for the ec2 tier's instances.";
+        default = 20;
+        description = ''
+          Root EBS volume size (GB) for the ec2 tier's instances. Small:
+          this is only OS + Nix store now, project/build data lives on the
+          instance's local NVMe (see instanceTypeX86/instanceTypeArm).
+        '';
       };
       awsProfile = mkOption {
         type = types.str;
