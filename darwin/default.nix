@@ -30,7 +30,7 @@
     programs.git = {
       enable = true;
       userName = "Greg Burd";
-      userEmail = "gregburd@amazon.com";
+      userEmail = "greg@burd.me";
       lfs.enable = true;
       aliases = {
         st = "status --short";
@@ -77,10 +77,31 @@
       };
     };
 
+    # NOTE: wiring the shared emacs mixin here is deferred — its theme.nix needs
+    # a `colorscheme` attr only the Linux console mixin provides (eval fails with
+    # "attribute 'colorscheme' missing"), and emacs-gtk must be overridden to the
+    # Cocoa build on macOS. Emacs on the aws host is a follow-up (provide the
+    # colorscheme option or a darwin-tailored programs.emacs block + burd.org
+    # placement, then runtime-test).
+
     home.packages = with pkgs; [
       gh
       nodejs
       uv
+      # curated CLI dev tools, migrated from Homebrew to nixpkgs
+      ripgrep
+      eza
+      bat
+      fd
+      tree
+      bottom
+      dust
+      wget
+      tig
+      shellcheck
+      git-absorb
+      git-filter-repo
+      fzf
     ];
   };
 
