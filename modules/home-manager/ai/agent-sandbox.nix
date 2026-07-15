@@ -629,9 +629,13 @@ let
             # live: 'nix run ...activationPackage -- switch' fails with
             # "unknown option 'switch'".) --refresh: always deploy whatever
             # is CURRENTLY pushed, never a cached-stale flake read.
-            GENPATH=$(ssh_gburd "$IP" \
+            GENPATH_LOG=$(mktemp)
+            ssh_gburd "$IP" \
               'nix --extra-experimental-features "nix-command flakes" build --refresh --no-link --print-out-paths github:gburd/nix-config#homeConfigurations."gburd@ec2".activationPackage 2>&1' \
-              | tee /dev/stderr | tail -1)
+              > "$GENPATH_LOG" || true
+            cat "$GENPATH_LOG" >&2
+            GENPATH=$(tail -1 "$GENPATH_LOG")
+            rm -f "$GENPATH_LOG"
             case "$GENPATH" in
               /nix/store/*) ;;
               *) echo "agent-sandbox: home-manager build failed on $TAGNAME (see above); continuing without it." >&2; return 1 ;;
