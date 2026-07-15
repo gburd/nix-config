@@ -84,6 +84,11 @@
     # colorscheme option or a darwin-tailored programs.emacs block + burd.org
     # placement, then runtime-test).
 
+    # Amazon Builder Toolbox stays self-managed under ~/.toolbox (brazil, ada,
+    # cr, toolbox, q, builder-mcp, amzn-mcp, ...); it self-updates and must NOT
+    # be managed by nix or Homebrew. Just keep it on PATH.
+    home.sessionPath = [ "$HOME/.toolbox/bin" ];
+
     home.packages = with pkgs; [
       gh
       nodejs
