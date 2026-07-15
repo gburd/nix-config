@@ -730,16 +730,41 @@ let
           # real repo data lives in ~/ws/postgres/.git/worktrees/bcs, itself
           # inside the BARE ~/ws/postgres/.git), only syncing $PROJECT
           # leaves git broken on the box: .git there is a one-line pointer
-          # file to a path that doesn't exist remotely. Detect the common
-          # git dir (same for a worktree or a plain repo -- --git-common-dir
-          # is just .git for a plain repo) and sync IT too, at its own
-          # matching relative-to-$HOME path, whenever it's outside $PROJECT.
+          # file to a path that doesn't exist remotely. Two strategies:
+          #   1. FAST PATH: worktree on a real branch with a remote
+          #      upstream -- the box does its OWN shallow clone of just
+          #      that branch (GIT_WORKTREE_URL/GIT_WORKTREE_BRANCH below).
+          #      Verified live: 33MB for a --depth 50 single-branch clone
+          #      vs. 9.4GB for syncing the WHOLE local bare repo (every
+          #      branch, every worktree) for ONE worktree's fixup -- a
+          #      285x difference that turned a normal connect into a
+          #      15+ minute hang.
+          #   2. FALLBACK (detached HEAD, or a branch with no upstream --
+          #      local-only commits a shallow clone from the remote can
+          #      never reconstruct; confirmed live, GitHub's upload-pack
+          #      refuses to fetch an arbitrary SHA not at a ref tip): the
+          #      original sync-the-whole-common-dir approach, unchanged.
           GIT_COMMON_DIR=""
+          GIT_WORKTREE_URL=""
+          GIT_WORKTREE_BRANCH=""
           if command -v git >/dev/null 2>&1 && git -C "$PROJECT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
             GCD=$(git -C "$PROJECT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
             case "$GCD" in
               "$PROJECT"/.git|"$PROJECT") ;; # inside $PROJECT already -- unison syncs it as part of the project
-              "${home}"/*) GIT_COMMON_DIR="$GCD" ;;
+              "${home}"/*)
+                GIT_COMMON_DIR="$GCD"
+                BRANCH=$(git -C "$PROJECT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+                UPSTREAM=$(git -C "$PROJECT" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)
+                if [ -n "$BRANCH" ] && [ "$BRANCH" != "HEAD" ] && [ -n "$UPSTREAM" ]; then
+                  REMOTE_NAME="''${UPSTREAM%%/*}"
+                  URL=$(git -C "$PROJECT" remote get-url "$REMOTE_NAME" 2>/dev/null || true)
+                  if [ -n "$URL" ]; then
+                    GIT_WORKTREE_URL="$URL"
+                    GIT_WORKTREE_BRANCH="$BRANCH"
+                    GIT_COMMON_DIR="" # fast path applies -- skip the fallback entirely
+                  fi
+                fi
+                ;;
             esac
           fi
           # Whatever workspace we ended up using, remember it -- so a LATER
@@ -995,6 +1020,29 @@ let
               2>&1 | tail -20 || true
           }
 
+          # Fast path: the box does its OWN shallow clone of just
+          # GIT_WORKTREE_BRANCH from GIT_WORKTREE_URL. $PROJECT's regular
+          # files (already synced by sync_unison, including any local
+          # uncommitted edits) get overlaid on top of the clone's checkout
+          # -- git only compares the working tree against its own
+          # index/HEAD, so this is fully correct regardless of how the
+          # files arrived. Idempotent: skips straight past if .git is
+          # already a real directory (a reconnect to an already-fixed-up box).
+          fixup_git_worktree() {
+            IP="$1"
+            [ -n "$GIT_WORKTREE_URL" ] || return 0
+            ssh_gburd "$IP" "set -eu
+              cd '$REMOTE_REL'
+              [ -d .git ] && exit 0
+              TMPCLONE=\$(mktemp -d)
+              git clone --quiet --depth 50 --branch '$GIT_WORKTREE_BRANCH' --single-branch '$GIT_WORKTREE_URL' \"\$TMPCLONE\"
+              find . -maxdepth 1 -name .git -type f -delete
+              mv \"\$TMPCLONE/.git\" ./.git
+              find \"\$TMPCLONE\" -maxdepth 2 -delete 2>/dev/null || true
+              git checkout --quiet -- . 2>/dev/null || true
+            " 2>&1 | tail -10 || true
+          }
+
           # Sync ONLY the session-storage root of the agent actually being
           # started (not all agents' session state, not the rest of
           # $HOME) -- e.g. running 'pi' syncs ~/.pi/agent/sessions both
@@ -1090,6 +1138,7 @@ let
               sync_git_identity "$IP"
               echo "agent-sandbox: syncing $WORKSPACE -> $TAGNAME ($IP)..." >&2
               sync_unison "$IP" "$REMOTE_REL"
+              fixup_git_worktree "$IP"
               sync_git_common_dir "$IP"
               # The agent being started (first word of the remote command,
               # if any) determines which session-state dir + LiteLLM key
