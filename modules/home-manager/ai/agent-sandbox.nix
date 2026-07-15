@@ -262,7 +262,14 @@ let
     mountpoint -q /mnt/nvme || mount "$DEV" /mnt/nvme
     mkdir -p /mnt/nvme/ws /mnt/nvme/nix-build-tmp
     chown gburd:users /mnt/nvme/ws
-    chmod 1777 /mnt/nvme /mnt/nvme/nix-build-tmp
+    # /mnt/nvme itself stays root:root 0755 (mount's own default), NOT
+    # world-writable -- nix.settings.build-dir walks the whole parent
+    # chain and REFUSES a world-writable ancestor ("not allowed for
+    # security"), confirmed live. Only the two subdirs anyone actually
+    # writes to need their own ownership: ws (gburd's project tree) and
+    # nix-build-tmp (root, since only the nix-daemon writes there).
+    chown root:root /mnt/nvme/nix-build-tmp
+    chmod 0755 /mnt/nvme/nix-build-tmp
     # ~/ws -> /mnt/nvme/ws. gburd's home dir exists by now (user creation
     # happens during system activation, before services start). gburd is
     # always a freshly-created user, so there's never real content at
@@ -776,9 +783,18 @@ let
             echo "agent-sandbox: provisioning gburd user + passwordless sudo on $TAGNAME (one-time)..." >&2
             AUTHKEY=$(cat "${home}/.ssh/id_auth_ed25519.pub" 2>/dev/null || cat "${home}/.ssh/id_ed25519.pub")
             case "$ARCH" in
-              x86_64) TEMPLATE="${ec2ConfigTemplateX86}" ;;
-              aarch64) TEMPLATE="${ec2ConfigTemplateArm}" ;;
+              x86_64) TEMPLATE="${ec2ConfigTemplateX86}"; MOUNTSCRIPT="${mkMountInstanceNvmeScript pkgsFor.x86_64}" ;;
+              aarch64) TEMPLATE="${ec2ConfigTemplateArm}"; MOUNTSCRIPT="${mkMountInstanceNvmeScript pkgsFor.aarch64}" ;;
             esac
+            # TEMPLATE's ExecStart references MOUNTSCRIPT by /nix/store path,
+            # but that path was built HERE (floki/meh/arnold), not on a
+            # public cache -- confirmed live: nixos-rebuild switch on the
+            # box failed with "Unable to locate executable" because the
+            # path simply didn't exist in the box's own store yet. Copy the
+            # whole closure over before the rebuild that references it.
+            echo "agent-sandbox: copying NVMe-mount script to $TAGNAME..." >&2
+            NIX_SSHOPTS="-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
+              nix copy --to "ssh://root@$IP" "$MOUNTSCRIPT" 2>&1 | tail -10 || true
             sed "s|@AUTHKEY@|$AUTHKEY|" "$TEMPLATE" | \
               ssh_root "$IP" 'cat > /etc/nixos/configuration.nix'
             ssh_root "$IP" 'nixos-rebuild switch 2>&1 | tail -20'
