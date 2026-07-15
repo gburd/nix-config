@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 # ec2 — the agent-sandbox `--tier ec2` guest. This is NOT a real workstation:
 # it's a throwaway NixOS instance (see modules/home-manager/ai/agent-sandbox.nix,
 # ec2 tier) provisioned with a gburd user + passwordless sudo, then handed
@@ -28,4 +28,17 @@
   # text generation, not a derivation needing cross-arch build/emulation)
   # but there's no reason to build/carry a tool this box never runs.
   programs.ai.sandbox.enable = lib.mkForce false;
+
+  # Same dev-CLI tooling as meh (users/gburd/hosts/meh.nix's own
+  # home.packages, minus what genuinely doesn't belong here: GUI apps
+  # (1password-gui, element-desktop -- meh is headless too and doesn't
+  # actually run these either) and taskbook/khal (both hard-depend on
+  # Proton Drive / calendar sops secrets this sops-free host doesn't
+  # have). cmake/plocate/minio-client are real CLI tools with no such
+  # dependency -- straightforward parity.
+  home.packages = with pkgs; [
+    cmake
+    plocate
+    unstable.minio-client
+  ];
 }
