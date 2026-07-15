@@ -9,6 +9,7 @@
     imports = [
       ../modules/home-manager/ai
       ./_mixins/console/ai
+      ../home-manager/_mixins/emacs
     ];
 
     home.username = lib.mkForce username;
@@ -77,12 +78,11 @@
       };
     };
 
-    # NOTE: wiring the shared emacs mixin here is deferred — its theme.nix needs
-    # a `colorscheme` attr only the Linux console mixin provides (eval fails with
-    # "attribute 'colorscheme' missing"), and emacs-gtk must be overridden to the
-    # Cocoa build on macOS. Emacs on the aws host is a follow-up (provide the
-    # colorscheme option or a darwin-tailored programs.emacs block + burd.org
-    # placement, then runtime-test).
+    # Emacs (shared mixin, now colorscheme-optional). The mixin defaults to
+    # emacs-gtk (X11) which is wrong on macOS -> use the Cocoa/NS build; and
+    # socketActivation is systemd-only, so disable it (launchd emacs still runs).
+    programs.emacs.package = lib.mkForce pkgs.emacs;
+    services.emacs.socketActivation.enable = lib.mkForce false;
 
     # Amazon Builder Toolbox stays self-managed under ~/.toolbox (brazil, ada,
     # cr, toolbox, q, builder-mcp, amzn-mcp, ...); it self-updates and must NOT

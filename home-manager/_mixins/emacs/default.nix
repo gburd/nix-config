@@ -1,10 +1,17 @@
-{ pkgs, config, ... }:
+{ pkgs, config, lib, ... }:
+let
+  # theme.nix needs a nix-colors base16 `config.colorscheme`. Only wire the
+  # nix-theme override when one is actually set (e.g. Linux hosts that import
+  # nix-colors). On darwin there is none, and burd.org themes itself via
+  # solarized-theme, so the base16 theme is simply skipped.
+  hasScheme = config ? colorscheme && config.colorscheme != null;
+in
 {
   programs.emacs = {
     enable = true;
     package = pkgs.emacs-gtk;
 
-    overrides = final: _prev: {
+    overrides = final: _prev: lib.optionalAttrs hasScheme {
       nix-theme = final.callPackage ./theme.nix { inherit config; };
     };
     # burd.org uses `use-package-always-ensure t`. On a pure/offline nix Emacs
@@ -12,9 +19,8 @@
     # errors on startup trying to fetch from ELPA. Keep this in sync with the
     # (use-package ...) forms in burd.org. Built-ins (server, eglot, cc-mode,
     # js, sh-script, conf-mode, make-mode, sql) are :ensure nil and need nothing.
-    extraPackages = epkgs: with epkgs; [
+    extraPackages = epkgs: with epkgs; ([
       # theme + core
-      nix-theme
       solarized-theme
       which-key
       mmm-mode
@@ -68,7 +74,7 @@
       scala-mode
       sml-mode
       terraform-mode
-    ];
+    ] ++ lib.optional hasScheme nix-theme);
 
     extraConfig = builtins.readFile ./init.el;
   };
