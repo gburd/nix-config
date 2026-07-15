@@ -814,6 +814,44 @@ let
             ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "gburd@$IP" "$@"
           }
 
+          # Run a slow, normally-noisy command quietly: one line while it
+          # runs, full output only on failure. AGENT_SANDBOX_VERBOSE=1
+          # always shows full output (debugging).
+          run_quiet() {
+            MSG="$1"; shift
+            RUN_QUIET_LOG=$(mktemp)
+            if [ -n "''${AGENT_SANDBOX_VERBOSE:-}" ]; then
+              echo "agent-sandbox: $MSG..." >&2
+              "$@" 2>&1 | tee "$RUN_QUIET_LOG" >&2
+              STATUS="''${PIPESTATUS[0]}"
+            else
+              ( "$@" > "$RUN_QUIET_LOG" 2>&1 ) &
+              QPID=$!
+              if [ -t 2 ]; then
+                SPIN='-\|/'
+                I=0
+                while kill -0 "$QPID" 2>/dev/null; do
+                  printf '\ragent-sandbox: %s... %s' "$MSG" "''${SPIN:$((I++ % 4)):1}" >&2
+                  sleep 0.15
+                done
+              else
+                echo "agent-sandbox: $MSG... (please be patient)" >&2
+              fi
+              wait "$QPID"
+              STATUS=$?
+              if [ -t 2 ]; then
+                printf '\r%80s\r' "" >&2
+              fi
+              if [ "$STATUS" -eq 0 ]; then
+                echo "agent-sandbox: $MSG... done" >&2
+              else
+                echo "agent-sandbox: $MSG... FAILED" >&2
+                cat "$RUN_QUIET_LOG" >&2
+              fi
+            fi
+            return "$STATUS"
+          }
+
           provision_gburd_user() {
             IP="$1"
             if ssh_root "$IP" 'id gburd >/dev/null 2>&1' 2>/dev/null; then
@@ -827,7 +865,8 @@ let
             esac
             sed "s|@AUTHKEY@|$AUTHKEY|" "$TEMPLATE" | \
               ssh_root "$IP" 'cat > /etc/nixos/configuration.nix'
-            ssh_root "$IP" 'nixos-rebuild switch 2>&1 | tail -20'
+            run_quiet "one-time NixOS provisioning on $TAGNAME" ssh_root "$IP" 'nixos-rebuild switch'
+            rm -f "$RUN_QUIET_LOG"
           }
 
           # Push THIS connecting host's git-signing PUBLIC key into the
@@ -903,7 +942,6 @@ let
           # access -- no need to push the flake source itself over unison.
           deploy_home_manager() {
             IP="$1"
-            echo "agent-sandbox: deploying home-manager (gburd@ec2) on $TAGNAME..." >&2
             # activationPackage's default output IS the built generation --
             # running its own ./activate script performs the switch. (No
             # 'switch' subcommand: that belongs to the home-manager CLI,
@@ -911,18 +949,16 @@ let
             # live: 'nix run ...activationPackage -- switch' fails with
             # "unknown option 'switch'".) --refresh: always deploy whatever
             # is CURRENTLY pushed, never a cached-stale flake read.
-            GENPATH_LOG=$(mktemp)
-            ssh_gburd "$IP" \
-              'nix --extra-experimental-features "nix-command flakes" build --refresh --no-link --print-out-paths github:gburd/nix-config#homeConfigurations."gburd@ec2".activationPackage 2>&1' \
-              > "$GENPATH_LOG" || true
-            cat "$GENPATH_LOG" >&2
-            GENPATH=$(tail -1 "$GENPATH_LOG")
-            rm -f "$GENPATH_LOG"
+            run_quiet "deploying home-manager (gburd@ec2) on $TAGNAME" ssh_gburd "$IP" \
+              'nix --extra-experimental-features "nix-command flakes" build --refresh --no-link --print-out-paths github:gburd/nix-config#homeConfigurations."gburd@ec2".activationPackage 2>&1' || true
+            GENPATH=$(tail -1 "$RUN_QUIET_LOG")
+            rm -f "$RUN_QUIET_LOG"
             case "$GENPATH" in
               /nix/store/*) ;;
               *) echo "agent-sandbox: home-manager build failed on $TAGNAME (see above); continuing without it." >&2; return 1 ;;
             esac
-            ssh_gburd "$IP" "$GENPATH/activate" 2>&1 | tail -30 || true
+            run_quiet "activating home-manager generation on $TAGNAME" ssh_gburd "$IP" "$GENPATH/activate"
+            rm -f "$RUN_QUIET_LOG"
           }
 
           latest_nixos_ami() {
@@ -986,20 +1022,19 @@ let
           ensure_remote_unison() {
             IP="$1"
             ssh_gburd "$IP" 'command -v unison >/dev/null 2>&1' 2>/dev/null && return 0
-            echo "agent-sandbox: installing unison on $TAGNAME (one-time)..." >&2
-            ssh_gburd "$IP" \
-              'nix --extra-experimental-features "nix-command flakes" profile install nixpkgs#unison' \
-              2>&1 | tail -5 || true
+            run_quiet "installing unison on $TAGNAME (one-time)" ssh_gburd "$IP" \
+              'nix --extra-experimental-features "nix-command flakes" profile install nixpkgs#unison'
+            rm -f "$RUN_QUIET_LOG"
           }
 
           sync_unison() {
             IP="$1"; DIR="$2"
             ssh_gburd "$IP" "mkdir -p '$DIR'" 2>/dev/null || true
             ensure_remote_unison "$IP"
-            unison "$PROJECT" "ssh://gburd@$IP/$DIR" \
+            run_quiet "syncing $WORKSPACE <-> $TAGNAME" unison "$PROJECT" "ssh://gburd@$IP/$DIR" \
               -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-              -prefer newer -batch -ignore 'Name .direnv' \
-              2>&1 | tail -20 || true
+              -prefer newer -batch -contactquietly -ignore 'Name .direnv'
+            rm -f "$RUN_QUIET_LOG"
           }
 
           # For a git WORKTREE, $PROJECT/.git is just a one-line pointer
@@ -1014,10 +1049,10 @@ let
             [ -n "$GIT_COMMON_DIR" ] || return 0
             GCD_REL="''${GIT_COMMON_DIR#"${home}"/}"
             ssh_gburd "$IP" "mkdir -p '$(dirname "$GCD_REL")'" 2>/dev/null || true
-            unison "$GIT_COMMON_DIR" "ssh://gburd@$IP/$GCD_REL" \
+            run_quiet "syncing git data ($GIT_COMMON_DIR, this can be large)" unison "$GIT_COMMON_DIR" "ssh://gburd@$IP/$GCD_REL" \
               -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-              -prefer newer -batch \
-              2>&1 | tail -20 || true
+              -prefer newer -batch -contactquietly
+            rm -f "$RUN_QUIET_LOG"
           }
 
           # Fast path: the box does its OWN shallow clone of just
@@ -1031,7 +1066,7 @@ let
           fixup_git_worktree() {
             IP="$1"
             [ -n "$GIT_WORKTREE_URL" ] || return 0
-            ssh_gburd "$IP" "set -eu
+            run_quiet "cloning $GIT_WORKTREE_BRANCH on $TAGNAME" ssh_gburd "$IP" "set -eu
               cd '$REMOTE_REL'
               [ -d .git ] && exit 0
               TMPCLONE=\$(mktemp -d)
@@ -1040,7 +1075,8 @@ let
               mv \"\$TMPCLONE/.git\" ./.git
               find \"\$TMPCLONE\" -maxdepth 2 -delete 2>/dev/null || true
               git checkout --quiet -- . 2>/dev/null || true
-            " 2>&1 | tail -10 || true
+            "
+            rm -f "$RUN_QUIET_LOG"
           }
 
           # Sync ONLY the session-storage root of the agent actually being
@@ -1069,10 +1105,10 @@ let
             KEYSRC="${home}/.config/litellm/keys/$AGENT.key"
             if [ -n "$SESSDIR" ]; then
               ssh_gburd "$IP" "mkdir -p '$SESSDIR'" 2>/dev/null || true
-              unison "${home}/$SESSDIR" "ssh://gburd@$IP/$SESSDIR" \
+              run_quiet "syncing $AGENT session state" unison "${home}/$SESSDIR" "ssh://gburd@$IP/$SESSDIR" \
                 -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-                -prefer newer -batch \
-                2>&1 | tail -10 || true
+                -prefer newer -batch -contactquietly
+              rm -f "$RUN_QUIET_LOG"
             fi
             if [ -r "$KEYSRC" ]; then
               ssh_gburd "$IP" 'mkdir -p .config/litellm/keys' 2>/dev/null || true
