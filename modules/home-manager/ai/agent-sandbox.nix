@@ -807,11 +807,11 @@ let
           # restarted instance).
           ssh_root() {
             IP="$1"; shift
-            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "root@$IP" "$@"
+            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -i "$KEYFILE" "root@$IP" "$@"
           }
           ssh_gburd() {
             IP="$1"; shift
-            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i "$KEYFILE" "gburd@$IP" "$@"
+            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -i "$KEYFILE" "gburd@$IP" "$@"
           }
 
           # Run a slow, normally-noisy command quietly: one line while it
@@ -957,7 +957,7 @@ let
               /nix/store/*) ;;
               *) echo "agent-sandbox: home-manager build failed on $TAGNAME (see above); continuing without it." >&2; return 1 ;;
             esac
-            run_quiet "activating home-manager generation on $TAGNAME" ssh_gburd "$IP" "$GENPATH/activate"
+            run_quiet "activating home-manager generation on $TAGNAME" ssh_gburd "$IP" "$GENPATH/activate" || true
             rm -f "$RUN_QUIET_LOG"
           }
 
@@ -1023,7 +1023,7 @@ let
             IP="$1"
             ssh_gburd "$IP" 'command -v unison >/dev/null 2>&1' 2>/dev/null && return 0
             run_quiet "installing unison on $TAGNAME (one-time)" ssh_gburd "$IP" \
-              'nix --extra-experimental-features "nix-command flakes" profile install nixpkgs#unison'
+              'nix --extra-experimental-features "nix-command flakes" profile install nixpkgs#unison' || true
             rm -f "$RUN_QUIET_LOG"
           }
 
@@ -1033,7 +1033,7 @@ let
             ensure_remote_unison "$IP"
             run_quiet "syncing $WORKSPACE <-> $TAGNAME" unison "$PROJECT" "ssh://gburd@$IP/$DIR" \
               -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-              -prefer newer -batch -contactquietly -ignore 'Name .direnv'
+              -prefer newer -batch -contactquietly -ignore 'Name .direnv' || true
             rm -f "$RUN_QUIET_LOG"
           }
 
@@ -1051,7 +1051,7 @@ let
             ssh_gburd "$IP" "mkdir -p '$(dirname "$GCD_REL")'" 2>/dev/null || true
             run_quiet "syncing git data ($GIT_COMMON_DIR, this can be large)" unison "$GIT_COMMON_DIR" "ssh://gburd@$IP/$GCD_REL" \
               -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-              -prefer newer -batch -contactquietly
+              -prefer newer -batch -contactquietly || true
             rm -f "$RUN_QUIET_LOG"
           }
 
@@ -1075,7 +1075,7 @@ let
               mv \"\$TMPCLONE/.git\" ./.git
               find \"\$TMPCLONE\" -maxdepth 2 -delete 2>/dev/null || true
               git checkout --quiet -- . 2>/dev/null || true
-            "
+            " || true
             rm -f "$RUN_QUIET_LOG"
           }
 
@@ -1107,7 +1107,7 @@ let
               ssh_gburd "$IP" "mkdir -p '$SESSDIR'" 2>/dev/null || true
               run_quiet "syncing $AGENT session state" unison "${home}/$SESSDIR" "ssh://gburd@$IP/$SESSDIR" \
                 -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-                -prefer newer -batch -contactquietly
+                -prefer newer -batch -contactquietly || true
               rm -f "$RUN_QUIET_LOG"
             fi
             if [ -r "$KEYSRC" ]; then
