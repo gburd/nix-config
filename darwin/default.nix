@@ -121,7 +121,9 @@
 
   fonts = {
     packages = with pkgs; [
-      iosevka
+      # iosevka-bin (prebuilt) — building iosevka from source crashes on macOS
+      # (Node/libuv kqueue assertion), which broke `nix build` of the system.
+      iosevka-bin
       font-awesome
       nerd-fonts.fira-code
     ];
