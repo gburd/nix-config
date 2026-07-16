@@ -821,7 +821,18 @@ let
           }
           ssh_gburd() {
             IP="$1"; shift
-            ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -i "$KEYFILE" "gburd@$IP" "$@"
+            # -A: forward THIS host's ssh-agent. Needed by more than just
+            # the final interactive session -- fixup_git_worktree's git
+            # clone (from a private git@github.com:... remote) and
+            # sync_git_identity's signing both need to authenticate AS the
+            # user, and neither happens over the interactive -A tunnel
+            # (that's only set up for the final `ssh -t -A -R` call).
+            # Confirmed live: without -A here, fixup_git_worktree's clone
+            # failed outright ("Could not read from remote repository").
+            # Never a copied private key -- same forward-only posture as
+            # every other credential in this tier (Bedrock bearer token,
+            # LiteLLM keys, git signing key).
+            ssh -A -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -i "$KEYFILE" "gburd@$IP" "$@"
           }
 
           # Run a slow, normally-noisy command quietly: one line while it
@@ -899,10 +910,21 @@ let
               echo "agent-sandbox: warning: no local ssh-agent (SSH_AUTH_SOCK unset) -- git signing on $TAGNAME will fail without one." >&2
             fi
             SIGNKEY=$(cat "$SIGNPUB")
-            ssh_gburd "$IP" "git config --global gpg.format ssh && \
-              git config --global user.signingKey '$SIGNKEY' && \
-              git config --global commit.gpgsign true && \
-              git config --global tag.gpgsign true" 2>&1 | tail -5 || true
+            # --local (in $REMOTE_REL), NOT --global: the box's global
+            # ~/.config/git/config is a home-manager-owned symlink into the
+            # read-only /nix/store (programs.git.enable=true, shared by
+            # every host via cli/git.nix) -- `git config --global` there
+            # fails outright ("could not lock config file ... Read-only
+            # file system", confirmed live). A per-repo --local config is
+            # a normal mutable file regardless of what owns the global
+            # one, and this is only ever signing commits in THIS one
+            # project anyway. Must run AFTER sync_unison/fixup_git_worktree
+            # (the connect call site does) -- $REMOTE_REL doesn't exist on
+            # the box until then.
+            ssh_gburd "$IP" "git -C '$REMOTE_REL' config --local gpg.format ssh && \
+              git -C '$REMOTE_REL' config --local user.signingKey '$SIGNKEY' && \
+              git -C '$REMOTE_REL' config --local commit.gpgsign true && \
+              git -C '$REMOTE_REL' config --local tag.gpgsign true" 2>&1 | tail -5 || true
           }
 
           # Keep a STABLE ssh alias (asx-<workspace>) pointed at whatever IP
@@ -1198,11 +1220,11 @@ let
               IP=$(wait_for_ssh)
               ensure_provisioned "$IP"
               sync_ssh_alias "$IP"
-              sync_git_identity "$IP"
               echo "agent-sandbox: syncing $WORKSPACE -> $TAGNAME ($IP)..." >&2
               sync_unison "$IP" "$REMOTE_REL"
               fixup_git_worktree "$IP"
               sync_git_common_dir "$IP"
+              sync_git_identity "$IP"
               # Sync every agent's session state + LiteLLM key BEFORE
               # connecting -- 'connect' with no '-- cmd' drops into an
               # interactive shell and the agent is picked once inside
