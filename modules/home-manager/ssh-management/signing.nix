@@ -50,7 +50,15 @@ in
       '';
     };
 
-    # Verify git signing configuration
+    # Verify git signing configuration. The old check
+    # (`ssh-keygen -Y check-novalidate -s /dev/null`) passed an EMPTY file
+    # as the signature to verify -- ssh-keygen correctly rejects that
+    # ("missing header"/"incomplete message") every single time,
+    # regardless of whether signing actually works. Confirmed: real
+    # signing (git commit --allow-empty -S, git log --show-signature) has
+    # always worked correctly; this warning was a false positive from a
+    # broken self-test, not a real signing problem. Real check: sign a
+    # real throwaway payload with the actual key, then verify THAT.
     home.activation.verifySshSigning = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if command -v git >/dev/null 2>&1; then
         echo "Verifying git SSH signing configuration..."
@@ -59,12 +67,16 @@ in
         if [ ! -f "${cfg.signingKey.path}" ]; then
           echo "⚠️  WARNING: Signing key not found at ${cfg.signingKey.path}"
         else
-          # Test signature creation (dry-run)
-          if ! ${pkgs.openssh}/bin/ssh-keygen -Y check-novalidate -n git -s /dev/null 2>/dev/null; then
-            echo "⚠️  WARNING: ssh-keygen signature verification may not work correctly"
-          else
+          SIGCHECK_TMP=$(mktemp -d)
+          echo "signing self-test" > "$SIGCHECK_TMP/payload"
+          if ${pkgs.openssh}/bin/ssh-keygen -Y sign -n git -f "${cfg.signingKey.path}" "$SIGCHECK_TMP/payload" >/dev/null 2>&1 \
+             && ${pkgs.openssh}/bin/ssh-keygen -Y check-novalidate -n git -s "$SIGCHECK_TMP/payload.sig" < "$SIGCHECK_TMP/payload" >/dev/null 2>&1; then
             echo "✓ Git SSH signing verification successful"
+          else
+            echo "⚠️  WARNING: ssh-keygen signature verification may not work correctly"
           fi
+          find "$SIGCHECK_TMP" -type f -delete
+          rmdir "$SIGCHECK_TMP"
         fi
       fi
     '';
