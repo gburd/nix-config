@@ -294,19 +294,22 @@ let
         ];
 
         # Local NVMe instance-store: format + mount at /mnt/nvme, then
-        # relocate gburd's $HOME/ws (the project tree) and Nix's build
-        # scratch onto it -- project I/O and Nix builds run on fast,
-        # free-with-the-instance local SSD, not the (much smaller) EBS
-        # root volume. A systemd service, not fileSystems=: the disk
-        # doesn't exist until the instance actually boots on NVMe-capable
-        # hardware, and formatting must happen before the FIRST mount, not
-        # on every boot of a stopped/restarted instance (idempotent: skips
-        # mkfs if a filesystem is already there, skips the symlink if
-        # ~/ws already resolves correctly). Detected by NVMe model string
-        # "Amazon EC2 NVMe Instance Storage", the same method Amazon's own
-        # udev rules (amazon-ec2-utils) use to tell it apart from the EBS
-        # root -- robust across instance families/generations, unlike
-        # hardcoding a /dev/nvme?n1 index (varies by boot order).
+        # BIND MOUNT gburd's $HOME/ws (the project tree) onto it, and
+        # relocate Nix's build scratch there too -- project I/O and Nix
+        # builds run on fast, free-with-the-instance local SSD, not the
+        # (much smaller) EBS root volume. ~/ws is a real directory (bind
+        # mount), not a symlink -- deliberately, so every tool (unison,
+        # git, ssh, agents) sees an ordinary path with no special-casing.
+        # A systemd service, not fileSystems=: the disk doesn't exist
+        # until the instance actually boots on NVMe-capable hardware, and
+        # formatting must happen before the FIRST mount, not on every boot
+        # of a stopped/restarted instance (idempotent: skips mkfs if a
+        # filesystem is already there, skips re-binding if ~/ws is already
+        # mounted). Detected by NVMe model string "Amazon EC2 NVMe Instance
+        # Storage", the same method Amazon's own udev rules
+        # (amazon-ec2-utils) use to tell it apart from the EBS root --
+        # robust across instance families/generations, unlike hardcoding a
+        # /dev/nvme?n1 index (varies by boot order).
         systemd.services.mount-instance-nvme = {
           description = "Format (if needed) and mount local NVMe instance-store at /mnt/nvme";
           wantedBy = [ "multi-user.target" ];
@@ -352,16 +355,23 @@ let
             # only the nix-daemon writes there).
             chown root:root /mnt/nvme/nix-build-tmp
             chmod 0755 /mnt/nvme/nix-build-tmp
-            # ~/ws -> /mnt/nvme/ws. gburd's home dir exists by now (user
-            # creation happens during system activation, before services
-            # start). gburd is always a freshly-created user, so there's
-            # never real content at ~/ws to protect; ln -sfn just replaces
-            # any prior symlink (idempotent across reboots) or, if
-            # something unexpected is already a real directory there,
-            # leaves it alone rather than deleting anything.
-            if [ -d /home/gburd ] && [ ! -d /home/gburd/ws ]; then
-              ln -sfn /mnt/nvme/ws /home/gburd/ws
+            # ~/ws is a BIND MOUNT of /mnt/nvme/ws, not a symlink -- every
+            # tool (unison, git, ssh, agents) sees a completely normal
+            # directory at /home/gburd/ws (readlink -f/stat show nothing
+            # special, confirmed), while the actual storage lives on fast
+            # NVMe. gburd's home dir exists by now (user creation happens
+            # during system activation, before services start). Idempotent:
+            # mountpoint check skips re-binding if already mounted (e.g.
+            # this oneshot re-running on an instance restart). Migration
+            # from an older boot's symlink (a previous version of this
+            # script used ln -sfn instead of a bind mount): unlink only
+            # removes an actual symlink, never touches a real directory.
+            if [ -L /home/gburd/ws ]; then
+              unlink /home/gburd/ws
             fi
+            mkdir -p /home/gburd/ws
+            chown gburd:users /home/gburd/ws
+            mountpoint -q /home/gburd/ws || mount --bind /mnt/nvme/ws /home/gburd/ws
           ${"''"};
         };
 
