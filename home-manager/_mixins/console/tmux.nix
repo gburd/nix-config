@@ -20,6 +20,13 @@ _:
     terminal = "tmux-256color";
 
     extraConfig = ''
+      # Report modified keys (Ctrl/Meta/Shift combos, e.g. a modified Enter)
+      # to apps running inside tmux -- off by default, which is exactly the
+      # "Warning: tmux extended-keys is off" pi/other TUIs print on
+      # startup. Needed for agents that read raw modified-key sequences
+      # (e.g. Shift+Enter for multi-line input).
+      set -g extended-keys on
+
       # True color passthrough (WezTerm / modern terminals).
       set -ga terminal-overrides ",*256col*:Tc,xterm-256color:RGB"
 
@@ -35,6 +42,11 @@ _:
       bind c new-window -c "#{pane_current_path}"
       unbind '"'
       unbind %
+
+      # C-a C-a sends a literal C-a through to the pane (Emacs/readline
+      # "start of line") -- otherwise the prefix eats every C-a, which
+      # fights any Emacs-style muscle memory. Standard screen/tmux trick.
+      bind C-a send-prefix
 
       # --- Vim-style pane navigation (prefix h/j/k/l) ----------------------
       bind h select-pane -L

@@ -1117,6 +1117,23 @@ let
             fi
           }
 
+          # Sync EVERY known agent's session state, not just the one named
+          # after '--' on the command line. connect with no '-- cmd' drops
+          # into an interactive shell (bash -l) and the user picks an agent
+          # once inside tmux -- REMOTE_CMD is empty in that case, so the
+          # single-agent sync above never ran at all. Confirmed live: a
+          # session run entirely by typing 'pi' inside the interactive
+          # shell never made it back to the local ~/.pi/agent/sessions,
+          # because nothing ever called sync_agent_state for it. Cheap
+          # (session dirs are small, unlike the git-object-store mistake
+          # this tier already learned from) -- always sync all of them.
+          sync_all_agent_state() {
+            IP="$1"
+            for a in pi claude codex maki hermes; do
+              sync_agent_state "$IP" "$a"
+            done
+          }
+
           case "$VERB" in
             up)
               up_instance
@@ -1176,14 +1193,13 @@ let
               sync_unison "$IP" "$REMOTE_REL"
               fixup_git_worktree "$IP"
               sync_git_common_dir "$IP"
-              # The agent being started (first word of the remote command,
-              # if any) determines which session-state dir + LiteLLM key
-              # to sync -- e.g. 'connect -- pi --session-id X' only syncs
-              # pi's sessions, not claude/codex/maki/hermes's.
-              AGENT="''${REMOTE_CMD[0]:-}"
-              if [ -n "$AGENT" ]; then
-                sync_agent_state "$IP" "$AGENT"
-              fi
+              # Sync every agent's session state + LiteLLM key BEFORE
+              # connecting -- 'connect' with no '-- cmd' drops into an
+              # interactive shell and the agent is picked once inside
+              # tmux, so there's no command-line hint of which one; syncing
+              # all of them up front means whichever one gets typed
+              # already has its prior local session state + key in place.
+              sync_all_agent_state "$IP"
               echo "agent-sandbox: connecting (tmux session '$TMUX_SESSION', persists across disconnects). Ctrl-D/exit to disconnect; syncs back after." >&2
               # Wrapped in tmux new-session -A (attach-or-create): the
               # session survives an ssh drop, and reconnecting later re-
@@ -1215,9 +1231,7 @@ let
               echo "agent-sandbox: syncing $WORKSPACE <- $TAGNAME ($IP)..." >&2
               sync_unison "$IP" "$REMOTE_REL"
               sync_git_common_dir "$IP"
-              if [ -n "$AGENT" ]; then
-                sync_agent_state "$IP" "$AGENT"
-              fi
+              sync_all_agent_state "$IP"
               ;;
             *) echo "agent-sandbox: unknown ec2 verb '$VERB' (up|connect|down|status)" >&2; exit 2 ;;
           esac
