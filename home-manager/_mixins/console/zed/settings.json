@@ -2,6 +2,26 @@
   // Zed Editor Configuration
   // Mirroring Neovim setup for consistency
 
+  // Remote development via SSH -- "host" here must resolve through the
+  // NORMAL ssh config resolution (~/.ssh/config, which Includes
+  // ~/.ssh/agent-sandbox-ec2.conf), same as a plain `ssh asx-<workspace>`
+  // would. agent-sandbox's ec2 tier keeps that alias pointed at whatever
+  // IP the box currently has (rewritten on every `up`/`connect`) -- so
+  // this entry survives the box being stopped/restarted with a new IP,
+  // as long as Zed is told to (re)connect AFTER the alias has been
+  // refreshed (i.e. after running `agent-sandbox --tier ec2 connect`
+  // once from a terminal first). Zed does NOT prompt for a remote path
+  // separately -- after connecting it opens directly into project
+  // selection on the projects list below.
+  "ssh_connections": [
+    {
+      "host": "asx-bcs",
+      "projects": [
+        { "paths": ["~/ws/postgres/bcs"] }
+      ]
+    }
+  ],
+
   // Theme and appearance
   "theme": "Gruvbox Dark Hard",
   "ui_font_size": 14,
