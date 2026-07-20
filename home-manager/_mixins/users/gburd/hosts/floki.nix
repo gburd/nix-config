@@ -268,6 +268,7 @@ with lib.hm.gvariant;
       _1password-gui
       cmake
       plocate
+      telegram-desktop
       unstable.element-desktop
       unstable.minio-client
 
