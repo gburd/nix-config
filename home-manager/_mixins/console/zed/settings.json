@@ -229,7 +229,7 @@
   "disable_ai": false,
   "agent": {
     "enabled": true,
-    "button": true,
+    "button": false,
     "default_model": {
       "provider": "openai_compatible",
       "model": "claude-opus-4-8"
