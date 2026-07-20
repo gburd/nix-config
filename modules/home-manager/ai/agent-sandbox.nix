@@ -1065,7 +1065,7 @@ let
             ensure_remote_unison "$IP"
             run_quiet "syncing $WORKSPACE <-> $TAGNAME" unison "$PROJECT" "ssh://gburd@$IP/$DIR" \
               -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-              -prefer newer -batch -contactquietly -ignore 'Name .direnv' || true
+              -prefer newer -batch -silent -ui text -contactquietly -ignore 'Name .direnv' || true
             rm -f "$RUN_QUIET_LOG"
           }
 
@@ -1083,7 +1083,7 @@ let
             ssh_gburd "$IP" "mkdir -p '$(dirname "$GCD_REL")'" 2>/dev/null || true
             run_quiet "syncing git data ($GIT_COMMON_DIR, this can be large)" unison "$GIT_COMMON_DIR" "ssh://gburd@$IP/$GCD_REL" \
               -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-              -prefer newer -batch -contactquietly || true
+              -prefer newer -batch -silent -ui text -contactquietly || true
             rm -f "$RUN_QUIET_LOG"
           }
 
@@ -1131,15 +1131,38 @@ let
             esac
           }
 
+          # Mangled per-project session-subdir name, matching each
+          # agent's OWN convention -- computed from $PROJECT (the box's
+          # absolute path is $HOME/$REMOTE_REL, which equals $PROJECT
+          # exactly whenever REMOTE_REL isn't the "project" fallback, i.e.
+          # in the common case of a project actually under $HOME). Used to
+          # scope pi/claude's sync to just THIS project's session data via
+          # unison's -path, instead of their entire (potentially huge --
+          # confirmed live: 675MB pi, 4.1GB claude, across every project
+          # ever worked on) sessions root. codex/maki/hermes have no such
+          # per-project subdir at all (confirmed: codex organizes by date,
+          # maki/hermes are flat UUID/timestamp files) -- nothing to scope
+          # to, so they still sync in full (small in practice: <500MB).
+          projectSessionSubdir() {
+            case "$1" in
+              pi)     printf '%s' "''${PROJECT#/}" | tr '/' '-' | sed 's/^/--/; s/$/--/' ;;
+              claude) printf '%s' "$PROJECT" | tr '/' '-' ;;
+              *)      echo "" ;;
+            esac
+          }
+
           sync_agent_state() {
             IP="$1"; AGENT="$2"
             SESSDIR=$(agentSessionDir "$AGENT")
             KEYSRC="${home}/.config/litellm/keys/$AGENT.key"
             if [ -n "$SESSDIR" ]; then
               ssh_gburd "$IP" "mkdir -p '$SESSDIR'" 2>/dev/null || true
-              run_quiet "syncing $AGENT session state" unison "${home}/$SESSDIR" "ssh://gburd@$IP/$SESSDIR" \
+              UNISON_ARGS=("${home}/$SESSDIR" "ssh://gburd@$IP/$SESSDIR" \
                 -sshargs "-i $KEYFILE -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes" \
-                -prefer newer -batch -contactquietly || true
+                -prefer newer -batch -silent -ui text -contactquietly)
+              SUBDIR=$(projectSessionSubdir "$AGENT")
+              [ -n "$SUBDIR" ] && UNISON_ARGS+=(-path "$SUBDIR")
+              run_quiet "syncing $AGENT session state" unison "''${UNISON_ARGS[@]}" || true
               rm -f "$RUN_QUIET_LOG"
             fi
             if [ -r "$KEYSRC" ]; then
