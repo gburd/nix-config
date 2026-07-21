@@ -322,8 +322,5 @@
   // Preview tabs
   "preview_tabs": {
     "enabled": true
-  },
-
-  // Auto-update
-  "auto_update": false
+  }
 }
