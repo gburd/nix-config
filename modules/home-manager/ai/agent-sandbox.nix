@@ -796,14 +796,38 @@ let
                 --query 'KeyMaterial' --output text > "$KEYFILE"
               chmod 600 "$KEYFILE"
             fi
+            MYIP=$(curl -s https://checkip.amazonaws.com)
             if ! aws ec2 describe-security-groups --region "$REGION" --group-names "$SGNAME" >/dev/null 2>&1; then
               echo "agent-sandbox: creating security group $SGNAME (SSH from your current IP)..." >&2
               VPCID=$(aws ec2 describe-vpcs --region "$REGION" --filters Name=is-default,Values=true --query 'Vpcs[0].VpcId' --output text)
               GID=$(aws ec2 create-security-group --region "$REGION" --group-name "$SGNAME" \
                 --description "agent-sandbox ec2 tier: SSH only" --vpc-id "$VPCID" --query 'GroupId' --output text)
-              MYIP=$(curl -s https://checkip.amazonaws.com)
               aws ec2 authorize-security-group-ingress --region "$REGION" --group-id "$GID" \
                 --protocol tcp --port 22 --cidr "$MYIP/32" >/dev/null
+            else
+              # SG already exists -- but its ingress rule is a ONE-TIME
+              # snapshot of whatever IP was current when it was FIRST
+              # created. A home/mobile ISP's IP changes (DHCP renewal,
+              # reconnect, etc.) -- confirmed live: this is exactly what
+              # silently broke reconnecting to an already-running instance
+              # the next day (AWS's own instance-status checks reported
+              # fully healthy; ssh just timed out at the network level,
+              # because the SG was still only authorizing YESTERDAY's IP).
+              # Revoke every existing port-22 rule and reauthorize the
+              # CURRENT IP -- unconditional and idempotent (revoking a rule
+              # that doesn't match anything, or authorizing one that's
+              # already there, are both harmless no-ops), so this never
+              # accumulates stale rules release over release either.
+              GID=$(aws ec2 describe-security-groups --region "$REGION" --group-names "$SGNAME" --query 'SecurityGroups[0].GroupId' --output text)
+              OLD_CIDRS=$(aws ec2 describe-security-groups --region "$REGION" --group-ids "$GID" \
+                --query 'SecurityGroups[0].IpPermissions[?FromPort==`22`].IpRanges[].CidrIp' --output text 2>/dev/null || true)
+              for cidr in $OLD_CIDRS; do
+                [ "$cidr" = "$MYIP/32" ] && continue
+                aws ec2 revoke-security-group-ingress --region "$REGION" --group-id "$GID" \
+                  --protocol tcp --port 22 --cidr "$cidr" >/dev/null 2>&1 || true
+              done
+              aws ec2 authorize-security-group-ingress --region "$REGION" --group-id "$GID" \
+                --protocol tcp --port 22 --cidr "$MYIP/32" >/dev/null 2>&1 || true
             fi
           }
 
@@ -1191,6 +1215,7 @@ let
 
           case "$VERB" in
             up)
+              ensure_keypair_and_sg
               up_instance
               IP=$(wait_for_ssh)
               ensure_provisioned "$IP"
@@ -1205,6 +1230,7 @@ let
               echo "$EXISTING" | awk -F'\t' '{print "instance="$1, "state="$2, "ip="$3}'
               ;;
             down)
+              ensure_keypair_and_sg
               EXISTING=$(aws_find_instance)
               if [ -z "$EXISTING" ]; then
                 echo "agent-sandbox: no instance tagged $TAGNAME" >&2; exit 1
@@ -1234,6 +1260,16 @@ let
               fi
               ;;
             connect)
+              # Always refresh the SG's SSH rule for whatever IP THIS host
+              # currently has, even when reconnecting to an
+              # already-running instance -- confirmed live: a changed
+              # public IP (ISP DHCP renewal overnight) silently breaks
+              # reconnecting to a box left running from a prior session.
+              # AWS's own instance-status checks report fully healthy;
+              # ssh just times out at the network level, because the SG
+              # was still only authorizing the OLD IP. Idempotent/cheap
+              # when nothing's actually changed.
+              ensure_keypair_and_sg
               EXISTING=$(aws_find_instance)
               if [ -z "$EXISTING" ]; then
                 up_instance
