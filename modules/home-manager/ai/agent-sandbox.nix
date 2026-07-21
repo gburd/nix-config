@@ -193,13 +193,23 @@ let
         default entirely (must still match --arch's actual architecture).
       Config: programs.ai.sandbox.ec2.{region,instanceTypeX86,instanceTypeArm,volumeSizeGb,awsProfile}.
       One-time on first up: creates a dedicated key pair + security group
-      (SSH from your current IP only) via the configured AWS profile.
+      (SSH from your current IP only) via the configured AWS profile. That
+      IP allow-list is refreshed on every up/connect/down too (not just
+      the first time) -- your ISP's IP can change between sessions, which
+      otherwise silently locks out reconnecting to a box left running.
       Every up/connect also refreshes a stable ssh alias (asx-<workspace>,
       in ~/.ssh/agent-sandbox-ec2.conf) pointed at the box's CURRENT IP
       (EC2 assigns a new one on every start) -- use it for a plain
       `ssh asx-<workspace>`, VSCode's `code --remote ssh-remote+asx-<workspace>
       <path>`, or Zed's ssh_connections (host: asx-<workspace>), instead of
       chasing the IP by hand.
+      Optionally also joins your Tailscale tailnet: put a REUSABLE +
+      EPHEMERAL Tailscale auth key at ~/.config/agent-sandbox/tailscale.key
+      (sops-deployed; see floki.nix's tailscale/agent-sandbox-key secret)
+      and each box joins the tailnet as asx-<workspace> on first boot.
+      Ephemeral means Tailscale itself removes the device on disconnect --
+      terminating the instance is the only teardown step needed. No key
+      configured -> tailscale-join.service is a harmless no-op.
 
     EXAMPLES:
       agent-sandbox pi                 # isolate pi (recommended: firejail)
@@ -292,6 +302,44 @@ let
         security.sudo.extraRules = [
           { users = [ "gburd" ]; commands = [ { command = "ALL"; options = [ "NOPASSWD" ]; } ]; }
         ];
+
+        # Join the tailnet with a DEDICATED, ephemeral auth key -- see
+        # tailscale/agent-sandbox-key in floki.nix's sops secrets for why
+        # this is a separate key from the one real hosts use. --ssh
+        # exposes Tailscale SSH too (belt-and-suspenders; the agent-sandbox
+        # CLI itself still connects via the security-group-gated public IP,
+        # not this), --hostname makes the box findable in the tailnet by
+        # its workspace name. Ephemeral means Tailscale ITSELF removes this
+        # node once it disconnects -- terminate the instance and the device
+        # entry disappears with zero explicit teardown code needed.
+        services.tailscale.enable = true;
+        systemd.services.tailscale-join = {
+          description = "Join the tailnet with the agent-sandbox ephemeral key";
+          after = [ "tailscaled.service" "network-online.target" ];
+          wants = [ "network-online.target" ];
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          path = [ pkgs.tailscale pkgs.jq ];
+          script = ${"''"}
+            TSKEY="@TSKEY@"
+            if [ -z "$TSKEY" ]; then
+              echo "tailscale-join: no key configured (programs.ai.sandbox ec2 tier), skipping" >&2
+              exit 0
+            fi
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+              tailscale status >/dev/null 2>&1 && break
+              sleep 1
+            done
+            state=$(tailscale status --json 2>/dev/null | jq -r '.BackendState // "Unknown"')
+            if [ "$state" = "Running" ]; then
+              exit 0
+            fi
+            tailscale up --auth-key="$TSKEY" --ssh --hostname="@TSHOSTNAME@" --accept-routes
+          ${"''"};
+        };
 
         # Local NVMe instance-store: format + mount at /mnt/nvme, then
         # BIND MOUNT gburd's $HOME/ws (the project tree) onto it, and
@@ -908,7 +956,17 @@ let
               x86_64) TEMPLATE="${ec2ConfigTemplateX86}" ;;
               aarch64) TEMPLATE="${ec2ConfigTemplateArm}" ;;
             esac
-            sed "s|@AUTHKEY@|$AUTHKEY|" "$TEMPLATE" | \
+            # Tailscale join is opt-in: only substituted in when a real key
+            # is actually configured (${home}/.config/agent-sandbox/tailscale.key,
+            # the sops-deployed dedicated agent-sandbox key -- see
+            # floki.nix). No key -> tailscale-join.service is left in the
+            # generated config but with an empty auth-key, which `tailscale
+            # up` rejects harmlessly (the service fails, nothing else on
+            # the box depends on it, ssh/agents/everything else works
+            # exactly as before this feature existed).
+            TSKEY=$(cat "${home}/.config/agent-sandbox/tailscale.key" 2>/dev/null || true)
+            TSHOSTNAME=$(printf '%s' "$TAGNAME" | tr -c 'A-Za-z0-9-' '-')
+            sed -e "s|@AUTHKEY@|$AUTHKEY|" -e "s|@TSKEY@|$TSKEY|" -e "s|@TSHOSTNAME@|$TSHOSTNAME|" "$TEMPLATE" | \
               ssh_root "$IP" 'cat > /etc/nixos/configuration.nix'
             run_quiet "one-time NixOS provisioning on $TAGNAME" ssh_root "$IP" 'nixos-rebuild switch'
             rm -f "$RUN_QUIET_LOG"

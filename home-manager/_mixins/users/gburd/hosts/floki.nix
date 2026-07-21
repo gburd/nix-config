@@ -82,6 +82,22 @@ with lib.hm.gvariant;
       "anthropic/claude_max_oauth_token" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.anthropic_oauth_token";
       };
+      # Dedicated Tailscale auth key for the agent-sandbox ec2 tier --
+      # deliberately SEPARATE from the tailscale-auth-key used to join
+      # real, long-lived hosts (nixos/_mixins/services/tailscale-autoconnect.nix):
+      # that key's ephemeral/reusable flags are unknown from the key
+      # string alone, and reusing it for throwaway EC2 boxes risks either
+      # leaving permanent zombie device entries (if not ephemeral) or
+      # being fine (if it is) -- not worth the ambiguity. Mint this ONE
+      # specifically: https://login.tailscale.com/admin/settings/keys ->
+      # Generate auth key -> Reusable + Ephemeral + tag:agent-sandbox.
+      # Ephemeral is what makes `agent-sandbox --tier ec2 down --terminate`
+      # need ZERO explicit teardown code -- Tailscale itself removes an
+      # ephemeral node's device entry once it disconnects, which happens
+      # automatically the moment the underlying EC2 instance is gone.
+      "tailscale/agent-sandbox-key" = {
+        path = "${config.home.homeDirectory}/.config/agent-sandbox/tailscale.key";
+      };
       # Crates.io API token (exposed as $CARGO_REGISTRY_TOKEN by console/cargo.nix)
       "cargo/crates_io_token" = { };
       "jetbrains/clion-key" = {

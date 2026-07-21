@@ -639,7 +639,7 @@ in
 
     agents = mkOption {
       type = types.listOf types.str;
-      default = [ "claude" "pi" "maki" "hermes" "codex" "terax" ];
+      default = [ "claude" "pi" "maki" "hermes" "codex" "terax" "zed" ];
       description = ''
         Agent identifiers. Each gets a DISTINCT API key at
         ~/.config/litellm/keys/<agent>.key (mode 600). Those keys are

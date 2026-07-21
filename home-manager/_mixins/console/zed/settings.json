@@ -13,11 +13,66 @@
   // once from a terminal first). Zed does NOT prompt for a remote path
   // separately -- after connecting it opens directly into project
   // selection on the projects list below.
+  //
+  // "xtc-postgres" (not the default basename "xtc") is deliberate: TWO
+  // distinct projects share the basename xtc --
+  // ~/ws/xtc (a plain repo) and ~/ws/postgres/xtc (a git worktree) --
+  // which would otherwise collide on the same asx-xtc alias/tag.
+  // Launch that one explicitly: `agent-sandbox --tier ec2 connect
+  // xtc-postgres` (from inside ~/ws/postgres/xtc), not a bare `connect`.
   "ssh_connections": [
     {
       "host": "asx-bcs",
       "projects": [
         { "paths": ["~/ws/postgres/bcs"] }
+      ]
+    },
+    {
+      "host": "asx-arc",
+      "projects": [
+        { "paths": ["~/ws/postgres/arc"] }
+      ]
+    },
+    {
+      "host": "asx-tepid",
+      "projects": [
+        { "paths": ["~/ws/postgres/tepid"] }
+      ]
+    },
+    {
+      "host": "asx-stdatomic",
+      "projects": [
+        { "paths": ["~/ws/postgres/thomas/stdatomic"] }
+      ]
+    },
+    {
+      "host": "asx-thr",
+      "projects": [
+        { "paths": ["~/ws/postgres/thr"] }
+      ]
+    },
+    {
+      "host": "asx-xtc-postgres",
+      "projects": [
+        { "paths": ["~/ws/postgres/xtc"] }
+      ]
+    },
+    {
+      "host": "asx-xtc",
+      "projects": [
+        { "paths": ["~/ws/xtc"] }
+      ]
+    },
+    {
+      "host": "asx-osv",
+      "projects": [
+        { "paths": ["~/ws/osv"] }
+      ]
+    },
+    {
+      "host": "asx-pg_fts",
+      "projects": [
+        { "paths": ["~/ws/pg_fts"] }
       ]
     }
   ],
