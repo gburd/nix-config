@@ -129,8 +129,19 @@ let
     # programs.ai.litellm.anthropicAuthTokenFile to a sops-deployed file
     # holding the sk-ant-oat... token from `claude setup-token` to enable.
     # Distinct model_name (claude-max-*) so agents opt in explicitly — it
-    # never shadows the Bedrock claude-opus-4-8 etc. rows.
+    # never shadows the Bedrock claude-opus-4-8 etc. rows. maxInput/maxOutput
+    # match each model's own advertised limits (confirmed live via
+    # api.anthropic.com/v1/models: 1000000/128000 for both sonnet-5 and
+    # fable-5, same as their Bedrock rows above) -- NOT a claim that the
+    # Max/Pro plan can actually reach fable-5/sonnet-5 today; that's
+    # unconfirmed (every live probe hit an account-wide 429, including the
+    # already-working opus-4-8 control, so it was inconclusive either way).
+    # These rows just make the models CALLABLE through this account once/if
+    # access is confirmed -- default routing is untouched, nothing selects
+    # these unless explicitly asked for by name.
     { name = "claude-max-opus-4-8"; provider = "anthropic"; anthropicModel = "claude-opus-4-8"; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 200000; maxOutput = 32000; }
+    { name = "claude-max-sonnet-5"; provider = "anthropic"; anthropicModel = "claude-sonnet-5"; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-max-fable-5"; provider = "anthropic"; anthropicModel = "claude-fable-5"; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
   ];
 
   # Anthropic-direct (Claude Max/Pro subscription) rows are only wired in
