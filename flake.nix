@@ -104,6 +104,21 @@
       flake = false;
     };
 
+    # superpowers (obra/superpowers) — cross-agent spec/plan/TDD/subagent
+    # methodology, MIT-licensed, listed on Anthropic's official Claude Code
+    # plugin marketplace. We deploy only a CURATED SUBSET (see
+    # skills.superpowers in skills.nix) -- the 4 skills covering structured
+    # spec-writing, plan-writing, red/green TDD enforcement, and parallel
+    # subagent dispatch that weren't already covered by our own
+    # brainstorming/checkpoint/subagent-teams skills -- not the whole
+    # opinionated methodology (which assumes docs/superpowers/ paths, its
+    # own plan-file conventions, etc. that would collide with our existing
+    # workflow). Pinned for reproducibility, same as ponytail above.
+    superpowers = {
+      url = "github:obra/superpowers";
+      flake = false;
+    };
+
     # treehouse (Kun Chen) — reusable git-worktree pool for parallel agents
     # (worktrees preserved with deps + build cache intact). Go program with
     # a proper flake exposing packages.default.

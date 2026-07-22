@@ -126,8 +126,14 @@
           url = "https://pg.ddx.io/mcp/";
         };
 
-        # Persistent knowledge graph across sessions
-        server-memory.enable = true;
+        # Persistent knowledge graph across sessions -- REMOVED (was
+        # server-memory.enable = true;): its storage file lives inside a
+        # volatile npx cache dir (~/.npm/_npx/<hash>/...) that gets a fresh,
+        # empty file whenever npm's resolution hash changes -- not reliably
+        # persistent at all (confirmed: 1 entity, unclear survival across
+        # cache invalidation). memelord below is the real persistent-memory
+        # layer (project-scoped .memelord/, proven to survive sandbox sync).
+        server-memory.enable = false;
 
         # Local Git operations (diff, log, blame, branch) beyond GitHub MCP
         server-git.enable = true;

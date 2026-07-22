@@ -34,10 +34,13 @@
 - Diff, log, blame, branch operations on ~/ws/* projects
 - Works on repos not hosted on GitHub (aether, dbsql, openldap)
 
-### memory — Persistent Knowledge Graph
+### memelord — Persistent Knowledge Graph + Session Lifecycle
 **Use when** you need to store or retrieve structured knowledge across sessions:
 - Project architecture decisions
 - Cross-session state that doesn't fit in CLAUDE.md
+
+Also automatic via hooks: handles session start/end, embedding-based memory
+search. Project-scoped (.memelord/ inside the project dir).
 
 ### sequential-thinking — Structured Reasoning
 **Use when** facing complex architectural decisions:
@@ -48,9 +51,6 @@
 ### filesystem — File System Access
 General-purpose file reading/writing. Prefer built-in Read/Write tools when available.
 
-### memelord — Session Lifecycle
-Automatic via hooks. Handles session start/end, embedding-based memory search.
-
 ### llms-docs (nix, home-manager, rust, python)
 **Use when** you need official documentation for these specific ecosystems. These serve llms.txt files optimized for LLM consumption.
 
@@ -60,6 +60,6 @@ Automatic via hooks. Handles session start/end, embedding-based memory search.
 2. **Library/crate API docs** → context7
 3. **GitHub repo operation** → github MCP
 4. **Local git repo operation** → git MCP
-5. **Store/recall structured knowledge** → memory
+5. **Store/recall structured knowledge** → memelord
 6. **Complex multi-step reasoning** → sequential-thinking
 7. **Nix/Rust/Python official docs** → llms-docs wrappers

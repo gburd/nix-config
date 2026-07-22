@@ -9,6 +9,7 @@ let
   ###
   ponytailSrc = inputs.ponytail or null;
   skillspectorSrc = inputs.skillspector or null;
+  superpowersSrc = inputs.superpowers or null;
 
   ###
   # In-tree operator skills
@@ -217,6 +218,94 @@ let
   ];
 
   ###
+  # superpowers (obra/superpowers) — CURATED SUBSET.
+  #
+  # Upstream is a whole opinionated methodology (spec -> plan -> TDD ->
+  # subagent-driven execution -> review -> merge) with its own doc-path
+  # conventions (docs/superpowers/plans/, docs/superpowers/specs/) and a
+  # dozen skills, several of which overlap or conflict with what we already
+  # have (brainstorming vs. our own dream/checkpoint, subagent-driven-
+  # development vs. subagent-teams). Rather than deploy the whole tree and
+  # let it fight our existing skills, we symlink in just the FOUR that fill
+  # a real gap: structured spec-writing, plan-writing, red/green TDD
+  # enforcement, and parallel subagent dispatch. Each is deployed as its
+  # own named subdir (not merged into one "superpowers" tree) so it reads
+  # as an independent skill, same shape as our in-tree operator skills.
+  #
+  # brainstorming's scripts/ + visual-companion.md (an OPTIONAL local
+  # webserver for browser-based mockup review, referenced conditionally in
+  # SKILL.md -- not needed for the core text-based flow) are excluded: they
+  # trip SkillSpector's heuristic scanner (nohup/disown backgrounding the
+  # server, chmod 600 on its own session-id file, rm -f on its own
+  # session-state file, an HTML comment in a static waiting-page template)
+  # into a CRITICAL/DO_NOT_INSTALL verdict that blocks the whole
+  # `home-manager switch` -- confirmed live, and confirmed by reading each
+  # flagged line that every finding is a false positive on ordinary local
+  # shell/Node code (no sudo, no credential access, no real persistence
+  # beyond one session's own scratch dir). Rather than disable the gate or
+  # add a per-skill scanner exemption (weakens the gate for every future
+  # external skill), just don't deploy the part that isn't needed anyway.
+  ###
+  superpowersSkillNames = [
+    "brainstorming"
+    "writing-plans"
+    "test-driven-development"
+    "dispatching-parallel-agents"
+  ];
+
+  superpowersExcludePaths = {
+    brainstorming = [ "scripts" "visual-companion.md" ];
+  };
+
+  superpowersSkillFiles = name:
+    let
+      excluded = superpowersExcludePaths.${name} or [ ];
+      files = collectFiles "" (superpowersSrc + "/skills/${name}");
+    in
+    lib.filter
+      (f: !(lib.any (ex: f.path == "/${ex}" || lib.hasPrefix "/${ex}/" f.path) excluded))
+      files;
+
+  superpowersFilesFor = root:
+    lib.optionalAttrs (cfg.superpowers.enable && superpowersSrc != null) (
+      builtins.listToAttrs (builtins.concatMap
+        (name:
+          map
+            (f: {
+              name = "${root}/superpowers-${name}${f.path}";
+              value = { inherit (f) source; };
+            })
+            (superpowersSkillFiles name))
+        superpowersSkillNames)
+    );
+
+  # Filtered copy of just the deployed subset (selected skills, minus
+  # excluded paths) for the SkillSpector gate below to scan -- scanning the
+  # raw upstream tree would flag brainstorming/scripts/ even though it's
+  # never actually deployed (see the exclusion comment above).
+  superpowersScanTree = pkgs.runCommand "superpowers-scan-tree" { } (
+    lib.concatMapStringsSep "\n"
+      (name: ''
+        mkdir -p $out/${name}
+        cp -r --no-preserve=mode ${superpowersSrc}/skills/${name}/. $out/${name}/
+      ''
+      + lib.concatMapStringsSep "\n"
+        (ex: "rm -rf $out/${name}/${ex}")
+        (superpowersExcludePaths.${name} or [ ]))
+      superpowersSkillNames
+  );
+
+  superpowersFiles = lib.mkMerge [
+    (lib.mkIf (cfg.superpowers.enable && superpowersSrc != null && cfg.targets.claude)
+      (superpowersFilesFor ".claude/skills"))
+    (lib.mkIf (cfg.superpowers.enable && superpowersSrc != null && cfg.targets.kiro)
+      (superpowersFilesFor ".kiro/skills"))
+    # codex + maki always get the subset when enabled, mirroring ponytail.
+    (lib.mkIf (cfg.superpowers.enable && superpowersSrc != null)
+      ((superpowersFilesFor ".codex/skills") // (superpowersFilesFor ".maki/skills")))
+  ];
+
+  ###
   # asm (Part 2) — agent-skill-manager as the cross-agent management layer.
   #
   # asm is installed as a CLI (npm wrapper, like memelord) and its config is
@@ -282,6 +371,7 @@ let
   ];
   skillSpectorUntrusted = lib.filter (p: p != null) (
     lib.optional (cfg.ponytail.enable && ponytailSrc != null) (ponytailSrc + "/skills")
+    ++ lib.optional (cfg.superpowers.enable && superpowersSrc != null) superpowersScanTree
     ++ map (spec: spec.input) (lib.attrValues enabledSkillsGitBranches)
   );
 
@@ -416,6 +506,22 @@ in
       };
     };
 
+    # superpowers (obra/superpowers) — curated 4-skill subset.
+    superpowers = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Deploy a curated subset of obra/superpowers (brainstorming,
+          writing-plans, test-driven-development, dispatching-parallel-
+          agents) to all agents, as superpowers-<name> subdirs alongside
+          the in-tree operator skills. NOT the whole upstream methodology
+          (its doc-path conventions and several overlapping/conflicting
+          skills are deliberately excluded -- see skills.nix comment).
+        '';
+      };
+    };
+
     # Part 4: SkillSpector switch-time security gate.
     skillSpector = {
       enable = mkOption {
@@ -442,6 +548,7 @@ in
       (lib.mkIf cfg.targets.claude claudeSkillDirFiles)
       (lib.mkIf cfg.skillsGit.enable skillsGitFiles)
       ponytailFiles
+      superpowersFiles
       asmFiles
     ];
 

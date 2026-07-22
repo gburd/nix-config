@@ -10,16 +10,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "maki";
-  version = "0.3.26-gburd.1";
+  version = "0.4.1-gburd.1";
 
   src = fetchFromGitHub {
     owner = "gburd";
     repo = "maki";
     rev = "v${version}";
-    hash = "sha256-FJKi/zTXwYv958vGt8abMP12gXP07mFCLjwFjqxDT3U=";
+    hash = "sha256-Lt9SVuI5jdOcwQExEWe3qAD+h1eE0ax4krdO14zHSAo=";
   };
 
-  cargoHash = "sha256-dG0MHgIUAHIulVhvAIok4WqGBXrZKytUldHFL2ShMMk=";
+  cargoHash = "sha256-Z1xp3onGGBdRudCSyGqwGGghUZZPZ0gGSMW2Owt1wGE=";
 
   nativeBuildInputs = [
     pkg-config

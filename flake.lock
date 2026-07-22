@@ -695,6 +695,7 @@
         "postgresq-skills-pi": "postgresq-skills-pi",
         "skillspector": "skillspector",
         "sops-nix": "sops-nix",
+        "superpowers": "superpowers",
         "treehouse": "treehouse",
         "vscode-server": "vscode-server"
       }
@@ -748,6 +749,22 @@
         "owner": "NixOS",
         "ref": "release-26.05",
         "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "superpowers": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783029415,
+        "narHash": "sha256-kHdQ9e44doBk2yYW88tMSCqVG8ycYcvJSZlrIziXhpA=",
+        "owner": "obra",
+        "repo": "superpowers",
+        "rev": "d884ae04edebef577e82ff7c4e143debd0bbec99",
+        "type": "github"
+      },
+      "original": {
+        "owner": "obra",
+        "repo": "superpowers",
         "type": "github"
       }
     },

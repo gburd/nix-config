@@ -20,7 +20,7 @@ Before reaching for `grep`, `rg`, `find`, or `git log` to answer one of these qu
 | Library/crate API docs (tokio, serde, etc.) | **context7** |
 | GitHub repo operations (PRs, issue search, code search across orgs) | **gh-axi** (low-token CLI; falls back to the **github** MCP only if a project enabled it and gh-axi can't do the op) |
 | Local git ops on `~/ws/*` projects | **git** |
-| Persistent knowledge across sessions | **memory** |
+| Persistent knowledge across sessions | **memelord** |
 | Multi-step architectural reasoning | **sequential-thinking** |
 | Nix / home-manager / Rust / Python official docs | **llms-docs** wrappers |
 
