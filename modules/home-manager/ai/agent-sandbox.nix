@@ -161,6 +161,18 @@ let
                    (e.g. numa-bench). Default blocks ~/.aws entirely; this is
                    opt-in per invocation and scoped to the one named profile.
                    Works alongside the normal (gateway) tier, unlike --aws.
+                   Also works with --tier ec2: pushes just that ONE profile's
+                   credentials to the box itself (via `aws configure
+                   export-credentials`, so SSO/role-assumption profiles
+                   resolve to plain keys before copying -- the box has
+                   neither your SSO cache nor any assumed-role chain) and
+                   exports AWS_PROFILE in the tmux session, so an agent
+                   running INSIDE the sandbox (e.g. following the
+                   aws-benchmark skill to launch its own EC2 instances for a
+                   benchmark) has something to authenticate with. Without
+                   this flag an ec2-tier sandbox has NO AWS credentials at
+                   all -- confirmed live gap, the box never had ~/.aws
+                   regardless of what's configured on the connecting host.
       --ssh        Allow outbound SSH: forwards the ssh-agent SOCKET into the
                    sandbox so the agent can SSH to LAN hosts / EC2 / etc. using
                    your loaded keys. Private key FILES stay blocked (the agent
@@ -1009,6 +1021,49 @@ let
               git -C '$REMOTE_REL' config --local tag.gpgsign true" 2>&1 | tail -5 || true
           }
 
+          # Optional: --aws-profile <name> (parsed in the shared outer flag
+          # loop above, already used by firejail's --whitelist=~/.aws) also
+          # applies to the ec2 tier: push just that ONE profile's creds to
+          # the box + export AWS_PROFILE there, so an agent running INSIDE
+          # the sandbox (e.g. pi following the aws-benchmark skill to launch
+          # its own throwaway EC2 instances for a numa clock-sweep) has
+          # something to authenticate with. Confirmed live gap: a sandboxed
+          # agent that correctly followed the aws-benchmark skill still had
+          # no ~/.aws at all on the box -- this tier never synced it,
+          # unlike firejail's --aws-profile which whitelists the real
+          # ~/.aws read-only. Scoped to the ONE named profile (not the
+          # whole ~/.aws, which may hold other unrelated accounts) via
+          # `aws configure export-credentials`, which resolves whatever
+          # auth type that profile actually uses (static keys here, but
+          # also correct for SSO/role-assumption profiles) into plain
+          # access-key/secret -- avoids depending on SSO token caches or
+          # role-assumption chains existing on the box, which they won't.
+          sync_aws_credentials() {
+            IP="$1"
+            [ -n "$AWS_PROFILE_NAME" ] || return 0
+            CREDS=$(aws configure export-credentials --profile "$AWS_PROFILE_NAME" 2>/dev/null) || {
+              echo "agent-sandbox: warning: --aws-profile $AWS_PROFILE_NAME has no exportable credentials locally, skipping" >&2
+              return 0
+            }
+            AKID=$(printf '%s' "$CREDS" | jq -r '.AccessKeyId')
+            SECRET=$(printf '%s' "$CREDS" | jq -r '.SecretAccessKey')
+            SESSTOK=$(printf '%s' "$CREDS" | jq -r '.SessionToken // ""')
+            REGION_LOCAL=$(aws configure get region --profile "$AWS_PROFILE_NAME" 2>/dev/null || echo "$REGION")
+            ssh_gburd "$IP" 'mkdir -p .aws && chmod 700 .aws'
+            {
+              echo "[$AWS_PROFILE_NAME]"
+              echo "aws_access_key_id = $AKID"
+              echo "aws_secret_access_key = $SECRET"
+              [ -n "$SESSTOK" ] && echo "aws_session_token = $SESSTOK"
+              true
+            } | ssh_gburd "$IP" 'cat > .aws/credentials && chmod 600 .aws/credentials'
+            {
+              echo "[profile $AWS_PROFILE_NAME]"
+              echo "region = $REGION_LOCAL"
+              echo "output = json"
+            } | ssh_gburd "$IP" 'cat > .aws/config && chmod 600 .aws/config'
+          }
+
           # Keep a STABLE ssh alias (asx-<workspace>) pointed at whatever IP
           # the box currently has -- EC2 gives it a fresh public IP on every
           # start, so "ssh <the box>" would otherwise mean re-discovering
@@ -1342,6 +1397,7 @@ let
               fixup_git_worktree "$IP"
               sync_git_common_dir "$IP"
               sync_git_identity "$IP"
+              sync_aws_credentials "$IP"
               # Sync every agent's session state + LiteLLM key BEFORE
               # connecting -- 'connect' with no '-- cmd' drops into an
               # interactive shell and the agent is picked once inside
@@ -1363,7 +1419,15 @@ let
               else
                 TMUX_CMD=("''${REMOTE_CMD[@]}")
               fi
-              REMOTE_LINE=$(printf '%q ' tmux new-session -A -s "$TMUX_SESSION" -c "$REMOTE_REL" "''${TMUX_CMD[@]}")
+              # -e AWS_PROFILE=...: only takes effect when tmux actually
+              # creates a NEW session (harmless no-op on -A reattach to an
+              # existing one, same as everything else here being safe to
+              # rerun) -- lets an agent inside follow the aws-benchmark
+              # skill against the SAME profile sync_aws_credentials just
+              # pushed, without needing --aws-profile passed again by hand.
+              TMUX_ENV=()
+              [ -n "$AWS_PROFILE_NAME" ] && TMUX_ENV=(-e "AWS_PROFILE=$AWS_PROFILE_NAME")
+              REMOTE_LINE=$(printf '%q ' tmux new-session -A -s "$TMUX_SESSION" -c "$REMOTE_REL" "''${TMUX_ENV[@]}" "''${TMUX_CMD[@]}")
               # -A: forward THIS host's ssh-agent, so git commit/tag signing
               # on the box resolves the private key via the agent (never a
               # copied key file -- sync_git_identity above only pushed the
