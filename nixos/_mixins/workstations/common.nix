@@ -104,6 +104,14 @@
   boot.kernel.sysctl = {
     "kernel.core_pattern" = "core.%p";
     "kernel.core_uses_pid" = 1;
+    # Allow ptrace (gdb/lldb/strace attaching to an unrelated process) without
+    # sudo. Default (1, "restricted") only allows a process to ptrace its own
+    # direct children -- attaching a debugger to an already-running process
+    # (a running server, a test harness's child, another terminal's shell)
+    # needs CAP_SYS_PTRACE (sudo) otherwise. 0 = classic/unrestricted (any
+    # process owned by the same uid can be traced), the standard trade-off on
+    # a single-user dev workstation that already trusts its own user.
+    "kernel.yama.ptrace_scope" = 0;
   };
 
   # Support for cross-platform NixOS builds

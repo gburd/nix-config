@@ -7,6 +7,7 @@ let
     "must-rules.md" = ./files/steering/must-rules.md;
     "coding-standards.md" = ./files/steering/coding-standards.md;
     "rust-conventions.md" = ./files/steering/rust-conventions.md;
+    "c-conventions.md" = ./files/steering/c-conventions.md;
     "workflow.md" = ./files/steering/workflow.md;
     "tools.md" = ./files/steering/tools.md;
     "opinions.md" = ./files/steering/opinions.md;
@@ -36,6 +37,7 @@ let
     postgresql = [ "postgresql-workflow.md" ];
     aws = [ "aws-builder.md" ];
     rust = [ "rust-conventions.md" ];
+    c = [ "c-conventions.md" ];
   };
 
   # Concatenated steering for agents that use a single instructions file

@@ -3,13 +3,15 @@
 ## Build & Tooling
 
 - Prefer whatever build system the project already uses (`make`, `meson`,
-  `cmake`, PostgreSQL's own `configure`/meson) — don't introduce a second one.
+  `cmake`, autotools) — don't introduce a second one.
 - Compile with `-Wall -Wextra` at minimum; treat new warnings in touched code
   as errors, don't silence with a blanket pragma.
-- Format with the project's own tool if it has one (PostgreSQL: `pgindent` +
-  `pg_bsd_indent`, exact `perltidy` version matters — see the
-  `nix-agent-configs` skill). No project-wide reformatting in a feature/fix
-  commit — formatting changes are their own commit.
+- Find and use the project's own formatter/indent tool if it has one (check
+  for a `.clang-format`, a documented custom indent script, or contributor
+  docs before assuming a style) — match its exact configured version if one
+  is pinned, since indent tools can differ in output between versions. No
+  project-wide reformatting in a feature/fix commit — formatting changes are
+  their own commit.
 
 ## Memory & Resource Safety
 
@@ -23,16 +25,16 @@
   could plausibly be reused/rechecked afterward (defends against double-free,
   not a substitute for correct ownership).
 - Match allocator families: don't `free()` something a library-specific
-  allocator returned (PostgreSQL's `palloc`/`pfree`, a custom arena, etc.).
+  allocator returned (an arena, a pool allocator, a runtime with its own
+  `alloc`/`dealloc` pair) — free with whatever the allocating API expects.
 
 ## Error Handling
 
 - Check every return value that can fail (syscalls, allocations, library
   calls) — no silently ignored `int` return from something that can error.
 - Prefer one consistent error-propagation style per project (errno + return
-  code, a `Result`-shaped struct, or the project's existing macro convention
-  like PostgreSQL's `ereport()`/`PG_TRY`/`PG_CATCH`) — don't mix styles
-  within one file.
+  code, a `Result`-shaped struct, or the project's existing error-handling
+  macro/convention) — don't mix styles within one file.
 - Never sizeof() or index into a pointer that hasn't been checked for NULL
   on the current path.
 
@@ -64,7 +66,9 @@ or log-message search:
 
 ## PostgreSQL-Specific
 
-See `postgresql-workflow.md` for PostgreSQL/extension-specific conventions
-(4-space indent, `palloc`/`pfree`, `ereport()`, GUC placement, patch
-submission workflow) — this file is the general-C baseline; that one layers
-PostgreSQL's own house style on top.
+Working on PostgreSQL itself or a PostgreSQL extension? See
+`postgresql-workflow.md` (`use project_steering postgresql`) for its
+specific conventions (4-space indent, `palloc`/`pfree`, `ereport()`, GUC
+placement, patch submission workflow) — this file is the general-C
+baseline; layer that domain on top for Postgres work (`use
+project_steering c postgresql`).
