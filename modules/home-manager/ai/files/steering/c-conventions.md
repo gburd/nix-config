@@ -63,12 +63,3 @@ or log-message search:
   patch (`ast-grep --pattern '$FUNC($$$)' --lang c`).
 - Use `rg`/`grep` only for literal strings, log messages, or comments —
   not for "find all callers of X" or "find every place that frees Y."
-
-## PostgreSQL-Specific
-
-Working on PostgreSQL itself or a PostgreSQL extension? See
-`postgresql-workflow.md` (`use project_steering postgresql`) for its
-specific conventions (4-space indent, `palloc`/`pfree`, `ereport()`, GUC
-placement, patch submission workflow) — this file is the general-C
-baseline; layer that domain on top for Postgres work (`use
-project_steering c postgresql`).
