@@ -194,7 +194,6 @@
     fish = {
       enable = false;
       shellAliases = {
-        diff = "diffr";
         glow = "glow --pager";
         ip = "ip --color --brief";
         top = "btm --basic --tree --hide_table_gap --dot_marker --process_memory_as_value";
@@ -393,7 +392,6 @@
       '';
       shellAliases = {
         # Existing aliases
-        diff = "diffr";
         glow = "glow --pager";
         ip = "ip --color --brief";
         top = "btm --basic --tree --hide_table_gap --dot_marker --process_memory_as_value";
