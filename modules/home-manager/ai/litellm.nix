@@ -857,6 +857,25 @@ in
         SystemCallErrorNumber = "EPERM";
         # Soft resource ceiling so a runaway request can't OOM the box.
         MemoryMax = "4G";
+        # Deprioritize this unit as an OOM-kill target under system-wide
+        # memory pressure -- confirmed live on arnold (Fedora, real
+        # systemd-oomd running, NOT covered by this repo's
+        # nixos/_mixins/services/oomd.nix, which only applies to NixOS
+        # hosts): a local PostgreSQL check-world run (dozens of parallel
+        # `postgres` test instances) drove swap to 100%, and litellm.service
+        # got oom-killed (Result=oom-kill in the unit's own journal) even
+        # though its own usage was well under MemoryMax=4G -- global
+        # reclaim/oomd can select ANY cgroup, not just the one that's
+        # actually over its own limit. LiteLLM is small and always-on; it
+        # should be near-last to die, not a plausible victim just because
+        # something else on the box is memory-heavy. OOMScoreAdjust protects
+        # against the kernel OOM killer path; ManagedOOMPreference protects
+        # against systemd-oomd's path (works per-unit regardless of the
+        # host's own oomd.conf, per systemd.resource-control(5)'s note that
+        # a user-owned cgroup's own attributes are respected when the
+        # monitored ancestor is owned by the same user).
+        OOMScoreAdjust = -500;
+        ManagedOOMPreference = "avoid";
         UMask = "0077";
       };
       Install = {
