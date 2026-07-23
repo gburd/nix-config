@@ -756,6 +756,12 @@ let
             shift
           done
           [ $# -gt 0 ] && [ "$1" = "--" ] && shift
+          ${lib.optionalString (!cfg.ec2.buildAarch64) ''
+            if [ "$ARCH" = "aarch64" ]; then
+              echo "agent-sandbox: --arch aarch64 is unavailable on this host (programs.ai.sandbox.ec2.buildAarch64 = false -- no local/remote aarch64 builder configured here)" >&2
+              exit 2
+            fi
+          ''}
           case "$ARCH" in
             x86_64) NIXARCH="x86_64-linux"; AWSARCH="x86_64" ;;
             aarch64|arm64) ARCH="aarch64"; NIXARCH="aarch64-linux"; AWSARCH="arm64" ;;
@@ -966,7 +972,7 @@ let
             AUTHKEY=$(cat "${home}/.ssh/id_auth_ed25519.pub" 2>/dev/null || cat "${home}/.ssh/id_ed25519.pub")
             case "$ARCH" in
               x86_64) TEMPLATE="${ec2ConfigTemplateX86}" ;;
-              aarch64) TEMPLATE="${ec2ConfigTemplateArm}" ;;
+              ${lib.optionalString cfg.ec2.buildAarch64 ''aarch64) TEMPLATE="${ec2ConfigTemplateArm}" ;;''}
             esac
             # Tailscale join is opt-in: only substituted in when a real key
             # is actually configured (${home}/.config/agent-sandbox/tailscale.key,
@@ -1525,6 +1531,26 @@ in
           used when --arch aarch64 is passed. Same instance-store
           requirement as instanceTypeX86. m7gd.8xlarge: 32 vCPU / 128 GiB
           RAM / 1900 GB NVMe.
+        '';
+      };
+      buildAarch64 = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Whether this HOST can build the aarch64 EC2 config template
+          (mkEc2ConfigTemplate's Arm variant). The generated template's
+          own store-path references (pkgs.git etc.) must be built for
+          aarch64-linux -- on NixOS this needs
+          boot.binfmt.emulatedSystems to include aarch64-linux (see
+          nixos/_mixins/workstations/common.nix); on non-NixOS hosts
+          (e.g. arnold, Fedora) there's no equivalent, and no local/remote
+          aarch64 builder means --arch aarch64 can never succeed there.
+          Set false on such hosts so home-manager switch doesn't try to
+          build the aarch64 template at all -- confirmed live: it failed
+          outright ("required system: aarch64-linux... current system:
+          x86_64-linux") on arnold, blocking every switch, including ones
+          with unrelated changes. x86_64 sandboxes (the default arch)
+          remain fully unaffected either way.
         '';
       };
       volumeSizeGb = mkOption {

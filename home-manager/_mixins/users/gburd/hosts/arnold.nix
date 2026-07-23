@@ -48,6 +48,19 @@ with lib.hm.gvariant;
     AWS_PROFILE = "asbxbedrock";
   };
 
+  # Fedora (not NixOS) -- no boot.binfmt.emulatedSystems equivalent, and no
+  # local/remote aarch64 builder configured here. agent-sandbox's ec2 tier
+  # would otherwise try to build the aarch64 EC2 config template on every
+  # switch regardless of whether --arch aarch64 is ever actually used
+  # (Nix must realize every ${} string interpolation to write the
+  # generated shell script, even for a branch that won't run) --
+  # confirmed live: this silently blocked EVERY home-manager switch on
+  # arnold once the ec2 tier's dual-arch support landed ("required system:
+  # aarch64-linux... current system: x86_64-linux"), for two months of
+  # missed switches before it was diagnosed. x86_64 sandboxes (the tier's
+  # default arch) are entirely unaffected by this.
+  programs.ai.sandbox.ec2.buildAarch64 = false;
+
   # arnold has no GNOME (desktop=null) but runs GUI apps over X11, so opt
   # the Keybase GUI in explicitly (linux.nix defaults gui to desktop!=null,
   # i.e. false here — mkForce to override that normal-priority default).
