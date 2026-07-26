@@ -117,6 +117,43 @@ let
         "${h}/.nix-profile"
         "${h}/.nix-defexpr"
         "${h}/.local/state/nix"
+        # Per-project build/test/install artifacts under ~/ws/* -- these are
+        # ALWAYS regenerable from source (cargo build, meson/cmake, make, a
+        # test harness's own scratch data) and can be enormous: confirmed
+        # live, ~600GB combined across ~/ws (target/ alone was 551GB, one
+        # single Rust project's target/ was 459GB) with NO existing
+        # exclusion -- this was the actual root cause of a multi-day backup
+        # outage (floki's backup ran 6+ hours nightly trying to archive it,
+        # holding the shared rsync.net repo lock long enough that meh's and
+        # arnold's backups timed out waiting for it and failed outright,
+        # 4 nights running). `sh:` + `**` matches the name at ANY depth
+        # under $HOME, not just directly under ~/ws, since some projects
+        # nest build dirs under subdirectories (e.g. workspace members).
+        # Language/build-system coverage: Rust (target), C/C++ (build,
+        # cmake-build-*, Debug, Release, *.o/*.a/*.so build products live
+        # inside these dirs already), generic (build, dist, out, _build,
+        # vendor -- vendored deps are refetchable), Python (__pycache__,
+        # .venv, venv, .pytest_cache, .mypy_cache, .tox), PostgreSQL test
+        # harnesses (tmp_install, testrun -- confirmed live: 6GB/28GB
+        # respectively, TAP test scratch data recreated on every run), and
+        # Nix devshell caches (.direnv -- small but pure cache, no content).
+        "sh:${h}/ws/**/target"
+        "sh:${h}/ws/**/build"
+        "sh:${h}/ws/**/_build"
+        "sh:${h}/ws/**/cmake-build-*"
+        "sh:${h}/ws/**/dist"
+        "sh:${h}/ws/**/out"
+        "sh:${h}/ws/**/vendor"
+        "sh:${h}/ws/**/tmp_install"
+        "sh:${h}/ws/**/testrun"
+        "sh:${h}/ws/**/node_modules"
+        "sh:${h}/ws/**/__pycache__"
+        "sh:${h}/ws/**/.venv"
+        "sh:${h}/ws/**/venv"
+        "sh:${h}/ws/**/.pytest_cache"
+        "sh:${h}/ws/**/.mypy_cache"
+        "sh:${h}/ws/**/.tox"
+        "sh:${h}/ws/**/.direnv"
       ] ++ rubo77ExcludePatterns;
     exclude_if_present = [ ".nobackup" ".borgignore" ];
     keep_within = "2d";
