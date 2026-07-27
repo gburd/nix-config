@@ -1,21 +1,87 @@
 { config, lib, pkgs, ... }:
-# Voice dictation — a version-independent local speech-to-text that types the
-# transcription into whatever app has focus. Replaces the GNOME whisper
-# extensions (which lag the shell version and broke on GNOME 49). Uses
-# whisper.cpp (local, no cloud) + ydotool (uinput typing, works on
-# GNOME/Wayland where wtype doesn't). This is the Linux equivalent of Kun
-# Chen's OpenSuperWhisper workflow.
+# Voice I/O — local speech-to-text (dictation) and text-to-speech, both
+# fully local/offline (whisper.cpp + pocket-tts), no cloud APIs.
 #
-# `dictate` is a TOGGLE: run it once to start recording, run it again to stop,
-# transcribe, and type the text at the cursor. Bind it to a keyboard shortcut
-# (a GNOME custom keybinding is added below) for push-to-talk-style use:
-# tap the key, speak, tap again.
+# SAFETY (the reason this file structures things the way it does): STT
+# listening to the mic while TTS is talking out loud is a feedback-loop
+# hazard -- pocket-tts's own output could be picked up by the mic and
+# mis-transcribed as a dictation command, which could itself trigger more
+# speech, etc. `voiceLock` is a single, shared, PID-based lock directory
+# that BOTH `dictate` and `speak` acquire before doing anything with audio
+# hardware, and BOTH refuse to proceed if the other already holds it. This
+# makes "STT running while TTS is producing audio" structurally impossible,
+# not just unlikely -- there's no code path in either tool that touches the
+# mic/speaker without holding the lock first.
 #
-# Model + language are options. The model auto-downloads to
-# ~/.local/share/whisper/ on first use.
+# dictate: local speech-to-text that types the transcription into whatever
+# app has focus. whisper.cpp (STT) + ydotool (uinput typing, works on
+# GNOME/Wayland where wtype doesn't). Toggle: run once to start recording,
+# run again to stop/transcribe/type. GNOME custom keybindings only fire on
+# key-DOWN (no key-up event is exposed to a shortcut command), so a literal
+# push-to-HOLD isn't achievable without a raw-input-watching daemon running
+# with elevated privileges (architecturally a keylogger) -- out of scope.
+# Instead: a hard `maxRecordSeconds` cap (auto-stops itself via `timeout`,
+# so "forgot to tap again" can't run the mic forever) + a minimum
+# transcript length before auto-typing (so a burst of ambient noise
+# mis-transcribed as one or two garbage words never gets typed/executed).
+#
+# speak: local text-to-speech via Kyutai's pocket-tts (CPU-only, ~100M
+# params, MIT). Not in nixpkgs -- installed via pipx (same pattern as
+# hermes-agent/litellm: a private venv under ~/.local/share/pipx/venvs,
+# a thin writeShellScriptBin wrapper execs the real pipx-installed binary).
+#
+# Both DISABLED by default. Enabling either is a per-host opt-in
+# (programs.ai.voice.enable / programs.ai.voice.tts.enable).
 let
   cfg = config.programs.ai.voice;
-  inherit (lib) mkEnableOption mkOption mkIf types;
+  inherit (lib) mkEnableOption mkOption mkIf mkMerge types;
+
+  pipxBin = "${pkgs.pipx}/bin/pipx";
+
+  # Shared lock dir both dictate and speak acquire/check. A directory (not
+  # a plain file) so mkdir's atomicity gives us a race-free "acquire"
+  # primitive for free (mkdir fails if it already exists), same trick
+  # POSIX advisory-locking tools have used forever.
+  lockDirExpr = ''"''${XDG_RUNTIME_DIR:-/tmp}/voice-lock"'';
+
+  # Shared shell functions, sourced (via `.`) by both dictate and speak, so
+  # the acquire/release/holder-check logic exists in exactly one place --
+  # no risk of the two tools' lock logic drifting apart.
+  voiceLockLib = pkgs.writeText "voice-lock.sh" ''
+    VOICE_LOCK=${lockDirExpr}
+
+    # Acquire the lock for $1 ("stt" or "tts"), recording our own PID +
+    # kind so the other tool's holder-check can report what's blocking it.
+    # Returns 1 (caller should abort) if already held by a LIVE process;
+    # a stale lock (holder PID no longer running -- e.g. a crash) is
+    # reclaimed automatically rather than wedging voice I/O forever.
+    voice_lock_acquire() {
+      local kind="$1"
+      if [ -d "$VOICE_LOCK" ]; then
+        local holder_pid holder_kind
+        holder_pid="$(cat "$VOICE_LOCK/pid" 2>/dev/null || echo "")"
+        holder_kind="$(cat "$VOICE_LOCK/kind" 2>/dev/null || echo "unknown")"
+        if [ -n "$holder_pid" ] && kill -0 "$holder_pid" 2>/dev/null; then
+          echo "voice: $holder_kind is active (pid $holder_pid) -- refusing to start $kind to avoid a feedback loop" >&2
+          return 1
+        fi
+        # Stale lock (holder process is gone) -- reclaim it.
+        find "$VOICE_LOCK" -delete 2>/dev/null || true
+      fi
+      if ! mkdir "$VOICE_LOCK" 2>/dev/null; then
+        # Lost a race to acquire; treat as held.
+        echo "voice: lock acquisition race -- another voice tool just started, refusing to start $kind" >&2
+        return 1
+      fi
+      echo "$$" > "$VOICE_LOCK/pid"
+      echo "$kind" > "$VOICE_LOCK/kind"
+      return 0
+    }
+
+    voice_lock_release() {
+      find "$VOICE_LOCK" -delete 2>/dev/null || true
+    }
+  '';
 
   dictate = pkgs.writeShellApplication {
     name = "dictate";
@@ -30,8 +96,12 @@ let
     ];
     text = ''
       set -euo pipefail
+      # shellcheck source=/dev/null
+      . ${voiceLockLib}
       MODEL_NAME="${cfg.model}"
       LANG_CODE="${cfg.language}"
+      MAX_SECONDS="${toString cfg.maxRecordSeconds}"
+      MIN_CHARS="${toString cfg.minTranscriptChars}"
       DATA="''${XDG_DATA_HOME:-$HOME/.local/share}/whisper"
       RUN="''${XDG_RUNTIME_DIR:-/tmp}/dictate"
       WAV="$RUN/rec.wav"
@@ -44,6 +114,7 @@ let
       if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null; then
         kill "$(cat "$PIDF")" 2>/dev/null || true
         rm -f "$PIDF"
+        voice_lock_release
         # give the recorder a moment to flush the WAV
         sleep 0.3
         notify "Transcribing…"
@@ -58,7 +129,15 @@ let
         whisper-cli -m "$MODEL" -f "$WAV" -l "$LANG_CODE" -nt -otxt -of "$OUT" >/dev/null 2>&1 || {
           notify "dictate: transcription failed"; exit 1; }
         TEXT="$(tr -d '\r' < "$OUT.txt" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | tr '\n' ' ' | sed 's/[[:space:]]\+$//')"
-        [ -n "$TEXT" ] || { notify "dictate: (nothing heard)"; exit 0; }
+        # Refuse to auto-type suspiciously short output: a stray cough,
+        # ambient noise, or a mic pop often transcribes as one short/garbage
+        # "word" -- typing that unattended is exactly the kind of runaway
+        # behavior that got voice.enable turned off in the first place.
+        # Below the floor, surface it via notification only (never typed).
+        if [ -z "$TEXT" ] || [ "''${#TEXT}" -lt "$MIN_CHARS" ]; then
+          notify "dictate: too short, not typed" "$TEXT"
+          exit 0
+        fi
         # Copy to clipboard as a fallback, then type it at the cursor.
         printf '%s' "$TEXT" | wl-copy 2>/dev/null || true
         if ! ydotool type -- "$TEXT" 2>/dev/null; then
@@ -67,11 +146,73 @@ let
         exit 0
       fi
 
-      # --- Otherwise: start recording (16kHz mono, whisper's native rate) ---
+      # --- Otherwise: start recording ----------------------------------------
+      # Refuse to start if `speak` currently holds the lock (i.e. TTS audio
+      # may be playing) -- see the SAFETY comment at the top of this file.
+      if ! voice_lock_acquire stt; then
+        notify "dictate: blocked" "text-to-speech is active"
+        exit 1
+      fi
       rm -f "$WAV"
-      notify "Listening…" "run dictate again to stop"
-      pw-record --rate 16000 --channels 1 --format s16 "$WAV" &
-      echo $! > "$PIDF"
+      notify "Listening…" "run dictate again to stop (auto-stops after ''${MAX_SECONDS}s)"
+      # Hard cap: `timeout` sends TERM to pw-record after MAX_SECONDS
+      # regardless of whether the toggle is ever pressed again, so a
+      # forgotten/missed second tap can't leave the mic recording
+      # indefinitely (and, per the lock above, can't leave TTS blocked
+      # indefinitely either).
+      timeout "''${MAX_SECONDS}s" pw-record --rate 16000 --channels 1 --format s16 "$WAV" &
+      RECPID=$!
+      echo "$RECPID" > "$PIDF"
+      # Background watcher: if the timeout fires (recording self-stops)
+      # before the user taps again, release the lock and clean up the pidfile
+      # so the NEXT invocation correctly starts a new recording instead of
+      # tripping over a dead pidfile / a lock nothing will ever release.
+      (
+        wait "$RECPID" 2>/dev/null || true
+        if [ -f "$PIDF" ] && [ "$(cat "$PIDF" 2>/dev/null || echo "")" = "$RECPID" ]; then
+          rm -f "$PIDF"
+          voice_lock_release
+          notify "dictate: auto-stopped" "recording exceeded ''${MAX_SECONDS}s"
+        fi
+      ) &
+      disown
+    '';
+  };
+
+  speak = pkgs.writeShellApplication {
+    name = "speak";
+    runtimeInputs = [ pkgs.pipewire pkgs.libnotify pkgs.coreutils ];
+    text = ''
+      # shellcheck source=/dev/null
+      . ${voiceLockLib}
+      VOICE="${cfg.tts.voice}"
+      LANGUAGE="${cfg.tts.language}"
+      RUN="''${XDG_RUNTIME_DIR:-/tmp}/speak"
+      mkdir -p "$RUN"
+
+      notify() { notify-send -t 2000 -a speak "$1" "''${2:-}" 2>/dev/null || true; }
+
+      if [ $# -eq 0 ]; then
+        echo "usage: speak <text>" >&2
+        exit 2
+      fi
+      TEXT="$*"
+
+      # Refuse to speak if `dictate` currently holds the lock (i.e. the mic
+      # may be recording) -- see the SAFETY comment at the top of this file.
+      if ! voice_lock_acquire tts; then
+        notify "speak: blocked" "dictation is active"
+        exit 1
+      fi
+      trap voice_lock_release EXIT
+
+      export LD_LIBRARY_PATH="${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib pkgs.zlib ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+      WAV="$RUN/tts_output.wav"
+      if ! "$HOME/.local/bin/pocket-tts" generate --text "$TEXT" --voice "$VOICE" --language "$LANGUAGE" --output-path "$WAV" --quiet; then
+        notify "speak: generation failed"
+        exit 1
+      fi
+      pw-play "$WAV"
     '';
   };
 in
@@ -96,24 +237,99 @@ in
       default = "<Super>d";
       description = "GNOME custom shortcut bound to `dictate` (toggle record).";
     };
-  };
+    maxRecordSeconds = mkOption {
+      type = types.int;
+      default = 60;
+      description = ''
+        Hard cap on a single recording. GNOME custom keybindings only fire
+        on key-down (no key-up event is exposed to a shortcut command), so
+        a true push-to-hold isn't achievable here -- this bounds the worst
+        case of "tapped once, forgot to tap again" instead.
+      '';
+    };
+    minTranscriptChars = mkOption {
+      type = types.int;
+      default = 4;
+      description = ''
+        Minimum transcript length (characters) before it's auto-typed.
+        Shorter transcripts are surfaced via notification only, never
+        typed -- guards against a short burst of ambient noise/mic pop
+        being mis-transcribed as a word or two and typed unattended.
+      '';
+    };
 
-  config = mkIf cfg.enable {
-    home.packages = [ dictate ];
-
-    # GNOME custom keybinding -> dictate (toggle). Appended to the custom
-    # keybindings list. NOTE: this assumes GNOME (dconf); harmless elsewhere.
-    dconf.settings = {
-      "org/gnome/settings-daemon/plugins/media-keys" = {
-        custom-keybindings = [
-          "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/dictate/"
-        ];
+    tts = {
+      enable = mkEnableOption "local text-to-speech (pocket-tts)";
+      voice = mkOption {
+        type = types.str;
+        default = "alba";
+        description = ''
+          pocket-tts built-in voice name, a local file path, or an
+          hf://kyutai/tts-voices/... URL. See the pocket-tts README for
+          the full voice catalog.
+        '';
       };
-      "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/dictate" = {
-        name = "Dictate (voice to text)";
-        command = "${dictate}/bin/dictate";
-        binding = cfg.keybinding;
+      language = mkOption {
+        type = types.str;
+        default = "english";
+        description = "pocket-tts language model to use.";
+      };
+      autoUpgrade = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Run `pipx upgrade pocket-tts` on every home-manager activation.";
       };
     };
   };
+
+  config = mkMerge [
+    (mkIf cfg.enable {
+      home.packages = [ dictate ];
+
+      # GNOME custom keybinding -> dictate (toggle). Appended to the custom
+      # keybindings list. NOTE: this assumes GNOME (dconf); harmless elsewhere.
+      dconf.settings = {
+        "org/gnome/settings-daemon/plugins/media-keys" = {
+          custom-keybindings = [
+            "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/dictate/"
+          ];
+        };
+        "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/dictate" = {
+          name = "Dictate (voice to text)";
+          command = "${dictate}/bin/dictate";
+          binding = cfg.keybinding;
+        };
+      };
+    })
+
+    (mkIf cfg.tts.enable {
+      home.packages = [ pkgs.pipx speak ];
+
+      # Install (or upgrade) pocket-tts via pipx -- same pattern as
+      # hermes-agent/litellm (modules/home-manager/ai/hermes.nix): pipx
+      # itself comes from nix, pocket-tts's real deps (torch et al.) live
+      # in a private venv under ~/.local/share/pipx/venvs/pocket-tts.
+      home.activation.installPocketTts = lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" ] ''
+        export PATH="${pkgs.pipx}/bin:${pkgs.coreutils}/bin:$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:$PATH"
+        export PIPX_HOME="$HOME/.local/share/pipx"
+        export PIPX_BIN_DIR="$HOME/.local/bin"
+        ${pkgs.coreutils}/bin/mkdir -p "$PIPX_BIN_DIR" "$PIPX_HOME"
+
+        if ${pipxBin} list --short 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '^pocket-tts '; then
+          ${if cfg.tts.autoUpgrade then ''
+            echo "[pocket-tts] upgrading existing pipx venv..."
+            ${pipxBin} upgrade --pip-args="--upgrade-strategy=only-if-needed" pocket-tts || \
+              echo "[pocket-tts] upgrade failed (will retry on next switch)"
+          '' else ''
+            echo "[pocket-tts] already installed (auto-upgrade disabled)"
+          ''}
+        else
+          echo "[pocket-tts] installing via pipx (this pulls in PyTorch -- first install is slow)..."
+          ${pipxBin} install --quiet pocket-tts || {
+            echo "[pocket-tts] install failed — run 'pipx install pocket-tts' manually" >&2
+          }
+        fi
+      '';
+    })
+  ];
 }
