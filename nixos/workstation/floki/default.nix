@@ -24,6 +24,7 @@
     ../../_mixins/desktop/daw.nix
     ../../_mixins/hardware/intel.accelerated-video-playback.nix
     ../../_mixins/hardware/roccat.nix
+    ../../_mixins/services/flatpak.nix
   ];
 
   boot = {

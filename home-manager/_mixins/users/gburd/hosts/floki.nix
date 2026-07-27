@@ -1,5 +1,14 @@
 { inputs, lib, pkgs, config, ... }:
 with lib.hm.gvariant;
+let
+  # Orion browser flatpak bundle (see the installOrionBrowser activation
+  # below for why this is a direct bundle fetch, not a Flathub install).
+  # Bump both the URL and hash together when a newer release is wanted.
+  orionBrowserBundle = pkgs.fetchurl {
+    url = "https://orionbrowser.com/download/oriongtk.0.3.0.flatpak";
+    hash = "sha256-0NOWPS2Yv5NpnTxqsiMvshHFyTyDotPi964/2og/bCw=";
+  };
+in
 {
   imports = [
     # NOTE: impermanence only works with home-manager as NixOS module
@@ -40,6 +49,31 @@ with lib.hm.gvariant;
   # key events -> more transcription -> runaway. Left off until reworked with
   # push-to-hold (not toggle) + a hard max-record cap + no auto-type loop.
   programs.ai.voice.enable = false;
+
+  # Orion browser (Kagi's WebKitGTK browser) -- proprietary, not packaged in
+  # nixpkgs and not published on Flathub, only distributed as a direct
+  # single-file flatpak BUNDLE from orionbrowser.com. fetchurl makes Nix the
+  # one that downloads/verifies/caches it (reproducible, garbage-collectable
+  # like anything else in the store) instead of a raw `curl | flatpak install`
+  # in an activation script. Requires org.gnome.Platform/x86_64/49 from
+  # Flathub (confirmed via the bundle's own embedded metadata --
+  # `runtime=org.gnome.Platform/x86_64/49`). No passwordless sudo is
+  # configured for this user (confirmed: no wheelNeedsPassword override
+  # anywhere in nixos/_mixins), so a system-wide flatpak install from a
+  # home.activation script would hang forever on a password prompt --
+  # install --user instead, and add a USER-scoped Flathub remote here so
+  # the runtime dependency resolves without depending on (or fighting
+  # over scope with) the SYSTEM-wide remote ../../_mixins/services/flatpak.nix
+  # adds. Both `remote-add --if-not-exists` and `install --or-update` are
+  # idempotent -- safe to run on every switch.
+  home.activation.installOrionBrowser = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${pkgs.flatpak}/bin/flatpak remote-add --user --if-not-exists \
+      flathub https://flathub.org/repo/flathub.flatpakrepo 2>&1 || true
+    ${pkgs.flatpak}/bin/flatpak install --user --or-update -y --noninteractive \
+      ${orionBrowserBundle} 2>&1 | ${pkgs.gnugrep}/bin/grep -v '^$' || true
+  '';
+
+
 
   # Proton Drive (rclone native protondrive backend; on-demand FUSE mount).
   services.protonDrive.enable = true;
@@ -283,6 +317,7 @@ with lib.hm.gvariant;
       # Below: floki-specific packages only.
       _1password-gui
       cmake
+      flatpak # CLI for the Orion browser bundle install below (flatpak run com.kagi.OrionGtk)
       plocate
       telegram-desktop
       unstable.element-desktop
