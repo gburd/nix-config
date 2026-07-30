@@ -41,6 +41,27 @@
     # ...
     # });
 
+    # pipx 1.8.0's own test suite fails on nixos-26.05 (7 tests in
+    # test_package_specifier.py, all a `packaging`-library string-
+    # formatting difference -- e.g. asserting 'black@ https://...' where
+    # the installed `packaging` version now normalizes to 'black @
+    # https://...' with a space). This is nixpkgs' own package check
+    # failing against a newer `packaging`, not anything in this repo --
+    # confirmed via `nix log`, no matching upstream nixpkgs issue found
+    # yet. pipx is a real dependency here (hermes-agent/litellm/maki/
+    # pocket-tts all install via it), so skip just ITS test suite rather
+    # than block every switch on an unrelated upstream test regression.
+    #
+    # MUST use overridePythonAttrs, not plain overrideAttrs -- confirmed
+    # live (built both, compared drvPath): pkgs.pipx is produced via
+    # buildPythonPackage + toPythonApplication
+    # (pkgs/top-level/all-packages.nix: `with python3.pkgs;
+    # toPythonApplication pipx`), and buildPythonPackage's extra
+    # derivation-construction logic means a plain overrideAttrs call is a
+    # silent no-op here (drvPath stayed byte-identical) --
+    # overridePythonAttrs is the mechanism that actually threads through.
+    pipx = prev.pipx.overridePythonAttrs (_oldAttrs: { doCheck = false; });
+
     customMaintainer = prev.lib.maintainers.overrideAttrs (oldAttrs: oldAttrs // {
       tcarrio = {
         email = "tom@carrio.dev";
@@ -50,7 +71,6 @@
       };
     });
   };
-
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will
   # be accessible through 'pkgs.unstable'

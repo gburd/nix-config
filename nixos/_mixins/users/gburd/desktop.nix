@@ -15,7 +15,9 @@
   ++ lib.optional (builtins.pathExists (../.. + "/desktop/${desktop}-apps.nix")) ../../desktop/${desktop}-apps.nix;
 
   environment.systemPackages = with pkgs; [
-    audio-recorder
+    # audio-recorder removed upstream in 26.05 (unmaintained/broken);
+    # gnome-sound-recorder (below) is nixpkgs' suggested replacement and
+    # was already installed here, so this is a clean drop, no loss.
     gimp-with-plugins
     gnome-clocks
     dconf-editor

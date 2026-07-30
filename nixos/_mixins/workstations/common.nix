@@ -47,14 +47,19 @@
       "1.1.1.1"
       "8.8.8.8"
     ];
-    extraConfig = ''
-      DNS=45.90.28.0#362f8c.dns.nextdns.io
-      DNS=2a07:a8c0::#362f8c.dns.nextdns.io
-      DNS=45.90.30.0#362f8c.dns.nextdns.io
-      DNS=2a07:a8c1::#362f8c.dns.nextdns.io
+    # 26.05: services.resolved.extraConfig was removed in favor of the
+    # structured .settings (INI section -> key/value). This is the
+    # [Resolve] section of resolved.conf.
+    settings.Resolve = {
+      DNS = [
+        "45.90.28.0#362f8c.dns.nextdns.io"
+        "2a07:a8c0::#362f8c.dns.nextdns.io"
+        "45.90.30.0#362f8c.dns.nextdns.io"
+        "2a07:a8c1::#362f8c.dns.nextdns.io"
+      ];
       # Route .local queries to mDNS (avahi), not upstream NextDNS
-      Domains=~local
-    '';
+      Domains = "~local";
+    };
   };
   # Tell NetworkManager to use systemd-resolved, but don't let per-link
   # DHCP DNS override the global NextDNS config in resolved.conf
@@ -95,9 +100,8 @@
   programs.nix-ld.enable = true;
 
   # Enable core dumps in current directory with pattern core.<pid>
-  systemd.coredump.extraConfig = ''
-    Storage=none
-  '';
+  # 26.05: systemd.coredump.extraConfig removed in favor of .settings.Coredump.
+  systemd.coredump.settings.Coredump.Storage = "none";
   security.pam.loginLimits = [
     { domain = "*"; type = "-"; item = "core"; value = "unlimited"; }
   ];

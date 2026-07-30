@@ -69,7 +69,7 @@ in
 
     # TypeScript/Node.js ecosystem (CLAUDE.md requirements)
     typescript
-    nodePackages.prettier # Until oxfmt available in nixpkgs
+    prettier # Until oxfmt available in nixpkgs (nodePackages removed in 26.05; prettier moved to top level)
     # oxlint not yet in nixpkgs - use prettier interim
 
     # Nix development tools

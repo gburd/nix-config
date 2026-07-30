@@ -24,7 +24,7 @@
       vscode-langservers-extracted # JSON, HTML, CSS, ESLint LSP
       yaml-language-server
       perlPackages.PLS # Perl LSP
-      nodePackages.bash-language-server
+      bash-language-server # nodePackages removed in 26.05; moved to top level
 
       # Formatters
       stylua
@@ -42,7 +42,9 @@
       markdownlint-cli
 
       # Debuggers
-      lldb # LLDB debugger for Rust/C/C++ (provides lldb-vscode)
+      # lldb comes from console/lldb/default.nix (llvmPackages_latest.lldb);
+      # do NOT re-add plain `lldb` here -- on 26.05 it's a different version
+      # (21.1.8 vs the module's 22.1.5) and both in home.packages collide.
       python3Packages.debugpy # Python debugger
       delve # Go debugger
 

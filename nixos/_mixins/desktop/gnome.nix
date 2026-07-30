@@ -13,7 +13,8 @@
 
   services.displayManager.gdm = {
     enable = true;
-    wayland = true;
+    # 26.05/GNOME 50: gdm.wayland can no longer be toggled (wayland-only);
+    # the option was removed. wayland is the default and only mode now.
   };
 
   # Enable udev rules

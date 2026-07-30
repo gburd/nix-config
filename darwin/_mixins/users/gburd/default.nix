@@ -17,7 +17,7 @@
     lazydocker
     lazygit
     mysql
-    neofetch
+    hyfetch # neofetch removed upstream; hyfetch's neowofetch is the maintained fork
     neovim
     tmux
     tokei

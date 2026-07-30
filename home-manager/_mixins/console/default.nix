@@ -59,7 +59,7 @@
       jpegoptim # Terminal JPEG optimizer
       jiq # Modern Unix `jq`
       lazygit # Terminal Git client
-      neofetch # Terminal system info
+      hyfetch # Terminal system info (neofetch fork; neofetch itself removed upstream in 26.05 -- confirmed hyfetch's neowofetch reads the SAME ~/.config/neofetch/config.conf path, genuine drop-in for the custom theme below). Run as `neowofetch`.
       nixpkgs-review # Nix code review
       nurl # Nix URL fetcher
       nyancat # Terminal rainbow spewing feline
@@ -196,6 +196,7 @@
       shellAliases = {
         glow = "glow --pager";
         ip = "ip --color --brief";
+        neofetch = "neowofetch"; # nixpkgs removed the neofetch package in 26.05 (hyfetch's fork provides neowofetch instead)
         top = "btm --basic --tree --hide_table_gap --dot_marker --process_memory_as_value";
         tree = "eza --tree";
       };
@@ -394,6 +395,7 @@
         # Existing aliases
         glow = "glow --pager";
         ip = "ip --color --brief";
+        neofetch = "neowofetch"; # nixpkgs removed the neofetch package in 26.05 (hyfetch's fork provides neowofetch instead)
         top = "btm --basic --tree --hide_table_gap --dot_marker --process_memory_as_value";
         tree = "eza --tree";
 

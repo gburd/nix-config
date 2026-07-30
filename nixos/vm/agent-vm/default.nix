@@ -9,7 +9,7 @@
 # reaches the host LiteLLM gateway (127.0.0.1:4000) via slirp at 10.0.2.2:4000.
 {
   imports = [ (modulesPath + "/virtualisation/qemu-vm.nix") ];
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 
   virtualisation = {
     memorySize = lib.mkDefault 4096;

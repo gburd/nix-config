@@ -11,7 +11,6 @@
     # = true, meh = headless/false).
     ../../../services/keybase.nix
   ] ++ lib.optionals (builtins.isString desktop) [
-    ../../../desktop/audio-recorder.nix
     ../../../desktop/celluloid.nix
     ../../../desktop/dconf-editor.nix
     ../../../desktop/gnome-sound-recorder.nix
