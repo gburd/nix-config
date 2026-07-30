@@ -51,6 +51,9 @@ in
       {
         home-manager.useGlobalPkgs = true;
         home-manager.useUserPackages = true;
+        # First activation on a machine with pre-existing dotfiles: back up
+        # clobbered files (~/.zshrc, ~/.gitconfig, ...) to *.hm-bak, don't error.
+        home-manager.backupFileExtension = "hm-bak";
         # HM modules (e.g. programs.ai.skills, which reads
         # inputs.postgresq-skills-*) need the flake args too — darwin's
         # specialArgs only reach the system modules, not the nested HM

@@ -152,7 +152,8 @@ let
       command = "npx";
       args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
     };
-  });
+  })
+    // cfg.extraServers;
 
   # Claude Code user-scoped format (stored in ~/.claude.json under mcpServers)
   claudeUserMcpServers = { }
@@ -217,7 +218,8 @@ let
       args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
       env = { };
     };
-  });
+  })
+    // cfg.extraServers;
 
   ###
   # Per-project MCP gating (context-window optimization).
@@ -300,6 +302,18 @@ in
 {
   options.programs.ai.mcps = {
     enable = mkEnableOption "MCP server module";
+
+    extraServers = mkOption {
+      type = types.attrs;
+      default = { };
+      description = ''
+        Extra raw MCP server definitions merged into the core outputs
+        (~/.mcp.json, ~/.kiro/settings/mcp.json, ~/.claude.json, Pi, maki) and
+        the kiro agent tool list. For host-specific servers not modelled above
+        (e.g. Amazon-toolbox builder-mcp/amzn-mcp on the work Mac). Keys become
+        the MCP server names. Defaults to {} so other hosts are unaffected.
+      '';
+    };
 
     targets = {
       default = mkOption {
@@ -465,7 +479,7 @@ in
             "@rust"
             "@python"
             "@home-manager"
-          ];
+          ] ++ (map (n: "@${n}") (lib.attrNames cfg.extraServers));
           allowedTools = [
             # auto-approved (no prompt) subset of the enabled tools above
             "fs_read"
@@ -488,7 +502,7 @@ in
             "@rust"
             "@python"
             "@home-manager"
-          ];
+          ] ++ (map (n: "@${n}") (lib.attrNames cfg.extraServers));
           toolsSettings = {
             execute_bash = {
               # autoAllowReadonly: kiro's built-in classifier auto-approves

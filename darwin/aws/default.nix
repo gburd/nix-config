@@ -1,11 +1,7 @@
-# Device:      work-issued macOS laptop ("aws" host)
-# CPU:         Apple Silicon (aarch64-darwin)
-# Hostname:    aws
-#
-# Starting-point config modelled on 80a99738d7e2 (the existing work laptop).
-# An agent on the host will tune this further; this gives parity with the
-# other hosts (shared darwin/default.nix: home-manager, AI agents, fish,
-# git, overlays, fonts).
+# Device:      MacBook Air (M3, 2024)
+# CPU:         Apple M3 (aarch64-darwin)
+# Model:       Mac15,7
+# Hostname:    80a99738d7e2 (aliased as "aws")
 
 { username, ... }: {
   imports = [
@@ -14,8 +10,13 @@
   ];
 
   networking = {
-    hostName = "aws";
+    hostName = "80a99738d7e2";
+    # Alias: use `ssh aws` via ~/.ssh/config, not nix-darwin networking
   };
+
+  # Preserve Touch ID for sudo (matches the pre-existing /etc/pam.d/sudo_local
+  # that we move aside as *.before-nix-darwin on first activation).
+  security.pam.services.sudo_local.touchIdAuth = true;
 
   system = {
     primaryUser = username;
@@ -24,11 +25,14 @@
       dock = {
         autohide = true;
         orientation = "left";
+        # tilesize not explicitly set — uses macOS default
       };
       finder = {
         AppleShowAllExtensions = true;
+        # ShowPathbar and ShowStatusBar not explicitly set
       };
       trackpad = {
+        # Clicking = false (tap-to-click disabled on this machine)
         TrackpadRightClick = true;
       };
       NSGlobalDomain = {
