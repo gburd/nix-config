@@ -35,7 +35,6 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     vscode-server.url = "github:msteen/nixos-vscode-server";
-    vscode-server.inputs.nixpkgs.follows = "nixpkgs";
 
     devshells.url = "github:gburd/devshells";
     devshells.inputs.nixpkgs.follows = "nixpkgs";
@@ -181,18 +180,16 @@
         # Servers
       };
 
-      # Support for nix-darwin workstations
-      # - darwin-rebuild build --flake .#80a99738d7e2
+      # Support for nix-darwin workstations. Single profile for this machine:
+      # logical name "aws"; real (IT-assigned) hostname stays "80a99738d7e2".
+      # - build:  nix build .#darwinConfigurations.aws.system
+      # - switch: darwin-rebuild switch --flake .#aws
       darwinConfigurations = {
-        "80a99738d7e2" = libx.mkDarwin { username = "gregburd"; hostname = "80a99738d7e2"; stateVersion = 4; };
-        # Work-issued macOS laptop (host named "aws"). Starting point matching
-        # the other hosts; an agent on the host will tune it further.
-        # - darwin-rebuild switch --flake .#aws
         aws = libx.mkDarwin { username = "gregburd"; hostname = "aws"; stateVersion = 4; };
       };
 
       # Expose the package set, including overlays, for convenience.
-      darwinPackages = self.darwinConfigurations."80a99738d7e2".pkgs;
+      darwinPackages = self.darwinConfigurations.aws.pkgs;
 
       nixosConfigurations = {
         # .iso images

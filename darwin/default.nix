@@ -16,64 +16,85 @@
     home.homeDirectory = lib.mkForce "/Users/${username}";
     home.stateVersion = "24.11";
 
-    # SSH host aliases
+    # Amazon-toolbox MCP servers — this work Mac ("aws") only; NOT synced to
+    # the Linux hosts (they have no Amazon toolbox). extraServers is {} elsewhere.
+    programs.ai.mcps.extraServers = lib.mkIf (hostname == "aws") {
+      "builder-mcp" = { command = "builder-mcp"; args = [ ]; };
+      "amzn-mcp" = { command = "amzn-mcp"; args = [ "--include-publish-status=experimental" ]; };
+    };
+
+    # SSH host aliases. enableDefaultConfig=false (its defaults are being
+    # removed upstream); shared defaults live in matchBlocks."*".
     programs.ssh = {
       enable = true;
+      enableDefaultConfig = false;
       matchBlocks = {
+        "*" = {
+          identityFile = "~/.ssh/id_ecdsa";
+          identitiesOnly = true;
+          extraOptions.StrictHostKeyChecking = "accept-new";
+        };
         "aws" = {
           hostname = "80a99738d7e2";
           user = username;
         };
+        # Home-lab hosts (LAN; user gburd). Restored from the pre-nix-darwin
+        # ~/.ssh/config so unison/ssh to these hosts keeps working.
+        "floki" = { hostname = "192.168.1.151"; user = "gburd"; };
+        "arnold" = { hostname = "192.168.1.37"; user = "gburd"; };
+        "meh" = { hostname = "192.168.1.185"; user = "gburd"; };
+        "rv greenfly" = { hostname = "192.168.1.126"; user = "gburd"; };
+        "sun icarus" = { hostname = "192.168.1.206"; user = "gburd"; };
+        "santorini win unicorn" = { hostname = "100.112.230.126"; user = "gburd"; };
       };
     };
 
     # Git config
     programs.git = {
       enable = true;
-      userName = "Greg Burd";
-      userEmail = "greg@burd.me";
       lfs.enable = true;
-      aliases = {
-        st = "status --short";
-        ci = "commit";
-        co = "checkout";
-        di = "diff";
-        dc = "diff --cached";
-        aa = "add --all";
-        amend = "commit --amend";
-        mend = "commit --amend --no-edit";
-        head = "!git l -1";
-        h = "!git head";
-        r = "!git --no-pager l -20";
-        ra = "!git r --all";
-        ff = "merge --ff-only";
-        pullff = "pull --ff-only";
-        l = "log --graph --abbrev-commit --date=relative";
-        la = "!git l --all";
-        div = "divergence";
-        gn = "goodness";
-        gnc = "goodness --cached";
-        fa = "fetch --all";
-        pom = "push origin master";
-        files = "show --oneline";
-        graph = "log --graph --decorate --all";
-        lol = "log --graph --decorate --pretty=oneline --abbrev-commit";
-        lola = "log --graph --decorate --pretty=oneline --abbrev-commit --all";
-        lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
-        unadd = "reset --";
-        unedit = "checkout --";
-        unstage = "reset HEAD";
-        unrm = "checkout --";
-        unstash = "stash pop";
-        lastchange = "log -n 1 -p";
-        subdate = "submodule update --init --recursive";
-        sync = "pull --rebase";
-        update = "merge --ff-only origin/master";
-      };
-      # Mirrors ~/.gitconfig [core] excludesFile. NOTE: the credential helper in
-      # ~/.gitconfig (a plaintext PAT echo) is deliberately NOT codified — it is
-      # a secret and this repo is public; `gh auth git-credential` handles auth.
-      extraConfig = {
+      settings = {
+        user.name = "Greg Burd";
+        user.email = "greg@burd.me";
+        alias = {
+          st = "status --short";
+          ci = "commit";
+          co = "checkout";
+          di = "diff";
+          dc = "diff --cached";
+          aa = "add --all";
+          amend = "commit --amend";
+          mend = "commit --amend --no-edit";
+          head = "!git l -1";
+          h = "!git head";
+          r = "!git --no-pager l -20";
+          ra = "!git r --all";
+          ff = "merge --ff-only";
+          pullff = "pull --ff-only";
+          l = "log --graph --abbrev-commit --date=relative";
+          la = "!git l --all";
+          div = "divergence";
+          gn = "goodness";
+          gnc = "goodness --cached";
+          fa = "fetch --all";
+          pom = "push origin master";
+          files = "show --oneline";
+          graph = "log --graph --decorate --all";
+          lol = "log --graph --decorate --pretty=oneline --abbrev-commit";
+          lola = "log --graph --decorate --pretty=oneline --abbrev-commit --all";
+          lg = "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative";
+          unadd = "reset --";
+          unedit = "checkout --";
+          unstage = "reset HEAD";
+          unrm = "checkout --";
+          unstash = "stash pop";
+          lastchange = "log -n 1 -p";
+          subdate = "submodule update --init --recursive";
+          sync = "pull --rebase";
+          update = "merge --ff-only origin/master";
+        };
+        # Mirrors ~/.gitconfig [core] excludesFile. The ~/.gitconfig credential
+        # helper (plaintext PAT) is deliberately NOT codified (secret; repo public).
         core.excludesFile = "~/.gitignore";
       };
     };
@@ -186,7 +207,7 @@
       '';
       shellAliases = {
         nix-gc = "sudo nix-collect-garbage --delete-older-than 14d";
-        rebuild-all = "sudo nix-collect-garbage --delete-older-than 14d && darwin-rebuild switch --flake $HOME/ws/nix-config && home-manager switch -b backup --flake $HOME/ws/nix-config";
+        rebuild-all = "sudo nix-collect-garbage --delete-older-than 14d && darwin-rebuild switch --flake $HOME/ws/nix-config#aws && home-manager switch -b backup --flake $HOME/ws/nix-config";
         rebuild-home = "home-manager switch -b backup --flake $HOME/ws/nix-config";
         rebuild-host = "darwin-rebuild switch --flake $HOME/ws/nix-config";
         rebuild-lock = "pushd $HOME/ws/nix-config && nix flake lock --recreate-lock-file && popd";
