@@ -15,8 +15,12 @@
     ../../_mixins/services/tailscale-autoconnect.nix
   ];
 
-  # WSL has no hardware-configuration.nix to set this; WSL2 is x86_64.
-  nixpkgs.hostPlatform = "x86_64-linux";
+  # WSL has no hardware-configuration.nix to set this. santorini is an
+  # ARM64 Windows host (Snapdragon/Windows-on-ARM), so the WSL2 guest is
+  # aarch64 — NOT x86_64. An x86_64 image will not boot here (wsl.exe throws
+  # Wsl/Service/E_UNEXPECTED: the engine can't exec the wrong-arch /init),
+  # which is what wedged the previous install.
+  nixpkgs.hostPlatform = "aarch64-linux";
 
   wsl = {
     enable = true;
