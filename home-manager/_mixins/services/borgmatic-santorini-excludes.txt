@@ -1,0 +1,93 @@
+# Extra borg exclude patterns for santorini (Windows host, backed up from
+# inside WSL NixOS via the /mnt/c mounts). These are Windows-path patterns,
+# NOT the Linux-home patterns in borgmatic.nix's rubo77 set — santorini backs
+# up the Windows user homes + the PostgreSQL build farm, not the WSL home.
+#
+# Source roots (see borgmatic-santorini.nix):
+#   /mnt/c/Users/gburd
+#   /mnt/c/Users/gregb
+#   /mnt/c/bf                (build-farm client-code + animal .conf files)
+#
+# Rule of thumb: keep sources, configs, scripts, animal .conf; drop anything
+# a compiler/package manager/build farm regenerates. `sh:` patterns match at
+# any depth; leading-path patterns are anchored under a source root.
+
+# ---- PostgreSQL build farm: transient build tree (regenerable) -----------
+# build-farm.conf sets  build_root => "c:/build"  — 20GB of checked-out
+# source + object files, rebuilt from git on every run. Never back it up.
+/mnt/c/build
+# per-animal ccache / mirror / scratch under the build root live in c:/build
+# already (covered above); the .conf files under /mnt/c/bf ARE kept.
+sh:/mnt/c/bf/logs
+sh:/mnt/c/bf/.locks
+
+# ---- Rust / Cargo (both users) -------------------------------------------
+sh:target
+sh:.cargo/registry
+sh:.cargo/git
+sh:.rustup/toolchains
+sh:.rustup/downloads
+
+# ---- C / C++ / autotools / MSVC build outputs ----------------------------
+# libdb build/validate trees under gburd are configure+make outputs.
+/mnt/c/Users/gburd/libdb
+/mnt/c/Users/gburd/libdb-msvc-atomics
+/mnt/c/Users/gburd/libdb-validate
+/mnt/c/Users/gburd/dist
+sh:cmake-build-*
+sh:_build
+sh:.deps
+
+# ---- Node / Python -------------------------------------------------------
+sh:node_modules
+sh:__pycache__
+sh:.venv
+sh:venv
+sh:.pytest_cache
+sh:.mypy_cache
+sh:.tox
+
+# ---- Windows per-user caches & regenerable state -------------------------
+# gregb's 27GB is almost all AppData\Local caches; back up Roaming, skip Local
+# caches. We keep AppData\Roaming (real app config) and drop the big caches.
+sh:AppData/Local/Temp
+sh:AppData/Local/Microsoft/Windows/INetCache
+sh:AppData/Local/Microsoft/Windows/WebCache
+sh:AppData/Local/Microsoft/Edge/User Data/*/Cache
+sh:AppData/Local/Google/Chrome/User Data/*/Cache
+sh:AppData/Local/Google/Chrome/User Data/*/Service Worker/CacheStorage
+sh:AppData/Local/Packages/*/AC/*Cache*
+sh:AppData/Local/pip/cache
+sh:AppData/Local/npm-cache
+sh:AppData/Local/CrashDumps
+sh:AppData/Local/D3DSCache
+sh:AppData/Local/NuGet/Cache
+sh:AppData/Local/.cpan-w64/build
+sh:.cpan-w64/build
+# "Local Settings" is a legacy junction to AppData\Local — skip to avoid
+# double-walking (and the cache blowup) the junction points at.
+sh:Local Settings
+sh:Application Data
+sh:Cookies
+sh:NetHood
+sh:PrintHood
+sh:Recent
+sh:SendTo
+sh:Templates
+sh:Start Menu
+sh:My Documents
+
+# ---- OneDrive placeholders (cloud-backed already) ------------------------
+sh:OneDrive
+
+# ---- agent scratch we archived (kept once, not forever) ------------------
+# _agent_scratch is fine to keep (small); no exclude.
+
+# ---- generic junk --------------------------------------------------------
+sh:*.pyc
+sh:*.o
+sh:*.obj
+sh:*.pdb
+sh:*.ilk
+sh:Thumbs.db
+sh:desktop.ini
