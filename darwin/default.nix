@@ -16,6 +16,16 @@
     home.homeDirectory = lib.mkForce "/Users/${username}";
     home.stateVersion = "24.11";
 
+    # This host runs the home-manager 26.05 module against rolling (unstable)
+    # darwin pkgs (nix-darwin follows nixpkgs-unstable + useGlobalPkgs), an
+    # intentional pairing; the release check false-positives on it.
+    home.enableNixpkgsReleaseCheck = false;
+
+    # Skip building home-manager manpages here: it triggers HM's docs/options.json
+    # generation, which emits an upstream "references store path without proper
+    # context" eval warning. `home-manager-help` / the HTML manual are unaffected.
+    manual.manpages.enable = false;
+
     # Amazon-toolbox MCP servers — this work Mac ("aws") only; NOT synced to
     # the Linux hosts (they have no Amazon toolbox). extraServers is {} elsewhere.
     programs.ai.mcps.extraServers = lib.mkIf (hostname == "aws") {
