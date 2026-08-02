@@ -1,16 +1,16 @@
 { config, lib, pkgs, ... }:
 # Voice I/O — local speech-to-text (dictation) and text-to-speech, both
-# fully local/offline (whisper.cpp + pocket-tts), no cloud APIs.
+# fully local/offline (whisper.cpp + piper), no cloud APIs.
 #
 # SAFETY (the reason this file structures things the way it does): STT
 # listening to the mic while TTS is talking out loud is a feedback-loop
-# hazard -- pocket-tts's own output could be picked up by the mic and
+# hazard -- piper's own output could be picked up by the mic and
 # mis-transcribed as a dictation command, which could itself trigger more
-# speech, etc. `voiceLock` is a single, shared, PID-based lock directory
-# that BOTH `dictate` and `speak` acquire before doing anything with audio
-# hardware, and BOTH refuse to proceed if the other already holds it. This
-# makes "STT running while TTS is producing audio" structurally impossible,
-# not just unlikely -- there's no code path in either tool that touches the
+# speech, etc. `voiceLock` is a single, shared lock directory that BOTH
+# `dictate` and `speak` acquire before doing anything with audio hardware,
+# and BOTH refuse to proceed if the other already holds it. This makes
+# "STT running while TTS is producing audio" structurally impossible, not
+# just unlikely -- there's no code path in either tool that touches the
 # mic/speaker without holding the lock first.
 #
 # dictate: local speech-to-text that types the transcription into whatever
@@ -20,23 +20,22 @@
 # key-DOWN (no key-up event is exposed to a shortcut command), so a literal
 # push-to-HOLD isn't achievable without a raw-input-watching daemon running
 # with elevated privileges (architecturally a keylogger) -- out of scope.
-# Instead: a hard `maxRecordSeconds` cap (auto-stops itself via `timeout`,
-# so "forgot to tap again" can't run the mic forever) + a minimum
-# transcript length before auto-typing (so a burst of ambient noise
-# mis-transcribed as one or two garbage words never gets typed/executed).
+# Instead: a hard `maxRecordSeconds` cap (recording runs as a systemd-run
+# --user unit with RuntimeMaxSec, so "forgot to tap again" can't run the mic
+# forever) + a minimum transcript length before auto-typing (so a burst of
+# ambient noise mis-transcribed as a garbage word never gets typed).
 #
-# speak: local text-to-speech via Kyutai's pocket-tts (CPU-only, ~100M
-# params, MIT). Not in nixpkgs -- installed via pipx (same pattern as
-# hermes-agent/litellm: a private venv under ~/.local/share/pipx/venvs,
-# a thin writeShellScriptBin wrapper execs the real pipx-installed binary).
+# speak: local text-to-speech via piper (onnxruntime, CPU). A plain nixpkgs
+# package -- no pipx/venv/PyTorch. Voice model is Nix-fetched + pinned.
+# NPU note: nixpkgs' piper/onnxruntime ship CPUExecutionProvider only, so
+# this runs on CPU; the Intel AI Boost NPU would need an onnxruntime built
+# with the OpenVINO EP (or a direct-OpenVINO runner), neither in nixpkgs.
 #
 # Both DISABLED by default. Enabling either is a per-host opt-in
 # (programs.ai.voice.enable / programs.ai.voice.tts.enable).
 let
   cfg = config.programs.ai.voice;
   inherit (lib) mkEnableOption mkOption mkIf mkMerge types;
-
-  pipxBin = "${pkgs.pipx}/bin/pipx";
 
   # Shared lock dir both dictate and speak acquire/check. A directory (not
   # a plain file) so mkdir's atomicity gives us a race-free "acquire"
@@ -97,6 +96,21 @@ let
       find "$VOICE_LOCK" -delete 2>/dev/null || true
     }
   '';
+
+  # Piper TTS voice model (en_US amy medium) + its config, fetched from
+  # rhasspy/piper-voices and pinned. Piper voices aren't packaged in
+  # nixpkgs; this is the same fetchurl-pins-a-blob approach used elsewhere.
+  # To change voice: swap both URLs+hashes (a voice is always a paired
+  # .onnx + .onnx.json).
+  piperVoiceBase = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/amy/medium";
+  piperVoiceModel = pkgs.fetchurl {
+    url = "${piperVoiceBase}/en_US-amy-medium.onnx";
+    hash = "sha256-s6bke1e4x/vmoM4lGBYaUPWanN2KUINcAssCvdYgbBg=";
+  };
+  piperVoiceConfig = pkgs.fetchurl {
+    url = "${piperVoiceBase}/en_US-amy-medium.onnx.json";
+    hash = "sha256-laI+tNQpCdON9zu5rH9F9Zfb/N4tG/lSb96vVGaXfXc=";
+  };
 
   dictate = pkgs.writeShellApplication {
     name = "dictate";
@@ -210,12 +224,10 @@ let
 
   speak = pkgs.writeShellApplication {
     name = "speak";
-    runtimeInputs = [ pkgs.pipewire pkgs.libnotify pkgs.coreutils ];
+    runtimeInputs = [ pkgs.piper-tts pkgs.pipewire pkgs.libnotify pkgs.coreutils ];
     text = ''
       # shellcheck source=/dev/null
       . ${voiceLockLib}
-      VOICE="${cfg.tts.voice}"
-      LANGUAGE="${cfg.tts.language}"
       RUN="''${XDG_RUNTIME_DIR:-/tmp}/speak"
       mkdir -p "$RUN"
 
@@ -235,13 +247,24 @@ let
       fi
       trap voice_lock_release EXIT
 
-      export LD_LIBRARY_PATH="${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib pkgs.zlib ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-      WAV="$RUN/tts_output.wav"
-      if ! "$HOME/.local/bin/pocket-tts" generate --text "$TEXT" --voice "$VOICE" --language "$LANGUAGE" --output-path "$WAV" --quiet; then
+      # piper (onnxruntime, CPU) -- tiny + sub-second, no PyTorch. The voice
+      # model .onnx + its .onnx.json config are Nix-fetched (see
+      # piperVoiceModel below), pinned + reproducible. Piper streams raw
+      # 16-bit PCM to stdout; feed it straight to pw-play with the model's
+      # sample rate. NPU note: nixpkgs' piper/onnxruntime have no OpenVINO
+      # execution provider (CPUExecutionProvider only -- verified), so this
+      # runs on CPU; targeting the Intel NPU would need an onnxruntime built
+      # with the OpenVINO EP or a direct-OpenVINO runner, neither of which
+      # exists in nixpkgs today.
+      RATE=$(${pkgs.jq}/bin/jq -r '.audio.sample_rate // 22050' "${piperVoiceConfig}" 2>/dev/null || echo 22050)
+      if ! printf '%s' "$TEXT" | piper \
+            --model "${piperVoiceModel}" \
+            --config "${piperVoiceConfig}" \
+            --output-raw 2>/dev/null \
+          | pw-play --rate "$RATE" --channels 1 --format s16 --raw -; then
         notify "speak: generation failed"
         exit 1
       fi
-      pw-play "$WAV"
     '';
   };
 in
@@ -288,26 +311,7 @@ in
     };
 
     tts = {
-      enable = mkEnableOption "local text-to-speech (pocket-tts)";
-      voice = mkOption {
-        type = types.str;
-        default = "alba";
-        description = ''
-          pocket-tts built-in voice name, a local file path, or an
-          hf://kyutai/tts-voices/... URL. See the pocket-tts README for
-          the full voice catalog.
-        '';
-      };
-      language = mkOption {
-        type = types.str;
-        default = "english";
-        description = "pocket-tts language model to use.";
-      };
-      autoUpgrade = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Run `pipx upgrade pocket-tts` on every home-manager activation.";
-      };
+      enable = mkEnableOption "local text-to-speech (piper, CPU/onnxruntime)";
     };
   };
 
@@ -332,33 +336,10 @@ in
     })
 
     (mkIf cfg.tts.enable {
-      home.packages = [ pkgs.pipx speak ];
-
-      # Install (or upgrade) pocket-tts via pipx -- same pattern as
-      # hermes-agent/litellm (modules/home-manager/ai/hermes.nix): pipx
-      # itself comes from nix, pocket-tts's real deps (torch et al.) live
-      # in a private venv under ~/.local/share/pipx/venvs/pocket-tts.
-      home.activation.installPocketTts = lib.hm.dag.entryAfter [ "writeBoundary" "linkGeneration" ] ''
-        export PATH="${pkgs.pipx}/bin:${pkgs.coreutils}/bin:$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:$PATH"
-        export PIPX_HOME="$HOME/.local/share/pipx"
-        export PIPX_BIN_DIR="$HOME/.local/bin"
-        ${pkgs.coreutils}/bin/mkdir -p "$PIPX_BIN_DIR" "$PIPX_HOME"
-
-        if ${pipxBin} list --short 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '^pocket-tts '; then
-          ${if cfg.tts.autoUpgrade then ''
-            echo "[pocket-tts] upgrading existing pipx venv..."
-            ${pipxBin} upgrade --pip-args="--upgrade-strategy=only-if-needed" pocket-tts || \
-              echo "[pocket-tts] upgrade failed (will retry on next switch)"
-          '' else ''
-            echo "[pocket-tts] already installed (auto-upgrade disabled)"
-          ''}
-        else
-          echo "[pocket-tts] installing via pipx (this pulls in PyTorch -- first install is slow)..."
-          ${pipxBin} install --quiet pocket-tts || {
-            echo "[pocket-tts] install failed — run 'pipx install pocket-tts' manually" >&2
-          }
-        fi
-      '';
+      # piper is a plain nixpkgs package (pulled in via speak's runtimeInputs)
+      # -- no pipx/venv/PyTorch dance like pocket-tts needed. The voice model
+      # is Nix-fetched (piperVoiceModel/Config above).
+      home.packages = [ speak ];
     })
   ];
 }
