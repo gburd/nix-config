@@ -50,22 +50,36 @@ let
   voiceLockLib = pkgs.writeText "voice-lock.sh" ''
     VOICE_LOCK=${lockDirExpr}
 
-    # Acquire the lock for $1 ("stt" or "tts"), recording our own PID +
-    # kind so the other tool's holder-check can report what's blocking it.
-    # Returns 1 (caller should abort) if already held by a LIVE process;
-    # a stale lock (holder PID no longer running -- e.g. a crash) is
-    # reclaimed automatically rather than wedging voice I/O forever.
+    # Acquire the lock for $1 ("stt" or "tts"). $2 is an optional liveness
+    # token: a `systemd --user` unit name whose active-state defines whether
+    # the holder is still alive. This matters because dictate hands recording
+    # off to a transient unit and then EXITS -- so its own PID ($$) dies
+    # immediately and can't represent "recording in progress". When a unit
+    # token is given we record it and the staleness check consults systemd;
+    # otherwise we fall back to the holder PID (speak holds the lock for its
+    # own lifetime, so $$ is correct there).
+    # Returns 1 (caller should abort) if already held by a LIVE holder;
+    # a stale lock (holder gone -- e.g. a crash) is reclaimed automatically
+    # rather than wedging voice I/O forever.
     voice_lock_acquire() {
-      local kind="$1"
+      local kind="$1" unit="''${2:-}"
       if [ -d "$VOICE_LOCK" ]; then
-        local holder_pid holder_kind
+        local holder_pid holder_kind holder_unit alive=1
         holder_pid="$(cat "$VOICE_LOCK/pid" 2>/dev/null || echo "")"
         holder_kind="$(cat "$VOICE_LOCK/kind" 2>/dev/null || echo "unknown")"
-        if [ -n "$holder_pid" ] && kill -0 "$holder_pid" 2>/dev/null; then
-          echo "voice: $holder_kind is active (pid $holder_pid) -- refusing to start $kind to avoid a feedback loop" >&2
+        holder_unit="$(cat "$VOICE_LOCK/unit" 2>/dev/null || echo "")"
+        if [ -n "$holder_unit" ]; then
+          systemctl --user --quiet is-active "$holder_unit.service" 2>/dev/null || alive=0
+        elif [ -n "$holder_pid" ] && kill -0 "$holder_pid" 2>/dev/null; then
+          alive=1
+        else
+          alive=0
+        fi
+        if [ "$alive" = "1" ]; then
+          echo "voice: $holder_kind is active -- refusing to start $kind to avoid a feedback loop" >&2
           return 1
         fi
-        # Stale lock (holder process is gone) -- reclaim it.
+        # Stale lock (holder gone) -- reclaim it.
         find "$VOICE_LOCK" -delete 2>/dev/null || true
       fi
       if ! mkdir "$VOICE_LOCK" 2>/dev/null; then
@@ -75,6 +89,7 @@ let
       fi
       echo "$$" > "$VOICE_LOCK/pid"
       echo "$kind" > "$VOICE_LOCK/kind"
+      [ -n "$unit" ] && echo "$unit" > "$VOICE_LOCK/unit"
       return 0
     }
 
@@ -93,11 +108,20 @@ let
       pkgs.libnotify
       pkgs.coreutils
       pkgs.procps
+      pkgs.systemd # systemd-run/systemctl --user: run pw-record as a unit that
+      # survives the transient gsd-media-keys scope that launches dictate
     ];
     text = ''
       set -euo pipefail
       # shellcheck source=/dev/null
       . ${voiceLockLib}
+      # ydotoold runs as a SYSTEM service (programs.ydotool.enable in
+      # nixos/_mixins/desktop/ydotool.nix) with its socket here. Set it
+      # explicitly: the transient gsd-media-keys scope that launches dictate
+      # doesn't reliably inherit the session-wide YDOTOOL_SOCKET env var, and
+      # ydotool would otherwise fall back to the wrong ~/.ydotool_socket path
+      # and fail with "check if ydotoold is running".
+      export YDOTOOL_SOCKET="''${YDOTOOL_SOCKET:-/run/ydotoold/socket}"
       MODEL_NAME="${cfg.model}"
       LANG_CODE="${cfg.language}"
       MAX_SECONDS="${toString cfg.maxRecordSeconds}"
@@ -110,9 +134,19 @@ let
 
       notify() { notify-send -t 2000 -a dictate "$1" "''${2:-}" 2>/dev/null || true; }
 
+      # pw-record runs as this transient --user unit (NOT a raw backgrounded
+      # PID): gsd-media-keys launches `dictate` inside a transient systemd
+      # SCOPE, and when dictate's short-lived main process exits, systemd
+      # reaps that scope's whole cgroup -- which would instantly kill a
+      # plain `pw-record &` child (confirmed live: recorder + pidfile
+      # vanished within 2s). A `systemd-run --user` service is owned by the
+      # user manager, not the launching scope, so it outlives dictate
+      # returning. "Recording in progress?" == "is this unit active?".
+      REC_UNIT="dictate-rec"
+
       # --- Toggle: if a recording is in progress, stop + transcribe ---------
-      if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null; then
-        kill "$(cat "$PIDF")" 2>/dev/null || true
+      if systemctl --user --quiet is-active "$REC_UNIT.service" 2>/dev/null; then
+        systemctl --user stop "$REC_UNIT.service" 2>/dev/null || true
         rm -f "$PIDF"
         voice_lock_release
         # give the recorder a moment to flush the WAV
@@ -149,33 +183,28 @@ let
       # --- Otherwise: start recording ----------------------------------------
       # Refuse to start if `speak` currently holds the lock (i.e. TTS audio
       # may be playing) -- see the SAFETY comment at the top of this file.
-      if ! voice_lock_acquire stt; then
+      # Pass REC_UNIT as the liveness token: recording lives in that unit
+      # after dictate exits, so the lock's staleness check must track the
+      # unit's active-state, not dictate's (already-dead) PID -- otherwise
+      # `speak` could wrongly reclaim the lock mid-recording.
+      if ! voice_lock_acquire stt "$REC_UNIT"; then
         notify "dictate: blocked" "text-to-speech is active"
         exit 1
       fi
       rm -f "$WAV"
       notify "Listening…" "run dictate again to stop (auto-stops after ''${MAX_SECONDS}s)"
-      # Hard cap: `timeout` sends TERM to pw-record after MAX_SECONDS
-      # regardless of whether the toggle is ever pressed again, so a
-      # forgotten/missed second tap can't leave the mic recording
-      # indefinitely (and, per the lock above, can't leave TTS blocked
-      # indefinitely either).
-      timeout "''${MAX_SECONDS}s" pw-record --rate 16000 --channels 1 --format s16 "$WAV" &
-      RECPID=$!
-      echo "$RECPID" > "$PIDF"
-      # Background watcher: if the timeout fires (recording self-stops)
-      # before the user taps again, release the lock and clean up the pidfile
-      # so the NEXT invocation correctly starts a new recording instead of
-      # tripping over a dead pidfile / a lock nothing will ever release.
-      (
-        wait "$RECPID" 2>/dev/null || true
-        if [ -f "$PIDF" ] && [ "$(cat "$PIDF" 2>/dev/null || echo "")" = "$RECPID" ]; then
-          rm -f "$PIDF"
-          voice_lock_release
-          notify "dictate: auto-stopped" "recording exceeded ''${MAX_SECONDS}s"
-        fi
-      ) &
-      disown
+      # Run pw-record as a transient --user service so it survives the
+      # gsd-media-keys scope that launched us (see REC_UNIT comment above).
+      # RuntimeMaxSec is the hard cap: systemd stops the unit after
+      # MAX_SECONDS even if the toggle is never pressed again (replaces the
+      # old `timeout` wrapper + watcher subshell, both of which died with
+      # the scope anyway). --collect so the unit auto-clears when it stops,
+      # leaving is-active correctly false for the next invocation.
+      systemd-run --user --quiet --collect \
+        --unit="$REC_UNIT" \
+        --property=RuntimeMaxSec="$MAX_SECONDS" \
+        pw-record --rate 16000 --channels 1 --format s16 "$WAV"
+      echo "$REC_UNIT" > "$PIDF"
     '';
   };
 
