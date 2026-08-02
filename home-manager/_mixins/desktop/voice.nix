@@ -100,17 +100,34 @@ let
   # Piper TTS voice model (en_US amy medium) + its config, fetched from
   # rhasspy/piper-voices and pinned. Piper voices aren't packaged in
   # nixpkgs; this is the same fetchurl-pins-a-blob approach used elsewhere.
-  # To change voice: swap both URLs+hashes (a voice is always a paired
-  # .onnx + .onnx.json).
-  piperVoiceBase = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/amy/medium";
-  piperVoiceModel = pkgs.fetchurl {
-    url = "${piperVoiceBase}/en_US-amy-medium.onnx";
-    hash = "sha256-s6bke1e4x/vmoM4lGBYaUPWanN2KUINcAssCvdYgbBg=";
+  # To change voice: swap the name + both hashes (a voice is always a
+  # paired .onnx + .onnx.json).
+  #
+  # CRITICAL: piper 1.4.2 IGNORES --config and derives the config path as
+  # "<model>.onnx.json" right beside the model -- so the two files MUST be
+  # co-located in ONE directory with matching basenames. Two separate
+  # fetchurl store paths don't satisfy that (confirmed live: piper emitted
+  # a 32-byte stub, no audio, exit 0 -> silent failure). symlinkJoin-style
+  # runCommand puts both under one dir so `--model <dir>/<name>.onnx`
+  # finds its sibling config.
+  piperVoiceName = "en_GB-southern_english_female-low";
+  piperVoiceBase = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_GB/southern_english_female/low";
+  piperVoiceModelFile = pkgs.fetchurl {
+    url = "${piperVoiceBase}/${piperVoiceName}.onnx";
+    hash = "sha256-8vN67Rs6CTR29xnRN5ugwLGxz28e+ZKI4uv1ApcaB8M=";
   };
-  piperVoiceConfig = pkgs.fetchurl {
-    url = "${piperVoiceBase}/en_US-amy-medium.onnx.json";
-    hash = "sha256-laI+tNQpCdON9zu5rH9F9Zfb/N4tG/lSb96vVGaXfXc=";
+  piperVoiceConfigFile = pkgs.fetchurl {
+    url = "${piperVoiceBase}/${piperVoiceName}.onnx.json";
+    hash = "sha256-oa9DMQ+HVhYVBuhJooY9NCqYsIU6+eJDdYHTnpki0OU=";
   };
+  # Co-located voice dir: <dir>/en_US-amy-medium.onnx + .onnx.json
+  piperVoiceDir = pkgs.runCommand "piper-voice-${piperVoiceName}" { } ''
+    mkdir -p "$out"
+    ln -s ${piperVoiceModelFile}  "$out/${piperVoiceName}.onnx"
+    ln -s ${piperVoiceConfigFile} "$out/${piperVoiceName}.onnx.json"
+  '';
+  piperVoiceModel = "${piperVoiceDir}/${piperVoiceName}.onnx";
+  piperVoiceConfig = "${piperVoiceDir}/${piperVoiceName}.onnx.json";
 
   dictate = pkgs.writeShellApplication {
     name = "dictate";
@@ -207,6 +224,15 @@ let
       fi
       rm -f "$WAV"
       notify "Listening…" "run dictate again to stop (auto-stops after ''${MAX_SECONDS}s)"
+      # Clear any lingering/half-collected unit of the same name before
+      # starting -- rapid double-presses (gsd-media-keys fired several
+      # invocations within the same second, confirmed live) otherwise race
+      # on the fixed unit name and fail with "Unit dictate-rec.service was
+      # already loaded or has a fragment file". stop + reset-failed makes
+      # start idempotent; the voice_lock above already serializes the
+      # start-vs-stop decision, this just cleans systemd's own residue.
+      systemctl --user stop "$REC_UNIT.service" 2>/dev/null || true
+      systemctl --user reset-failed "$REC_UNIT.service" 2>/dev/null || true
       # Run pw-record as a transient --user service so it survives the
       # gsd-media-keys scope that launched us (see REC_UNIT comment above).
       # RuntimeMaxSec is the hard cap: systemd stops the unit after
@@ -214,10 +240,14 @@ let
       # old `timeout` wrapper + watcher subshell, both of which died with
       # the scope anyway). --collect so the unit auto-clears when it stops,
       # leaving is-active correctly false for the next invocation.
-      systemd-run --user --quiet --collect \
-        --unit="$REC_UNIT" \
-        --property=RuntimeMaxSec="$MAX_SECONDS" \
-        pw-record --rate 16000 --channels 1 --format s16 "$WAV"
+      if ! systemd-run --user --quiet --collect \
+          --unit="$REC_UNIT" \
+          --property=RuntimeMaxSec="$MAX_SECONDS" \
+          pw-record --rate 16000 --channels 1 --format s16 "$WAV"; then
+        notify "dictate: could not start recording"
+        voice_lock_release
+        exit 1
+      fi
       echo "$REC_UNIT" > "$PIDF"
     '';
   };
