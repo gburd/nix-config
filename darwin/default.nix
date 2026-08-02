@@ -34,28 +34,31 @@
     };
 
     # SSH host aliases. enableDefaultConfig=false (its defaults are being
-    # removed upstream); shared defaults live in matchBlocks."*".
+    # removed upstream); shared defaults live in settings."*".
+    # 26.05: matchBlocks -> settings; block key is the Host pattern
+    # (multi-word -> literal "Host ..." key), upstream directive names,
+    # extraOptions merges flat.
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      matchBlocks = {
+      settings = {
         "*" = {
-          identityFile = "~/.ssh/id_ecdsa";
-          identitiesOnly = true;
-          extraOptions.StrictHostKeyChecking = "accept-new";
+          IdentityFile = "~/.ssh/id_ecdsa";
+          IdentitiesOnly = true;
+          StrictHostKeyChecking = "accept-new";
         };
-        "aws" = {
-          hostname = "80a99738d7e2";
-          user = username;
+        aws = {
+          HostName = "80a99738d7e2";
+          User = username;
         };
         # Home-lab hosts (LAN; user gburd). Restored from the pre-nix-darwin
         # ~/.ssh/config so unison/ssh to these hosts keeps working.
-        "floki" = { hostname = "192.168.1.151"; user = "gburd"; };
-        "arnold" = { hostname = "192.168.1.37"; user = "gburd"; };
-        "meh" = { hostname = "192.168.1.185"; user = "gburd"; };
-        "rv greenfly" = { hostname = "192.168.1.126"; user = "gburd"; };
-        "sun icarus" = { hostname = "192.168.1.206"; user = "gburd"; };
-        "santorini win unicorn" = { hostname = "100.112.230.126"; user = "gburd"; };
+        floki = { HostName = "192.168.1.151"; User = "gburd"; };
+        arnold = { HostName = "192.168.1.37"; User = "gburd"; };
+        meh = { HostName = "192.168.1.185"; User = "gburd"; };
+        "Host rv greenfly" = { HostName = "192.168.1.126"; User = "gburd"; };
+        "Host sun icarus" = { HostName = "192.168.1.206"; User = "gburd"; };
+        "Host santorini win unicorn" = { HostName = "100.112.230.126"; User = "gburd"; };
       };
     };
 

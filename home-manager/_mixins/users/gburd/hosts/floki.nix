@@ -43,12 +43,16 @@ in
   programs.ai.litellm.anthropicAuthTokenFile =
     "${config.home.homeDirectory}/.config/claude-code/.anthropic_oauth_token";
 
-  # Local voice dictation — DISABLED. The `dictate` toggle + Super+D +
-  # ydotool auto-typing created a feedback loop: whisper transcribed ambient
-  # noise as "(keyboard clicking) …", ydotool typed it, which generated more
-  # key events -> more transcription -> runaway. Left off until reworked with
-  # push-to-hold (not toggle) + a hard max-record cap + no auto-type loop.
-  programs.ai.voice.enable = false;
+  # Local voice I/O — ENABLED. The original feedback-loop risk (dictate's
+  # ydotool auto-typing runaway) is now bounded: a hard maxRecordSeconds cap
+  # (auto-stops the mic), a minTranscriptChars floor (won't auto-type
+  # suspiciously-short/garbage transcriptions), and a shared voice-lock that
+  # makes it STRUCTURALLY impossible for STT (dictate) and TTS (speak) to run
+  # at the same time — so pocket-tts output can never be picked up by the mic
+  # and re-transcribed. STT: whisper.cpp + ydotool, Super+D toggle. TTS:
+  # pocket-tts via the `speak <text>` command.
+  programs.ai.voice.enable = true;
+  programs.ai.voice.tts.enable = true;
 
   # Orion browser (Kagi's WebKitGTK browser) -- proprietary, not packaged in
   # nixpkgs and not published on Flathub, only distributed as a direct

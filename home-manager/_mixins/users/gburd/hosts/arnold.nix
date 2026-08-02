@@ -84,21 +84,21 @@ with lib.hm.gvariant;
   # via IdentityAgent in ~/.ssh/config — signs fine once the app is
   # unlocked.)
   programs.ssh.package = pkgs.openssh_gssapi;
-  programs.git.extraConfig.core.sshCommand = "${pkgs.openssh_gssapi}/bin/ssh";
+  programs.git.settings.core.sshCommand = "${pkgs.openssh_gssapi}/bin/ssh";
 
-  # Arnold-specific SSH hosts
-  programs.ssh.matchBlocks = {
-    "agora-deploy" = lib.hm.dag.entryBefore [ "*" ] {
-      host = "fra fra.pg.ddx.io 89.145.162.3 gva gva.pg.ddx.io 185.19.30.253";
-      user = "root";
-      identityFile = "~/.ssh/agora-deploy";
-      identitiesOnly = true;
-      extraOptions.IdentityAgent = "none";
+  # Arnold-specific SSH hosts. 26.05: matchBlocks -> settings; block key is
+  # the Host pattern (multi-word -> literal "Host ..." key), upstream
+  # directive names, extraOptions merges flat.
+  programs.ssh.settings = {
+    "Host fra fra.pg.ddx.io 89.145.162.3 gva gva.pg.ddx.io 185.19.30.253" = lib.hm.dag.entryBefore [ "*" ] {
+      User = "root";
+      IdentityFile = "~/.ssh/agora-deploy";
+      IdentitiesOnly = true;
+      IdentityAgent = "none";
     };
-    "nuc" = lib.hm.dag.entryBefore [ "*" ] {
-      host = "nuc";
-      identityFile = "~/.ssh/id_ed25519";
-      identitiesOnly = true;
+    nuc = lib.hm.dag.entryBefore [ "*" ] {
+      IdentityFile = "~/.ssh/id_ed25519";
+      IdentitiesOnly = true;
     };
   };
 

@@ -60,7 +60,10 @@ in
     ssh = {
       enable = true;
       enableDefaultConfig = false;
-      matchBlocks = {
+      # 26.05: matchBlocks -> settings; block key is the Host pattern, fields
+      # use upstream OpenSSH directive names, and the old extraOptions nesting
+      # is gone (those were already OpenSSH directives -> merge in flat).
+      settings = {
         "*" = {
           # No global IdentityAgent: SSH auth + git signing now use the
           # sops-deployed on-disk keys (~/.ssh/id_auth_ed25519 /
@@ -68,38 +71,34 @@ in
           # (modules/home-manager/ssh-management). 1Password's agent socket
           # required an unlocked, non-auto-locked GUI app to sign — unusable
           # headless/over-SSH — so it's no longer wired here.
-          compression = true;
-          extraOptions = {
-            ConnectTimeout = "5";
-            ControlMaster = "auto";
-            ControlPath = "/tmp/ssh_mux_%h_%p_%r";
-            ControlPersist = "10m";
-            LogLevel = "QUIET";
-            ServerAliveInterval = "60";
-            ServerAliveCountMax = "2";
-            TCPKeepAlive = "yes";
-            # accept-new: trust a host on FIRST contact (no prompt) but
-            # WARN+refuse if a known host's key later changes — i.e. keep
-            # the MITM protection that StrictHostKeyChecking=no +
-            # UserKnownHostsFile=/dev/null threw away. Real known_hosts so
-            # changes are actually detected. forwardAgent/forwardX11 are
-            # deliberately NOT set globally: they're scoped per-trusted-
-            # host in cli/ssh.nix (net/trusted/meh/santorini blocks).
-            StrictHostKeyChecking = "accept-new";
-          };
+          Compression = true;
+          ConnectTimeout = "5";
+          ControlMaster = "auto";
+          ControlPath = "/tmp/ssh_mux_%h_%p_%r";
+          ControlPersist = "10m";
+          LogLevel = "QUIET";
+          ServerAliveInterval = "60";
+          ServerAliveCountMax = "2";
+          TCPKeepAlive = "yes";
+          # accept-new: trust a host on FIRST contact (no prompt) but
+          # WARN+refuse if a known host's key later changes — i.e. keep
+          # the MITM protection that StrictHostKeyChecking=no +
+          # UserKnownHostsFile=/dev/null threw away. Real known_hosts so
+          # changes are actually detected. ForwardAgent/ForwardX11 are
+          # deliberately NOT set globally: they're scoped per-trusted-
+          # host in cli/ssh.nix (net/trusted/meh/santorini blocks).
+          StrictHostKeyChecking = "accept-new";
         };
         # Throwaway / ephemeral local targets (quickemu VMs, freshly-imaged
         # boxes, link-local) where the host key churns and there's nothing
         # to MITM. Here — and ONLY here — skip verification.
-        "192.168.122.* 10.0.2.* *.local quickemu vm-*" = {
-          extraOptions = {
-            StrictHostKeyChecking = "no";
-            UserKnownHostsFile = "/dev/null";
-          };
+        "Host 192.168.122.* 10.0.2.* *.local quickemu vm-*" = {
+          StrictHostKeyChecking = "no";
+          UserKnownHostsFile = "/dev/null";
         };
         "github.com" = {
-          hostname = "github.com";
-          user = "git";
+          HostName = "github.com";
+          User = "git";
         };
       };
     };

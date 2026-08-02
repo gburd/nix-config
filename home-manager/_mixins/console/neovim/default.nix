@@ -10,6 +10,12 @@
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
+    # 26.05 flipped these defaults true -> false. Pin them explicitly to keep
+    # the prior (working) behavior rather than silently drop the ruby/python3
+    # remote-plugin providers, and to silence the "default value changed"
+    # eval warnings (we deliberately keep home.stateVersion < 26.05).
+    withRuby = true;
+    withPython3 = true;
     extraPackages = with pkgs; [
       # Language servers
       lua-language-server

@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, config, ... }:
+{ inputs, config, ... }:
 {
   # santorini — NixOS running as a WSL2 distro on the Windows host
   # "santorini". This home-manager profile (gburd, inside WSL) drives the

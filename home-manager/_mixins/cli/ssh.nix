@@ -14,15 +14,19 @@ in
     # includes; touch once so a fresh host has an empty-but-valid file
     # before agent-sandbox ever runs (ssh errors on a missing Include).
     includes = [ "~/.ssh/agent-sandbox-ec2.conf" ];
-    matchBlocks = {
+    # 26.05: programs.ssh.matchBlocks -> programs.ssh.settings. The block key
+    # IS the Host pattern (multi-word patterns use a literal "Host ..." key),
+    # and fields use upstream OpenSSH directive names (HostName, User,
+    # ForwardAgent, IdentityFile, IdentitiesOnly, RequestTTY, RemoteCommand,
+    # ...) directly -- the old `extraOptions` nesting is gone (those were
+    # already OpenSSH directives, so they merge in flat). DAG ordering
+    # (lib.hm.dag.entryBefore) is unchanged.
+    settings = {
       meh = lib.hm.dag.entryBefore [ "net" ] {
-        host = "meh";
-        hostname = "192.168.1.185";
-        forwardAgent = true;
-        extraOptions = {
-          StreamLocalBindUnlink = "yes";
-        };
-        remoteForwards = [
+        HostName = "192.168.1.185";
+        ForwardAgent = true;
+        StreamLocalBindUnlink = "yes";
+        RemoteForward = [
           {
             bind.address = ''/%d/.gnupg-sockets/S.gpg-agent'';
             host.address = ''/%d/.gnupg-sockets/S.gpg-agent.extra'';
@@ -34,50 +38,40 @@ in
       # Drop into a PowerShell session on login instead of the default cmd.exe.
       # (RemoteCommand needs RequestTTY; to run a one-off command or scp, override
       #  with `ssh -o RemoteCommand=none -o RequestTTY=no santorini ...`.)
-      santorini = lib.hm.dag.entryBefore [ "net" ] {
-        host = "win santorini";
-        hostname = "santorini";
-        forwardAgent = true;
-        extraOptions = {
-          RequestTTY = "yes";
-          RemoteCommand = "powershell -NoProfile";
-        };
+      "Host win santorini" = lib.hm.dag.entryBefore [ "net" ] {
+        HostName = "santorini";
+        ForwardAgent = true;
+        RequestTTY = "yes";
+        RemoteCommand = "powershell -NoProfile";
       };
       # wix — same Windows host, but log straight into the NixOS-WSL distro as gburd.
       wix = lib.hm.dag.entryBefore [ "net" ] {
-        host = "wix";
-        hostname = "santorini";
-        forwardAgent = true;
-        extraOptions = {
-          RequestTTY = "yes";
-          RemoteCommand = "wsl.exe -d NixOS --user gburd";
-        };
+        HostName = "santorini";
+        ForwardAgent = true;
+        RequestTTY = "yes";
+        RemoteCommand = "wsl.exe -d NixOS --user gburd";
       };
       # PostgreSQL build-farm animal hosts (not NixOS, so not covered by `net`).
       # Force publickey auth with our standard key and disable the password
       # fallback so a missing/empty agent fails loudly instead of silently
-      # prompting for a password. forwardAgent lets the inner `ssh pgbf@host`
+      # prompting for a password. ForwardAgent lets the inner `ssh pgbf@host`
       # hop reuse the (now non-empty) agent.
-      buildfarm = lib.hm.dag.entryBefore [ "net" ] {
-        host = "sun rv";
-        forwardAgent = true;
-        identitiesOnly = true;
-        identityFile = "~/.ssh/id_ed25519";
-        extraOptions = {
-          PreferredAuthentications = "publickey";
-        };
+      "Host sun rv" = lib.hm.dag.entryBefore [ "net" ] {
+        ForwardAgent = true;
+        IdentitiesOnly = true;
+        IdentityFile = "~/.ssh/id_ed25519";
+        PreferredAuthentications = "publickey";
       };
       net = {
-        host = builtins.concatStringsSep " " hostnames;
-        forwardAgent = true;
-        remoteForwards = [{
+        header = "Host " + builtins.concatStringsSep " " hostnames;
+        ForwardAgent = true;
+        RemoteForward = [{
           bind.address = ''/%d/.gnupg-sockets/S.gpg-agent'';
           host.address = ''/%d/.gnupg-sockets/S.gpg-agent.extra'';
         }];
       };
-      trusted = lib.hm.dag.entryBefore [ "net" ] {
-        host = "burd.me *.burd.me *.ts.burd.me";
-        forwardAgent = true;
+      "Host burd.me *.burd.me *.ts.burd.me" = lib.hm.dag.entryBefore [ "net" ] {
+        ForwardAgent = true;
       };
     };
   };

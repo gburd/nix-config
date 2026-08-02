@@ -75,25 +75,28 @@ in
       ''}
     '';
 
-    # SSH config to use the auth key
-    programs.ssh.matchBlocks = mkIf (cfg.authKey.publicKey != null) {
+    # SSH config to use the auth key. 26.05: programs.ssh.matchBlocks ->
+    # programs.ssh.settings, using upstream OpenSSH directive names
+    # (HostName/User/IdentityFile/IdentitiesOnly) instead of the old
+    # HM-specific lowercase field names.
+    programs.ssh.settings = mkIf (cfg.authKey.publicKey != null) {
       "*" = {
-        identityFile = [ cfg.authKey.path ];
+        IdentityFile = [ cfg.authKey.path ];
       };
 
       # Specific configurations for git hosting services
       "github.com" = mkIf (builtins.elem "github" cfg.gitHostingServices) {
-        hostname = "github.com";
-        user = "git";
-        identityFile = [ cfg.authKey.path ];
-        identitiesOnly = true;
+        HostName = "github.com";
+        User = "git";
+        IdentityFile = [ cfg.authKey.path ];
+        IdentitiesOnly = true;
       };
 
       "codeberg.org" = mkIf (builtins.elem "codeberg" cfg.gitHostingServices) {
-        hostname = "codeberg.org";
-        user = "git";
-        identityFile = [ cfg.authKey.path ];
-        identitiesOnly = true;
+        HostName = "codeberg.org";
+        User = "git";
+        IdentityFile = [ cfg.authKey.path ];
+        IdentitiesOnly = true;
       };
     };
   };

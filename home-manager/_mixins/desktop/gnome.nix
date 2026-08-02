@@ -151,6 +151,10 @@ with lib.hm.gvariant;
     };
 
     gtk4 = {
+      # 26.05 changed gtk4.theme's default from config.gtk.theme to null.
+      # Pin it to the shared gtk theme to keep gtk4 apps themed as before
+      # (and silence the "default value changed" eval warning).
+      theme = config.gtk.theme;
       extraConfig = {
         gtk-application-prefer-dark-theme = 1;
       };
