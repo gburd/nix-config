@@ -177,6 +177,23 @@
         # there reach the ORIGINATING host's gateway over an SSH tunnel).
         "gburd@ec2" = libx.mkHome { hostname = "ec2"; username = "gburd"; };
 
+        # gburd@solnix: the declarative illumos (Nix-on-illumos) target, x86_64-solaris.
+        #
+        # ⚠️ NOT YET FUNCTIONAL. This is the aim-point for running this config on
+        # a solnix EC2 instance the same way gburd@ec2 / gburd@meh run on Linux.
+        # See home-manager/_mixins/users/gburd/hosts/solnix.nix for the full
+        # gap writeup. In short, before this evaluates:
+        #   - platform "x86_64-solaris" is not stock nixpkgs; mkHome does
+        #     `inputs.nixpkgs.legacyPackages.x86_64-solaris`, which only exists
+        #     when inputs.nixpkgs points at (or is overlaid by) the solnix-pkgs
+        #     fork that wires x86_64-solaris into lib/systems. WIRING TODO.
+        #   - the pure x86_64-solaris stdenv + real hermetic derivations for the
+        #     package set must land (solnix Phase-3 rebuild).
+        #   - systemd services -> SMF shim (solnix backlog); omitted for now.
+        # Kept here as the deliberate target of record. Deploying it today will
+        # fail at eval on the missing x86_64-solaris legacyPackages attr.
+        "gburd@solnix" = libx.mkHome { hostname = "solnix"; username = "gburd"; platform = "x86_64-solaris"; }; # headless illumos — NOT YET FUNCTIONAL
+
         # Servers
       };
 
