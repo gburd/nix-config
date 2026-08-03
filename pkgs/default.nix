@@ -13,6 +13,8 @@
   nix-inspect = pkgs.callPackage ./nix-inspect { };
   tly = pkgs.callPackage ./tly { };
   umami = pkgs.callPackage ./umami { };
-  mailspring = pkgs.callPackage ./mailspring { };
+  # mailspring: overridden in overlays/default.nix (modifications), not here
+  # -- it wraps the EXISTING nixpkgs mailspring, which recurses if resolved
+  # via callPackage against the final (additions) pkg set.
   terax-ai = pkgs.callPackage ./terax-ai { };
 }

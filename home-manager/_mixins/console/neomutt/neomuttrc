@@ -124,8 +124,12 @@ set mime_forward_rest = yes
 
 # Navigation
 bind index,pager g noop
-bind index,pager gg first-entry
-bind index,pager G last-entry
+# first-entry/last-entry are index-only functions; the pager's equivalents
+# are top/bottom (binding them to index,pager together errors on pager).
+bind index gg first-entry
+bind index G last-entry
+bind pager gg top
+bind pager G bottom
 bind index,pager \Cd half-down
 bind index,pager \Cu half-up
 bind index,pager R group-reply

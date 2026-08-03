@@ -62,6 +62,17 @@
     # overridePythonAttrs is the mechanism that actually threads through.
     pipx = prev.pipx.overridePythonAttrs (_oldAttrs: { doCheck = false; });
 
+    # Mailspring with a randomized outgoing Message-ID header (stop
+    # advertising "@getmailspring.com" on every sent message, e.g. to the
+    # pgsql-hackers list). Lives here (modifications, prev = upstream) not
+    # in additions/callPackage, because it overrides an EXISTING pkg --
+    # referencing it via final would infinite-recurse (confirmed live).
+    # See pkgs/mailspring for the how (binary .deb -> asar patch).
+    mailspring = prev.callPackage ../pkgs/mailspring {
+      mailspringBase = prev.mailspring;
+      inherit (prev) asar;
+    };
+
     customMaintainer = prev.lib.maintainers.overrideAttrs (oldAttrs: oldAttrs // {
       tcarrio = {
         email = "tom@carrio.dev";

@@ -1,13 +1,43 @@
-# TODO: Create custom Mailspring package with randomized Message-IDs
-# This requires:
-# 1. Creating a patch file that modifies app/src/flux/stores/draft-factory.ts
-#    to change headerMessageId from:
-#      headerMessageId: `${uuidv4().toUpperCase()}@getmailspring.com`,
-#    to:
-#      headerMessageId: `${uuidv4().toUpperCase()}@${uuidv4().split('-')[0]}.local`,
-# 2. Overriding the mailspring package with the patch
-# 3. Building from source or patching the existing package
+{ mailspringBase, asar }:
+
+# Mailspring with a randomized outgoing Message-ID.
 #
-# For now, use the standard mailspring package from nixpkgs
-{ pkgs }:
-pkgs.mailspring
+# WHY: stock Mailspring stamps every draft's Message-ID header as
+# `<UUID>@getmailspring.com`, which advertises the client on every message
+# you send (e.g. to the pgsql-hackers list). This override rewrites that to
+# `<UUID>@<random>.local` so the header leaks nothing about the client.
+#
+# HOW: nixpkgs' mailspring is a BINARY package (prebuilt .deb) -- there's no
+# TypeScript source to patch at build time, so the original
+# pkgs/mailspring/randomize-message-id.patch (a source diff against
+# draft-factory.ts) can't apply. But the .deb ships the compiled JS
+# unminified inside app.asar, so we unpack the asar, do the same
+# substitution on src/flux/stores/draft-factory.js, and repack. Same net
+# effect as the patch, applied one layer down (compiled JS, not TS source).
+mailspringBase.overrideAttrs (old: {
+  nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ asar ];
+
+  # Run after autoPatchelf/wrapGApps have done their thing. Extract ->
+  # substitute -> repack the asar in place. The `\`...\`` template literal
+  # in the compiled JS is matched exactly (verified against the shipped
+  # 1.21.1 bundle); if a future mailspring bump changes that line, this
+  # sed becomes a no-op (harmless) and the header reverts to upstream --
+  # re-verify the line then.
+  postFixup = (old.postFixup or "") + ''
+    asarFile="$out/share/mailspring/resources/app.asar"
+    work="$(mktemp -d)"
+    asar extract "$asarFile" "$work"
+    target="$work/src/flux/stores/draft-factory.js"
+    if grep -q '@getmailspring.com`' "$target"; then
+      substituteInPlace "$target" \
+        --replace-fail \
+          '`''${crypto.randomUUID().toUpperCase()}@getmailspring.com`' \
+          '`''${crypto.randomUUID().toUpperCase()}@''${crypto.randomUUID().split("-")[0]}.local`'
+      asar pack "$work" "$asarFile"
+      echo "mailspring: randomized outgoing Message-ID domain (was @getmailspring.com)"
+    else
+      echo "mailspring: WARNING @getmailspring.com Message-ID line not found -- upstream changed it; leaving asar untouched" >&2
+    fi
+    rm -rf "$work"
+  '';
+})

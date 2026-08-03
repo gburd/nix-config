@@ -322,6 +322,7 @@ in
       _1password-gui
       cmake
       flatpak # CLI for the Orion browser bundle install below (flatpak run com.kagi.OrionGtk)
+      mailspring # GUI mail client (patched: randomized Message-ID, see overlays/default.nix)
       plocate
       telegram-desktop
       unstable.element-desktop
