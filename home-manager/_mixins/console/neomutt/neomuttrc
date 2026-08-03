@@ -19,7 +19,8 @@ source ~/.config/neomutt/accounts/fastmail.muttrc
 # Account Switching Macros (F1-F7)
 macro index <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
 macro index <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-personal.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Personal"
-macro index <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
+# gmail-work (F3) disabled: Workspace app-passwords blocked, no OAuth yet (see neomutt/default.nix)
+# macro index <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
 macro index <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
 macro index <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
 macro index <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
@@ -28,7 +29,8 @@ macro index <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # Same for pager mode
 macro pager <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
 macro pager <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-personal.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Personal"
-macro pager <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
+# gmail-work (F3) disabled: Workspace app-passwords blocked, no OAuth yet (see neomutt/default.nix)
+# macro pager <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
 macro pager <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
 macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
 macro pager <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
