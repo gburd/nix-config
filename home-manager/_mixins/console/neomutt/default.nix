@@ -26,7 +26,9 @@
   xdg.configFile."neomutt/accounts/fastmail.muttrc".source = ./accounts/fastmail.muttrc;
   xdg.configFile."neomutt/accounts/icloud.muttrc".source = ./accounts/icloud.muttrc;
   xdg.configFile."neomutt/accounts/outlook.muttrc".source = ./accounts/outlook.muttrc;
-  xdg.configFile."neomutt/accounts/amazon.muttrc".source = ./accounts/amazon.muttrc;
+  # amazon (gregburd@amazon.com) DISABLED for now (per request). Re-enable
+  # this + the F7 macros in neomuttrc + the cache dir below when wanted.
+  # xdg.configFile."neomutt/accounts/amazon.muttrc".source = ./accounts/amazon.muttrc;
 
   # Create cache directories for each account
   home.file = {
@@ -37,6 +39,7 @@
     ".cache/neomutt/fastmail/.keep".text = "";
     ".cache/neomutt/icloud/.keep".text = "";
     ".cache/neomutt/outlook/.keep".text = "";
-    ".cache/neomutt/amazon/.keep".text = "";
+    # amazon cache dir omitted while that account is disabled (see above)
+    # ".cache/neomutt/amazon/.keep".text = "";
   };
 }

@@ -24,7 +24,8 @@ macro index <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 macro index <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
 macro index <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
 macro index <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
-macro index <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
+# amazon (F7) disabled for now (per request; re-enable with neomutt/default.nix)
+# macro index <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
 # Same for pager mode
 macro pager <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
@@ -34,7 +35,8 @@ macro pager <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 macro pager <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
 macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
 macro pager <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
-macro pager <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
+# amazon (F7) disabled for now (per request; re-enable with neomutt/default.nix)
+# macro pager <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
 # ============================================================================
 # General Settings
