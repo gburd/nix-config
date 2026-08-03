@@ -12,6 +12,7 @@
   maki = pkgs.callPackage ./maki { inherit (pkgs.unstable) rustPlatform; };
   nix-inspect = pkgs.callPackage ./nix-inspect { };
   tly = pkgs.callPackage ./tly { };
+  umami = pkgs.callPackage ./umami { };
   mailspring = pkgs.callPackage ./mailspring { };
   terax-ai = pkgs.callPackage ./terax-ai { };
 }

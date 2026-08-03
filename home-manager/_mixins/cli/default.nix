@@ -40,6 +40,7 @@
     ltex-ls # Spell checking LSP
 
     tly # Tally counter
+    umami # Filter log streams down to the anomalous messages
 
     kubectl
     k9s
