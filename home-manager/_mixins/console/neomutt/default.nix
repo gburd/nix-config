@@ -25,7 +25,12 @@
   # xdg.configFile."neomutt/accounts/gmail-work.muttrc".source = ./accounts/gmail-work.muttrc;
   xdg.configFile."neomutt/accounts/fastmail.muttrc".source = ./accounts/fastmail.muttrc;
   xdg.configFile."neomutt/accounts/icloud.muttrc".source = ./accounts/icloud.muttrc;
-  xdg.configFile."neomutt/accounts/outlook.muttrc".source = ./accounts/outlook.muttrc;
+  # outlook (gregburd@outlook.com) DISABLED: personal outlook.com is
+  # OAuth2-only and had no working password/gateway path (DavMail's
+  # device-code flow is broken for personal MS accounts; Azure app /
+  # mutt_oauth2.py declined). Re-enable this + the F6 macros in neomuttrc +
+  # the cache dir below with a working XOAUTH2 setup.
+  # xdg.configFile."neomutt/accounts/outlook.muttrc".source = ./accounts/outlook.muttrc;
   # amazon (gregburd@amazon.com) DISABLED for now (per request). Re-enable
   # this + the F7 macros in neomuttrc + the cache dir below when wanted.
   # xdg.configFile."neomutt/accounts/amazon.muttrc".source = ./accounts/amazon.muttrc;
@@ -38,7 +43,8 @@
     # ".cache/neomutt/gmail-work/.keep".text = "";
     ".cache/neomutt/fastmail/.keep".text = "";
     ".cache/neomutt/icloud/.keep".text = "";
-    ".cache/neomutt/outlook/.keep".text = "";
+    # outlook cache dir omitted while that account is disabled (see above)
+    # ".cache/neomutt/outlook/.keep".text = "";
     # amazon cache dir omitted while that account is disabled (see above)
     # ".cache/neomutt/amazon/.keep".text = "";
   };

@@ -25,7 +25,6 @@ in
     ../../../desktop/wezterm.nix
     ../../../desktop/voice.nix
     ../../../services/protonmail-bridge.nix
-    ../../../services/davmail.nix
     ../../../services/vdirsyncer.nix
     ../../../services/proton-drive.nix
     ../../../console/khal.nix

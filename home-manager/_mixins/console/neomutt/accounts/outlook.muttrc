@@ -1,31 +1,14 @@
-# Outlook (via local DavMail gateway)
-#
-# DavMail (services.davmail, floki-only) presents the OAuth-only outlook.com
-# account as plain IMAP/SMTP on 127.0.0.1 (imap 1243 / smtp 1125 -- NOT the
-# DavMail defaults 1143/1025, which the ProtonMail bridge already owns on
-# this host). neomutt talks to DavMail, DavMail handles the Microsoft OAuth2
-# token. Same pattern as the ProtonMail bridge.
-#
-# First-run OAuth (once): start DavMail (systemctl --user start davmail), then
-# connect from neomutt (F6). DavMail opens a browser to Microsoft login; sign
-# in with your existing outlook.com session and consent. DavMail persists the
-# refresh token ($XDG_STATE_HOME/davmail-tokens) and refreshes it thereafter.
-#
-# imap_pass: DavMail-in-OAuth-mode ignores the client-supplied password (it
-# uses the OAuth token it holds), so any non-empty value works. The address is
-# the IMAP user.
+# Outlook
 set imap_user = `cat $HOME/.config/sops-nix/secrets/email/ms/outlook/user`
-set imap_pass = "davmail"
-set folder = "imap://127.0.0.1:1243"
+set imap_pass = `cat $HOME/.config/sops-nix/secrets/email/ms/outlook/pass`
+set folder = "imaps://outlook.office365.com:993"
 set spoolfile = "+INBOX"
-set record = "+Sent"
+set record = "+Sent Items"
 set postponed = "+Drafts"
-set trash = "+Trash"
-set ssl_starttls = no
-set ssl_force_tls = no
+set trash = "+Deleted Items"
 
-set smtp_url = "smtp://`cat $HOME/.config/sops-nix/secrets/email/ms/outlook/user`@127.0.0.1:1125"
-set smtp_pass = "davmail"
+set smtp_url = "smtps://`cat $HOME/.config/sops-nix/secrets/email/ms/outlook/user`@smtp.office365.com:587"
+set smtp_pass = `cat $HOME/.config/sops-nix/secrets/email/ms/outlook/pass`
 
 set from = `cat $HOME/.config/sops-nix/secrets/email/ms/outlook/user`
 set realname = "Greg Burd"
@@ -35,7 +18,7 @@ set envelope_from = yes
 set header_cache = "~/.cache/neomutt/outlook/headers"
 set message_cachedir = "~/.cache/neomutt/outlook/bodies"
 
-mailboxes +INBOX +Sent +Drafts +Trash +Junk
+mailboxes +INBOX "+Sent Items" +Drafts "+Deleted Items" "+Junk Email"
 
 set status_format = "[Outlook] %f [Msgs:%?M?%M/?%m%?n? New:%n?]---(%s/%S)-%>-(%P)---"
 color indicator black cyan

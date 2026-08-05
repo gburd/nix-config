@@ -10,20 +10,28 @@
 # F3 = Gmail Work
 # F4 = Fastmail (default)
 # F5 = iCloud
-# F6 = Outlook
+# F6 = Outlook (disabled)
 # F7 = Amazon
 #
 # Default account: Fastmail
 source ~/.config/neomutt/accounts/fastmail.muttrc
 
-# Account Switching Macros (F1-F7)
-macro index <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
+  # Account Switching Macros (F1-F7)
+  macro
+  index <f1> '<sync-mailbox> <enter-command>
+  source ~/.config/neomutt/accounts/protonmail.muttrc <enter> <change-folder>!<enter>' "Switch to ProtonMail"
 macro index <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-personal.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Personal"
 # gmail-work (F3) disabled: Workspace app-passwords blocked, no OAuth yet (see neomutt/default.nix)
 # macro index <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
 macro index <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
 macro index <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
-macro index <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
+# outlook (F6) disabled: personal outlook.com is OAuth2-only (basic-auth
+# IMAP removed Sept 2024) and has no working password/gateway path here --
+# DavMail 6.8.0's device-code flow is broken for personal MS accounts
+# (AADSTS500201/500202), and the OAuth options (own Azure app or
+# mutt_oauth2.py) were declined. Use outlook.com in a browser. Re-enable
+# by uncommenting + wiring an XOAUTH2 path in accounts/outlook.muttrc.
+# macro index <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
 # amazon (F7) disabled for now (per request; re-enable with neomutt/default.nix)
 # macro index <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
@@ -34,7 +42,8 @@ macro pager <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # macro pager <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
 macro pager <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
 macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
-macro pager <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
+# outlook (F6) disabled -- see index binding above for why.
+# macro pager <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
 # amazon (F7) disabled for now (per request; re-enable with neomutt/default.nix)
 # macro pager <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
