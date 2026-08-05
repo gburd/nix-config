@@ -195,6 +195,11 @@
           }
         }
       }
+    },
+    "harper-ls": {
+      "binary": {
+        "path": "harper-ls"
+      }
     }
   },
 
@@ -249,7 +254,11 @@
       "format_on_save": "off",
       "hard_tabs": false,
       "soft_wrap": "preferred_line_length",
-      "preferred_line_length": 80
+      "preferred_line_length": 80,
+      "language_servers": ["harper-ls", "..."]
+    },
+    "Plain Text": {
+      "language_servers": ["harper-ls", "..."]
     },
     "Shell Script": {
       "tab_size": 2,

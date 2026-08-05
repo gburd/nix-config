@@ -673,7 +673,11 @@
                (go-mode . eglot-ensure)
                (python-mode . eglot-ensure)
                (sh-mode . eglot-ensure)
-               (bash-ts-mode . eglot-ensure))
+               (bash-ts-mode . eglot-ensure)
+               ;; harper-ls: offline grammar/prose checker for writing
+               (markdown-mode . eglot-ensure)
+               (text-mode . eglot-ensure)
+               (org-mode . eglot-ensure))
         :bind (:map eglot-mode-map
                     ("C-c l r" . eglot-rename)
                     ("C-c l f" . eglot-format)
@@ -713,7 +717,12 @@
 
         ;; Go with gopls
         (add-to-list 'eglot-server-programs
-                     '(go-mode . ("gopls"))))
+                     '(go-mode . ("gopls")))
+
+        ;; harper-ls: offline, privacy-first grammar/prose checker for
+        ;; markdown/text/org (nix-provided; also wired into neovim + zed).
+        (add-to-list 'eglot-server-programs
+                     '((markdown-mode text-mode org-mode) . ("harper-ls" "--stdio"))))
     #+end_src
 
 *** Flycheck

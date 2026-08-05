@@ -25,6 +25,7 @@ in
     ../../../desktop/wezterm.nix
     ../../../desktop/voice.nix
     ../../../services/protonmail-bridge.nix
+    ../../../services/davmail.nix
     ../../../services/vdirsyncer.nix
     ../../../services/proton-drive.nix
     ../../../console/khal.nix
@@ -322,6 +323,7 @@ in
       _1password-gui
       cmake
       flatpak # CLI for the Orion browser bundle install below (flatpak run com.kagi.OrionGtk)
+      harper # harper-ls on PATH for Zed + Emacs (eglot); neovim gets it via its own extraPackages
       mailspring # GUI mail client (patched: randomized Message-ID, see overlays/default.nix)
       plocate
       telegram-desktop

@@ -5,7 +5,12 @@
 # WHY: stock Mailspring stamps every draft's Message-ID header as
 # `<UUID>@getmailspring.com`, which advertises the client on every message
 # you send (e.g. to the pgsql-hackers list). This override rewrites that to
-# `<UUID>@<random>.local` so the header leaks nothing about the client.
+# `<UUID>@burd.me` so the header leaks nothing about the client. (Not a
+# bare `<UUID>@` with no domain -- a Message-ID needs a valid id-right per
+# RFC 5322, and a missing/non-FQDN right side hurts deliverability / spam
+# scoring on lists like pgsql-hackers. Using your own real domain is both
+# valid and non-identifying. Not `.local` either -- that TLD is itself a
+# mild "avoiding a real domain" tell.)
 #
 # HOW: nixpkgs' mailspring is a BINARY package (prebuilt .deb) -- there's no
 # TypeScript source to patch at build time, so the original
@@ -32,7 +37,7 @@ mailspringBase.overrideAttrs (old: {
       substituteInPlace "$target" \
         --replace-fail \
           '`''${crypto.randomUUID().toUpperCase()}@getmailspring.com`' \
-          '`''${crypto.randomUUID().toUpperCase()}@''${crypto.randomUUID().split("-")[0]}.local`'
+          '`''${crypto.randomUUID().toUpperCase()}@burd.me`'
       asar pack "$work" "$asarFile"
       echo "mailspring: randomized outgoing Message-ID domain (was @getmailspring.com)"
     else

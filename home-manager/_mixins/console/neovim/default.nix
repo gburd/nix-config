@@ -31,6 +31,7 @@
       yaml-language-server
       perlPackages.PLS # Perl LSP
       bash-language-server # nodePackages removed in 26.05; moved to top level
+      harper # provides harper-ls: offline grammar/prose LSP (also wired into emacs + zed)
 
       # Formatters
       stylua
