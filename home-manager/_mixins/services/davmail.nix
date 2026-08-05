@@ -33,12 +33,17 @@
     settings = {
       "davmail.mode" = "auto"; # EWS + OAuth2, browser-driven login
       "davmail.url" = "https://outlook.office365.com/EWS/Exchange.asmx";
-      # Local listeners neomutt connects to (defaults, made explicit here).
-      "davmail.imapPort" = 1143;
-      "davmail.smtpPort" = 1025;
-      "davmail.caldavPort" = 1080;
-      "davmail.popPort" = 1110;
-      "davmail.ldapPort" = 1389;
+      # Local listeners. NOT the DavMail defaults (1143/1025) -- the
+      # ProtonMail bridge already owns those on this host, so DavMail gets
+      # its own range. DavMail rejects -1 ("Port out of range"), so every
+      # listener gets a real free port even the ones neomutt doesn't use
+      # (CalDAV/POP/LDAP), all on loopback. neomutt uses IMAP 1243 + SMTP
+      # 1125 (see accounts/outlook.muttrc); the rest just avoid collisions.
+      "davmail.imapPort" = 1243;
+      "davmail.smtpPort" = 1125;
+      "davmail.caldavPort" = 1180;
+      "davmail.popPort" = 1210;
+      "davmail.ldapPort" = 1489;
       # Bind to loopback only -- never expose the gateway off-box.
       "davmail.bindAddress" = "127.0.0.1";
       "davmail.allowRemote" = false;

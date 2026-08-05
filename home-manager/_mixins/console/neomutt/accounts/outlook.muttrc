@@ -1,8 +1,10 @@
 # Outlook (via local DavMail gateway)
 #
 # DavMail (services.davmail, floki-only) presents the OAuth-only outlook.com
-# account as plain IMAP/SMTP on 127.0.0.1. neomutt talks to DavMail, DavMail
-# handles the Microsoft OAuth2 token. Same pattern as the ProtonMail bridge.
+# account as plain IMAP/SMTP on 127.0.0.1 (imap 1243 / smtp 1125 -- NOT the
+# DavMail defaults 1143/1025, which the ProtonMail bridge already owns on
+# this host). neomutt talks to DavMail, DavMail handles the Microsoft OAuth2
+# token. Same pattern as the ProtonMail bridge.
 #
 # First-run OAuth (once): start DavMail (systemctl --user start davmail), then
 # connect from neomutt (F6). DavMail opens a browser to Microsoft login; sign
@@ -14,7 +16,7 @@
 # the IMAP user.
 set imap_user = `cat $HOME/.config/sops-nix/secrets/email/ms/outlook/user`
 set imap_pass = "davmail"
-set folder = "imap://127.0.0.1:1143"
+set folder = "imap://127.0.0.1:1243"
 set spoolfile = "+INBOX"
 set record = "+Sent"
 set postponed = "+Drafts"
@@ -22,7 +24,7 @@ set trash = "+Trash"
 set ssl_starttls = no
 set ssl_force_tls = no
 
-set smtp_url = "smtp://`cat $HOME/.config/sops-nix/secrets/email/ms/outlook/user`@127.0.0.1:1025"
+set smtp_url = "smtp://`cat $HOME/.config/sops-nix/secrets/email/ms/outlook/user`@127.0.0.1:1125"
 set smtp_pass = "davmail"
 
 set from = `cat $HOME/.config/sops-nix/secrets/email/ms/outlook/user`
