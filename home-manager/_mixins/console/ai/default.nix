@@ -108,6 +108,14 @@
           # pkgs.memelord (pkgs/memelord) bundles the npm memelord MCP server
           # + the local memelord-rollup tool (flat-pile -> pattern summaries).
           pkg = pkgs.memelord;
+          # Weekly timer: distill every ~/ws project's flat memelord pile into
+          # pattern summaries via the local LiteLLM proxy. pi.key is minted at
+          # activation into ~/.config/litellm/keys/ and readable by the user
+          # unit (not a sops path -- the key file is already local).
+          rollup = {
+            enable = true;
+            apiKeyFile = "${config.home.homeDirectory}/.config/litellm/keys/pi.key";
+          };
         };
 
         filesystem = {

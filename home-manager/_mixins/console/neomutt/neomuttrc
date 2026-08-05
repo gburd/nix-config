@@ -17,9 +17,7 @@
 source ~/.config/neomutt/accounts/fastmail.muttrc
 
   # Account Switching Macros (F1-F7)
-  macro
-  index <f1> '<sync-mailbox> <enter-command>
-  source ~/.config/neomutt/accounts/protonmail.muttrc <enter> <change-folder>!<enter>' "Switch to ProtonMail"
+  macro index <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
 macro index <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-personal.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Personal"
 # gmail-work (F3) disabled: Workspace app-passwords blocked, no OAuth yet (see neomutt/default.nix)
 # macro index <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
@@ -46,6 +44,15 @@ macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # macro pager <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
 # amazon (F7) disabled for now (per request; re-enable with neomutt/default.nix)
 # macro pager <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
+
+# --- Quick jump: pgsql-hackers list (Fastmail: Work/Postgres/Hackers List) ---
+# Press ",h" (comma then h -- "go Hackers") in either index or pager to switch
+# to Fastmail and open the Hackers List folder directly, no folder-name
+# typing. Comma is a free leader key (avoids the g-prefix alias warning that
+# "gh" triggers against the gg/G binds). The folder name has spaces, so it's
+# quoted inside change-folder.
+macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>"Work/Postgres/Hackers List"<enter>' "Go to pgsql-hackers list"
+macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>"Work/Postgres/Hackers List"<enter>' "Go to pgsql-hackers list"
 
 # ============================================================================
 # General Settings
