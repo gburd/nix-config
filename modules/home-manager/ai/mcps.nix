@@ -392,7 +392,34 @@ in
         enable = mkEnableOption "memelord MCP server integration";
         pkg = mkOption {
           type = types.package;
-          description = "The memelord package";
+          description = "The memelord package (also provides memelord-rollup)";
+        };
+        rollup = {
+          enable = mkEnableOption ''
+            a weekly systemd timer that runs `memelord-rollup` over every
+            project's .memelord/memory.db. memelord's Stop-hook auto-detection
+            floods the flat store with near-duplicate corrections (one project
+            here held 11,611 memories, 10,950 of them the same "Auto-detected
+            correction with Bash" template); rollup clusters those and distills
+            each cluster into ONE pattern summary via the local LiteLLM proxy,
+            stored in a separate rollup_summaries table (memelord's own tables
+            are never touched). Off by default -- the CLI works on demand
+            regardless (`memelord-rollup --stats|--show|--dry-run`)
+          '';
+          apiKeyFile = mkOption {
+            type = types.nullOr types.path;
+            default = null;
+            description = ''
+              Path to a LiteLLM proxy key for the rollup LLM pass (e.g. a
+              sops secret). If null, the timer runs clustering-only (no LLM
+              distillation -- mechanical summaries).
+            '';
+          };
+          searchRoot = mkOption {
+            type = types.str;
+            default = "${config.home.homeDirectory}/ws";
+            description = "Directory tree scanned for .memelord project DBs.";
+          };
         };
       };
 
@@ -436,6 +463,42 @@ in
     # project-mcp helper for adding heavy MCP servers per project (used from
     # .envrc); core servers are loaded globally, heavy ones opt-in.
     home.packages = packages ++ [ projectMcpHelper ];
+
+    # Weekly memelord-rollup timer (opt-in): distill every project's flat
+    # memelord pile into pattern summaries. See servers.memelord.rollup.
+    systemd.user.services.memelord-rollup = lib.mkIf
+      (cfg.servers.memelord.enable && cfg.servers.memelord.rollup.enable)
+      {
+        Unit.Description = "Distill memelord flat memory into pattern summaries";
+        Service = {
+          Type = "oneshot";
+          # Scan for .memelord/memory.db under searchRoot, roll up each. Never
+          # fatal per-DB (|| true) so one bad DB can't abort the sweep.
+          ExecStart = toString (pkgs.writeShellScript "memelord-rollup-sweep" ''
+            set -uo pipefail
+            ${lib.optionalString (cfg.servers.memelord.rollup.apiKeyFile != null) ''
+              export MEMELORD_ROLLUP_API_KEY_FILE=${cfg.servers.memelord.rollup.apiKeyFile}
+            ''}
+            export MEMELORD_ROLLUP_BASE_URL=http://127.0.0.1:4000
+            find ${cfg.servers.memelord.rollup.searchRoot} \
+              -type f -name memory.db -path '*/.memelord/*' 2>/dev/null \
+            | while read -r db; do
+                echo "rollup: $db"
+                ${cfg.servers.memelord.pkg}/bin/memelord-rollup --db "$db" || true
+              done
+          '');
+        };
+      };
+    systemd.user.timers.memelord-rollup = lib.mkIf
+      (cfg.servers.memelord.enable && cfg.servers.memelord.rollup.enable)
+      {
+        Unit.Description = "Weekly memelord memory rollup";
+        Timer = {
+          OnCalendar = "weekly";
+          Persistent = true;
+        };
+        Install.WantedBy = [ "timers.target" ];
+      };
 
     home.file = lib.mkMerge [
       (lib.mkIf cfg.targets.default {

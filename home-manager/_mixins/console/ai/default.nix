@@ -105,13 +105,9 @@
 
         memelord = {
           enable = true;
-          pkg = pkgs.writeShellApplication {
-            name = "memelord";
-            runtimeInputs = [ pkgs.nodejs ];
-            text = ''
-              exec npx -y memelord "$@"
-            '';
-          };
+          # pkgs.memelord (pkgs/memelord) bundles the npm memelord MCP server
+          # + the local memelord-rollup tool (flat-pile -> pattern summaries).
+          pkg = pkgs.memelord;
         };
 
         filesystem = {

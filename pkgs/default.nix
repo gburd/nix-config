@@ -11,6 +11,7 @@
   # 1.91, so build it with unstable's rustPlatform (1.95).
   maki = pkgs.callPackage ./maki { inherit (pkgs.unstable) rustPlatform; };
   nix-inspect = pkgs.callPackage ./nix-inspect { };
+  memelord = pkgs.callPackage ./memelord { };
   tly = pkgs.callPackage ./tly { };
   umami = pkgs.callPackage ./umami { };
   # mailspring: overridden in overlays/default.nix (modifications), not here
