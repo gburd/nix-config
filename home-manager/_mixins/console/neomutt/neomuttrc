@@ -51,17 +51,16 @@ macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # typing. Comma is a free leader key (avoids the g-prefix alias warning that
 # "gh" triggers against the gg/G binds).
 #
-# The folder path is stored in a variable ($my_hackers) and the macro expands
-# it. This is the robust way to handle the SPACE in "Hackers List": a
-# variable's value is taken literally by <change-folder>, so the space isn't
-# re-tokenized the way it is when the path is written inline in the macro
-# push-string (inline quotes get stripped by the macro parser -> the space
-# splits the arg -> 'List" is not a mailbox'; an inline backslash-escape
-# also didn't survive). The "+" prefix makes it relative to $folder,
-# matching this account's spoolfile="+INBOX" / mailboxes convention.
-set my_hackers = "+Work/Postgres/Hackers List"
-macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>$my_hackers<enter>' "Go to pgsql-hackers list"
-macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>$my_hackers<enter>' "Go to pgsql-hackers list"
+# The folder "Hackers List" has a SPACE, which broke every inline form tried:
+# quoted (parser strips quotes -> arg splits -> 'List" is not a mailbox'),
+# backslash-escaped (didn't survive), and $variable (not expanded here ->
+# '$my_hackers is not a mailbox'). The fix: a FULL imaps:// URL with the
+# space URL-encoded as %20, so there is NO literal space in the macro
+# push-string for the parser to split on. neomutt decodes %20 and resolves
+# to .../Work/Postgres/Hackers List (verified via neomutt -d5). A full URL
+# needs no "+" prefix.
+macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>imaps://imap.fastmail.com:993/Work/Postgres/Hackers%20List<enter>' "Go to pgsql-hackers list"
+macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>imaps://imap.fastmail.com:993/Work/Postgres/Hackers%20List<enter>' "Go to pgsql-hackers list"
 
 # ============================================================================
 # General Settings
