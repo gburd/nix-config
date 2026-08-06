@@ -51,15 +51,17 @@ macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # typing. Comma is a free leader key (avoids the g-prefix alias warning that
 # "gh" triggers against the gg/G binds).
 #
-# The folder path MUST use the "+" prefix (relative to $folder), matching this
-# account's spoolfile="+INBOX" / mailboxes convention. The space in the name
-# is escaped with a BACKSLASH (Hackers\ List), NOT wrapped in double quotes:
-# inside a macro push-string the "..." quotes get consumed by neomutt's outer
-# arg parser, so the space splits the argument and you get
-# 'List" is not a mailbox'. A backslash-escaped space survives the parser
-# (verified via neomutt -d5: resolves to .../Work/Postgres/Hackers List).
-macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>+Work/Postgres/Hackers\ List<enter>' "Go to pgsql-hackers list"
-macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>+Work/Postgres/Hackers\ List<enter>' "Go to pgsql-hackers list"
+# The folder path is stored in a variable ($my_hackers) and the macro expands
+# it. This is the robust way to handle the SPACE in "Hackers List": a
+# variable's value is taken literally by <change-folder>, so the space isn't
+# re-tokenized the way it is when the path is written inline in the macro
+# push-string (inline quotes get stripped by the macro parser -> the space
+# splits the arg -> 'List" is not a mailbox'; an inline backslash-escape
+# also didn't survive). The "+" prefix makes it relative to $folder,
+# matching this account's spoolfile="+INBOX" / mailboxes convention.
+set my_hackers = "+Work/Postgres/Hackers List"
+macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>$my_hackers<enter>' "Go to pgsql-hackers list"
+macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>$my_hackers<enter>' "Go to pgsql-hackers list"
 
 # ============================================================================
 # General Settings
