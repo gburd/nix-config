@@ -52,12 +52,14 @@ macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # "gh" triggers against the gg/G binds).
 #
 # The folder path MUST use the "+" prefix (relative to $folder), matching this
-# account's spoolfile="+INBOX" / mailboxes convention -- a bare
-# "Work/Postgres/Hackers List" is treated as absolute and fails to open
-# ($folder has no trailing slash so it can't be concatenated). Quoted because
-# of the space in the name.
-macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>"+Work/Postgres/Hackers List"<enter>' "Go to pgsql-hackers list"
-macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>"+Work/Postgres/Hackers List"<enter>' "Go to pgsql-hackers list"
+# account's spoolfile="+INBOX" / mailboxes convention. The space in the name
+# is escaped with a BACKSLASH (Hackers\ List), NOT wrapped in double quotes:
+# inside a macro push-string the "..." quotes get consumed by neomutt's outer
+# arg parser, so the space splits the argument and you get
+# 'List" is not a mailbox'. A backslash-escaped space survives the parser
+# (verified via neomutt -d5: resolves to .../Work/Postgres/Hackers List).
+macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>+Work/Postgres/Hackers\ List<enter>' "Go to pgsql-hackers list"
+macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>+Work/Postgres/Hackers\ List<enter>' "Go to pgsql-hackers list"
 
 # ============================================================================
 # General Settings
