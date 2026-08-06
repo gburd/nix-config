@@ -709,7 +709,15 @@ let
           # tag. aws ec2 describe-instances IS the state store here.
           REGION="${cfg.ec2.region}"
           VOLSIZE="${toString cfg.ec2.volumeSizeGb}"
-          AWS_PROFILE_EC2="${cfg.ec2.awsProfile}"
+          # Which AWS profile manages the EC2 infra (key pair, security group,
+          # instance lifecycle). --aws-profile <name>, if given, drives the
+          # infra too -- so "agent-sandbox --tier ec2 --aws-profile beef" runs
+          # EVERYTHING against beef, not just the creds synced into the box.
+          # Without --aws-profile it falls back to programs.ai.sandbox.ec2.
+          # awsProfile (default "numa"). (Previously this always forced the
+          # cfg default, so --aws-profile beef still tried to create the key
+          # pair under "numa" -> NoCredentials when numa has none locally.)
+          AWS_PROFILE_EC2="''${AWS_PROFILE_NAME:-${cfg.ec2.awsProfile}}"
           KEYNAME="agent-sandbox-ec2"
           SGNAME="agent-sandbox-ec2"
           export AWS_PROFILE="$AWS_PROFILE_EC2"
