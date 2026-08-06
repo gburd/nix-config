@@ -18,7 +18,11 @@ set envelope_from = yes
 set header_cache = "~/.cache/neomutt/fastmail/headers"
 set message_cachedir = "~/.cache/neomutt/fastmail/bodies"
 
-mailboxes +INBOX +Sent +Drafts +Trash +Spam "+Work/Postgres/Hackers List"
+mailboxes +INBOX +Sent +Drafts +Trash +Spam
+# Show the pgsql-hackers folder in the sidebar as just "Hackers"
+# (named-mailboxes = a display label + the real path; the space in the path
+# is fine here since it's a quoted top-level command arg, not a macro string).
+named-mailboxes "Hackers" "+Work/Postgres/Hackers List"
 
 set status_format = "[Fastmail] %f [Msgs:%?M?%M/?%m%?n? New:%n?]---(%s/%S)-%>-(%P)---"
 color indicator black yellow
