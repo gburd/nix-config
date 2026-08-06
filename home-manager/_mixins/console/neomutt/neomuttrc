@@ -49,10 +49,15 @@ macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # Press ",h" (comma then h -- "go Hackers") in either index or pager to switch
 # to Fastmail and open the Hackers List folder directly, no folder-name
 # typing. Comma is a free leader key (avoids the g-prefix alias warning that
-# "gh" triggers against the gg/G binds). The folder name has spaces, so it's
-# quoted inside change-folder.
-macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>"Work/Postgres/Hackers List"<enter>' "Go to pgsql-hackers list"
-macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>"Work/Postgres/Hackers List"<enter>' "Go to pgsql-hackers list"
+# "gh" triggers against the gg/G binds).
+#
+# The folder path MUST use the "+" prefix (relative to $folder), matching this
+# account's spoolfile="+INBOX" / mailboxes convention -- a bare
+# "Work/Postgres/Hackers List" is treated as absolute and fails to open
+# ($folder has no trailing slash so it can't be concatenated). Quoted because
+# of the space in the name.
+macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>"+Work/Postgres/Hackers List"<enter>' "Go to pgsql-hackers list"
+macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>"+Work/Postgres/Hackers List"<enter>' "Go to pgsql-hackers list"
 
 # ============================================================================
 # General Settings
