@@ -46,6 +46,13 @@
   # WSL is headless; no desktop. fish is the default shell (matches gburd).
   programs.fish.enable = true;
 
+  # smartd has nothing to monitor in WSL: the only block devices are the
+  # Hyper-V virtual disks (/dev/sd{b,c,d}), which return "Bad IEC (SMART)
+  # mode page" and no SMART data, so smartd exits 17 ("No devices to
+  # monitor") and fails the activation (rebuild returns 4) on every switch.
+  # Disable it — there's no physical disk health to watch from inside WSL.
+  services.smartd.enable = lib.mkForce false;
+
   # Keep the closure lean for a WSL distro: no GUI/display stack.
   # (systemType = "wsl" means nixos/default.nix imports no desktop mixin.)
   networking.hostName = lib.mkDefault "santorini";
