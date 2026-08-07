@@ -44,9 +44,12 @@ with lib.hm.gvariant;
     };
   };
 
-  home.sessionVariables = {
-    AWS_PROFILE = "asbxbedrock";
-  };
+  # NO global AWS_PROFILE. The Bedrock-backed agents authenticate via the
+  # bearer token (AWS_BEARER_TOKEN_BEDROCK); botocore prefers AWS_PROFILE over
+  # the bearer token, so a session-wide AWS_PROFILE=asbxbedrock (a profile that
+  # isn't even in ~/.aws/config) leaked into every agent and made every Bedrock
+  # call fail with ProfileNotFound. Set AWS_PROFILE per-shell when you actually
+  # need the AWS CLI, not globally. (See modules/home-manager/ai skill notes.)
 
   # Fedora (not NixOS) -- no boot.binfmt.emulatedSystems equivalent, and no
   # local/remote aarch64 builder configured here. agent-sandbox's ec2 tier
