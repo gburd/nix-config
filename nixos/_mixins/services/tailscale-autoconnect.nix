@@ -1,6 +1,16 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 {
   imports = [ ./tailscale.nix ];
+
+  # Per-host override for the name this node registers under in the tailnet.
+  # Defaults to the system hostname; set it when the OS hostname would collide
+  # with an existing node (e.g. santorini's WSL guest shares the "santorini"
+  # name with the Windows host, so tailscale would suffix it to "santorini-1").
+  options.services.tailscaleAutoconnect.hostname = lib.mkOption {
+    type = lib.types.str;
+    default = config.networking.hostName;
+    description = "Hostname to register this node under in Tailscale.";
+  };
 
   # ---------------------------------------------------------------
   # Auto-authenticated Tailscale (sops-nix-driven)
@@ -30,6 +40,7 @@
   # ./tailscale.nix directly.
   # ---------------------------------------------------------------
 
+  config = {
   sops.secrets.tailscale-auth-key = {
     sopsFile = ../../_mixins/secrets.yaml;
     owner = "root";
@@ -87,8 +98,10 @@
 
       ${pkgs.tailscale}/bin/tailscale up \
         --auth-key="$key" \
+        --hostname=${config.services.tailscaleAutoconnect.hostname} \
         --accept-routes \
         --reset
     '';
+  };
   };
 }

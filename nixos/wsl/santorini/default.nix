@@ -46,6 +46,12 @@
   # WSL is headless; no desktop. fish is the default shell (matches gburd).
   programs.fish.enable = true;
 
+  # Register in the tailnet as "wix", not the OS hostname "santorini" — the
+  # Windows host already owns "santorini" on the tailnet, so this WSL guest
+  # would otherwise show up as the confusing auto-suffixed "santorini-1".
+  # "wix" matches the ~/.ssh/config alias that opens this distro.
+  services.tailscaleAutoconnect.hostname = "wix";
+
   # smartd has nothing to monitor in WSL: the only block devices are the
   # Hyper-V virtual disks (/dev/sd{b,c,d}), which return "Bad IEC (SMART)
   # mode page" and no SMART data, so smartd exits 17 ("No devices to
