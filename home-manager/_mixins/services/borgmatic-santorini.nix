@@ -32,6 +32,17 @@ let
   home = config.home.homeDirectory; # WSL home, holds config + secrets only
   cfgDir = "${home}/.config/borgmatic";
 
+  # rsync.net (zh6216) host keys, pinned so borg's ssh can verify the server
+  # WITHOUT relying on the user's ~/.ssh/known_hosts (the ssh_command uses
+  # `-F none`, so it reads no user config/known_hosts). Captured via
+  # `ssh-keyscan zh6216.rsync.net`. Real verification, not TOFU. Refresh if
+  # rsync.net ever rotates its host keys (backup will fail loudly if so).
+  rsyncNetKnownHosts = pkgs.writeText "rsyncnet_known_hosts" ''
+    zh6216.rsync.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJtclizeBy1Uo3D86HpgD3LONGVH0CJ0NT+YfZlldAJd
+    zh6216.rsync.net ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLR2uz+YLn2KiQK0Luu8rhfWS6LHgUfGAWB1j8rM2MKn4KZ2/LhIX1CYkPKMTPxHr6mzayeL1T1hyJIylxXv0BY=
+    zh6216.rsync.net ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDPgHxQyaDaVxUefoUJZO/lITh0Gp0sqbP7HejQcCfZi7gAcuM6/IAuUXLHFImefCHh52x6T/cHxgL1qz26GKgdxykl06WRXlRIuE45QFSy/cd9JKr6l58fKq30ApmXRsCNwFrMlFPoEpCTqxzddZ9cLXs1Yt9dRxvFlQVEuAzw7ayvt8DE6RP9/CHYVp54wbbvUToECGwu70sxY1vFg51K+vNpvJ3J0t5j3s4c1Wls4BrIwqi2U8kqCq9Nj2CUIQqjM+93CSqEacR3qOGvG/6QMzd733wzpJ/iZee+lcyTYzA0YNMosnaF01hrv7NMwtZ6xRFLlJZtMZ7JpfySrOBr
+  '';
+
   # Windows source roots, as seen from WSL.
   windowsSources = [
     "/mnt/c/Users/gburd"
@@ -81,7 +92,12 @@ let
 
     encryption_passcommand = "${pkgs.coreutils}/bin/cat ${cfgDir}/.passphrase";
     remote_path = "borg1";
-    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -F none -i ${cfgDir}/.rsync-key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o PreferredAuthentications=publickey -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
+    # `-F none` (skip user ssh config: the nix-store ~/.ssh/config symlink is
+    # root-owned and trips strict-modes) means no known_hosts is read either,
+    # so pin rsync.net's host keys explicitly via UserKnownHostsFile +
+    # StrictHostKeyChecking=yes (real verification, no TOFU prompt that would
+    # hang the unattended run).
+    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -F none -i ${cfgDir}/.rsync-key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o PreferredAuthentications=publickey -o UserKnownHostsFile=${rsyncNetKnownHosts} -o StrictHostKeyChecking=yes -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
   };
 
   # Wrapper the Windows scheduled task runs (via wsl.exe -d NixOS --user gburd
