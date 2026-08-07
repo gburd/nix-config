@@ -8,25 +8,32 @@
 #   /mnt/c/Users/gregb
 #   /mnt/c/bf                (build-farm client-code + animal .conf files)
 #
+# BORG PATTERN SYNTAX (important — got this wrong the first run):
+#   borg matches `sh:` (shell-style) patterns against the FULL path, anchored
+#   at the start. So `sh:target` matches ONLY a path literally beginning with
+#   "target" — it does NOT match /mnt/c/Users/gburd/.../target. To match a
+#   directory NAME at ANY depth, anchor to the source root and use `**`:
+#   `sh:/mnt/c/**/target` (the `**` spans path separators; `fm:` does not).
+#   This mirrors the proven fleet idiom in borgmatic.nix (`sh:${h}/ws/**/target`).
+#   Path-anchored excludes use the full absolute path as seen inside WSL.
+#
 # Rule of thumb: keep sources, configs, scripts, animal .conf; drop anything
-# a compiler/package manager/build farm regenerates. `sh:` patterns match at
-# any depth; leading-path patterns are anchored under a source root.
+# a compiler/package manager/build farm regenerates.
 
 # ---- PostgreSQL build farm: transient build tree (regenerable) -----------
 # build-farm.conf sets  build_root => "c:/build"  — 20GB of checked-out
 # source + object files, rebuilt from git on every run. Never back it up.
 /mnt/c/build
-# per-animal ccache / mirror / scratch under the build root live in c:/build
-# already (covered above); the .conf files under /mnt/c/bf ARE kept.
-sh:/mnt/c/bf/logs
-sh:/mnt/c/bf/.locks
+# build-farm logs/locks under /mnt/c/bf (the .conf files there ARE kept).
+/mnt/c/bf/logs
+/mnt/c/bf/.locks
 
 # ---- Rust / Cargo (both users) -------------------------------------------
-sh:target
-sh:.cargo/registry
-sh:.cargo/git
-sh:.rustup/toolchains
-sh:.rustup/downloads
+sh:/mnt/c/**/target
+sh:/mnt/c/**/.cargo/registry
+sh:/mnt/c/**/.cargo/git
+sh:/mnt/c/**/.rustup/toolchains
+sh:/mnt/c/**/.rustup/downloads
 
 # ---- C / C++ / autotools / MSVC build outputs ----------------------------
 # libdb build/validate trees under gburd are configure+make outputs.
@@ -34,60 +41,59 @@ sh:.rustup/downloads
 /mnt/c/Users/gburd/libdb-msvc-atomics
 /mnt/c/Users/gburd/libdb-validate
 /mnt/c/Users/gburd/dist
-sh:cmake-build-*
-sh:_build
-sh:.deps
+sh:/mnt/c/**/cmake-build-*
+sh:/mnt/c/**/_build
+sh:/mnt/c/**/.deps
 
 # ---- Node / Python -------------------------------------------------------
-sh:node_modules
-sh:__pycache__
-sh:.venv
-sh:venv
-sh:.pytest_cache
-sh:.mypy_cache
-sh:.tox
+sh:/mnt/c/**/node_modules
+sh:/mnt/c/**/__pycache__
+sh:/mnt/c/**/.venv
+sh:/mnt/c/**/venv
+sh:/mnt/c/**/.pytest_cache
+sh:/mnt/c/**/.mypy_cache
+sh:/mnt/c/**/.tox
 
 # ---- Windows per-user caches & regenerable state -------------------------
 # gregb's 27GB is almost all AppData\Local caches; back up Roaming, skip Local
 # caches. We keep AppData\Roaming (real app config) and drop the big caches.
-sh:AppData/Local/Temp
-sh:AppData/Local/Microsoft/Windows/INetCache
-sh:AppData/Local/Microsoft/Windows/WebCache
-sh:AppData/Local/Microsoft/Edge/User Data/*/Cache
-sh:AppData/Local/Google/Chrome/User Data/*/Cache
-sh:AppData/Local/Google/Chrome/User Data/*/Service Worker/CacheStorage
-sh:AppData/Local/Packages/*/AC/*Cache*
-sh:AppData/Local/pip/cache
-sh:AppData/Local/npm-cache
-sh:AppData/Local/CrashDumps
-sh:AppData/Local/D3DSCache
-sh:AppData/Local/NuGet/Cache
-sh:AppData/Local/.cpan-w64/build
-sh:.cpan-w64/build
+sh:/mnt/c/**/AppData/Local/Temp
+sh:/mnt/c/**/AppData/Local/Microsoft/Windows/INetCache
+sh:/mnt/c/**/AppData/Local/Microsoft/Windows/WebCache
+sh:/mnt/c/**/AppData/Local/Microsoft/Edge/User Data/*/Cache
+sh:/mnt/c/**/AppData/Local/Google/Chrome/User Data/*/Cache
+sh:/mnt/c/**/AppData/Local/Google/Chrome/User Data/*/Service Worker/CacheStorage
+sh:/mnt/c/**/AppData/Local/Packages/*/AC/*Cache*
+sh:/mnt/c/**/AppData/Local/pip/cache
+sh:/mnt/c/**/AppData/Local/npm-cache
+sh:/mnt/c/**/AppData/Local/CrashDumps
+sh:/mnt/c/**/AppData/Local/D3DSCache
+sh:/mnt/c/**/AppData/Local/NuGet/Cache
+sh:/mnt/c/**/.cpan-w64/build
 # "Local Settings" is a legacy junction to AppData\Local — skip to avoid
 # double-walking (and the cache blowup) the junction points at.
-sh:Local Settings
-sh:Application Data
-sh:Cookies
-sh:NetHood
-sh:PrintHood
-sh:Recent
-sh:SendTo
-sh:Templates
-sh:Start Menu
-sh:My Documents
+sh:/mnt/c/**/Local Settings
+sh:/mnt/c/**/Application Data
+sh:/mnt/c/**/Cookies
+sh:/mnt/c/**/NetHood
+sh:/mnt/c/**/PrintHood
+sh:/mnt/c/**/Recent
+sh:/mnt/c/**/SendTo
+sh:/mnt/c/**/Templates
+sh:/mnt/c/**/Start Menu
+sh:/mnt/c/**/My Documents
 
 # ---- OneDrive placeholders (cloud-backed already) ------------------------
-sh:OneDrive
+sh:/mnt/c/**/OneDrive
 
 # ---- agent scratch we archived (kept once, not forever) ------------------
 # _agent_scratch is fine to keep (small); no exclude.
 
 # ---- generic junk --------------------------------------------------------
-sh:*.pyc
-sh:*.o
-sh:*.obj
-sh:*.pdb
-sh:*.ilk
-sh:Thumbs.db
-sh:desktop.ini
+sh:/mnt/c/**/*.pyc
+sh:/mnt/c/**/*.o
+sh:/mnt/c/**/*.obj
+sh:/mnt/c/**/*.pdb
+sh:/mnt/c/**/*.ilk
+sh:/mnt/c/**/Thumbs.db
+sh:/mnt/c/**/desktop.ini
