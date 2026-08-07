@@ -167,6 +167,9 @@
         "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
         "gburd@meh" = libx.mkHome { hostname = "meh"; username = "gburd"; }; # headless
         "gburd@arnold" = libx.mkHome { hostname = "arnold"; username = "gburd"; };
+        # santorini: NixOS-WSL guest on the ARM64 Windows host. aarch64, headless.
+        # Activate inside the distro: home-manager switch -b backup --flake .#"gburd@santorini"
+        "gburd@santorini" = libx.mkHome { hostname = "santorini"; username = "gburd"; platform = "aarch64-linux"; };
         # gburd@ec2: agent-sandbox's `--tier ec2` guest (see
         # modules/home-manager/ai/agent-sandbox.nix). NOT a real host --
         # deployed fresh via `nix run github:gburd/nix-config#homeConfigurations."gburd@ec2".activationPackage -- switch`
