@@ -133,6 +133,7 @@ in
       ".pi/agent/extensions/coccinelle.ts".source = ./pi-extensions/coccinelle.ts;
       ".pi/agent/extensions/context-monitor.ts".source = ./pi-extensions/context-monitor.ts;
       ".pi/agent/extensions/litellm.ts".source = ./pi-extensions/litellm.ts;
+      ".pi/agent/extensions/memelord.ts".source = ./pi-extensions/memelord.ts;
       ".pi/agent/extensions/project-context.ts".source = ./pi-extensions/project-context.ts;
       ".pi/agent/extensions/safety-hooks.ts".source = ./pi-extensions/safety-hooks.ts;
     };
