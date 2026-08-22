@@ -19,6 +19,20 @@
 
   programs.ai.litellm.enable = lib.mkForce false;
 
+  # MCP servers that can't work (or aren't worth it) on a sops-free throwaway
+  # box, disabled so pi/agents don't spew connect failures on startup:
+  #   * github  -- needs a token; this box has no sops tokenFile, no
+  #     GITHUB_PERSONAL_ACCESS_TOKEN, and no interactive `gh auth login`, so
+  #     the server exits 3 ("no GitHub token"). An agent on a scratch box
+  #     rarely needs the GitHub API MCP anyway.
+  #   * llms-docs (home-manager/nix/python/rust mcpdoc wrappers) -- run via
+  #     `uvx --from mcpdoc`, which pulls an mcp dep whose version breaks
+  #     (ModuleNotFoundError: mcp.server.fastmcp) in the box's uv cache;
+  #     doc-lookup servers are the least useful thing on a throwaway box.
+  # CORE (filesystem/git/memelord/sequential-thinking) stays enabled.
+  programs.ai.mcps.servers.github.enable = lib.mkForce false;
+  programs.ai.mcps.servers.llms-docs.enable = lib.mkForce false;
+
   # agent-sandbox is the CLIENT-side tool that manages this box's own
   # lifecycle (agent-sandbox --tier ec2 up/connect/down, run from floki/
   # meh/arnold) -- the guest itself never invokes it, so there's no reason
