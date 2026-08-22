@@ -864,11 +864,38 @@ let
           }
 
           ensure_keypair_and_sg() {
+            # The private key material is only ever returned ONCE, at
+            # create-key-pair time -- AWS never stores it. So the guard must
+            # check BOTH sides: the AWS key pair AND a non-empty local
+            # $KEYFILE. Guarding on the AWS side alone (the old bug) meant
+            # that if the AWS key pair existed but the local .pem was
+            # missing/empty (e.g. a truncated write, a wiped ~/.ssh, or a
+            # different machine), create-key-pair was SKIPPED and the private
+            # key stayed lost forever -> every SSH to the box times out at
+            # "waiting to be reachable". If the local key is unusable, the
+            # existing AWS key pair is worthless (its private half is
+            # unrecoverable), so delete it and mint a fresh one.
+            if [ ! -s "$KEYFILE" ] && \
+               aws ec2 describe-key-pairs --region "$REGION" --key-names "$KEYNAME" >/dev/null 2>&1; then
+              echo "agent-sandbox: local key $KEYFILE missing/empty but AWS key pair $KEYNAME exists (private key unrecoverable) -- recreating." >&2
+              echo "agent-sandbox: NOTE: any running box launched with the OLD key pair can no longer be reached; terminate + re-create it (agent-sandbox --tier ec2 down, then connect)." >&2
+              aws ec2 delete-key-pair --region "$REGION" --key-name "$KEYNAME" >/dev/null 2>&1 || true
+            fi
             if ! aws ec2 describe-key-pairs --region "$REGION" --key-names "$KEYNAME" >/dev/null 2>&1; then
               echo "agent-sandbox: creating EC2 key pair $KEYNAME..." >&2
+              umask 077
               aws ec2 create-key-pair --region "$REGION" --key-name "$KEYNAME" \
                 --query 'KeyMaterial' --output text > "$KEYFILE"
               chmod 600 "$KEYFILE"
+              # A zero-byte result means the create call failed (e.g. the
+              # key already existed in a race, or an auth/region error slipped
+              # through) -- don't leave an empty .pem that re-triggers this
+              # whole path next run; fail loudly instead.
+              if [ ! -s "$KEYFILE" ]; then
+                rm -f "$KEYFILE"
+                echo "agent-sandbox: ERROR: create-key-pair produced no key material for $KEYNAME (region $REGION, profile $AWS_PROFILE_EC2)." >&2
+                return 1
+              fi
             fi
             MYIP=$(curl -s https://checkip.amazonaws.com)
             if ! aws ec2 describe-security-groups --region "$REGION" --group-names "$SGNAME" >/dev/null 2>&1; then
