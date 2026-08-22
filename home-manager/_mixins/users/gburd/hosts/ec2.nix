@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 # ec2 — the agent-sandbox `--tier ec2` guest. This is NOT a real workstation:
 # it's a throwaway NixOS instance (see modules/home-manager/ai/agent-sandbox.nix,
 # ec2 tier) provisioned with a gburd user + passwordless sudo, then handed
@@ -21,17 +21,21 @@
 
   # MCP servers that can't work (or aren't worth it) on a sops-free throwaway
   # box, disabled so pi/agents don't spew connect failures on startup:
-  #   * github  -- needs a token; this box has no sops tokenFile, no
-  #     GITHUB_PERSONAL_ACCESS_TOKEN, and no interactive `gh auth login`, so
-  #     the server exits 3 ("no GitHub token"). An agent on a scratch box
-  #     rarely needs the GitHub API MCP anyway.
   #   * llms-docs (home-manager/nix/python/rust mcpdoc wrappers) -- run via
   #     `uvx --from mcpdoc`, which pulls an mcp dep whose version breaks
   #     (ModuleNotFoundError: mcp.server.fastmcp) in the box's uv cache;
   #     doc-lookup servers are the least useful thing on a throwaway box.
   # CORE (filesystem/git/memelord/sequential-thinking) stays enabled.
-  programs.ai.mcps.servers.github.enable = lib.mkForce false;
   programs.ai.mcps.servers.llms-docs.enable = lib.mkForce false;
+
+  # github MCP: KEPT (you need PR review / GitHub API from the box), pointed
+  # at the token the agent-sandbox `connect` step syncs from the launching
+  # host (sync_github_token -> ~/.config/github-mcp/token). The box is
+  # sops-free, so this file-based token (not sops) is how github auth reaches
+  # it. If the file is absent the MCP wrapper still falls back to GH_TOKEN /
+  # `gh auth token` and only errors when truly no token exists.
+  programs.ai.mcps.servers.github.tokenFile =
+    "${config.home.homeDirectory}/.config/github-mcp/token";
 
   # agent-sandbox is the CLIENT-side tool that manages this box's own
   # lifecycle (agent-sandbox --tier ec2 up/connect/down, run from floki/

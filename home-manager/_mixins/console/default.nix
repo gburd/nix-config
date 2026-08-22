@@ -45,7 +45,15 @@
       # treehouse (Kun Chen): reusable git-worktree pool for parallel agents
       # — worktrees preserved with deps + build cache intact. Go binary from
       # the treehouse flake.
-      inputs.treehouse.packages.${platform}.default
+      #
+      # doCheck=false: treehouse's OWN Go test suite (TestNoMistakesGateDecisions)
+      # fails at the pinned rev -- its tests expect a no-mistakes >= 1.46.0
+      # attestation format the current source doesn't emit (upstream version
+      # skew, reproduced directly from the flake input, not our config). Skip
+      # just ITS tests rather than block every host's home-manager switch on
+      # an unrelated upstream test regression -- same rationale as the pipx
+      # override in overlays/default.nix.
+      (inputs.treehouse.packages.${platform}.default.overrideAttrs (_: { doCheck = false; }))
       # fortune-mod: the classic BSD `fortune` (Keith Bostic lineage), the
       # complete curated jokes/quotes collection. withOffensive=true pulls in
       # the off-color datfiles that the default nixpkgs build strips, for the

@@ -1078,6 +1078,36 @@ let
             } | ssh_gburd "$IP" 'cat > .aws/config && chmod 600 .aws/config'
           }
 
+          # Sync a GitHub token to the box so BOTH the `gh` CLI (PR review,
+          # issues, api) AND the github MCP server work there -- the box is
+          # sops-free, so without this it has no token at all (hosts/ec2.nix
+          # even disables the github MCP for that reason). Source the token
+          # the same way the github MCP wrapper does locally: an explicit
+          # GH_TOKEN/GITHUB_TOKEN env, else `gh auth token` on THIS host.
+          # Written to two places on the box:
+          #   * ~/.config/gh/hosts.yml (oauth_token) -> `gh` authenticates
+          #     non-interactively, no `gh auth login` on the box.
+          #   * ~/.config/github-mcp/token -> the github MCP tokenFile the
+          #     ec2 config points at (see hosts/ec2.nix), re-enabling that
+          #     server on the box now that a token exists.
+          # Scoped to a token you already hold; nothing new is minted.
+          sync_github_token() {
+            IP="$1"
+            GHT="''${GH_TOKEN:-''${GITHUB_TOKEN:-}}"
+            [ -n "$GHT" ] || GHT=$(gh auth token 2>/dev/null || true)
+            if [ -z "$GHT" ]; then
+              echo "agent-sandbox: no local GitHub token (set GH_TOKEN or run 'gh auth login'); box will have no gh/github access" >&2
+              return 0
+            fi
+            ssh_gburd "$IP" 'mkdir -p .config/gh .config/github-mcp && chmod 700 .config/gh .config/github-mcp'
+            printf '%s' "$GHT" | ssh_gburd "$IP" 'cat > .config/github-mcp/token && chmod 600 .config/github-mcp/token'
+            {
+              echo "github.com:"
+              echo "    oauth_token: $GHT"
+              echo "    git_protocol: https"
+            } | ssh_gburd "$IP" 'cat > .config/gh/hosts.yml && chmod 600 .config/gh/hosts.yml'
+          }
+
           # Keep a STABLE ssh alias (asx-<workspace>) pointed at whatever IP
           # the box currently has -- EC2 gives it a fresh public IP on every
           # start, so "ssh <the box>" would otherwise mean re-discovering
@@ -1412,6 +1442,7 @@ let
               sync_git_common_dir "$IP"
               sync_git_identity "$IP"
               sync_aws_credentials "$IP"
+              sync_github_token "$IP"
               # Sync every agent's session state + LiteLLM key BEFORE
               # connecting -- 'connect' with no '-- cmd' drops into an
               # interactive shell and the agent is picked once inside
