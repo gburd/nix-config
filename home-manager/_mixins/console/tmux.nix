@@ -27,6 +27,13 @@ _:
       # (e.g. Shift+Enter for multi-line input).
       set -g extended-keys on
 
+      # ...and report them in the CSI-u format pi/other TUIs prefer. With
+      # extended-keys on but the DEFAULT format (xterm), pi warns "tmux
+      # extended-keys-format is xterm. Pi works best with csi-u." csi-u
+      # encodes modified keys unambiguously (e.g. Shift+Enter), which is
+      # what those agents parse.
+      set -g extended-keys-format csi-u
+
       # True color passthrough (WezTerm / modern terminals).
       set -ga terminal-overrides ",*256col*:Tc,xterm-256color:RGB"
 

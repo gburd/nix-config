@@ -28,8 +28,15 @@ let
 
     export GITHUB_PERSONAL_ACCESS_TOKEN="$TOKEN"
 
+    # github-mcp-server v1.1.2 removed --dynamic-toolsets (it errored
+    # "unknown flag" and the server refused to start -- confirmed live after
+    # the flake bump). Dynamic on-demand toolset discovery is gone; the
+    # current server loads its default toolset set with no such flag. Pi
+    # keeps context small via pi-mcp-adapter's lazy loading regardless, and
+    # the schema-eager agents get github only as a HEAVY opt-in server. If
+    # the default set is ever too large, narrow it with `--toolsets <groups>`
+    # (e.g. repos,issues,pull_requests) rather than reviving the old flag.
     ${cfg.servers.github.pkg}/bin/github-mcp-server stdio \
-      --dynamic-toolsets \
       --read-only \
       "$@"
   '';
