@@ -19,6 +19,18 @@
 
   programs.ai.litellm.enable = lib.mkForce false;
 
+  # SkillSpector switch-time gate: DISABLED on the ephemeral box. It runs
+  # `uvx --python 3.13 --from skillspector scan ...` per skill during
+  # home-manager activation, which on a fresh EC2 box must first download a
+  # standalone Python + skillspector + yara-python etc. via uv -- and it
+  # HANGS there (confirmed live: the gate sat with no child process, box
+  # near-idle, so `home-manager switch`/`connect` never completed and the
+  # box appeared to "not start up"). The gate is pointless here anyway: the
+  # box deploys the SAME trusted skill set that already passed the gate on
+  # the launching host (floki), so re-scanning a throwaway box adds only a
+  # hang risk, no security value.
+  programs.ai.skills.skillSpector.enable = lib.mkForce false;
+
   # MCP servers that can't work (or aren't worth it) on a sops-free throwaway
   # box, disabled so pi/agents don't spew connect failures on startup:
   #   * llms-docs (home-manager/nix/python/rust mcpdoc wrappers) -- run via
