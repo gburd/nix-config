@@ -180,6 +180,18 @@
         # there reach the ORIGINATING host's gateway over an SSH tunnel).
         "gburd@ec2" = libx.mkHome { hostname = "ec2"; username = "gburd"; };
 
+        # solnix: Nix on illumos/Solaris. platform x86_64-solaris (or
+        # aarch64-solaris) -> systemType "solaris" -> systems/solaris.nix.
+        # NOTE: mkHome uses inputs.nixpkgs.legacyPackages.<platform>; the
+        # solnix package set (nixpkgs-illumos overlay) must supply that
+        # platform for a real build -- until wired, this entry evaluates the
+        # profile shape but resolves pkgs against the solnix overlay on the
+        # target. Two shapes:
+        #   * workstation w/ COSMIC (the imminent RISC-V daily driver + EC2 test box)
+        "gburd@solnix" = libx.mkHome { hostname = "solnix"; username = "gburd"; desktop = "cosmic"; platform = "x86_64-solaris"; };
+        #   * headless aarch64 build-farm animal (ongoing EC2 build node)
+        "gburd@solnix-arm" = libx.mkHome { hostname = "solnix"; username = "gburd"; platform = "aarch64-solaris"; };
+
         # Servers
       };
 
