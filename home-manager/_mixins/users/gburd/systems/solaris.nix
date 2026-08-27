@@ -1,14 +1,17 @@
-{ desktop ? null, lib, pkgs, username, ... }:
-# systems/solaris.nix -- the per-OS split for solnix (illumos/Solaris under Nix,
-# platform x86_64-solaris or aarch64-solaris; systemType "solaris").
+{ desktop ? null, lib, pkgs, ... }:
+# systems/solaris.nix -- the per-OS split for the solnix hosts (illumos/Solaris
+# under Nix): dixi (x86_64), dixa (aarch64), dixr (riscv64); systemType
+# "solaris".
 #
-# The parallel to systems/linux.nix, but for a Nix-on-illumos host. illumos
+# The parallel to systems/linux.nix, but for Nix-on-illumos hosts. illumos
 # has no systemd/udev/dconf-session-bus, so the Linux desktop-app mixins
 # (tilix/celluloid/keybase-gui, all of which pull dconf + a GNOME session bus
-# at activation) are NOT imported here. The desktop on solnix is COSMIC
-# (libcosmic/GTK4/libadwaita), driven by the system config (modules/), not by
-# home-manager desktop mixins -- same functional experience as pop!_OS COSMIC,
-# illumos underneath.
+# at activation) are NOT imported here. Only dixr (the physical RISC-V dev
+# box, desktop="cosmic") gets a desktop -- COSMIC (libcosmic/GTK4/libadwaita),
+# driven by the solnix system config (modules/), not by home-manager desktop
+# mixins -- the same functional experience as pop!_OS COSMIC, illumos
+# underneath. dixi/dixa are headless EC2 build animals (desktop=null) and get
+# no GUI closure at all.
 #
 # Keep this LEAN: the console/ + cli/ base (shell, git, editors, the AI agent
 # tooling) is what a gburd login on solnix needs day one -- including the

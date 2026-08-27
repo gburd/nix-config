@@ -53,7 +53,19 @@
       # just ITS tests rather than block every host's home-manager switch on
       # an unrelated upstream test regression -- same rationale as the pipx
       # override in overlays/default.nix.
-      (inputs.treehouse.packages.${platform}.default.overrideAttrs (_: { doCheck = false; }))
+      #
+      # treehouse only publishes linux/darwin outputs; on a solnix
+      # (*-solaris) platform inputs.treehouse.packages.${platform} is missing
+      # and would throw at eval. Fall back to the x86_64-linux output there so
+      # the config still evaluates (it won't run on illumos until treehouse
+      # ports, but this keeps `nix flake check` green for the dix* hosts).
+      (
+        let
+          thPkgs = inputs.treehouse.packages;
+          th = if thPkgs ? ${platform} then thPkgs.${platform} else thPkgs.x86_64-linux;
+        in
+        th.default.overrideAttrs (_: { doCheck = false; })
+      )
       # fortune-mod: the classic BSD `fortune` (Keith Bostic lineage), the
       # complete curated jokes/quotes collection. withOffensive=true pulls in
       # the off-color datfiles that the default nixpkgs build strips, for the

@@ -5,7 +5,19 @@ in
 {
   # Helper function for generating home-manager configs
   mkHome = { hostname, username, desktop ? null, platform ? "x86_64-linux" }: inputs.home-manager.lib.homeManagerConfiguration {
-    pkgs = inputs.nixpkgs.legacyPackages.${platform};
+    # Resolve pkgs for the target platform. Stock nixpkgs has no *-solaris
+    # systems (the solnix illumos platforms come from the solnix-pkgs fork,
+    # not yet wired here), so a direct legacyPackages.<platform> lookup would
+    # throw at eval and break `nix flake check`. Fall back to the host's
+    # native pkgs when the platform is absent -- the config still evaluates
+    # (proving the profile SHAPE) and gets a real solaris pkg set only once
+    # solnix-pkgs is wired in. Everything the solaris profile actually
+    # installs is guarded `pkgs.foo or null` (see systems/solaris.nix), so a
+    # fallback pkgs set never pulls in a wrong-arch closure.
+    pkgs =
+      if inputs.nixpkgs.legacyPackages ? ${platform}
+      then inputs.nixpkgs.legacyPackages.${platform}
+      else inputs.nixpkgs.legacyPackages.x86_64-linux;
     extraSpecialArgs = {
       inherit inputs outputs desktop hostname platform username stateVersion sshMatrix;
     };

@@ -180,17 +180,24 @@
         # there reach the ORIGINATING host's gateway over an SSH tunnel).
         "gburd@ec2" = libx.mkHome { hostname = "ec2"; username = "gburd"; };
 
-        # solnix: Nix on illumos/Solaris. platform x86_64-solaris (or
-        # aarch64-solaris) -> systemType "solaris" -> systems/solaris.nix.
-        # NOTE: mkHome uses inputs.nixpkgs.legacyPackages.<platform>; the
-        # solnix package set (nixpkgs-illumos overlay) must supply that
-        # platform for a real build -- until wired, this entry evaluates the
-        # profile shape but resolves pkgs against the solnix overlay on the
-        # target. Two shapes:
-        #   * workstation w/ COSMIC (the imminent RISC-V daily driver + EC2 test box)
-        "gburd@solnix" = libx.mkHome { hostname = "solnix"; username = "gburd"; desktop = "cosmic"; platform = "x86_64-solaris"; };
-        #   * headless aarch64 build-farm animal (ongoing EC2 build node)
-        "gburd@solnix-arm" = libx.mkHome { hostname = "solnix"; username = "gburd"; platform = "aarch64-solaris"; };
+        # solnix (Nix on illumos/Solaris): platform <arch>-solaris ->
+        # systemType "solaris" -> systems/solaris.nix. The illumos package set
+        # comes from the solnix-pkgs fork (exposes the *-solaris platforms +
+        # pkgs.illumos.*), NOT stock nixpkgs -- until that input is wired,
+        # mkHome falls back to native pkgs so these configs still EVALUATE
+        # (profile shape only; nothing builds yet). Solnix arch status (its
+        # own honest roadmap): x86_64 = Phase 1 (primary), aarch64 = Phase 3,
+        # RISC-V = Phase 5 (no illumos port yet) -- so dixa/dixr are staged
+        # targets ahead of the fork actually supporting their platforms.
+        #
+        # Three "dix" hosts:
+        #   * dixi -- x86_64, EC2 (permanent account), HEADLESS (no COSMIC).
+        "gburd@dixi" = libx.mkHome { hostname = "dixi"; username = "gburd"; platform = "x86_64-solaris"; };
+        #   * dixa -- aarch64, EC2 (permanent account), HEADLESS (no COSMIC).
+        "gburd@dixa" = libx.mkHome { hostname = "dixa"; username = "gburd"; platform = "aarch64-solaris"; };
+        #   * dixr -- RISC-V, PHYSICAL dev box (kbd/mouse/monitor), COSMIC
+        #     desktop (the Pop!_OS COSMIC experience, illumos underneath).
+        "gburd@dixr" = libx.mkHome { hostname = "dixr"; username = "gburd"; desktop = "cosmic"; platform = "riscv64-solaris"; };
 
         # Servers
       };

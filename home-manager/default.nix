@@ -1,6 +1,15 @@
-{ desktop, lib, inputs, outputs, pkgs, stateVersion, username, ... }:
+{ desktop, lib, inputs, outputs, pkgs, platform ? "x86_64-linux", stateVersion, username, ... }:
 let
   inherit (pkgs.stdenv) isDarwin;
+  # The generic _mixins/desktop tree is the LINUX (GNOME/GTK) desktop, keyed
+  # off `desktop`. On a solnix (illumos) host the desktop is COSMIC and is
+  # provisioned by systems/solaris.nix instead, so this generic tree must NOT
+  # be imported there -- and it wouldn't work anyway (it imports
+  # ./_mixins/desktop/${desktop}.nix, e.g. cosmic.nix, which doesn't exist,
+  # and pulls dconf/GNOME-session mixins illumos lacks). Detect solaris by the
+  # logical platform (NOT pkgs.stdenv, since solnix pkgs fall back to a native
+  # linux set until solnix-pkgs is wired).
+  isSolaris = lib.hasSuffix "-solaris" platform;
 in
 {
   # Only import desktop configuration if the host is desktop enabled
@@ -19,7 +28,7 @@ in
     # You can also split up your configuration and import pieces of it here:
     ./_mixins/console
   ]
-  ++ lib.optional (builtins.isString desktop) ./_mixins/desktop
+  ++ lib.optional (builtins.isString desktop && !isSolaris) ./_mixins/desktop
   ++ lib.optional (builtins.isPath (./. + "/_mixins/users/${username}")) ./_mixins/users/${username};
 
   home = {
