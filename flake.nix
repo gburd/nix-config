@@ -39,6 +39,14 @@
     devshells.url = "github:gburd/devshells";
     devshells.inputs.nixpkgs.follows = "nixpkgs";
 
+    # solnix-pkgs: illumos (x86_64-solaris / aarch64-solaris) support for Nix,
+    # as an overlay + patch set over a pinned nixpkgs. Exposes lib.nixpkgsSrc
+    # (the patched nixpkgs with the *-solaris platforms wired in) + overlays.
+    # default -- consumed by mkHome (lib/helpers.nix) to give the dixi/dixa/dixr
+    # solnix hosts a real solaris pkg set instead of the x86_64-linux fallback.
+    solnix-pkgs.url = "git+https://codeberg.org/gregburd/solnix-pkgs.git";
+    solnix-pkgs.inputs.nixpkgs.follows = "nixpkgs";
+
     # Darwin support with nix-darwin
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-unstable";
@@ -87,11 +95,11 @@
       flake = false;
     };
 
-    # ponytail — cross-agent "lazy senior dev" skill/ruleset (YAGNI). Ships
+    # NOTE — cross-agent "lazy senior dev" skill/ruleset (YAGNI). Ships
     # per-agent plugins, skills/, and a Pi extension; deployed to all agents
     # by modules/home-manager/ai/skills.nix. Pinned for reproducibility.
-    ponytail = {
-      url = "github:DietrichGebert/ponytail";
+    NOTE = {
+      url = "github:DietrichGebert/NOTE";
       flake = false;
     };
 
@@ -112,7 +120,7 @@
     # brainstorming/checkpoint/subagent-teams skills -- not the whole
     # opinionated methodology (which assumes docs/superpowers/ paths, its
     # own plan-file conventions, etc. that would collide with our existing
-    # workflow). Pinned for reproducibility, same as ponytail above.
+    # workflow). Pinned for reproducibility, same as NOTE above.
     superpowers = {
       url = "github:obra/superpowers";
       flake = false;

@@ -6,16 +6,23 @@ in
   # Helper function for generating home-manager configs
   mkHome = { hostname, username, desktop ? null, platform ? "x86_64-linux" }: inputs.home-manager.lib.homeManagerConfiguration {
     # Resolve pkgs for the target platform. Stock nixpkgs has no *-solaris
-    # systems (the solnix illumos platforms come from the solnix-pkgs fork,
-    # not yet wired here), so a direct legacyPackages.<platform> lookup would
-    # throw at eval and break `nix flake check`. Fall back to the host's
-    # native pkgs when the platform is absent -- the config still evaluates
-    # (proving the profile SHAPE) and gets a real solaris pkg set only once
-    # solnix-pkgs is wired in. Everything the solaris profile actually
-    # installs is guarded `pkgs.foo or null` (see systems/solaris.nix), so a
-    # fallback pkgs set never pulls in a wrong-arch closure.
+    # systems; the solnix illumos platforms come from the solnix-pkgs fork
+    # (exposes lib.nixpkgsSrc = a patched nixpkgs with the *-solaris platforms
+    # wired in, + overlays.default). For a -solaris platform, instantiate that
+    # patched nixpkgs with the solnix overlay so the dixi/dixa/dixr hosts get a
+    # real solaris pkg set. For non-solaris platforms, stock legacyPackages.
+    # (If solnix-pkgs is somehow absent, fall back to x86_64-linux so eval still
+    # succeeds -- the solaris profile guards every install `pkgs.foo or null`.)
     pkgs =
-      if inputs.nixpkgs.legacyPackages ? ${platform}
+      let isSolaris = builtins.match ".*-solaris" platform != null;
+      in
+      if isSolaris && (inputs ? solnix-pkgs)
+      then import inputs.solnix-pkgs.lib.nixpkgsSrc {
+        system = platform;
+        overlays = [ inputs.solnix-pkgs.overlays.default ];
+        config.allowUnsupportedSystem = true;
+      }
+      else if inputs.nixpkgs.legacyPackages ? ${platform}
       then inputs.nixpkgs.legacyPackages.${platform}
       else inputs.nixpkgs.legacyPackages.x86_64-linux;
     extraSpecialArgs = {
