@@ -95,11 +95,11 @@
       flake = false;
     };
 
-    # NOTE — cross-agent "lazy senior dev" skill/ruleset (YAGNI). Ships
+    # ponytail — cross-agent "lazy senior dev" skill/ruleset (YAGNI). Ships
     # per-agent plugins, skills/, and a Pi extension; deployed to all agents
     # by modules/home-manager/ai/skills.nix. Pinned for reproducibility.
-    NOTE = {
-      url = "github:DietrichGebert/NOTE";
+    ponytail = {
+      url = "github:DietrichGebert/ponytail";
       flake = false;
     };
 
@@ -120,7 +120,7 @@
     # brainstorming/checkpoint/subagent-teams skills -- not the whole
     # opinionated methodology (which assumes docs/superpowers/ paths, its
     # own plan-file conventions, etc. that would collide with our existing
-    # workflow). Pinned for reproducibility, same as NOTE above.
+    # workflow). Pinned for reproducibility, same as ponytail above.
     superpowers = {
       url = "github:obra/superpowers";
       flake = false;
