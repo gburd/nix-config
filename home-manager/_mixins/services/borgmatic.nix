@@ -105,6 +105,23 @@ let
         # runs rootless podman); excluding it fixes arnold and never backs up
         # throwaway container layers on any host.
         "${h}/.local/share/containers"
+        # ~/.ssh/gitpod is a Gitpod-VSCode-managed, regenerable ssh config dir
+        # ("This file is managed by Gitpod"). On arnold it had been created
+        # mode 600 (no traverse bit), so borg couldn't stat the file inside
+        # -> exit 105 -> the WHOLE backup aborted (arnold got no archive for
+        # ~4 weeks). It's regenerable and never needs backing up; excluding it
+        # removes that whole failure class regardless of a host's dir perms.
+        # (Real ~/.ssh keys are still backed up -- only this Gitpod subdir is
+        # skipped.)
+        "${h}/.ssh/gitpod"
+        # ~/.ssh/_ -- a stray, unreferenced 2023 ed25519 keypair (in an
+        # oddly-named "_" dir) present on floki+arnold. Not in any ssh/git
+        # config, not in ssh-agent. On arnold it too was created mode 600
+        # (no traverse), contributing to the same exit-105 backup abort.
+        # Excluded (non-destructive -- the key material is preserved on disk,
+        # just not backed up and no longer able to break a backup). If it's
+        # genuinely abandoned it can simply be deleted from ~/.ssh later.
+        "${h}/.ssh/_"
         "${h}/.thumbnails"
         "${h}/.var/app/*/cache"
         "${h}/.var/app/*/.cache"
