@@ -709,6 +709,7 @@
         "postgresq-skills-maki": "postgresq-skills-maki",
         "postgresq-skills-pi": "postgresq-skills-pi",
         "skillspector": "skillspector",
+        "solnix-pkgs": "solnix-pkgs",
         "sops-nix": "sops-nix",
         "superpowers": "superpowers",
         "treehouse": "treehouse",
@@ -729,6 +730,26 @@
         "owner": "NVIDIA",
         "repo": "SkillSpector",
         "type": "github"
+      }
+    },
+    "solnix-pkgs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787830089,
+        "narHash": "sha256-/ctw9+MIhWleb0lfe9c7JURP/079qmXnsSgNRy+dziE=",
+        "ref": "refs/heads/main",
+        "rev": "a7f5109fe6e45921f17a21a6d1809f571544795e",
+        "revCount": 96,
+        "type": "git",
+        "url": "https://codeberg.org/gregburd/solnix-pkgs.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://codeberg.org/gregburd/solnix-pkgs.git"
       }
     },
     "sops-nix": {

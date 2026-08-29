@@ -97,6 +97,14 @@ let
         "${h}/.local/share/zeitgeist"
         "${h}/.local/share/tracker"
         "${h}/.local/share/gvfs-metadata"
+        # Rootless-container (podman) overlay storage: regenerable image/layer
+        # cache, and its diff/home/appuser dirs are owned by a subuid gburd
+        # can't read -> borg exits 105 ("permission denied on some files"),
+        # which borgmatic treats as a hard error and ABORTS the whole backup.
+        # This silently killed arnold's nightly backup every night (Fedora
+        # runs rootless podman); excluding it fixes arnold and never backs up
+        # throwaway container layers on any host.
+        "${h}/.local/share/containers"
         "${h}/.thumbnails"
         "${h}/.var/app/*/cache"
         "${h}/.var/app/*/.cache"
