@@ -63,8 +63,10 @@ let
     #             than a flat 32000. budget_tokens (legacy thinking) still
     #             fits because it's carved out of maxOutput, not on top.
     { name = "claude-opus-4-8"; bedrock = "us.anthropic.claude-opus-4-8"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-opus-4-8" ]; }
-    { name = "claude-opus-4-7"; bedrock = "us.anthropic.claude-opus-4-7"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
-    { name = "claude-opus-4-6"; bedrock = "us.anthropic.claude-opus-4-6-v1"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    # Sunset opus-4-6/4-7: transient intermediate rungs, fully superseded by
+    # 4-8 (last 4.x, kept) and the new opus-5 default. 4-1/4-5 stay as the
+    # cheaper legacy-thinking fallbacks (different thinking mode + smaller
+    # ctx, still occasionally useful).
     { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6"; converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 64000; }
 
     # Legacy-thinking models (Opus 4.5/4.1, Sonnet 4.5, Haiku 4.5)
@@ -98,6 +100,8 @@ let
     # Devstral 2 is Mistral's agentic-coding model; Large 3 is the flagship.
     { name = "mistral-devstral-2"; bedrock = "mistral.devstral-2-123b"; converse = false; maxInput = 256000; maxOutput = 8192; }
     { name = "mistral-large-3"; bedrock = "mistral.mistral-large-3-675b-instruct"; converse = false; maxInput = 256000; maxOutput = 8192; }
+    # Magistral Small (Sept 2025) is Mistral's current reasoning model.
+    { name = "mistral-magistral-small"; bedrock = "mistral.magistral-small-2509"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
     # Qwen3 (Alibaba). Coder variants are code-specialized. The 480B coder
     # and 235B flagship are us-west-2 ONLY on Bedrock, so region-pin them.
@@ -114,6 +118,7 @@ let
     { name = "gpt-oss-120b"; bedrock = "openai.gpt-oss-120b-1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
     { name = "gpt-oss-20b"; bedrock = "openai.gpt-oss-20b-1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
     { name = "gpt-oss-safeguard-120b"; bedrock = "openai.gpt-oss-safeguard-120b"; converse = false; maxInput = 128000; maxOutput = 32000; }
+    { name = "gpt-oss-safeguard-20b"; bedrock = "openai.gpt-oss-safeguard-20b"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
     # OpenAI GPT-5.6 family (hosted, via the us. inference profile). terra =
     # flagship, sol = mid, luna = fast. Verified reachable 2026-08 (these
@@ -144,9 +149,12 @@ let
 
     # NVIDIA Nemotron (largest reasoning model).
     { name = "nemotron-super-120b"; bedrock = "nvidia.nemotron-super-3-120b"; converse = false; maxInput = 128000; maxOutput = 32000; }
+    { name = "nemotron-nano-3-30b"; bedrock = "nvidia.nemotron-nano-3-30b"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
-    # Writer Palmyra X5 (enterprise; has a us. inference profile).
+    # Writer Palmyra (enterprise; both have a us. inference profile). X5 is
+    # the flagship, X4 the prior/cheaper gen.
     { name = "palmyra-x5"; bedrock = "us.writer.palmyra-x5-v1:0"; converse = false; maxInput = 1000000; maxOutput = 8192; }
+    { name = "palmyra-x4"; bedrock = "us.writer.palmyra-x4-v1:0"; converse = false; maxInput = 128000; maxOutput = 8192; }
 
     # Claude Max/Pro subscription, direct Anthropic API (NOT Bedrock). Set
     # programs.ai.litellm.anthropicAuthTokenFile to a sops-deployed file

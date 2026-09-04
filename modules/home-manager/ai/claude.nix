@@ -11,9 +11,9 @@ in
     defaultModel = mkOption {
       type = types.str;
       # LiteLLM alias from modules/home-manager/ai/litellm.nix; resolves
-      # to bedrock/converse/us.anthropic.claude-opus-4-8 with adaptive
+      # to bedrock/converse/us.anthropic.claude-opus-5 with adaptive
       # thinking + output_config.effort=xhigh server-side.
-      default = "claude-opus-4-8";
+      default = "claude-opus-5";
       description = "Default LiteLLM-aliased model id for claude-code (ANTHROPIC_MODEL).";
     };
 
@@ -23,7 +23,7 @@ in
       description = ''
         Model used by claude-code for the lightweight "fast/small" calls.
         Set as ANTHROPIC_SMALL_FAST_MODEL. Sonnet 5 is the fast/background
-        tier (heavy interactive work uses defaultModel = Opus 4.8).
+        tier (heavy interactive work uses defaultModel = Opus 5).
       '';
     };
 
