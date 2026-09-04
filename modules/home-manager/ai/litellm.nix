@@ -43,12 +43,17 @@ let
     # Gen-5 Anthropic. Sonnet 5 + Fable 5 are the newest usable Anthropic
     # models on Bedrock (adaptive thinking + effort, like Opus 4.6+;
     # cross-region INFERENCE_PROFILE us.anthropic.claude-{sonnet,fable}-5).
-    # NOTE: Opus 5 does NOT exist on Bedrock (line tops out at opus-4-8).
+    # NOTE: Opus 5 has since landed on Bedrock (see claude-opus-5 below).
     # Fable 5 previously 400'd ("data retention mode 'default' is not
     # available") until the account's data-retention/AI-opt-out posture was
     # set; verified working 2026-07-02.
     { name = "claude-sonnet-5"; bedrock = "us.anthropic.claude-sonnet-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-sonnet-5" ]; }
     { name = "claude-fable-5"; bedrock = "us.anthropic.claude-fable-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-fable-5" ]; }
+    # Opus 5 + Fable 5.1 landed on Bedrock since the note above was written --
+    # both verified reachable (HTTP 200 via the us. inference profile,
+    # 2026-08). Opus 5 is the new flagship.
+    { name = "claude-opus-5"; bedrock = "us.anthropic.claude-opus-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-opus-5" ]; }
+    { name = "claude-fable-5-1"; bedrock = "us.anthropic.claude-fable-5-1"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
 
     # Adaptive-thinking models (Opus 4.6+, Sonnet 4.6, Haiku 4.5+)
     #
@@ -82,6 +87,7 @@ let
     { name = "llama4-scout"; bedrock = "us.meta.llama4-scout-17b-instruct-v1:0"; converse = false; maxInput = 3500000; maxOutput = 8192; }
 
     # Amazon Nova
+    { name = "nova-2-lite"; bedrock = "us.amazon.nova-2-lite-v1:0"; converse = false; maxInput = 300000; maxOutput = 5120; }
     { name = "nova-premier"; bedrock = "us.amazon.nova-premier-v1:0"; converse = false; maxInput = 1000000; maxOutput = 32000; }
     { name = "nova-pro"; bedrock = "us.amazon.nova-pro-v1:0"; converse = false; maxInput = 300000; maxOutput = 5120; }
     { name = "nova-lite"; bedrock = "us.amazon.nova-lite-v1:0"; converse = false; maxInput = 300000; maxOutput = 5120; }
@@ -100,10 +106,24 @@ let
     { name = "qwen3-coder-next"; bedrock = "qwen.qwen3-coder-next"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "qwen3-235b"; bedrock = "qwen.qwen3-235b-a22b-2507-v1:0"; converse = false; region = "us-west-2"; maxInput = 256000; maxOutput = 32000; }
     { name = "qwen3-next-80b"; bedrock = "qwen.qwen3-next-80b-a3b"; converse = false; maxInput = 256000; maxOutput = 32000; }
+    # qwen3-vl = vision-language 235B; qwen3-32b = dense 32B. Bare ON_DEMAND ids.
+    { name = "qwen3-vl-235b"; bedrock = "qwen.qwen3-vl-235b-a22b"; converse = false; maxInput = 256000; maxOutput = 32000; }
+    { name = "qwen3-32b"; bedrock = "qwen.qwen3-32b-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
     # OpenAI open-weight (gpt-oss). ON_DEMAND, multi-region.
     { name = "gpt-oss-120b"; bedrock = "openai.gpt-oss-120b-1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
     { name = "gpt-oss-20b"; bedrock = "openai.gpt-oss-20b-1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
+    { name = "gpt-oss-safeguard-120b"; bedrock = "openai.gpt-oss-safeguard-120b"; converse = false; maxInput = 128000; maxOutput = 32000; }
+
+    # OpenAI GPT-5.6 family (hosted, via the us. inference profile). terra =
+    # flagship, sol = mid, luna = fast. Verified reachable 2026-08 (these
+    # reject a bare `max_tokens` -- LiteLLM maps to max_completion_tokens).
+    { name = "gpt-5-6-terra"; bedrock = "us.openai.gpt-5.6-terra"; converse = false; maxInput = 256000; maxOutput = 32000; }
+    { name = "gpt-5-6-sol"; bedrock = "us.openai.gpt-5.6-sol"; converse = false; maxInput = 256000; maxOutput = 32000; }
+    { name = "gpt-5-6-luna"; bedrock = "us.openai.gpt-5.6-luna"; converse = false; maxInput = 256000; maxOutput = 32000; }
+
+    # xAI Grok (via the us. inference profile).
+    { name = "grok-4-6"; bedrock = "us.xai.grok-4.6"; converse = false; maxInput = 256000; maxOutput = 32000; }
 
     # Google Gemma 3 (open weights; largest is 27B).
     { name = "gemma-3-27b"; bedrock = "google.gemma-3-27b-it"; converse = false; maxInput = 128000; maxOutput = 8192; }
@@ -115,9 +135,12 @@ let
     # Zhipu GLM (flagship GLM-5; strong coding/agentic).
     { name = "glm-5"; bedrock = "zai.glm-5"; converse = false; maxInput = 128000; maxOutput = 32000; }
     { name = "glm-4-7"; bedrock = "zai.glm-4.7"; converse = false; maxInput = 128000; maxOutput = 32000; }
+    { name = "glm-4-7-flash"; bedrock = "zai.glm-4.7-flash"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
     # MiniMax M2.x (agentic/coding).
     { name = "minimax-m2-5"; bedrock = "minimax.minimax-m2.5"; converse = false; maxInput = 200000; maxOutput = 32000; }
+    { name = "minimax-m2-1"; bedrock = "minimax.minimax-m2.1"; converse = false; maxInput = 200000; maxOutput = 32000; }
+    { name = "minimax-m2"; bedrock = "minimax.minimax-m2"; converse = false; maxInput = 200000; maxOutput = 32000; }
 
     # NVIDIA Nemotron (largest reasoning model).
     { name = "nemotron-super-120b"; bedrock = "nvidia.nemotron-super-3-120b"; converse = false; maxInput = 128000; maxOutput = 32000; }
