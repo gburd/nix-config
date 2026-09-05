@@ -9,11 +9,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788439799,
-        "narHash": "sha256-A4dm8cl5y+PomeCm/lx0/h68jYNDihKrbyU9RcLqFQY=",
+        "lastModified": 1788590915,
+        "narHash": "sha256-WebRze7ZsbMR+dHVvBTXkYCmeh7Wi9KUEFwTHK+ZxKg=",
         "owner": "chaotic-cx",
         "repo": "nyx",
-        "rev": "530da64577315e6bae6abbcd78e1e8f609794b3c",
+        "rev": "078974cf248e2634a25ecf414b77a393f6830d9b",
         "type": "github"
       },
       "original": {
@@ -194,11 +194,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788355065,
-        "narHash": "sha256-gAz5oTI7ur34CfuakQduiQd/2ZhO62Bn2XXg08nZYYQ=",
+        "lastModified": 1788487777,
+        "narHash": "sha256-Ro/e1N4ZR8/XaFF+sF9SgfPK79HM5YNEppzFj8p+0Ak=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "d9d750e4fc11c10cab2da677bdd31e427f3a3a71",
+        "rev": "693e8ce0fb240a73c116a03cfd7b19269c87af88",
         "type": "github"
       },
       "original": {
@@ -461,11 +461,11 @@
     },
     "nixpkgs-trunk": {
       "locked": {
-        "lastModified": 1788523300,
-        "narHash": "sha256-HRlfCPLSKAHOnbn+QxuEvWvug0yqU8oHZHLbO5snJQE=",
+        "lastModified": 1788633852,
+        "narHash": "sha256-vEztgjrErvqzqoHJsQcnCoaHxr29WLeig4HMy3hqLjQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "074b06a122e9f3e245e17fdc1199c3481c8b70b5",
+        "rev": "a1c7529cd42fdfc3098b2444a0f48ed8e954a689",
         "type": "github"
       },
       "original": {
@@ -477,11 +477,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1788316716,
-        "narHash": "sha256-bc7rSpXIdn9QWGNqfWcPZWOhEVF8NoeAZkWq0XWnf/k=",
+        "lastModified": 1788531059,
+        "narHash": "sha256-hLD4l3QOGBQhkVp3mQ2lJ/YbEi99qUgKapb40KovZ88=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "3ed67ec0a4d3c7ab4ae1f04f8ee8df07bfa506a2",
+        "rev": "801bef6abd86b91e51083066b83fb354a11fc640",
         "type": "github"
       },
       "original": {
@@ -571,11 +571,11 @@
     "no-mistakes": {
       "flake": false,
       "locked": {
-        "lastModified": 1788518186,
-        "narHash": "sha256-FrJ+q2jkrz5QSN4YpaZ4DcGzFpNQXPku9EZUrUKTBOU=",
+        "lastModified": 1788613767,
+        "narHash": "sha256-3gxQJuMJN9kg3s5Id+TVAMxE237/07dZviyd1FOpDA0=",
         "owner": "kunchenguid",
         "repo": "no-mistakes",
-        "rev": "e2f575aded870cc92e58b56fd5414ab9b4cb3c2b",
+        "rev": "d89e633f28dec6ad92bf8bc138b6e1b3bf563061",
         "type": "github"
       },
       "original": {
@@ -587,11 +587,11 @@
     "ponytail": {
       "flake": false,
       "locked": {
-        "lastModified": 1786139041,
-        "narHash": "sha256-bGdXvzhWPwGdz3T2Yh2h6lf+3PBRFAfdBxP5pESmCHI=",
+        "lastModified": 1788525329,
+        "narHash": "sha256-ytmLscDv7OVFyX/9gsfGaZmTpEnaMDTZnwzUtcbbcS0=",
         "owner": "DietrichGebert",
         "repo": "ponytail",
-        "rev": "2ed6c52c9d7e5e56942508591085fd45dea277d3",
+        "rev": "974d940a1c5344210874150b98ff0d2c861fab6a",
         "type": "github"
       },
       "original": {
@@ -739,11 +739,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787830089,
-        "narHash": "sha256-/ctw9+MIhWleb0lfe9c7JURP/079qmXnsSgNRy+dziE=",
+        "lastModified": 1788556216,
+        "narHash": "sha256-FtAfcNPmoqjCJSu3EnMnuu3SHaesPoRrWdqdq9clf4c=",
         "ref": "refs/heads/main",
-        "rev": "a7f5109fe6e45921f17a21a6d1809f571544795e",
-        "revCount": 96,
+        "rev": "91cfe4d60a0634b10e51dbab17d28b21b3f61d75",
+        "revCount": 97,
         "type": "git",
         "url": "https://codeberg.org/gregburd/solnix-pkgs.git"
       },
@@ -841,11 +841,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788348192,
-        "narHash": "sha256-yjoU0U1v/+JxZv8pEUaAvKhWYQcXq27BcW5g7Qr8iQ4=",
+        "lastModified": 1788621666,
+        "narHash": "sha256-ILGwEz+n8BIg7VUKyGZqooVIZeg4fnXAJMGwFYTRhmc=",
         "owner": "kunchenguid",
         "repo": "treehouse",
-        "rev": "db06078c6f5569e539b8cdb7703f38fdefe06382",
+        "rev": "b227e59cf73fd15d69f00b580da0f5bee6b38fce",
         "type": "github"
       },
       "original": {
