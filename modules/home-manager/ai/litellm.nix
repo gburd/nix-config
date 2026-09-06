@@ -77,48 +77,33 @@ let
 
     # DeepSeek
     { name = "deepseek-r1"; bedrock = "us.deepseek.r1-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
-    # V3.2 / V3.1 are ON_DEMAND (no us. cross-region profile yet), so we
-    # invoke the bare modelId region-pinned. V3.2 is in us-east-1 +
-    # us-west-2; V3.1 (deepseek.v3-v1:0) is us-west-2 only.
+    # V3.2 is ON_DEMAND (no us. cross-region profile yet), so we invoke the
+    # bare modelId (us-east-1 + us-west-2). (Dropped v3-1: older, us-west-2
+    # only, superseded by v3-2.)
     { name = "deepseek-v3-2"; bedrock = "deepseek.v3.2"; converse = false; maxInput = 128000; maxOutput = 32000; }
-    { name = "deepseek-v3-1"; bedrock = "deepseek.v3-v1:0"; converse = false; region = "us-west-2"; maxInput = 128000; maxOutput = 32000; }
 
-    # Meta Llama 3.x and 4.x
-    { name = "llama3-3-70b"; bedrock = "us.meta.llama3-3-70b-instruct-v1:0"; converse = false; maxInput = 128000; maxOutput = 8192; }
+    # Meta Llama 4.x (dropped llama3-3-70b: a generation behind; llama4-scout:
+    # the weaker sibling of maverick).
     { name = "llama4-maverick"; bedrock = "us.meta.llama4-maverick-17b-instruct-v1:0"; converse = false; maxInput = 1000000; maxOutput = 8192; }
-    { name = "llama4-scout"; bedrock = "us.meta.llama4-scout-17b-instruct-v1:0"; converse = false; maxInput = 3500000; maxOutput = 8192; }
 
-    # Amazon Nova
-    { name = "nova-2-lite"; bedrock = "us.amazon.nova-2-lite-v1:0"; converse = false; maxInput = 300000; maxOutput = 5120; }
-    { name = "nova-premier"; bedrock = "us.amazon.nova-premier-v1:0"; converse = false; maxInput = 1000000; maxOutput = 32000; }
-    { name = "nova-pro"; bedrock = "us.amazon.nova-pro-v1:0"; converse = false; maxInput = 300000; maxOutput = 5120; }
-    { name = "nova-lite"; bedrock = "us.amazon.nova-lite-v1:0"; converse = false; maxInput = 300000; maxOutput = 5120; }
-    { name = "nova-micro"; bedrock = "us.amazon.nova-micro-v1:0"; converse = false; maxInput = 128000; maxOutput = 5120; }
-
-    # Mistral
-    { name = "mistral-pixtral-large"; bedrock = "us.mistral.pixtral-large-2502-v1:0"; converse = false; maxInput = 128000; maxOutput = 8192; }
-    # Devstral 2 is Mistral's agentic-coding model; Large 3 is the flagship.
+    # Mistral. Devstral 2 = agentic-coding model; Large 3 = flagship.
+    # (Dropped pixtral-large: vision-focused; magistral-small: small.)
     { name = "mistral-devstral-2"; bedrock = "mistral.devstral-2-123b"; converse = false; maxInput = 256000; maxOutput = 8192; }
     { name = "mistral-large-3"; bedrock = "mistral.mistral-large-3-675b-instruct"; converse = false; maxInput = 256000; maxOutput = 8192; }
-    # Magistral Small (Sept 2025) is Mistral's current reasoning model.
-    { name = "mistral-magistral-small"; bedrock = "mistral.magistral-small-2509"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
     # Qwen3 (Alibaba). Coder variants are code-specialized. The 480B coder
     # and 235B flagship are us-west-2 ONLY on Bedrock, so region-pin them.
+    # (Dropped qwen3-coder-30b: small sibling; qwen3-vl-235b: vision;
+    # qwen3-32b: small dense.)
     { name = "qwen3-coder-480b"; bedrock = "qwen.qwen3-coder-480b-a35b-v1:0"; converse = false; region = "us-west-2"; maxInput = 256000; maxOutput = 32000; }
-    { name = "qwen3-coder-30b"; bedrock = "qwen.qwen3-coder-30b-a3b-v1:0"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "qwen3-coder-next"; bedrock = "qwen.qwen3-coder-next"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "qwen3-235b"; bedrock = "qwen.qwen3-235b-a22b-2507-v1:0"; converse = false; region = "us-west-2"; maxInput = 256000; maxOutput = 32000; }
     { name = "qwen3-next-80b"; bedrock = "qwen.qwen3-next-80b-a3b"; converse = false; maxInput = 256000; maxOutput = 32000; }
-    # qwen3-vl = vision-language 235B; qwen3-32b = dense 32B. Bare ON_DEMAND ids.
-    { name = "qwen3-vl-235b"; bedrock = "qwen.qwen3-vl-235b-a22b"; converse = false; maxInput = 256000; maxOutput = 32000; }
-    { name = "qwen3-32b"; bedrock = "qwen.qwen3-32b-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
-    # OpenAI open-weight (gpt-oss). ON_DEMAND, multi-region.
+    # OpenAI open-weight (gpt-oss). ON_DEMAND, multi-region. (Dropped
+    # gpt-oss-20b: weak sibling; gpt-oss-safeguard-*: moderation-tuned, not
+    # coding.)
     { name = "gpt-oss-120b"; bedrock = "openai.gpt-oss-120b-1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
-    { name = "gpt-oss-20b"; bedrock = "openai.gpt-oss-20b-1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
-    { name = "gpt-oss-safeguard-120b"; bedrock = "openai.gpt-oss-safeguard-120b"; converse = false; maxInput = 128000; maxOutput = 32000; }
-    { name = "gpt-oss-safeguard-20b"; bedrock = "openai.gpt-oss-safeguard-20b"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
     # OpenAI GPT-5.6 family (hosted, via the us. inference profile). terra =
     # flagship, sol = mid, luna = fast. Verified reachable 2026-08 (these
@@ -130,31 +115,20 @@ let
     # xAI Grok (via the us. inference profile).
     { name = "grok-4-6"; bedrock = "us.xai.grok-4.6"; converse = false; maxInput = 256000; maxOutput = 32000; }
 
-    # Google Gemma 3 (open weights; largest is 27B).
-    { name = "gemma-3-27b"; bedrock = "google.gemma-3-27b-it"; converse = false; maxInput = 128000; maxOutput = 8192; }
-
     # Moonshot Kimi (strong agentic/coding MoE).
     { name = "kimi-k2-5"; bedrock = "moonshotai.kimi-k2.5"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "kimi-k2-thinking"; bedrock = "moonshot.kimi-k2-thinking"; converse = false; maxInput = 256000; maxOutput = 32000; }
 
-    # Zhipu GLM (flagship GLM-5; strong coding/agentic).
+    # Zhipu GLM (flagship GLM-5; strong coding/agentic). (Dropped glm-4-7 +
+    # glm-4-7-flash: superseded by GLM-5.)
     { name = "glm-5"; bedrock = "zai.glm-5"; converse = false; maxInput = 128000; maxOutput = 32000; }
-    { name = "glm-4-7"; bedrock = "zai.glm-4.7"; converse = false; maxInput = 128000; maxOutput = 32000; }
-    { name = "glm-4-7-flash"; bedrock = "zai.glm-4.7-flash"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
-    # MiniMax M2.x (agentic/coding).
+    # MiniMax M2.x (agentic/coding). (Dropped m2 + m2-1: superseded by m2-5.)
     { name = "minimax-m2-5"; bedrock = "minimax.minimax-m2.5"; converse = false; maxInput = 200000; maxOutput = 32000; }
-    { name = "minimax-m2-1"; bedrock = "minimax.minimax-m2.1"; converse = false; maxInput = 200000; maxOutput = 32000; }
-    { name = "minimax-m2"; bedrock = "minimax.minimax-m2"; converse = false; maxInput = 200000; maxOutput = 32000; }
 
-    # NVIDIA Nemotron (largest reasoning model).
+    # NVIDIA Nemotron (largest reasoning model). (Dropped nemotron-nano-3-30b:
+    # small sibling.)
     { name = "nemotron-super-120b"; bedrock = "nvidia.nemotron-super-3-120b"; converse = false; maxInput = 128000; maxOutput = 32000; }
-    { name = "nemotron-nano-3-30b"; bedrock = "nvidia.nemotron-nano-3-30b"; converse = false; maxInput = 128000; maxOutput = 32000; }
-
-    # Writer Palmyra (enterprise; both have a us. inference profile). X5 is
-    # the flagship, X4 the prior/cheaper gen.
-    { name = "palmyra-x5"; bedrock = "us.writer.palmyra-x5-v1:0"; converse = false; maxInput = 1000000; maxOutput = 8192; }
-    { name = "palmyra-x4"; bedrock = "us.writer.palmyra-x4-v1:0"; converse = false; maxInput = 128000; maxOutput = 8192; }
 
     # Claude Max/Pro subscription, direct Anthropic API (NOT Bedrock). Set
     # programs.ai.litellm.anthropicAuthTokenFile to a sops-deployed file
