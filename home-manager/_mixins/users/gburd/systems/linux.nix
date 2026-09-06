@@ -52,6 +52,13 @@
   };
 
   systemd.user.tmpfiles.rules = [
-    "d /home/${username}/ws                           0755 ${username} users - -"
+    # Ensure ~/ws exists (0755) but do NOT force its owner/group: hardcoding
+    # group "users" is correct on NixOS (gburd's primary group) but WRONG on
+    # Fedora/arnold, where user-private-groups makes gburd's group "gburd" --
+    # tmpfiles then fails `fchownat ~/ws: Operation not permitted`, which
+    # aborts the ENTIRE `home-manager switch` at reloadSystemd (confirmed live
+    # on arnold). Using `-` for user+group leaves ownership untouched (the dir
+    # already exists, gburd-owned, on every host), so the rule is portable.
+    "d /home/${username}/ws                           0755 - - - -"
   ];
 }
