@@ -14,10 +14,6 @@
   # forward if needed, same as the ec2 tier.
   programs.ai.litellm.enable = lib.mkForce false;
 
-  # SkillSpector's uvx-based switch-time scan hangs on a fresh box (see
-  # ec2.nix) -- pointless on solnix where the toolchain is still filling in.
-  programs.ai.skills.skillSpector.enable = lib.mkForce false;
-
   # illumos is not Linux: no targets.genericLinux, no nix-ld, no systemd
   # --user. Anything that assumes those is gated OUT in systems/solaris.nix
   # (which every dix* host pairs with via systemType "solaris").

@@ -296,13 +296,12 @@ let
         # ever gets to deploying anything. Everything else the agents need
         # comes in through home-manager/console/ai itself.
         environment.systemPackages = [ pkgs.git ];
-        # nix-ld: uv/uvx (used by programs.ai.skills' SkillSpector gate) can
-        # download its OWN standalone Python build, a generic dynamically-
-        # linked binary that fails on NixOS without this ("NixOS cannot run
-        # dynamically linked executables... nix.dev/permalink/stub-ld" --
-        # confirmed live: the gate then treats EVERY skill as blocked, since
-        # it can't tell a real risk finding from uvx failing to even run).
-        # Our other hosts already set this (nixos/_mixins/workstations/common.nix).
+        # nix-ld: uvx (used by the uvx-based MCP servers in mcps.nix --
+        # mcpdoc/git/context7) can download its OWN standalone Python build,
+        # a generic dynamically-linked binary that fails on NixOS without
+        # this ("NixOS cannot run dynamically linked executables...
+        # nix.dev/permalink/stub-ld"). Our other hosts already set this
+        # (nixos/_mixins/workstations/common.nix).
         programs.nix-ld.enable = true;
         users.users.gburd = {
           isNormalUser = true;

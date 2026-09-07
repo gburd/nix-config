@@ -4,11 +4,10 @@ let
   inherit (lib) mkEnableOption mkOption types;
 
   ###
-  # Skill source trees that SkillSpector scans at switch time (Part 4) and
-  # that ponytail/asm draw from. Each is a pinned flake input.
+  # Skill source trees that ponytail/asm/superpowers draw from. Each is a
+  # pinned flake input.
   ###
   ponytailSrc = inputs.ponytail or null;
-  skillspectorSrc = inputs.skillspector or null;
   superpowersSrc = inputs.superpowers or null;
 
   ###
@@ -235,16 +234,11 @@ let
   # brainstorming's scripts/ + visual-companion.md (an OPTIONAL local
   # webserver for browser-based mockup review, referenced conditionally in
   # SKILL.md -- not needed for the core text-based flow) are excluded: they
-  # trip SkillSpector's heuristic scanner (nohup/disown backgrounding the
-  # server, chmod 600 on its own session-id file, rm -f on its own
-  # session-state file, an HTML comment in a static waiting-page template)
-  # into a CRITICAL/DO_NOT_INSTALL verdict that blocks the whole
-  # `home-manager switch` -- confirmed live, and confirmed by reading each
-  # flagged line that every finding is a false positive on ordinary local
-  # shell/Node code (no sudo, no credential access, no real persistence
-  # beyond one session's own scratch dir). Rather than disable the gate or
-  # add a per-skill scanner exemption (weakens the gate for every future
-  # external skill), just don't deploy the part that isn't needed anyway.
+  # aren't used by the text-based flow, so there's no reason to deploy the
+  # extra webserver scripts. (They also used to trip the since-removed
+  # SkillSpector gate's heuristic scanner into a false-positive CRITICAL
+  # verdict; the exclusion still stands on its own merit -- don't deploy
+  # what isn't needed.)
   ###
   superpowersSkillNames = [
     "brainstorming"
@@ -280,21 +274,8 @@ let
     );
 
   # Filtered copy of just the deployed subset (selected skills, minus
-  # excluded paths) for the SkillSpector gate below to scan -- scanning the
-  # raw upstream tree would flag brainstorming/scripts/ even though it's
-  # never actually deployed (see the exclusion comment above).
-  superpowersScanTree = pkgs.runCommand "superpowers-scan-tree" { } (
-    lib.concatMapStringsSep "\n"
-      (name: ''
-        mkdir -p $out/${name}
-        cp -r --no-preserve=mode ${superpowersSrc}/skills/${name}/. $out/${name}/
-      ''
-      + lib.concatMapStringsSep "\n"
-        (ex: "rm -rf $out/${name}/${ex}")
-        (superpowersExcludePaths.${name} or [ ]))
-      superpowersSkillNames
-  );
-
+  # excluded paths applied at deployment (see superpowersFilesFor via
+  # collectFiles, which honors superpowersExcludePaths per skill).
   superpowersFiles = lib.mkMerge [
     (lib.mkIf (cfg.superpowers.enable && superpowersSrc != null && cfg.targets.claude)
       (superpowersFilesFor ".claude/skills"))
@@ -339,8 +320,7 @@ let
     ];
     customPaths = [ ];
     preferences = {
-      # Run a security audit before installing any skill (defence in depth
-      # alongside the SkillSpector switch-time gate).
+      # Run a security audit before installing any skill.
       auditOnInstall = true;
     };
   };
@@ -348,80 +328,6 @@ let
   asmFiles = lib.optionalAttrs cfg.asm.enable {
     ".config/agent-skill-manager/config.json".text = builtins.toJSON asmConfig;
   };
-
-  ###
-  # SkillSpector gate (Part 4) — run NVIDIA SkillSpector in static (--no-llm)
-  # mode against every skill source tree we're about to deploy, and FAIL the
-  # `home-manager switch` (exit 1) if any scores HIGH/CRITICAL (risk > 50,
-  # which is skillspector's own non-zero exit). Static mode is offline and
-  # needs no API key, so it's safe to run on every switch.
-  #
-  # We scan the SOURCE trees in the nix store (the operator skills, the
-  # skills.git branches, and ponytail) BEFORE home.file links them into the
-  # agent dirs — a failing scan aborts activation before anything is linked.
-  ###
-  # Directories to scan. We separate TRUSTED in-tree operator skills (which
-  # you authored — the static scanner false-positives on their legitimate
-  # sudo/AWS/benchmark shell, so they're warned-but-not-blocked) from
-  # UNTRUSTED external sources (ponytail + skills.git branches) which are the
-  # actual supply-chain risk and DO block the switch on a finding.
-  skillSpectorTrusted = [
-    ./files/kiro-skills
-    ./files/claude-skills
-  ];
-  skillSpectorUntrusted = lib.filter (p: p != null) (
-    lib.optional (cfg.ponytail.enable && ponytailSrc != null) (ponytailSrc + "/skills")
-    ++ lib.optional (cfg.superpowers.enable && superpowersSrc != null) superpowersScanTree
-    ++ map (spec: spec.input) (lib.attrValues enabledSkillsGitBranches)
-  );
-
-  # one scan loop, parameterised by whether findings block (untrusted) or
-  # just warn (trusted in-tree). Paths are interpolated with ${} so Nix
-  # preserves the store-path context (the writeShellScript then correctly
-  # depends on the scanned source trees).
-  scanLoop = block: roots: ''
-    for tgt in ${lib.concatMapStringsSep " " (p: ''"${p}"'') roots}; do
-      [ -e "$tgt" ] || continue
-      for skill in "$tgt"/*; do
-        [ -d "$skill" ] || continue
-        if ! find "$skill" -name SKILL.md -print -quit | grep -q .; then continue; fi
-        scanned=$((scanned+1))
-        out=$(${pkgs.uv}/bin/uvx --python 3.13 --from "$SPEC_SRC" \
-                skillspector scan "$skill" --no-llm --format json 2>/dev/null)
-        rc=$?
-        score=$(printf '%s' "$out" | ${pkgs.jq}/bin/jq -r '.risk_assessment.score // "?"' 2>/dev/null || echo '?')
-        sev=$(printf '%s' "$out" | ${pkgs.jq}/bin/jq -r '.risk_assessment.severity // "?"' 2>/dev/null || echo '?')
-        if [ "$rc" -ne 0 ]; then
-          ${if block then ''
-            echo "  skillspector: BLOCKED $skill — risk $score ($sev), rc=$rc" >&2
-            fail=1
-          '' else ''
-            echo "  skillspector: WARN (trusted in-tree) $skill — risk $score ($sev), rc=$rc" >&2
-          ''}
-        fi
-      done
-    done
-  '';
-
-  skillSpectorScript = pkgs.writeShellScript "skillspector-gate" ''
-    set -uo pipefail
-    SPEC_SRC="${skillspectorSrc}"
-    fail=0
-    scanned=0
-    # Pin Python 3.13: skillspector's yara-python dep has no cp314 wheel, so
-    # letting uv pick 3.14 is a spurious build failure. Static (--no-llm)
-    # mode is offline + needs no API key. EXIT CODE is the verdict:
-    # 0 = pass, 1 = risk>50 (HIGH/CRITICAL), 2 = error.
-    # --- trusted in-tree operator skills: warn only ---
-    ${scanLoop false skillSpectorTrusted}
-    # --- untrusted external skills (ponytail, skills.git): block ---
-    ${scanLoop true skillSpectorUntrusted}
-    if [ "$fail" -ne 0 ]; then
-      echo "❌ SkillSpector flagged an EXTERNAL skill about to be installed; aborting switch." >&2
-      exit 1
-    fi
-    echo "✓ SkillSpector: $scanned skill(s) scanned, no external skill flagged."
-  '';
 in
 {
   options.programs.ai.skills = {
@@ -521,21 +427,6 @@ in
         '';
       };
     };
-
-    # Part 4: SkillSpector switch-time security gate.
-    skillSpector = {
-      enable = mkOption {
-        type = types.bool;
-        default = true;
-        description = ''
-          Run NVIDIA SkillSpector (static, --no-llm) against every skill
-          source tree about to be deployed on each home-manager switch, and
-          FAIL the switch if SkillSpector flags any skill (its own exit code
-          1 = risk score > 50 = HIGH/CRITICAL). Offline, no API key required.
-          Python is pinned to 3.13 (the yara-python dep has no cp314 wheel).
-        '';
-      };
-    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -551,15 +442,5 @@ in
       superpowersFiles
       asmFiles
     ];
-
-    # Part 4: gate the switch on SkillSpector. entryBefore writeBoundary so
-    # the scan runs BEFORE any skill files are linked into the agent dirs;
-    # a non-zero exit aborts activation, leaving the previous generation.
-    home.activation.skillSpectorGate =
-      lib.mkIf (cfg.skillSpector.enable && skillspectorSrc != null)
-        (lib.hm.dag.entryBefore [ "writeBoundary" ] ''
-          echo "Running SkillSpector security gate on skills…"
-          ${skillSpectorScript}
-        '');
   };
 }

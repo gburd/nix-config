@@ -708,28 +708,11 @@
         "postgresq-skills-kiro": "postgresq-skills-kiro",
         "postgresq-skills-maki": "postgresq-skills-maki",
         "postgresq-skills-pi": "postgresq-skills-pi",
-        "skillspector": "skillspector",
         "solnix-pkgs": "solnix-pkgs",
         "sops-nix": "sops-nix",
         "superpowers": "superpowers",
         "treehouse": "treehouse",
         "vscode-server": "vscode-server"
-      }
-    },
-    "skillspector": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1788194980,
-        "narHash": "sha256-noSI8McF4tId6OFVmfOoKM3XLbkIn8jze2nDWipGnug=",
-        "owner": "NVIDIA",
-        "repo": "SkillSpector",
-        "rev": "7805bb94843d91cb9937f57264ca52642164499b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NVIDIA",
-        "repo": "SkillSpector",
-        "type": "github"
       }
     },
     "solnix-pkgs": {

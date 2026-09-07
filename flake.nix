@@ -103,13 +103,6 @@
       flake = false;
     };
 
-    # NVIDIA SkillSpector — static+LLM security scanner for agent skills.
-    # Run in --no-llm static mode at home-manager switch to gate skill
-    # installation (exit 1 => fail the switch). Python (flake-packaged).
-    skillspector = {
-      url = "github:NVIDIA/SkillSpector";
-      flake = false;
-    };
 
     # superpowers (obra/superpowers) — cross-agent spec/plan/TDD/subagent
     # methodology, MIT-licensed, listed on Anthropic's official Claude Code
