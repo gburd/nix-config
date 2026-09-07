@@ -62,10 +62,9 @@
   # Same dev-CLI tooling as meh (users/gburd/hosts/meh.nix's own
   # home.packages, minus what genuinely doesn't belong here: GUI apps
   # (1password-gui, element-desktop -- meh is headless too and doesn't
-  # actually run these either) and taskbook/khal (both hard-depend on
-  # Proton Drive / calendar sops secrets this sops-free host doesn't
-  # have). cmake/plocate/minio-client are real CLI tools with no such
-  # dependency -- straightforward parity.
+  # actually run these either) and khal (hard-depends on the calendar sops
+  # secrets this sops-free host doesn't have). cmake/plocate/minio-client
+  # are real CLI tools with no such dependency -- straightforward parity.
   home.packages = with pkgs; [
     cmake
     plocate

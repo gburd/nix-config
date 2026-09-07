@@ -12,7 +12,6 @@
     ../../../services/vdirsyncer.nix
     ../../../services/proton-drive.nix
     ../../../console/khal.nix
-    ../../../console/taskbook.nix
     # SSH key management with rotation
     (inputs.self + "/modules/home-manager/ssh-management")
   ];
