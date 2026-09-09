@@ -37,4 +37,10 @@ nix build .#homeConfigurations."gburd@floki".activationPackage --dry-run || {
   exit 1
 }
 
+echo "→ Testing darwin config (aws)..."
+nix build .#darwinConfigurations.aws.system --dry-run || {
+  echo "❌ Darwin config build failed."
+  exit 1
+}
+
 echo "✅ All validations passed!"

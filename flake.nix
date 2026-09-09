@@ -135,14 +135,7 @@
       flake = false;
     };
 
-    # TODO... review below here
     impermanence.url = "github:nix-community/impermanence";
-
-    #nh.url = "github:viperml/nh";
-    #nh.inputs.nixpkgs.follows = "nixpkgs";
-
-    #firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-    #firefox-addons.inputs.nixpkgs.follows = "nixpkgs";
   };
   outputs =
     { self

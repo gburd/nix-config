@@ -1,27 +1,32 @@
 version: '3'
 
-tasks:
-  rebuild-all:
-    desc: Rebuild both NixOS and home-manager
-    cmds:
-      - sudo nixos-rebuild switch --flake .
-      - home-manager switch -b backup --flake .
+# OS-aware tasks. On macOS the system config is nix-darwin (host "aws") and
+# home-manager is applied by darwin-rebuild itself, so there is no separate
+# home-manager step. On Linux the system is NixOS and home-manager is a
+# standalone switch.
 
+tasks:
   rebuild-host:
-    desc: Rebuild NixOS configuration
+    desc: Rebuild the system configuration (nix-darwin on macOS, NixOS on Linux)
     cmds:
-      - sudo nixos-rebuild switch --flake .
+      - '{{if eq OS "darwin"}}darwin-rebuild switch --flake .#aws{{else}}sudo nixos-rebuild switch --flake .{{end}}'
 
   rebuild-home:
-    desc: Rebuild home-manager configuration
+    desc: Rebuild the home-manager configuration (Linux only; folded into rebuild-host on macOS)
     cmds:
-      - home-manager switch -b backup --flake .
+      - '{{if eq OS "darwin"}}echo "On macOS home-manager is applied by darwin-rebuild; run: task rebuild-host"{{else}}home-manager switch -b backup --flake .{{end}}'
+
+  rebuild-all:
+    desc: Rebuild everything for this host
+    cmds:
+      - '{{if eq OS "darwin"}}darwin-rebuild switch --flake .#aws{{else}}sudo nixos-rebuild switch --flake .{{end}}'
+      - '{{if eq OS "darwin"}}true{{else}}home-manager switch -b backup --flake .{{end}}'
 
   test-build:
-    desc: Test build configurations without activation
+    desc: Test build the configuration without activation
     cmds:
-      - nixos-rebuild dry-build --flake .
-      - home-manager build --flake .
+      - '{{if eq OS "darwin"}}darwin-rebuild build --flake .#aws{{else}}nixos-rebuild dry-build --flake .{{end}}'
+      - '{{if eq OS "darwin"}}true{{else}}home-manager build --flake .{{end}}'
 
   check:
     desc: Run nix flake check
@@ -29,7 +34,7 @@ tasks:
       - nix flake check
 
   gc:
-    desc: Garbage collect old generations
+    desc: Garbage collect old generations (>28d)
     cmds:
       - sudo nix-collect-garbage --delete-older-than 28d
       - nix-collect-garbage --delete-older-than 28d

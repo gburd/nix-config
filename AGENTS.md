@@ -11,8 +11,8 @@ sudo nixos-rebuild switch --flake ~/ws/nix-config
 # Home Manager only
 home-manager switch --flake ~/ws/nix-config
 
-# Darwin
-darwin-rebuild build --flake .#80a99738d7e2
+# Darwin (host attr is "aws"; real hostname is 80a99738d7e2)
+darwin-rebuild build --flake .#aws
 
 # Check flake
 nix flake check
@@ -57,4 +57,10 @@ Enable in `home-manager/_mixins/console/ai/default.nix`.
 ## Notes
 - Secrets managed via sops-nix (`.sops.yaml`)
 - Nix formatter: nixpkgs-fmt + statix + deadnix
-- State version: 25.11
+- State versions are intentionally not uniform:
+  - NixOS / Home Manager hosts: `25.11` (the `stateVersion` in `flake.nix`)
+  - nix-darwin system (`aws`): `4` (nix-darwin uses its own integer series)
+  - Darwin Home Manager: `24.11`, pinned deliberately because this host runs
+    the HM 26.05 module against rolling (unstable) darwin pkgs; the release
+    check is disabled (`home.enableNixpkgsReleaseCheck = false`) for that pairing.
+  Do not "align" these; they track different upstreams.
