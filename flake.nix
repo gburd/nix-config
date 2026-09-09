@@ -332,9 +332,12 @@
             # allowUnfree so unfree custom pkgs (e.g. kiro-cli) evaluate —
             # otherwise `nix flake check` fails on packages.<sys>.kiro-cli
             # with "has an unfree license, refusing to evaluate".
+            # unstable-packages overlay provides `pkgs.unstable`, which
+            # pkgs/default.nix needs for maki's rustPlatform (1.95).
             pkgs = import nixpkgs {
               inherit system;
               config.allowUnfree = true;
+              overlays = [ outputs.overlays.unstable-packages ];
             };
           in
           (import ./pkgs { inherit pkgs inputs; })
