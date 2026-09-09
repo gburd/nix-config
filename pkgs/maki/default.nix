@@ -6,20 +6,34 @@
 , python3
 , tree-sitter
 , installShellFiles
+, maki-src ? null
 }:
 
-rustPlatform.buildRustPackage rec {
-  pname = "maki";
-  version = "0.4.12-gburd.1";
-
-  src = fetchFromGitHub {
+let
+  # Pinned fallback for legacy non-flake builds (`nix-build -A maki`), where
+  # the maki-src flake input isn't threaded in. The flake path (maki-src)
+  # tracks my fork's latest release; this pin only matters off-flake.
+  fallbackVersion = "0.4.12-gburd.1";
+  fallbackSrc = fetchFromGitHub {
     owner = "gburd";
     repo = "maki";
-    rev = "v${version}";
+    rev = "v${fallbackVersion}";
     hash = "sha256-HC3PbO1eWyklMmlkJl53tFy+M3x5/PbzFgoLG9rpp+0=";
   };
+  useInput = maki-src != null;
+in
+rustPlatform.buildRustPackage {
+  pname = "maki";
+  # From the flake input this is the tracked commit's short rev; the actual
+  # semver lives in the crate's Cargo.toml. Off-flake it's the pinned tag.
+  version = if useInput then (maki-src.shortRev or "unstable") else fallbackVersion;
 
-  cargoHash = "sha256-7s5/qPujrd7HnX3ZoRw13PfoeIhXUSaxfXE4mNL+hMA=";
+  src = if useInput then maki-src else fallbackSrc;
+
+  # Vendored crates hash. When maki-src advances to a release whose
+  # dependency tree changed, this must be updated (the build fails with the
+  # expected value); everything else tracks the tag automatically.
+  cargoHash = "sha256-MrWqmy8dCkg48+JVCAA0UWMYPOXW9Mid38RQzjJATew=";
 
   nativeBuildInputs = [
     pkg-config

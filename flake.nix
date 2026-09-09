@@ -135,6 +135,16 @@
       flake = false;
     };
 
+    # maki -- my fork of the maki coding agent, built by pkgs/maki. `main`
+    # is kept at the latest release tag, so tracking it here picks up the
+    # newest tagged version whenever the lock is updated (`nix flake update`
+    # or the scheduled lock-updater CI). Not a flake itself; consumed as a
+    # source tree, threaded in via pkgs/default.nix.
+    maki-src = {
+      url = "github:gburd/maki";
+      flake = false;
+    };
+
     impermanence.url = "github:nix-community/impermanence";
   };
   outputs =
@@ -327,7 +337,7 @@
               config.allowUnfree = true;
             };
           in
-          (import ./pkgs { inherit pkgs; })
+          (import ./pkgs { inherit pkgs inputs; })
           //
           {
             # nuc-init = mkNuc "nixos"  "nuc-init";

@@ -268,6 +268,22 @@
         "type": "github"
       }
     },
+    "maki-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788962467,
+        "narHash": "sha256-eVugHUr76qgwcnFSkU4Xa7WtrjpqZaPKPTeuMRF1te0=",
+        "owner": "gburd",
+        "repo": "maki",
+        "rev": "99639445438c0de438a0596e9bd791417a8f267e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gburd",
+        "repo": "maki",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
@@ -693,6 +709,7 @@
         "disko": "disko",
         "home-manager": "home-manager_2",
         "impermanence": "impermanence",
+        "maki-src": "maki-src",
         "nix-darwin": "nix-darwin",
         "nix-formatter-pack": "nix-formatter-pack",
         "nixos-generators": "nixos-generators",
