@@ -11,6 +11,12 @@ _: {
       "github"
       "kaleidoscope"
       "keepassxc"
+      # Mailspring GUI mail client. On darwin this is the upstream cask (a
+      # notarized .app) -- it does NOT carry the Nix asar patches our Linux
+      # build applies (Message-ID domain from sender, "Mailspring"->"Other"
+      # mailbox); those only apply to the nixpkgs .deb build on floki. If the
+      # unpatched Message-ID matters here too, revisit.
+      "mailspring"
       "podman-desktop"
       "serial"
       "sublime-merge"
