@@ -163,8 +163,18 @@ def main() -> int:
     if not os.path.exists(args.db):
         print(f"no memelord DB at {args.db}", file=sys.stderr)
         return 1
-    db = sqlite3.connect(args.db)
+    db = sqlite3.connect(args.db, timeout=30)
     db.row_factory = sqlite3.Row
+    # memelord (Turso/libSQL) keeps this DB in WAL mode and may have it open
+    # concurrently. Match its journal mode + wait on locks instead of failing
+    # or racing it -- a plain rollback-journal connection fighting libSQL's
+    # WAL is a corruption source ("short read on WAL frame" on memelord's next
+    # open). busy_timeout lets us block on its writes rather than tearing the
+    # WAL; synchronous=FULL avoids leaving a half-written frame if we're
+    # interrupted (reboot/switch mid-run).
+    db.execute("PRAGMA busy_timeout=30000")
+    db.execute("PRAGMA journal_mode=WAL")
+    db.execute("PRAGMA synchronous=FULL")
     ensure_schema(db)
 
     if args.show:
@@ -224,7 +234,15 @@ def main() -> int:
             written += 1
     if not args.dry_run:
         db.commit()
+        # Fold our writes back into the main DB and shrink the WAL, so we
+        # never leave a large/half-written WAL for memelord to short-read on
+        # its next open (the failure this hardening prevents).
+        try:
+            db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        except sqlite3.OperationalError:
+            pass  # memelord holds a read lock -> checkpoint deferred, harmless
         print(f"wrote {written} L1 summaries to {args.db} (rollup_summaries table)")
+    db.close()
     return 0
 
 
