@@ -2,6 +2,11 @@
 with lib.hm.gvariant;
 {
   # Arnold is a Fedora system running home-manager via Nix (not NixOS)
+  #
+  # Out-of-band, host-level changes NOT captured by this config (masked
+  # uresourced, ~/.ssh perm fixes, Fedora update/sudo notes, switch-hang
+  # recovery) are recorded in ./arnold-manual-changes.md -- consult it when
+  # rebuilding/re-provisioning arnold.
   imports = [
     # console and cli are imported by users/gburd/default.nix for all hosts
     ../../../console/ai # AI tools (opt-in; sops `or null` fallbacks safe without sops)
