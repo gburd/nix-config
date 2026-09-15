@@ -194,6 +194,15 @@
       inherit (self) outputs;
       sshMatrix = import ./lib/ssh-matrix.nix { };
       libx = import ./lib { inherit self inputs outputs stateVersion; };
+
+      # solnix-pkgs cannot yet evaluate a home-manager (or system) closure --
+      # its *-solaris pkg set is incomplete. While false, the dixi/dixa/dixr
+      # home configs fall back to x86_64-linux pkgs so they EVALUATE (profile
+      # shape) and `nix flake check` stays green. Flip to true once solnix-pkgs
+      # is ready; run `nix run .#check-solnix-ready` -- it exits nonzero (with
+      # flip instructions) the moment solnix-pkgs can evaluate a closure,
+      # prompting this flip + wiring the real solaris pkg set through.
+      solnixReady = false;
     in
     {
       # home-manager switch -b backup --flake $HOME/ws/nix-config
@@ -221,21 +230,22 @@
         # solnix (Nix on illumos/Solaris): platform <arch>-solaris ->
         # systemType "solaris" -> systems/solaris.nix. The illumos package set
         # comes from the solnix-pkgs fork (exposes the *-solaris platforms +
-        # pkgs.illumos.*), NOT stock nixpkgs -- until that input is wired,
-        # mkHome falls back to native pkgs so these configs still EVALUATE
-        # (profile shape only; nothing builds yet). Solnix arch status (its
-        # own honest roadmap): x86_64 = Phase 1 (primary), aarch64 = Phase 3,
-        # RISC-V = Phase 5 (no illumos port yet) -- so dixa/dixr are staged
-        # targets ahead of the fork actually supporting their platforms.
+        # pkgs.illumos.*), NOT stock nixpkgs. But solnix-pkgs can't yet
+        # evaluate a full HM closure, so mkHome gates it behind solnixReady
+        # (currently false -> x86_64-linux fallback so these EVALUATE; profile
+        # shape only, nothing builds). See solnixReady in the let block + the
+        # `nix run .#check-solnix-ready`. Solnix arch roadmap: x86_64 = Phase 1, aarch64
+        # = Phase 3, RISC-V = Phase 5 -- so dixa/dixr are staged targets ahead
+        # of the fork supporting their platforms.
         #
         # Three "dix" hosts:
         #   * dixi -- x86_64, EC2 (permanent account), HEADLESS (no COSMIC).
-        "gburd@dixi" = libx.mkHome { hostname = "dixi"; username = "gburd"; platform = "x86_64-solaris"; };
+        "gburd@dixi" = libx.mkHome { hostname = "dixi"; username = "gburd"; platform = "x86_64-solaris"; inherit solnixReady; };
         #   * dixa -- aarch64, EC2 (permanent account), HEADLESS (no COSMIC).
-        "gburd@dixa" = libx.mkHome { hostname = "dixa"; username = "gburd"; platform = "aarch64-solaris"; };
+        "gburd@dixa" = libx.mkHome { hostname = "dixa"; username = "gburd"; platform = "aarch64-solaris"; inherit solnixReady; };
         #   * dixr -- RISC-V, PHYSICAL dev box (kbd/mouse/monitor), COSMIC
         #     desktop (the Pop!_OS COSMIC experience, illumos underneath).
-        "gburd@dixr" = libx.mkHome { hostname = "dixr"; username = "gburd"; desktop = "cosmic"; platform = "riscv64-solaris"; };
+        "gburd@dixr" = libx.mkHome { hostname = "dixr"; username = "gburd"; desktop = "cosmic"; platform = "riscv64-solaris"; inherit solnixReady; };
 
         # Servers
       };
@@ -400,6 +410,61 @@
 
       # Custom packages and modifications, exported as overlays
       overlays = import ./overlays { inherit inputs; };
+
+      # `nix run .#check-solnix-ready` -- the TRIGGER that tells us when to undo
+      # the solnixReady=false workaround. It asks "can solnix-pkgs evaluate a
+      # home-manager closure on x86_64-solaris yet?" and inverts the answer:
+      #   * probe FAILS (solnix still incomplete) -> exits 0, "nothing to do".
+      #   * probe SUCCEEDS (closure-ready)        -> exits 1 with the flip
+      #     instructions (set solnixReady=true, drop the guard).
+      #
+      # It's an APP, not a flake `check`, on purpose: the probe needs
+      # `builtins.getFlake` on our own tree, which the `nix flake check`
+      # sandbox cannot do (fchmodat2 EPERM on the copied source) -- and this
+      # Nix's builtins.tryEval does NOT catch the `attribute 'shellPath'
+      # missing` / infinite-recursion class the incomplete solaris pkg set
+      # raises, so an in-eval check would crash `nix flake check` itself. An
+      # app runs unsandboxed where getFlake works. Run it by hand, or from a
+      # periodic job, when you want to know if solnix-pkgs caught up.
+      # ponytail: no automated CI gate here -- the sandbox can't run the probe;
+      # a manual `nix run` is the honest minimum that doesn't lie or crash CI.
+      apps = libx.forAllSystems (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          script = pkgs.writeShellApplication {
+            name = "check-solnix-ready";
+            runtimeInputs = [ pkgs.nix ];
+            text = ''
+              if nix eval --impure --expr '
+                    let i = (builtins.getFlake (toString ${self})).inputs;
+                        p = import i.solnix-pkgs.lib.nixpkgsSrc {
+                          system = "x86_64-solaris";
+                          overlays = [ i.solnix-pkgs.overlays.default ];
+                          config.allowUnsupportedSystem = true;
+                        };
+                        hm = i.home-manager.lib.homeManagerConfiguration {
+                          pkgs = p;
+                          modules = [{ home.username = "probe"; home.homeDirectory = "/home/probe"; home.stateVersion = "${stateVersion}"; }];
+                        };
+                    in builtins.seq hm.activationPackage.drvPath true' >/dev/null 2>&1; then
+                echo "solnix-pkgs CAN now evaluate a home-manager closure on x86_64-solaris."
+                echo "ACTION: set solnixReady = true in flake.nix's let block, wire the real"
+                echo "        solaris pkg set through, and delete this trigger."
+                exit 1
+              else
+                echo "solnix-pkgs still cannot evaluate a HM closure; solnixReady=false is correct."
+                exit 0
+              fi
+            '';
+          };
+        in
+        {
+          check-solnix-ready = {
+            type = "app";
+            program = "${script}/bin/check-solnix-ready";
+          };
+        }
+      );
 
       # Custom packages; acessible via 'nix build', 'nix shell', etc
       packages = libx.forAllSystems

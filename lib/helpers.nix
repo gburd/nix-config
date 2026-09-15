@@ -3,28 +3,32 @@ let
   sshMatrix = import ./ssh-matrix.nix { };
 in
 {
-  # Helper function for generating home-manager configs
-  mkHome = { hostname, username, desktop ? null, platform ? "x86_64-linux" }: inputs.home-manager.lib.homeManagerConfiguration {
-    # Resolve pkgs for the target platform. Stock nixpkgs has no *-solaris
-    # systems; the solnix illumos platforms come from the solnix-pkgs fork
-    # (exposes lib.nixpkgsSrc = a patched nixpkgs with the *-solaris platforms
-    # wired in, + overlays.default). For a -solaris platform, instantiate that
-    # patched nixpkgs with the solnix overlay so the dixi/dixa/dixr hosts get a
-    # real solaris pkg set. For non-solaris platforms, stock legacyPackages.
-    # (If solnix-pkgs is somehow absent, fall back to x86_64-linux so eval still
-    # succeeds -- the solaris profile guards every install `pkgs.foo or null`.)
+  # Helper function for generating home-manager configs.
+  #
+  # solnixReady gates the *-solaris path. solnix-pkgs cannot yet evaluate a
+  # full home-manager closure (its solaris stdenv/pkg set is incomplete --
+  # even a minimal HM config hits `attribute 'shellPath'` missing, and our
+  # full module tree hits infinite recursion in the patched-nixpkgs lib).
+  # While solnixReady=false, a -solaris host falls back to x86_64-linux pkgs
+  # so the config still EVALUATES (profile shape; `nix flake check` stays
+  # green). Flip it to true once solnix-pkgs can build a closure -- the
+  # `nix run .#check-solnix-ready` (flake.nix) exits nonzero when that day
+  # comes, prompting the flip. The solaris profile guards every install
+  # `pkgs.foo or null` (systems/solaris.nix), so the fallback pkgs set never
+  # drags in a wrong-arch closure.
+  mkHome = { hostname, username, desktop ? null, platform ? "x86_64-linux", solnixReady ? false }: inputs.home-manager.lib.homeManagerConfiguration {
     pkgs =
       let isSolaris = builtins.match ".*-solaris" platform != null;
       in
-      if isSolaris && (inputs ? solnix-pkgs)
-      then import inputs.solnix-pkgs.lib.nixpkgsSrc {
-        system = platform;
-        overlays = [ inputs.solnix-pkgs.overlays.default ];
-        config.allowUnsupportedSystem = true;
-      }
-      else if inputs.nixpkgs.legacyPackages ? ${platform}
-      then inputs.nixpkgs.legacyPackages.${platform}
-      else inputs.nixpkgs.legacyPackages.x86_64-linux;
+      if isSolaris && solnixReady && (inputs ? solnix-pkgs)
+      then
+        import inputs.solnix-pkgs.lib.nixpkgsSrc
+          {
+            system = platform;
+            overlays = [ inputs.solnix-pkgs.overlays.default ];
+            config.allowUnsupportedSystem = true;
+          }
+      else inputs.nixpkgs.legacyPackages.${platform} or inputs.nixpkgs.legacyPackages.x86_64-linux;
     extraSpecialArgs = {
       inherit inputs outputs desktop hostname platform username stateVersion sshMatrix;
     };
@@ -65,7 +69,7 @@ in
     inputs.solnix.lib.solnixSystem {
       system = platform;
       inherit pkgs;
-      modules = [ { networking.hostName = hostname; } ] ++ modules;
+      modules = [{ networking.hostName = hostname; }] ++ modules;
     };
 
   # Helper function for generating host configs

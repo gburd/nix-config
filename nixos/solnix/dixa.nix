@@ -17,7 +17,7 @@
 #     change.
 #
 # Headless deliberately: no COSMIC, nothing graphical. This is a build/test node.
-{ config, lib, pkgs, ... }:
+_:
 
 {
   users.users.gburd = {

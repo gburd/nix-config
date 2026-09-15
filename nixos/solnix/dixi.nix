@@ -16,7 +16,7 @@
 #   * This config EVALUATES on a Linux dev box and only BUILDS on an illumos
 #     host. `nix eval` succeeding is not a build; a build is not a boot.
 #   * COSMIC is wired below and is NOT a working desktop -- see the block there.
-{ config, lib, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # /home, not /export/home. FreeBSD's bsdinstall makes a plain

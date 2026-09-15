@@ -28,7 +28,7 @@
 #
 # So: no packages, no core-OS slices, no desktop, no network interface that has
 # ever been seen to attach. Adding any of those would be inventing evidence.
-{ config, lib, pkgs, ... }:
+_:
 
 {
   users.users.gburd = {
