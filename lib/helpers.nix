@@ -31,6 +31,43 @@ in
     modules = [ ../home-manager ];
   };
 
+  # mkSolnixHost -- the SYSTEM half of a solnix (Nix-on-illumos) host.
+  #
+  # ⚠️ WHY THIS IS NOT mkHost. mkHost is inputs.nixpkgs.lib.nixosSystem, which
+  # builds a LINUX system: it pulls in systemd, an initrd, a bootloader and a
+  # Linux kernel, none of which exist on illumos. mkHome gets away with a
+  # *-solaris platform because home-manager only needs PACKAGES -- no kernel, no
+  # init. A SYSTEM needs both, so it must go through solnix's OWN evaluator
+  # (solnix/lib/eval-config.nix, the analog of nixos/lib/eval-config.nix), which
+  # evaluates solnix's module tree (SMF instead of systemd, ZFS boot environments
+  # instead of GRUB generations).
+  #
+  # The attrset these feed is called `solnixConfigurations` in flake.nix, not
+  # `nixosConfigurations`, for the same reason -- and because solnix-install
+  # already probes solnixConfigurations BEFORE nixosConfigurations, so
+  # `solnix-install --flake .#dixi` resolves with no installer change.
+  #
+  # ⚠️ EVAL HERE, BUILD ON ILLUMOS. config.system.build.toplevel is an
+  # x86_64-solaris derivation. It EVALUATES on this Linux box; it can only be
+  # REALISED on an illumos host (the gate proto and the slices carved from it are
+  # x86_64-solaris store paths). Do not read a successful `nix eval` as a build.
+  mkSolnixHost = { hostname, modules ? [ ], platform ? "x86_64-solaris" }:
+    let
+      # The patched nixpkgs that knows about the *-solaris platforms. Same source
+      # mkHome uses, for the same reason: stock nixpkgs has no *-solaris system.
+      solnixNixpkgs = inputs.solnix-pkgs.lib.nixpkgsSrc;
+      pkgs = import solnixNixpkgs {
+        system = platform;
+        overlays = [ inputs.solnix-pkgs.overlays.default ];
+        config.allowUnsupportedSystem = true;
+      };
+    in
+    inputs.solnix.lib.solnixSystem {
+      system = platform;
+      inherit pkgs;
+      modules = [ { networking.hostName = hostname; } ] ++ modules;
+    };
+
   # Helper function for generating host configs
   # - installer: can be one of the following:
   #    - "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"

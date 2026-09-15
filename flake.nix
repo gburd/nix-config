@@ -45,7 +45,35 @@
     # default -- consumed by mkHome (lib/helpers.nix) to give the dixi/dixa/dixr
     # solnix hosts a real solaris pkg set instead of the x86_64-linux fallback.
     solnix-pkgs.url = "git+https://codeberg.org/gregburd/solnix-pkgs.git";
-    solnix-pkgs.inputs.nixpkgs.follows = "nixpkgs";
+
+    # NOTE: solnix-pkgs.inputs.nixpkgs is deliberately NOT followed.
+    #
+    # It used to be `follows = "nixpkgs"`, and that SILENTLY BROKE every solaris
+    # config in this flake -- including the homeConfigurations that predate the
+    # dix system configs. Measured: with the follows, evaluating
+    # homeConfigurations."gburd@dixi" fails while BUILDING
+    # nixpkgs-solnix-patched, with
+    #
+    #   patching file lib/systems/parse.nix
+    #   Hunk #2 FAILED at 876.  Hunk #3 FAILED at 949.
+    #   2 out of 3 hunks FAILED -- saving rejects to lib/systems/parse.nix.rej
+    #
+    # solnix-pkgs adds the *-solaris platforms by PATCHING nixpkgs' lib/systems,
+    # against its own pin (7f81d69). lib/systems/parse.nix has since moved, so
+    # forcing nixos-26.05 in makes the patch fail to apply, the patched-nixpkgs
+    # derivation fail to build, and every -solaris evaluation die -- as a BUILD
+    # error, which reads like an unrelated infrastructure problem rather than an
+    # input-pin mistake.
+    #
+    # The cost of not following is a second nixpkgs copy in the store. The cost of
+    # following is that nothing solaris works at all. Let solnix-pkgs keep its pin.
+
+    # solnix itself -- the illumos distribution: its module tree (SMF instead of
+    # systemd, ZFS boot environments instead of GRUB generations) and its
+    # evaluator lib.solnixSystem, which is the nixosSystem analog. Consumed by
+    # mkSolnixHost (lib/helpers.nix) for solnixConfigurations.{dixi,dixa,dixr}.
+    # Same reasoning as above: no nixpkgs follows.
+    solnix.url = "git+https://codeberg.org/gregburd/solnix.git";
 
     # Darwin support with nix-darwin
     nix-darwin.url = "github:LnL7/nix-darwin";
@@ -204,6 +232,48 @@
         "gburd@dixr" = libx.mkHome { hostname = "dixr"; username = "gburd"; desktop = "cosmic"; platform = "riscv64-solaris"; };
 
         # Servers
+      };
+
+      # solnixConfigurations -- the SYSTEM half of the solnix (Nix-on-illumos)
+      # hosts. The nixosConfigurations analog, and NOT part of it: see
+      # lib/helpers.nix:mkSolnixHost for why mkHost/nixosSystem cannot build these
+      # (it builds a Linux system -- systemd, initrd, GRUB, a Linux kernel).
+      #
+      # The name matters: solnix-install probes solnixConfigurations BEFORE
+      # nixosConfigurations, so this is what makes the maintainer's requested
+      #
+      #   solnix-install --git https://github.com/gburd/nix-config.git \
+      #                  --flake .#dixi --home-manager .#gburd@dixi
+      #
+      # resolve, with no change to the installer.
+      #
+      # WARNING: THESE EVALUATE HERE AND ONLY BUILD ON AN ILLUMOS HOST.
+      # config.system.build.toplevel is an x86_64-solaris (or aarch64/riscv64)
+      # derivation; the gate proto and the slices carved from it are *-solaris
+      # store paths that cannot be realised on Linux. `nix eval` succeeding is not
+      # a build, and a build is not a boot -- three separate claims, and this
+      # campaign produced four bugs from blurring them.
+      #
+      # Per-host honesty is in each file, and is not uniform:
+      #   dixi -- x86_64, real hardware. Slices are real; COSMIC is not a desktop.
+      #   dixa -- aarch64, headless EC2. GICv3/_CRS confirmed on metal, userland NOT built.
+      #   dixr -- riscv64 Milk-V (SpacemiT K3, not K1). ASPIRATIONAL SCAFFOLDING ONLY.
+      solnixConfigurations = {
+        dixi = libx.mkSolnixHost {
+          hostname = "dixi";
+          platform = "x86_64-solaris";
+          modules = [ ./nixos/solnix/dixi.nix ];
+        };
+        dixa = libx.mkSolnixHost {
+          hostname = "dixa";
+          platform = "aarch64-solaris";
+          modules = [ ./nixos/solnix/dixa.nix ];
+        };
+        dixr = libx.mkSolnixHost {
+          hostname = "dixr";
+          platform = "riscv64-solaris";
+          modules = [ ./nixos/solnix/dixr.nix ];
+        };
       };
 
       # Support for nix-darwin workstations. Single profile for this machine:
