@@ -73,7 +73,13 @@
     # evaluator lib.solnixSystem, which is the nixosSystem analog. Consumed by
     # mkSolnixHost (lib/helpers.nix) for solnixConfigurations.{dixi,dixa,dixr}.
     # Same reasoning as above: no nixpkgs follows.
-    solnix.url = "git+https://codeberg.org/gregburd/solnix.git";
+    # ?ref=main is REQUIRED, not cosmetic: without it Nix resolves the default
+    # branch as `master` and fails with
+    #   error: resolving Git reference 'master': revspec 'master' not found
+    # solnix's default branch is `main`. Measured on a fresh node with no
+    # pre-populated flake registry -- it does NOT reproduce where the input is
+    # already in the local eval cache, which is exactly why it survived to here.
+    solnix.url = "git+https://codeberg.org/gregburd/solnix.git?ref=main";
 
     # Darwin support with nix-darwin
     nix-darwin.url = "github:LnL7/nix-darwin";
