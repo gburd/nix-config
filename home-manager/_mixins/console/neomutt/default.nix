@@ -6,6 +6,7 @@
     lynx # Alternative HTML viewer
     urlscan # Extract URLs from email
     isync # Optional: for offline sync via mbsync
+    imapsync # Fastmail->Proton mailbox transfer (see docs/email-migration.md)
   ];
 
   # Neomutt main configuration

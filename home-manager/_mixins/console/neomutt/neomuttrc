@@ -5,16 +5,18 @@
 # Multi-Account Setup - Press F1-F7 to switch accounts
 # ============================================================================
 #
-# F1 = ProtonMail
+# F1 = ProtonMail (default -- greg@burd.me)
 # F2 = Gmail Personal
 # F3 = Gmail Work
-# F4 = Fastmail (default)
+# F4 = Fastmail (LEGACY -- being migrated to Proton; removed after MX cutover)
 # F5 = iCloud
 # F6 = Outlook (disabled)
 # F7 = Amazon
 #
-# Default account: Fastmail
-source ~/.config/neomutt/accounts/fastmail.muttrc
+# Default account: ProtonMail (greg@burd.me). During the Fastmail->Proton
+# migration Fastmail stays reachable on F4 so imapsync + verification can run;
+# it is removed once the burd.me MX points at Proton (see docs/email-migration.md).
+source ~/.config/neomutt/accounts/protonmail.muttrc
 
   # Account Switching Macros (F1-F7)
   macro index <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
@@ -45,22 +47,21 @@ macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # amazon (F7) disabled for now (per request; re-enable with neomutt/default.nix)
 # macro pager <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
-# --- Quick jump: pgsql-hackers list (Fastmail: Work/Postgres/Hackers List) ---
+# --- Quick jump: pgsql-hackers list (Proton bridge: Work/Postgres/Hackers List) ---
 # Press ",h" (comma then h -- "go Hackers") in either index or pager to switch
-# to Fastmail and open the Hackers List folder directly, no folder-name
-# typing. Comma is a free leader key (avoids the g-prefix alias warning that
-# "gh" triggers against the gg/G binds).
+# to Proton and open the Hackers List folder directly, no folder-name typing.
+# Comma is a free leader key (avoids the g-prefix alias warning that "gh"
+# triggers against the gg/G binds).
 #
 # The folder "Hackers List" has a SPACE, which broke every inline form tried:
 # quoted (parser strips quotes -> arg splits -> 'List" is not a mailbox'),
-# backslash-escaped (didn't survive), and $variable (not expanded here ->
-# '$my_hackers is not a mailbox'). The fix: a FULL imaps:// URL with the
-# space URL-encoded as %20, so there is NO literal space in the macro
-# push-string for the parser to split on. neomutt decodes %20 and resolves
-# to .../Work/Postgres/Hackers List (verified via neomutt -d5). A full URL
-# needs no "+" prefix.
-macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>imaps://imap.fastmail.com:993/Work/Postgres/Hackers%20List<enter>' "Go to pgsql-hackers list"
-macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>imaps://imap.fastmail.com:993/Work/Postgres/Hackers%20List<enter>' "Go to pgsql-hackers list"
+# backslash-escaped, and $variable (not expanded here). The fix: a FULL imap://
+# URL with the space URL-encoded as %20, so there is NO literal space in the
+# macro push-string for the parser to split on. neomutt decodes %20 and
+# resolves to .../Work/Postgres/Hackers List. A full URL needs no "+" prefix.
+# (Proton reached via the local bridge at 127.0.0.1:1143, not imaps.)
+macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>imap://127.0.0.1:1143/Work/Postgres/Hackers%20List<enter>' "Go to pgsql-hackers list"
+macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>imap://127.0.0.1:1143/Work/Postgres/Hackers%20List<enter>' "Go to pgsql-hackers list"
 
 # ============================================================================
 # General Settings

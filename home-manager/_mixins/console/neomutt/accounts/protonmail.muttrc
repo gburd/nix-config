@@ -1,4 +1,11 @@
-# ProtonMail via Bridge
+# ProtonMail via Bridge -- primary account for greg@burd.me
+#
+# The bridge authenticates as the Proton ACCOUNT login (email/proton/user +
+# email/proton/pass = the bridge-generated IMAP/SMTP credentials). The visible
+# From address is greg@burd.me, a custom-domain address on that Proton account
+# (email/proton/from). Keep imap_user = the bridge login; only `from` carries
+# the burd.me identity. See docs/email-migration.md for the Fastmail->Proton
+# cutover this account replaces.
 set imap_user = `cat $HOME/.config/sops-nix/secrets/email/proton/user`
 set imap_pass = `cat $HOME/.config/sops-nix/secrets/email/proton/pass`
 set folder = "imap://127.0.0.1:1143"
@@ -12,7 +19,7 @@ set smtp_pass = `cat $HOME/.config/sops-nix/secrets/email/proton/pass`
 set ssl_force_tls = no
 set ssl_starttls = no
 
-set from = `cat $HOME/.config/sops-nix/secrets/email/proton/user`
+set from = `cat $HOME/.config/sops-nix/secrets/email/proton/from`
 set realname = "Greg Burd"
 set use_from = yes
 set envelope_from = yes
@@ -20,7 +27,13 @@ set envelope_from = yes
 set header_cache = "~/.cache/neomutt/protonmail/headers"
 set message_cachedir = "~/.cache/neomutt/protonmail/bodies"
 
-mailboxes +INBOX +Sent +Drafts +Trash +Spam
+mailboxes +INBOX +Sent +Drafts +Trash +Spam +Work/Postgres/Hackers\ List
+# pgsql-hackers list, shown in the sidebar as just "Hackers". The list is
+# filtered into a Proton folder mirroring the old Fastmail path
+# (Work/Postgres/Hackers List) so the ,h macro + muscle memory carry over.
+# Recreate this folder in Proton and refile the list into it (imapsync with
+# --automap preserves the hierarchy from Fastmail during migration).
+named-mailboxes "Hackers" "+Work/Postgres/Hackers List"
 
 set status_format = "[ProtonMail] %f [Msgs:%?M?%M/?%m%?n? New:%n?]---(%s/%S)-%>-(%P)---"
 color indicator black red

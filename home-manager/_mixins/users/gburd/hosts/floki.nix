@@ -165,6 +165,10 @@ in
       # Email account credentials (nested structure)
       "email/proton/user" = { };
       "email/proton/pass" = { };
+      # Proton From address (greg@burd.me custom-domain address on the Proton
+      # account). Split from proton/user so the bridge login stays the account
+      # login while neomutt's From carries the burd.me identity.
+      "email/proton/from" = { };
       "email/google/personal/user" = { };
       "email/google/personal/pass" = { };
       "email/google/pgus/user" = { };

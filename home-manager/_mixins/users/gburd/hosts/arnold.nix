@@ -11,6 +11,11 @@ with lib.hm.gvariant;
     # console and cli are imported by users/gburd/default.nix for all hosts
     ../../../console/ai # AI tools (opt-in; sops `or null` fallbacks safe without sops)
     ../../../services/borgmatic.nix
+    # ProtonMail Bridge -- local IMAP/SMTP gateway for greg@burd.me. arnold
+    # has NO gnome-keyring/secret-service, so the bridge uses its file-based
+    # vault fallback; the ONE-TIME account login still needs an interactive
+    # `protonmail-bridge --cli` + `login` on the box (see arnold-manual-changes.md).
+    ../../../services/protonmail-bridge.nix
     # Sublime Text + Merge (GUI; arnold forwards X11) and their licenses
     ../../../desktop/sublime.nix
     ../../../desktop/sublime-merge.nix
@@ -46,6 +51,13 @@ with lib.hm.gvariant;
         path = "${config.home.homeDirectory}/.config/borg/keys/zh6216_rsync_net__borg";
         mode = "0600";
       };
+
+      # ProtonMail (greg@burd.me) -- neomutt reads these via the local bridge.
+      # Values live in floki's secrets.yaml (defaultSopsFile above); arnold
+      # just declares them. proton/from = greg@burd.me (see floki.nix).
+      "email/proton/user" = { };
+      "email/proton/pass" = { };
+      "email/proton/from" = { };
     };
   };
 

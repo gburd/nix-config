@@ -53,6 +53,8 @@
       # Email account credentials (nested structure)
       "email/proton/user" = { };
       "email/proton/pass" = { };
+      # Proton From address (greg@burd.me); split from proton/user -- see floki.nix.
+      "email/proton/from" = { };
       "email/google/personal/user" = { };
       "email/google/personal/pass" = { };
       "email/google/pgus/user" = { };
