@@ -62,7 +62,18 @@ in
       solnixNixpkgs = inputs.solnix-pkgs.lib.nixpkgsSrc;
       pkgs = import solnixNixpkgs {
         system = platform;
-        overlays = [ inputs.solnix-pkgs.overlays.default ];
+        # solnix-pkgs.overlays.default is only the BOOTSTRAP half of pkgs.solnix.
+        # A toplevel also needs worldOverlay (wires pkgs.solnix.systemPath, read by
+        # solnix's activation/default.nix) and shellPathOverlay (restores
+        # bashNonInteractive.shellPath); without them dixi's drvPath throws
+        # "attribute 'systemPath' missing" and solnix-install reports "no system
+        # configuration names dixi". solnix exports both from its lib so we apply
+        # the SAME layers its own pkgsFor does rather than drifting a copy.
+        overlays = [
+          inputs.solnix-pkgs.overlays.default
+          inputs.solnix.lib.shellPathOverlay
+          inputs.solnix.lib.worldOverlay
+        ];
         config.allowUnsupportedSystem = true;
       };
     in
