@@ -82,7 +82,7 @@ in
     };
     noMistakesVendorHash = mkOption {
       type = types.str;
-      default = "sha256-NZOYxNYvt4192uqKBdKRxdgrKFvWx3585psdCnRdPSM=";
+      default = "sha256-maAVBptEtdrGanJHwAPAmuGBorzIMUgK6T+NmIz1kS0=";
       description = "buildGoModule vendorHash for no-mistakes.";
     };
     enableNoMistakes = mkEnableOption "no-mistakes (Go binary + daemon)" // { default = true; };
