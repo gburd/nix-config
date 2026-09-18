@@ -8,8 +8,8 @@
 #
 # TIERS
 #   firejail (default, RECOMMENDED for host agents) — namespace sandbox that
-#     SHARES the host /nix store, so host agent binaries (pi/claude/codex/
-#     maki/hermes, all Nix/npm) run unchanged. Whitelists cwd (rw); blocks
+#     SHARES the host /nix store, so host agent binaries (pi/claude/
+#     maki, all Nix/npm) run unchanged. Whitelists cwd (rw); blocks
 #     SSH keys, secrets, ~/.aws, the bearer token. Shares the host network
 #     namespace so the agent reaches the loopback LiteLLM gateway (the single
 #     broker to AWS/Bedrock = the controlled cloud path).
@@ -152,7 +152,7 @@ let
       --tier <t>   firejail (default) | docker | vm | ec2
       --mem <size> memory cap, e.g. 8G / 512M (default: ${cfg.defaultMemMax})
       --aws        DIRECT-AWS mode: private netns + DNS/HTTPS-only egress.
-                   BREAKS gateway-routed agents (pi/claude/codex/maki/hermes)
+                   BREAKS gateway-routed agents (pi/claude/maki)
                    because the host LiteLLM gateway is unreachable in a private
                    netns. Use only for tools hitting AWS with their own creds.
       --aws-profile <name>
@@ -241,7 +241,7 @@ let
     it dies in the sandbox instead of taking down your terminals.
   '';
 
-  gatewayRouted = "pi claude codex maki hermes kiro";
+  gatewayRouted = "pi claude maki kiro";
 
   # pkgs set for each arch the ec2 tier supports. aarch64 needs its OWN
   # nixpkgs evaluation (not floki's native x86_64 one) so
@@ -474,8 +474,6 @@ let
       AGENT_DIRS=(
         --whitelist="${home}/.pi"
         --whitelist="${home}/.claude"
-        --whitelist="${home}/.codex"
-        --whitelist="${home}/.hermes"
         --whitelist="${home}/.local/share/maki"
         --whitelist="${home}/.config/maki"
         --whitelist="${home}/.config/litellm/keys"
@@ -582,7 +580,7 @@ let
           # Default: share host /nix + network; isolate the filesystem + cap
           # memory via a REAL cgroup (systemd-run --scope -p MemoryMax=),
           # not firejail's own --rlimit-as. --rlimit-as limits virtual
-          # ADDRESS SPACE, which Node/V8 (pi/claude/codex/maki/hermes are all
+          # ADDRESS SPACE, which Node/V8 (pi/claude/maki are all
           # Node) reserves far more of than it ever touches physically --
           # pi alone needs ~24G of --rlimit-as just to start (a WASM linear-
           # memory reservation in its HTTP client), well past any cap meant
@@ -1331,9 +1329,7 @@ let
             case "$1" in
               pi)     echo ".pi/agent/sessions" ;;
               claude) echo ".claude/projects" ;;
-              codex)  echo ".codex/sessions" ;;
               maki)   echo ".maki/sessions" ;;
-              hermes) echo ".hermes/sessions" ;;
               *)      echo "" ;;
             esac
           }
@@ -1346,10 +1342,10 @@ let
           # scope pi/claude's sync to just THIS project's session data via
           # unison's -path, instead of their entire (potentially huge --
           # confirmed live: 675MB pi, 4.1GB claude, across every project
-          # ever worked on) sessions root. codex/maki/hermes have no such
-          # per-project subdir at all (confirmed: codex organizes by date,
-          # maki/hermes are flat UUID/timestamp files) -- nothing to scope
-          # to, so they still sync in full (small in practice: <500MB).
+          # ever worked on) sessions root. maki has no such
+          # per-project subdir at all (confirmed: maki is flat
+          # UUID/timestamp files) -- nothing to scope
+          # to, so it still syncs in full (small in practice: <500MB).
           projectSessionSubdir() {
             case "$1" in
               pi)     printf '%s' "''${PROJECT#/}" | tr '/' '-' | sed 's/^/--/; s/$/--/' ;;
@@ -1391,7 +1387,7 @@ let
           # this tier already learned from) -- always sync all of them.
           sync_all_agent_state() {
             IP="$1"
-            for a in pi claude codex maki hermes; do
+            for a in pi claude maki; do
               sync_agent_state "$IP" "$a"
             done
           }
@@ -1534,7 +1530,7 @@ let
     complete -c agent-sandbox -l ssh -d "forward ssh-agent socket (SSH out; keys stay blocked)"
     complete -c agent-sandbox -s h -l help -d "show help"
     complete -c agent-sandbox -n "not __fish_seen_subcommand_from --tier --mem" \
-      -a "pi claude codex maki hermes kiro gnhf bash" -d "command to sandbox"
+      -a "pi claude maki kiro gnhf bash" -d "command to sandbox"
   '';
 in
 {

@@ -681,23 +681,6 @@
         "url": "https://codeberg.org/ddx/skills.git"
       }
     },
-    "postgresq-skills-codex": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1780152856,
-        "narHash": "sha256-wnjhZdckUkmRm6gUkcvKFIWy+R+oeIoORFDuS3Sfe3I=",
-        "ref": "codex",
-        "rev": "c0577d257d81e78401ca2effeee09a856d6d8286",
-        "revCount": 13,
-        "type": "git",
-        "url": "https://codeberg.org/ddx/skills.git"
-      },
-      "original": {
-        "ref": "codex",
-        "type": "git",
-        "url": "https://codeberg.org/ddx/skills.git"
-      }
-    },
     "postgresq-skills-kiro": {
       "flake": false,
       "locked": {
@@ -769,7 +752,6 @@
         "no-mistakes": "no-mistakes",
         "ponytail": "ponytail",
         "postgresq-skills-claude": "postgresq-skills-claude",
-        "postgresq-skills-codex": "postgresq-skills-codex",
         "postgresq-skills-kiro": "postgresq-skills-kiro",
         "postgresq-skills-maki": "postgresq-skills-maki",
         "postgresq-skills-pi": "postgresq-skills-pi",

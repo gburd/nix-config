@@ -105,7 +105,7 @@
 
     # PostgreSQL community agent skills (https://codeberg.org/ddx/skills.git).
     # One input per agent branch — content overlaps but each branch ships its
-    # own per-agent extras (claude/, pi/, kiro/, codex/, maki/ subdirs).
+    # own per-agent extras (claude/, pi/, kiro/, maki/ subdirs).
     # Deployed by modules/home-manager/ai/skills.nix as a blend over the
     # in-tree operator skills, not a replacement.
     postgresq-skills-claude = {
@@ -118,10 +118,6 @@
     };
     postgresq-skills-kiro = {
       url = "git+https://codeberg.org/ddx/skills.git?ref=kiro";
-      flake = false;
-    };
-    postgresq-skills-codex = {
-      url = "git+https://codeberg.org/ddx/skills.git?ref=codex";
       flake = false;
     };
     postgresq-skills-maki = {

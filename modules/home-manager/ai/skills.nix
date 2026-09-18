@@ -144,7 +144,7 @@ let
   # skills that want to cite them.
   #
   # The shared content (community/, examples/, generic/) and per-agent
-  # extras (claude/, pi/, kiro/, codex/, maki/) become available under
+  # extras (claude/, pi/, kiro/, maki/) become available under
   # the skills-git-<branch>/ namespace.
   ###
   skillsGitDeployments = {
@@ -161,10 +161,6 @@ let
     kiro = {
       input = inputs.postgresq-skills-kiro or null;
       target = ".kiro/skills/skills-git-kiro";
-    };
-    codex = {
-      input = inputs.postgresq-skills-codex or null;
-      target = ".codex/skills/skills-git-codex";
     };
     maki = {
       input = inputs.postgresq-skills-maki or null;
@@ -187,7 +183,7 @@ let
   # ponytail (Part 3) — cross-agent "lazy senior dev" skill/ruleset.
   #
   # The repo ships per-agent pieces; we deploy the ones our agents read:
-  #   - skills/<name>/ → each agent's skills dir (claude/codex/maki + the
+  #   - skills/<name>/ → each agent's skills dir (claude/maki + the
   #     kiro tree that Pi also reads)
   #   - .kiro/steering/ponytail.md → ~/.kiro/steering/ (kiro steering)
   #   - pi-extension/ → ~/.pi/agent/extensions/ponytail/ (Pi extension)
@@ -210,10 +206,10 @@ let
         ".pi/agent/extensions/ponytail".source = ponytailSrc + "/pi-extension";
       }
     ))
-    # codex + maki always get ponytail when enabled (no per-target toggle,
-    # mirroring how the skills.git codex/maki branches deploy).
+    # maki always gets ponytail when enabled (no per-target toggle,
+    # mirroring how the skills.git maki branch deploys).
     (lib.mkIf (cfg.ponytail.enable && ponytailSrc != null)
-      ((ponytailFilesFor ".codex/skills") // (ponytailFilesFor ".maki/skills")))
+      (ponytailFilesFor ".maki/skills"))
   ];
 
   ###
@@ -281,9 +277,9 @@ let
       (superpowersFilesFor ".claude/skills"))
     (lib.mkIf (cfg.superpowers.enable && superpowersSrc != null && cfg.targets.kiro)
       (superpowersFilesFor ".kiro/skills"))
-    # codex + maki always get the subset when enabled, mirroring ponytail.
+    # maki always gets the subset when enabled, mirroring ponytail.
     (lib.mkIf (cfg.superpowers.enable && superpowersSrc != null)
-      ((superpowersFilesFor ".codex/skills") // (superpowersFilesFor ".maki/skills")))
+      (superpowersFilesFor ".maki/skills"))
   ];
 
   ###
@@ -315,7 +311,6 @@ let
       { name = "kiro"; label = "Kiro CLI"; global = "~/.kiro/skills"; project = ".kiro/skills"; enabled = cfg.targets.kiro; }
       # Pi reads ~/.kiro/skills (pi.nix), NOT asm's default ~/.pi/skills.
       { name = "pi"; label = "Pi"; global = "~/.kiro/skills"; project = ".kiro/skills"; enabled = true; }
-      { name = "codex"; label = "Codex"; global = "~/.codex/skills"; project = ".codex/skills"; enabled = true; }
       { name = "maki"; label = "Maki"; global = "~/.maki/skills"; project = ".maki/skills"; enabled = true; }
     ];
     customPaths = [ ];
@@ -371,11 +366,6 @@ in
           type = types.bool;
           default = true;
           description = "Deploy skills.git kiro branch to ~/.kiro/skills/skills-git-kiro/";
-        };
-        codex.enable = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Deploy skills.git codex branch to ~/.codex/skills/skills-git-codex/";
         };
         maki.enable = mkOption {
           type = types.bool;

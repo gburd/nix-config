@@ -163,11 +163,6 @@ in
         default = true;
         description = "Deploy consolidated instructions to ~/.config/maki/instructions.md";
       };
-      codex = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Deploy consolidated instructions to ~/.codex/instructions.md";
-      };
     };
 
     extraFiles = mkOption {
@@ -237,11 +232,6 @@ in
       (lib.mkIf cfg.targets.maki {
         ".config/maki/instructions.md".text = allSteeringContent;
         ".maki/instructions.md".text = allSteeringContent;
-      })
-
-      # Codex instructions (all steering concatenated)
-      (lib.mkIf cfg.targets.codex {
-        ".codex/instructions.md".text = allSteeringContent;
       })
     ];
   };

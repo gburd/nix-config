@@ -78,7 +78,7 @@ in
     firstmateAgent = mkOption {
       type = types.str;
       default = "claude";
-      description = "Agent CLI firstmate launches in its repo (claude/codex/pi/...).";
+      description = "Agent CLI firstmate launches in its repo (claude/pi/...).";
     };
     noMistakesVendorHash = mkOption {
       type = types.str;

@@ -497,9 +497,9 @@ let
         # Fields some clients send that Bedrock's Converse API rejects
         # with "Extra inputs are not permitted" (validation runs AFTER
         # LiteLLM's OpenAI->Anthropic translation, so drop_params can't
-        # catch them). codex >= 0.135 sends client_metadata on every
-        # /v1/responses request; strip these unconditionally so we can
-        # track the latest codex without Bedrock 400s.
+        # catch them). Some clients (e.g. OpenAI-Responses-style CLIs)
+        # send client_metadata on every /v1/responses request; strip these
+        # unconditionally so any such client works without Bedrock 400s.
         _STRIP_FIELDS = ("client_metadata",)
 
         async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type):
@@ -655,7 +655,7 @@ in
 
     agents = mkOption {
       type = types.listOf types.str;
-      default = [ "claude" "pi" "maki" "hermes" "codex" "terax" "zed" ];
+      default = [ "claude" "pi" "maki" "terax" "zed" ];
       description = ''
         Agent identifiers. Each gets a DISTINCT API key at
         ~/.config/litellm/keys/<agent>.key (mode 600). Those keys are
@@ -891,7 +891,7 @@ in
     };
 
     # Expose convenience values for other modules that will consume the
-    # proxy in v2 (claude/pi/maki/hermes/codex/terax wrappers).
+    # proxy in v2 (claude/pi/maki/terax wrappers).
     home.sessionVariables = {
       LITELLM_URL = "http://127.0.0.1:${toString cfg.port}/v1";
     };

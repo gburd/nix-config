@@ -36,7 +36,7 @@ in
 
   # Claude Max/Pro subscription (claude-max-opus-4-8 model row in LiteLLM),
   # alongside the existing Bedrock rows. Bedrock stays the default for every
-  # agent (claude/pi/maki/codex/hermes' defaultModel = claude-opus-4-8);
+  # agent (claude/pi/maki' defaultModel = claude-opus-4-8);
   # this is opt-in per-request by naming the model explicitly. Token from
   # `claude setup-token`, sops-deployed (see sops.secrets below).
   programs.ai.litellm.anthropicAuthTokenFile =
