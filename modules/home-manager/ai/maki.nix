@@ -38,6 +38,7 @@ let
         # legacy ones) are intentionally absent.
         cat <<'JSON'
     [
+      {"id":"gpt-6-astra",   "tier":"strong", "context_window":256000, "max_output_tokens":32000},
       {"id":"claude-opus-5",   "tier":"strong", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-opus-4-8",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-fable-5-1","tier":"strong", "context_window":200000, "max_output_tokens":32000},
@@ -157,7 +158,7 @@ in
       # Maki dynamic-provider models are namespaced as `<slug>/<model>`,
       # where <slug> is the provider script's filename
       # (~/.maki/providers/litellm here).
-      default = "litellm/claude-opus-5";
+      default = "litellm/gpt-6-astra";
       description = "Default model for maki (<dynamic-provider-slug>/<model>).";
     };
 

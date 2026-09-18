@@ -47,12 +47,12 @@ let
     # Fable 5 previously 400'd ("data retention mode 'default' is not
     # available") until the account's data-retention/AI-opt-out posture was
     # set; verified working 2026-07-02.
-    { name = "claude-sonnet-5"; bedrock = "us.anthropic.claude-sonnet-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-sonnet-5" ]; }
-    { name = "claude-fable-5"; bedrock = "us.anthropic.claude-fable-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-fable-5" ]; }
+    { name = "claude-sonnet-5"; bedrock = "us.anthropic.claude-sonnet-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-fable-5"; bedrock = "us.anthropic.claude-fable-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
     # Opus 5 + Fable 5.1 landed on Bedrock since the note above was written --
     # both verified reachable (HTTP 200 via the us. inference profile,
     # 2026-08). Opus 5 is the new flagship.
-    { name = "claude-opus-5"; bedrock = "us.anthropic.claude-opus-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-opus-5" ]; }
+    { name = "claude-opus-5"; bedrock = "us.anthropic.claude-opus-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
     { name = "claude-fable-5-1"; bedrock = "us.anthropic.claude-fable-5-1"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
 
     # Adaptive-thinking models (Opus 4.6+, Sonnet 4.6, Haiku 4.5+)
@@ -62,7 +62,7 @@ let
     #             agents get the model's full generation budget rather
     #             than a flat 32000. budget_tokens (legacy thinking) still
     #             fits because it's carved out of maxOutput, not on top.
-    { name = "claude-opus-4-8"; bedrock = "us.anthropic.claude-opus-4-8"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; aliases = [ "us.anthropic.claude-opus-4-8" ]; }
+    { name = "claude-opus-4-8"; bedrock = "us.anthropic.claude-opus-4-8"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
     # Sunset opus-4-6/4-7: transient intermediate rungs, fully superseded by
     # 4-8 (last 4.x, kept) and the new opus-5 default. 4-1/4-5 stay as the
     # cheaper legacy-thinking fallbacks (different thinking mode + smaller
@@ -72,8 +72,8 @@ let
     # Legacy-thinking models (Opus 4.5/4.1, Sonnet 4.5, Haiku 4.5)
     { name = "claude-opus-4-5"; bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
     { name = "claude-opus-4-1"; bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 32000; }
-    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; aliases = [ "us.anthropic.claude-sonnet-4-5-20250929-v1:0" ]; }
-    { name = "claude-haiku-4-5"; bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; aliases = [ "claude-haiku-4-5-20251001" "claude-haiku-4-5-20251001-v1" "us.anthropic.claude-haiku-4-5-20251001-v1:0" ]; }
+    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-haiku-4-5"; bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
 
     # DeepSeek
     { name = "deepseek-r1"; bedrock = "us.deepseek.r1-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
@@ -120,9 +120,9 @@ let
     { name = "grok-4-6"; bedrock = "us.xai.grok-4.6"; converse = false; maxInput = 256000; maxOutput = 32000; }
 
     # Moonshot Kimi (strong agentic/coding MoE). k3 = newest flagship
-    # (verified reachable 2026-09, HTTP 200 invoke); k2.5 + k2-thinking kept.
+    # (verified reachable 2026-09, HTTP 200 invoke). (Dropped k2.5:
+    # superseded by k3; k2-thinking kept as the reasoning variant.)
     { name = "kimi-k3"; bedrock = "us.moonshotai.kimi-k3"; converse = false; maxInput = 256000; maxOutput = 32000; }
-    { name = "kimi-k2-5"; bedrock = "moonshotai.kimi-k2.5"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "kimi-k2-thinking"; bedrock = "moonshot.kimi-k2-thinking"; converse = false; maxInput = 256000; maxOutput = 32000; }
 
     # Zhipu GLM (flagship GLM-5; strong coding/agentic). (Dropped glm-4-7 +
@@ -197,20 +197,15 @@ let
           budget = m.thinkingBudget or 16000;
         };
       in
-      # Key the policy under the primary name AND every legacy alias, so
-        # the normalizer hook applies identically whether a client sends
-        # "claude-opus-4-8" or the legacy "us.anthropic.claude-opus-4-8".
-      [{ inherit (m) name; value = pol; }]
-      ++ map (alias: { name = alias; value = pol; }) (m.aliases or [ ]))
+      [{ inherit (m) name; value = pol; }])
     usableModels);
 
   # The actual config for LiteLLM's proxy. Built as an attrset and emitted
   # as JSON, which is valid YAML — bypasses the indent hazards of
   # multi-line indented-string Nix interpolation entirely.
 
-  # Build one model_list row for a given public name. Factored out so we
-  # can emit both the primary alias (m.name) and any legacy aliases
-  # (m.aliases) with identical params — see legacyAliases below.
+  # Build one model_list row for a given public name. rowName is normally
+  # m.name (kept as a parameter so the row builder stays reusable).
   mkModelRow = m: rowName:
     let
       isAnthropicDirect = (m.provider or "bedrock") == "anthropic";
@@ -254,7 +249,7 @@ let
 
       # model_info overrides LiteLLM's built-in price/context DB so the
       # /model/info and /v1/models endpoints advertise the *true*
-      # Bedrock context window + output ceiling for each alias. Clients
+      # Bedrock context window + output ceiling for each model. Clients
       # that size their context budget from the proxy (Pi reads this)
       # then won't trigger premature context-overflow recovery on the
       # 1M-token Opus/Sonnet 4.6+ models.
@@ -267,18 +262,7 @@ let
 
   configJson = builtins.toJSON {
     model_list =
-      (map (m: mkModelRow m m.name) usableModels)
-      # Legacy-id alias rows: extra model_list entries whose model_name is
-      # the OLD built-in amazon-bedrock model id (e.g.
-      # "us.anthropic.claude-opus-4-8") so that resuming a pre-migration
-      # Pi session — which persisted the bedrock id — restores cleanly via
-      # the amazon-bedrock provider override (see pi-extensions/litellm.ts)
-      # instead of warning "Could not restore model amazon-bedrock/…".
-      # They reuse the matching model's params, so the thinking-normalizer
-      # hook (keyed on model_name) also covers them via legacyPolicy below.
-      ++ lib.concatMap
-        (m: map (alias: mkModelRow m alias) (m.aliases or [ ]))
-        usableModels;
+      map (m: mkModelRow m m.name) usableModels;
 
     litellm_settings = {
       drop_params = true;
