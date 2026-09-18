@@ -3,7 +3,6 @@
 {
   imports = [
     ../desktop/ente.nix
-    ../desktop/logseq.nix
     ../hardware/systemd-boot.nix
     ../hardware/disable-nm-wait.nix
     ../services/avahi.nix
