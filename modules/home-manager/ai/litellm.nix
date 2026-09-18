@@ -111,11 +111,17 @@ let
     { name = "gpt-5-6-terra"; bedrock = "us.openai.gpt-5.6-terra"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "gpt-5-6-sol"; bedrock = "us.openai.gpt-5.6-sol"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "gpt-5-6-luna"; bedrock = "us.openai.gpt-5.6-luna"; converse = false; maxInput = 256000; maxOutput = 32000; }
+    # GPT-6 Astra -- OpenAI's new flagship, landed on Bedrock since the 5.6
+    # rows. Verified reachable 2026-09 (HTTP 200 converse + invoke, us-east-1
+    # and us-west-2, real completion). Same us. inference-profile pattern.
+    { name = "gpt-6-astra"; bedrock = "us.openai.gpt-6-astra"; converse = false; maxInput = 256000; maxOutput = 32000; }
 
     # xAI Grok (via the us. inference profile).
     { name = "grok-4-6"; bedrock = "us.xai.grok-4.6"; converse = false; maxInput = 256000; maxOutput = 32000; }
 
-    # Moonshot Kimi (strong agentic/coding MoE).
+    # Moonshot Kimi (strong agentic/coding MoE). k3 = newest flagship
+    # (verified reachable 2026-09, HTTP 200 invoke); k2.5 + k2-thinking kept.
+    { name = "kimi-k3"; bedrock = "us.moonshotai.kimi-k3"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "kimi-k2-5"; bedrock = "moonshotai.kimi-k2.5"; converse = false; maxInput = 256000; maxOutput = 32000; }
     { name = "kimi-k2-thinking"; bedrock = "moonshot.kimi-k2-thinking"; converse = false; maxInput = 256000; maxOutput = 32000; }
 
