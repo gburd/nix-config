@@ -6,7 +6,6 @@
     ../../desktop/firefox.nix
     #../../desktop/evolution.nix
     ../../desktop/google-chrome.nix
-    ../../desktop/lutris.nix
     ../../desktop/obs-studio.nix
     ../../desktop/spotify.nix
     ../../desktop/tilix.nix

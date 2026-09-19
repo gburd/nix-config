@@ -4,7 +4,6 @@
     ../../desktop/firefox.nix
     ../../desktop/google-chrome.nix
     ../../desktop/jetbrains-toolbox.nix
-    ../../desktop/lutris.nix
     ../../desktop/discord.nix
     ../../desktop/spotify.nix
     ../../desktop/tilix.nix
