@@ -74,6 +74,32 @@ systemctl --user daemon-reexec   # re-execs the user manager, clears the wedged 
 
 ---
 
+## 4. `warning: unknown setting 'eval-cores' / 'lazy-trees'` on switch
+
+During `home-manager switch` arnold prints (repeatedly):
+```
+warning: unknown setting 'eval-cores'
+warning: unknown setting 'lazy-trees'
+```
+These are **NOT from nix-config** — arnold runs **Determinate Nix** (3.11.1 /
+nix 2.31.1), whose installer writes `eval-cores` + `lazy-trees` into
+`/etc/nix/nix.conf` (a file headed "do not modify! this file will be
+replaced!"). A nix invocation during the switch that doesn't recognize those
+(newer) settings warns and ignores them. **Cosmetic** — plain `nix eval`
+doesn't even emit them, and switches work fine.
+
+Real fix (host-level, needs sudo): upgrade Determinate Nix so it fully
+recognizes them:
+```
+sudo determinate-nixd upgrade    # or: sudo -i nix upgrade-nix
+```
+Do NOT try to "fix" this in nix-config — the settings live in Determinate's
+own /etc/nix/nix.conf, not our flake. User-level overrides go in
+`/etc/nix/nix.custom.conf` (the only user-editable Determinate config), but
+that won't silence a warning for a setting `/etc/nix/nix.conf` already sets.
+
+---
+
 ## Fedora-side operational notes (not Nix-managed)
 
 - **No passwordless sudo** — `sudo dnf upgrade`, system flatpak ops, and any

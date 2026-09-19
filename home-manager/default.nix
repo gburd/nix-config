@@ -31,6 +31,12 @@ in
   ++ lib.optional (builtins.isString desktop && !isSolaris) ./_mixins/desktop
   ++ lib.optional (builtins.isPath (./. + "/_mixins/users/${username}")) ./_mixins/users/${username};
 
+  # Silence the "N unread and relevant news items" nag on every switch. HM
+  # news is upstream-module changelog noise (rarely actionable, and it had
+  # backlogged to 382 unread on arnold). 'silent' still records news so
+  # `home-manager news` works on demand; it just stops printing the prompt.
+  news.display = "silent";
+
   home = {
     # activation.report-changes = if isDarwin then "" else config.lib.dag.entryAnywhere ''
     #   ${pkgs.nvd}/bin/nvd diff $oldGenPath $newGenPath
