@@ -707,7 +707,7 @@ in
           echo '{}' > "$KIRO_CLI"
         fi
         ${pkgs.jq}/bin/jq '
-          ."chat.defaultModel" = "gpt-6-astra"
+          ."chat.defaultModel" = "claude-opus-5"
           | ."telemetry.enabled" = false
         ' "$KIRO_CLI" > "$KIRO_CLI.tmp" \
           && mv "$KIRO_CLI.tmp" "$KIRO_CLI"

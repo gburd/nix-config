@@ -198,25 +198,33 @@ in
     };
   };
 
-  # Activation script to link CLion license to all version directories
+  # Activation script to link the CLion license into the LATEST config dir of
+  # each CLion family (classic CLion + CLionNova). JetBrains keeps a per-version
+  # ~/.config/JetBrains/CLion<ver> dir forever; linking into all 8 stale ones
+  # is pointless -- only the newest of each product is actually launched.
   home.activation.linkClionLicense = lib.mkIf (config.sops.secrets ? "jetbrains/clion-key") (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       CLION_LICENSE="${config.sops.secrets."jetbrains/clion-key".path}"
 
       if [ -f "$CLION_LICENSE" ]; then
-        # Find all CLion version directories and create symlinks
-        for clion_dir in ${config.home.homeDirectory}/.config/JetBrains/CLion*; do
-          if [ -d "$clion_dir" ]; then
-            TARGET="$clion_dir/clion.key"
-            # Remove existing file/symlink if it exists
-            if [ -e "$TARGET" ] || [ -L "$TARGET" ]; then
-              rm -f "$TARGET"
-            fi
-            # Create symlink
-            ln -sf "$CLION_LICENSE" "$TARGET"
-            echo "Linked CLion license to $TARGET"
-          fi
+        # Link into the newest dir of EACH CLion family: classic "CLion<ver>"
+        # and "CLionNova<ver>" are separate products, and a naive sort would
+        # rank CLionNova2024.1 above CLion2024.3 (Nova sorts later
+        # alphabetically despite the lower version). Take the highest version
+        # within each family via `sort -V` on the version suffix.
+        linked=0
+        for prefix in CLion CLionNova; do
+          LATEST=$(ls -d ${config.home.homeDirectory}/.config/JetBrains/"$prefix"[0-9]* 2>/dev/null \
+            | sed "s#.*/$prefix##" | sort -V | tail -n1)
+          [ -z "$LATEST" ] && continue
+          DIR="${config.home.homeDirectory}/.config/JetBrains/$prefix$LATEST"
+          TARGET="$DIR/clion.key"
+          if [ -e "$TARGET" ] || [ -L "$TARGET" ]; then rm -f "$TARGET"; fi
+          ln -sf "$CLION_LICENSE" "$TARGET"
+          echo "Linked CLion license to $TARGET"
+          linked=1
         done
+        [ "$linked" = 1 ] || echo "No CLion config dir found under ~/.config/JetBrains; skipped"
       else
         echo "Warning: CLion license not found at $CLION_LICENSE"
       fi

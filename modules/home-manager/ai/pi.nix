@@ -63,10 +63,14 @@ in
     defaultModel = mkOption {
       type = types.str;
       # LiteLLM alias (see modules/home-manager/ai/litellm.nix). Resolves
-      # to bedrock/us.openai.gpt-6-astra on the proxy side. Pi's
-      # defaultModel is provider-scoped (no `provider:` prefix), so just
-      # "gpt-6-astra".
-      default = "gpt-6-astra";
+      # to bedrock/converse/us.anthropic.claude-opus-5 on the proxy side with
+      # output_config.effort=xhigh. Pi's defaultModel is provider-scoped (no
+      # `provider:` prefix), so just "claude-opus-5".
+      #
+      # NOT gpt-6-astra: its ~256K window (vs opus-5's 1M) overflowed on long
+      # sessions and wedged pi's auto-compaction (max_tokens=1 -> 400, then
+      # "summary is incomplete"). astra stays callable by name.
+      default = "claude-opus-5";
       description = "Default model id for Pi (resolved within defaultProvider).";
     };
 

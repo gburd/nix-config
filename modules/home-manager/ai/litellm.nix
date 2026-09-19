@@ -530,9 +530,14 @@ let
         # context-overflow summarizer can send max_tokens=1 (it shrinks the
         # response budget aggressively when the input already fills the
         # window), which 400s: "Invalid 'max_output_tokens': integer below
-        # minimum value. Expected a value >= 16, but got 1". Floor it. 16 is
-        # the observed minimum; harmless for Claude (accepts small values).
-        _MIN_MAX_TOKENS = 16
+        # minimum value. Expected a value >= 16, but got 1". Floor it.
+        #
+        # 512 rather than the bare 16 minimum: 16 tokens satisfies the API but
+        # can't write a usable summary, so compaction still failed with
+        # "generation hit the token cap and the summary is incomplete". 512 is
+        # small enough to fit alongside a nearly-full context, big enough for a
+        # terse summary. Harmless for Claude (accepts small values).
+        _MIN_MAX_TOKENS = 512
 
         async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type):
             try:
