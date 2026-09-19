@@ -442,15 +442,48 @@ let
 
     POLICY = json.loads(r"""${builtins.toJSON thinkingPolicy}""")
 
+    def _strip_reasoning_from_messages(data):
+        # Non-reasoning models (e.g. the OpenAI gpt-* on Bedrock) 400 with
+        #   "This model doesn't support the reasoningContent.reasoningText.text
+        #    field for assistant messages."
+        # when a multi-turn history carries a prior assistant turn's thinking/
+        # reasoning block. Clients that spoke to a reasoning model (maki formats
+        # everything as Anthropic Messages, incl. thinking blocks in assistant
+        # history) then replay it verbatim. Strip reasoning-shaped content from
+        # assistant messages so the model never sees it. Covers both the
+        # Anthropic content-block shape ({"type":"thinking"/"redacted_thinking"})
+        # and the Bedrock/Converse reasoningContent shape.
+        msgs = data.get("messages")
+        if not isinstance(msgs, list):
+            return
+        for m in msgs:
+            if not isinstance(m, dict) or m.get("role") != "assistant":
+                continue
+            m.pop("reasoning_content", None)
+            m.pop("reasoningContent", None)
+            c = m.get("content")
+            if isinstance(c, list):
+                m["content"] = [
+                    b for b in c
+                    if not (isinstance(b, dict) and b.get("type") in (
+                        "thinking", "redacted_thinking", "reasoning_content", "reasoningContent"))
+                ]
+
     def _apply(model_name, data):
         pol = POLICY.get(model_name)
         if pol is None:
-            return  # unknown model (e.g. nova/llama) -> leave untouched
+            # unknown model (e.g. nova/llama) -> leave thinking untouched, but
+            # still strip stale reasoning history (harmless for models that
+            # accept it, required for the OpenAI gpt-* invoke models).
+            _strip_reasoning_from_messages(data)
+            return
         mode = pol.get("mode", "none")
         if mode == "none":
-            # Model takes no thinking at all: strip both keys.
+            # Model takes no thinking at all: strip both keys AND any reasoning
+            # blocks carried in assistant history (see above).
             data.pop("thinking", None)
             data.pop("output_config", None)
+            _strip_reasoning_from_messages(data)
             return
         if mode in ("adaptive", "adaptive+effort"):
             data["thinking"] = {"type": "adaptive"}
@@ -492,10 +525,23 @@ let
         # unconditionally so any such client works without Bedrock 400s.
         _STRIP_FIELDS = ("client_metadata",)
 
+        # OpenAI models on Bedrock (gpt-*-astra/terra/...) reject a
+        # max_output_tokens below their minimum (>= 16). Pi's auto-compaction /
+        # context-overflow summarizer can send max_tokens=1 (it shrinks the
+        # response budget aggressively when the input already fills the
+        # window), which 400s: "Invalid 'max_output_tokens': integer below
+        # minimum value. Expected a value >= 16, but got 1". Floor it. 16 is
+        # the observed minimum; harmless for Claude (accepts small values).
+        _MIN_MAX_TOKENS = 16
+
         async def async_pre_call_hook(self, user_api_key_dict, cache, data, call_type):
             try:
                 for f in self._STRIP_FIELDS:
                     data.pop(f, None)
+                for k in ("max_tokens", "max_completion_tokens", "max_output_tokens"):
+                    v = data.get(k)
+                    if isinstance(v, int) and 0 < v < self._MIN_MAX_TOKENS:
+                        data[k] = self._MIN_MAX_TOKENS
                 model = data.get("model")
                 if isinstance(model, str):
                     _apply(model, data)

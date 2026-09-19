@@ -60,7 +60,11 @@ export default function (pi: ExtensionAPI) {
 
   function buildProgressBar(pct: number): string {
     const width = 10;
-    const filled = Math.floor((pct / 100) * width);
+    // pct can exceed 100 (or go negative) when the context is over budget --
+    // e.g. during over-window auto-compaction. Clamp so filled/empty never go
+    // out of [0,width]; String.repeat throws on a negative count.
+    const clamped = Math.max(0, Math.min(100, pct));
+    const filled = Math.max(0, Math.min(width, Math.floor((clamped / 100) * width)));
     const empty = width - filled;
     return "█".repeat(filled) + "░".repeat(empty);
   }
