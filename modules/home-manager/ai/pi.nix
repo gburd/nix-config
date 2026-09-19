@@ -137,5 +137,21 @@ in
       ".pi/agent/extensions/project-context.ts".source = ./pi-extensions/project-context.ts;
       ".pi/agent/extensions/safety-hooks.ts".source = ./pi-extensions/safety-hooks.ts;
     };
+
+    # Refresh pi's npm-installed extension deps on every switch. Our OWN
+    # extensions (the .ts above) are Nix-managed and unaffected; `pi update
+    # --extensions` updates the user npm packages pi runs from ~/.npm-global.
+    # Guarded: it needs network and is non-essential, so any failure (offline
+    # switch, npm hiccup) must NOT abort activation (which runs under
+    # `set -eu`). --no-approve so it never blocks on a trust prompt during a
+    # non-interactive switch. Runs after linkGeneration so the `pi` wrapper
+    # from home.packages is on PATH.
+    home.activation.piUpdateExtensions =
+      lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+        if command -v pi >/dev/null 2>&1; then
+          run pi update --extensions --no-approve > /dev/null 2>&1 \
+            || echo "pi update --extensions failed (offline/npm?); skipped" >&2
+        fi
+      '';
   };
 }
