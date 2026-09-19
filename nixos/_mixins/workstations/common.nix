@@ -41,15 +41,16 @@
   # NextDNS with DNS-over-TLS
   services.resolved = {
     enable = true;
-    dnsovertls = "true";
-    fallbackDns = [
-      "1.1.1.1"
-      "8.8.8.8"
-    ];
     # 26.05: services.resolved.extraConfig was removed in favor of the
-    # structured .settings (INI section -> key/value). This is the
-    # [Resolve] section of resolved.conf.
+    # structured .settings (INI section -> key/value). dnsovertls/fallbackDns
+    # were also renamed into settings.Resolve.DNSOverTLS/FallbackDNS. This is
+    # the [Resolve] section of resolved.conf.
     settings.Resolve = {
+      DNSOverTLS = "true";
+      FallbackDNS = [
+        "1.1.1.1"
+        "8.8.8.8"
+      ];
       DNS = [
         "45.90.28.0#362f8c.dns.nextdns.io"
         "2a07:a8c0::#362f8c.dns.nextdns.io"

@@ -26,8 +26,9 @@
     # Man pages configuration
     man = {
       enable = true;
-      # Generate whatis database for 'man -k' searches
-      generateCaches = true;
+      # Generate whatis database for 'man -k' searches (26.05: generateCaches
+      # renamed to cache.enable)
+      cache.enable = true;
     };
   };
 
