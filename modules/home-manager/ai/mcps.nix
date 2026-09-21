@@ -160,6 +160,23 @@ let
       args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
     };
   })
+    // (optionalAttrs cfg.servers.zvec-grep.enable {
+    # zg speaks MCP over stdio here rather than its default Streamable-HTTP
+    # daemon (http://127.0.0.1:7999/mcp): stdio needs no `zg --server on`
+    # lifecycle and matches every other server declared in this module.
+    zvec-grep = {
+      command = "npx";
+      args = [
+        "-y"
+        cfg.servers.zvec-grep.package
+        "--server"
+        "--mcp-transport"
+        "stdio"
+        "--mcp-toolset"
+        cfg.servers.zvec-grep.toolset
+      ];
+    };
+  })
     // cfg.extraServers;
 
   # Claude Code user-scoped format (stored in ~/.claude.json under mcpServers)
@@ -223,6 +240,22 @@ let
       type = "stdio";
       command = "npx";
       args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
+      env = { };
+    };
+  })
+    // (optionalAttrs cfg.servers.zvec-grep.enable {
+    zvec-grep = {
+      type = "stdio";
+      command = "npx";
+      args = [
+        "-y"
+        cfg.servers.zvec-grep.package
+        "--server"
+        "--mcp-transport"
+        "stdio"
+        "--mcp-toolset"
+        cfg.servers.zvec-grep.toolset
+      ];
       env = { };
     };
   })
@@ -303,8 +336,16 @@ let
   # permissions.allow) lives in ./bash-allowlist.nix.
   kiroAllowedBashCommands = bashAllowlist.kiroRegex;
 
+  # `zg` CLI wrapper so the same tool agents use over MCP is available in the
+  # terminal (needed at least once per workspace: `zg --index <dir>`). npx-based
+  # like the other fast-moving npm CLIs in this config.
+  zgCli = pkgs.writeShellScriptBin "zg" ''
+    exec ${pkgs.nodejs}/bin/npx -y ${cfg.servers.zvec-grep.package} "$@"
+  '';
+
   packages = lib.optional cfg.servers.memelord.enable cfg.servers.memelord.pkg
-    ++ lib.optional cfg.targets.claude pkgs.jq;
+    ++ lib.optional cfg.targets.claude pkgs.jq
+    ++ lib.optional cfg.servers.zvec-grep.enable zgCli;
 in
 {
   options.programs.ai.mcps = {
@@ -462,6 +503,34 @@ in
 
       sequential-thinking = {
         enable = mkEnableOption "Sequential thinking (structured multi-step reasoning)";
+      };
+
+      zvec-grep = {
+        enable = mkEnableOption "zvec-grep (zg) local-first hybrid search over the workspace";
+        root = mkOption {
+          type = types.str;
+          default = config.home.homeDirectory;
+          description = ''
+            Workspace root the zg MCP server may search. zg's workspace tools
+            take an absolute `root` the daemon can see; index a directory with
+            `zg --index <dir>` before search tools return results.
+          '';
+        };
+        toolset = mkOption {
+          type = types.enum [ "agent" "full" ];
+          default = "agent";
+          description = ''
+            zg MCP toolset. "agent" (default, recommended) exposes search only.
+            "full" adds the compatibility/administrative tools including
+            zvec_grep_rg -- unnecessary here since agents already have ripgrep
+            and a bash tool.
+          '';
+        };
+        package = mkOption {
+          type = types.str;
+          default = "@zvec/zvec-grep@latest";
+          description = "npm spec for zg, launched via npx (fast-moving upstream).";
+        };
       };
     };
   };

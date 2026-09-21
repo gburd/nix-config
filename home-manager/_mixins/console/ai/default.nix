@@ -134,6 +134,13 @@
 
         # Structured multi-step reasoning for complex decisions
         sequential-thinking.enable = true;
+
+        # zvec-grep (zg): local-first hybrid search (ripgrep + BM25 + vector)
+        # over the workspace, exposed to every agent over MCP. Index a tree
+        # once with `zg --index <dir>` before search tools return results.
+        # CORE (not per-project): useful everywhere, search-only `agent`
+        # toolset keeps the schema small.
+        zvec-grep.enable = true;
       };
     };
   };
