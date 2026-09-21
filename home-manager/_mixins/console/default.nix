@@ -130,7 +130,14 @@
 
       # Data format tools
       dasel # Query/modify JSON/YAML/TOML/XML/CSV
-      fx # Interactive JSON viewer
+      # fx (antonmedv) is an interactive JSON viewer whose binary is also named
+      # `fx` -- which now collides with the fx coding agent (pkgs/fx-agent,
+      # wired by modules/home-manager/ai/fx.nix). The agent wins the bare name
+      # since it's invoked interactively; expose the JSON viewer as `fx-json`.
+      (pkgs.runCommand "fx-json" { } ''
+        mkdir -p "$out/bin"
+        ln -s ${pkgs.fx}/bin/fx "$out/bin/fx-json"
+      '')
       htmlq # HTML query (like jq for HTML)
       miller # CSV/TSV/JSON/NIDX swiss army knife
       qsv # Fast CSV processor

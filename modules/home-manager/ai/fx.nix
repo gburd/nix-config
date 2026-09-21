@@ -81,7 +81,12 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages = [
-      cfg.package
+      # ONLY the launcher -- deliberately NOT cfg.package as well. The wrapper
+      # execs ${cfg.package}/bin/fx by absolute store path, so the package stays
+      # in the closure through that reference; adding it to home.packages too
+      # puts two different bin/fx into the profile and buildEnv fails with
+      # "two given paths contain a conflicting subpath".
+      #
       # Launcher: export the proxy's per-agent virtual key into the env var the
       # settings.json connection names, and strip stray provider creds so fx
       # can't silently fall back to Vercel AI Gateway / a subscription login.
