@@ -17,10 +17,41 @@ let
   # whatever URL we give it (the Anthropic provider's hardcoded
   # `MESSAGES_URL` is overridden by `auth.base_url`).
   #
+  # The model registry maki's `models` subcommand reports. Kept as a
+  # standalone binding so it can be hashed into the script (cache-bust marker
+  # below) and edited in one place. NOTE: each line is indented to match the
+  # provider script's body indentation -- interpolating a zero-indent line into
+  # that '' string would reset Nix's common-indent stripping to 0, leaving the
+  # heredoc `JSON` terminators indented (they must sit at column 0) and
+  # breaking the script with "here-document delimited by end-of-file".
+  makiModelRegistry = ''
+    [
+      {"id":"claude-opus-5",   "tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"gpt-6-astra",   "tier":"strong", "context_window":256000, "max_output_tokens":32000},
+      {"id":"claude-opus-4-8",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-fable-5-1","tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-fable-5",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-opus-4-5",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-opus-4-1",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-sonnet-5",  "tier":"medium", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-sonnet-4-6","tier":"medium", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-sonnet-4-5","tier":"medium", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-haiku-4-5", "tier":"weak",   "context_window":200000, "max_output_tokens":32000}
+    ]'';
+
   # Subcommand contract is documented at
   # https://github.com/maki-ai/maki/blob/main/site/docs/content/providers/_index.md#dynamic-providers
   litellmProviderScript = pkgs.writeShellScript "maki-litellm-provider" ''
     set -eu
+    # Cache-bust marker: maki caches this script's `info`/`models` output in
+    # ~/.maki/provider-scripts.json keyed on the script's (mtime, size). Nix
+    # store files all carry a CONSTANT mtime (epoch 1), so mtime never changes
+    # between generations -- leaving size as the only discriminator. An edit
+    # that preserves byte-size (e.g. reordering two same-length model lines)
+    # was therefore invisible to maki, which kept serving a stale model list.
+    # Embedding a hash of the model list guarantees the size/content changes
+    # whenever the list does, so the cache always invalidates.
+    # model-list-hash: ${builtins.hashString "sha256" makiModelRegistry}
     case "''${1:-}" in
       info)
         # has_auth=true so maki invokes `resolve` to discover base_url +
@@ -35,21 +66,9 @@ let
         # (modules/home-manager/ai/litellm.nix). Tier mapping is just
         # cost-bracket; the first model per tier is what /new picks.
         # Models the proxy doesn't actually expose (e.g. the dropped
-        # legacy ones) are intentionally absent.
+        # legacy ones) are intentionally absent. Source: makiModelRegistry.
         cat <<'JSON'
-    [
-      {"id":"claude-opus-5",   "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"gpt-6-astra",   "tier":"strong", "context_window":256000, "max_output_tokens":32000},
-      {"id":"claude-opus-4-8",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-fable-5-1","tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-fable-5",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-opus-4-5",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-opus-4-1",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-sonnet-5",  "tier":"medium", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-sonnet-4-6","tier":"medium", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-sonnet-4-5","tier":"medium", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-haiku-4-5", "tier":"weak",   "context_window":200000, "max_output_tokens":32000}
-    ]
+    ${lib.replaceStrings [ "\n" ] [ "\n    " ] makiModelRegistry}
     JSON
         ;;
       resolve)
