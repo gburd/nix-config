@@ -206,10 +206,10 @@ let
         ".pi/agent/extensions/ponytail".source = ponytailSrc + "/pi-extension";
       }
     ))
-    # maki always gets ponytail when enabled (no per-target toggle,
+    # maki + fx always get ponytail when enabled (no per-target toggle,
     # mirroring how the skills.git maki branch deploys).
     (lib.mkIf (cfg.ponytail.enable && ponytailSrc != null)
-      (ponytailFilesFor ".maki/skills"))
+      ((ponytailFilesFor ".maki/skills") // (ponytailFilesFor ".fx/skills")))
   ];
 
   ###
@@ -277,9 +277,9 @@ let
       (superpowersFilesFor ".claude/skills"))
     (lib.mkIf (cfg.superpowers.enable && superpowersSrc != null && cfg.targets.kiro)
       (superpowersFilesFor ".kiro/skills"))
-    # maki always gets the subset when enabled, mirroring ponytail.
+    # maki + fx always get the subset when enabled, mirroring ponytail.
     (lib.mkIf (cfg.superpowers.enable && superpowersSrc != null)
-      (superpowersFilesFor ".maki/skills"))
+      ((superpowersFilesFor ".maki/skills") // (superpowersFilesFor ".fx/skills")))
   ];
 
   ###
@@ -311,6 +311,7 @@ let
       { name = "kiro"; label = "Kiro CLI"; global = "~/.kiro/skills"; project = ".kiro/skills"; enabled = cfg.targets.kiro; }
       # Pi reads ~/.kiro/skills (pi.nix), NOT asm's default ~/.pi/skills.
       { name = "pi"; label = "Pi"; global = "~/.kiro/skills"; project = ".kiro/skills"; enabled = true; }
+      { name = "fx"; label = "fx"; global = "~/.fx/skills"; project = ".fx/skills"; enabled = true; }
       { name = "maki"; label = "Maki"; global = "~/.maki/skills"; project = ".maki/skills"; enabled = true; }
     ];
     customPaths = [ ];

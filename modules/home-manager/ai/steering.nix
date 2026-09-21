@@ -163,6 +163,11 @@ in
         default = true;
         description = "Deploy consolidated instructions to ~/.config/maki/instructions.md";
       };
+      fx = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Deploy consolidated instructions to ~/.fx/AGENTS.md";
+      };
     };
 
     extraFiles = mkOption {
@@ -232,6 +237,11 @@ in
       (lib.mkIf cfg.targets.maki {
         ".config/maki/instructions.md".text = allSteeringContent;
         ".maki/instructions.md".text = allSteeringContent;
+      })
+
+      # fx reads AGENTS.md for instructions (same convention as Codex/Pi).
+      (lib.mkIf cfg.targets.fx {
+        ".fx/AGENTS.md".text = allSteeringContent;
       })
     ];
   };

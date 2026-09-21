@@ -2,6 +2,7 @@
 {
   imports = [
     ./claude.nix
+    ./fx.nix
     ./litellm.nix
     ./lmstudio.nix
     ./maki.nix

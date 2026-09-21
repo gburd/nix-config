@@ -6,6 +6,10 @@
   ente-photos-desktop = pkgs.callPackage ./ente.nix { };
   charm-freeze = pkgs.callPackage ./charm-freeze.nix { };
   colibri = pkgs.callPackage ./colibri { };
+
+  # fx (vercel-labs/fx) -- named fx-agent because nixpkgs' `fx` is antonmedv's
+  # JSON viewer, which we also want on PATH.
+  fx-agent = pkgs.callPackage ./fx-agent { };
   kiro-cli = pkgs.callPackage ./kiro-cli { };
   # kiro-ide = pkgs.callPackage ./kiro-ide { };  # disabled: download URL broken (fakeSha256); re-enable when Amazon restores it
   # maki 0.3.26+ (monty/ruff) needs rustc >= 1.95; stable nixpkgs is on

@@ -351,6 +351,19 @@ in
   options.programs.ai.mcps = {
     enable = mkEnableOption "MCP server module";
 
+    # Internal: the resolved CORE server set, published so sibling agent
+    # modules that keep MCP config in their OWN file (fx -- see ai/fx.nix) can
+    # consume exactly the same servers the other agents get, instead of this
+    # module emitting a second config format for them. Not readOnly: this
+    # module assigns it in config, and readOnly forbids any second definition
+    # (the default counts as one).
+    coreServers = mkOption {
+      type = types.attrs;
+      internal = true;
+      default = { };
+      description = "Resolved CORE MCP server set (set by this module; read by ai/fx.nix).";
+    };
+
     extraServers = mkOption {
       type = types.attrs;
       default = { };
@@ -378,6 +391,16 @@ in
         type = types.bool;
         default = true;
         description = "Enables the ~/.kiro/settings/mcp.json output config file for Kiro CLI";
+      };
+      fx = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Feed the CORE server set to fx. fx keeps MCP servers inside its own
+          ~/.fx/settings.json (written by ai/fx.nix), so rather than emit a
+          second config file here we publish the set via
+          programs.ai.mcps.coreServers and fx.nix consumes it.
+        '';
       };
       maki = mkOption {
         type = types.bool;
@@ -536,6 +559,9 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Publish the resolved CORE set for sibling modules (ai/fx.nix).
+    programs.ai.mcps.coreServers = coreMcpServers;
+
     # project-mcp helper for adding heavy MCP servers per project (used from
     # .envrc); core servers are loaded globally, heavy ones opt-in.
     home.packages = packages ++ [ projectMcpHelper ];

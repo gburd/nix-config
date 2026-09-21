@@ -14,6 +14,7 @@
         claude = true;
         pi = true;
         maki = true;
+        fx = true;
       };
     };
 
@@ -33,6 +34,10 @@
     claude.enable = true;
     maki.enable = true;
     pi.enable = true;
+    # fx (vercel-labs/fx): experimental v0.0.x native agent. Same LiteLLM
+    # routing / steering / MCP / skills as the others; see ai/fx.nix for the
+    # preview-feature caveat.
+    fx.enable = true;
 
     # LiteLLM Bedrock proxy (per-host, loopback only). Holds the
     # bearer token from sops-nix at
