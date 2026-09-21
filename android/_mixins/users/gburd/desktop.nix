@@ -1,6 +1,6 @@
 { desktop, pkgs, lib, ... }: {
   imports = [
-    ../../desktop/chromium.nix
+    ../../desktop/ungoogled-chromium.nix
     ../../desktop/discord.nix
     ../../desktop/element.nix
     ../../desktop/firefox.nix

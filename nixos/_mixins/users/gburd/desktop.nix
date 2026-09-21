@@ -1,6 +1,6 @@
 { desktop, pkgs, lib, ... }: {
   imports = [
-    ../../desktop/chromium.nix
+    ../../desktop/ungoogled-chromium.nix
     ../../desktop/firefox.nix
     ../../desktop/google-chrome.nix
     ../../desktop/jetbrains-toolbox.nix
