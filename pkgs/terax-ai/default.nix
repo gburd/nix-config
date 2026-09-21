@@ -16,6 +16,8 @@
 , rustPlatform
 , nodejs
 , pnpm
+, fetchPnpmDeps
+, pnpmConfigHook
 , jq
 , cargo-tauri
 , pkg-config
@@ -56,8 +58,14 @@ rustPlatform.buildRustPackage {
   };
 
   # pnpm deps — pnpm-lock.yaml is at project ROOT (not in src-tauri/)
-  pnpmDeps = pnpm.fetchDeps {
-    inherit pname version src patches;
+  #
+  # Uses the top-level fetchPnpmDeps / pnpmConfigHook rather than the
+  # deprecated pnpm.fetchDeps / pnpm.configHook shims (which warn on every
+  # eval). Those shims only forwarded to these same attrs while pinning the
+  # pnpm major, so passing `pnpm` explicitly here is behaviour-identical and
+  # keeps the pinned hash valid.
+  pnpmDeps = fetchPnpmDeps {
+    inherit pname version src patches pnpm;
     fetcherVersion = 3;
     hash = "sha256-kj70e/Q+lxPgW8Zc3lx2ph6BgSvFNu4oee6Oj8Oi6AU=";
   };
@@ -66,7 +74,11 @@ rustPlatform.buildRustPackage {
     cargo-tauri.hook
     jq
     nodejs
-    pnpm.configHook
+    # Equivalent of the old pnpm.configHook: the top-level hook plus the
+    # specific pnpm this package pins.
+    (pnpmConfigHook.overrideAttrs (prev: {
+      propagatedBuildInputs = (prev.propagatedBuildInputs or [ ]) ++ [ pnpm ];
+    }))
     pkg-config
     wrapGAppsHook4
     gobject-introspection

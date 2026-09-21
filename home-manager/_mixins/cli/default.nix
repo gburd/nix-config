@@ -34,7 +34,7 @@
     timer # To help with my ADHD paralysis
 
     nil # Nix LSP
-    nixfmt-rfc-style # Nix formatter
+    nixfmt # Nix formatter (was nixfmt-rfc-style; that alias is now deprecated)
     nix-inspect # See which pkgs are in your PATH
 
     ltex-ls # Spell checking LSP
