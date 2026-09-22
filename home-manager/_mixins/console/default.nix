@@ -400,19 +400,15 @@
       enable = true;
       enableCompletion = true;
       initExtra = ''
-        # Detect if we're running in Claude Code by checking parent process
-        if pgrep -P $PPID claude-code >/dev/null 2>&1 || pgrep -a $PPID | grep -q claude-code; then
+        # Claude Code sets CLAUDECODE=1 in the environment it spawns shells in,
+        # so just read it -- the previous version ran TWO pgrep processes on
+        # every interactive bash start to guess this.
+        if [ -n "''${CLAUDECODE:-}" ] || [ -n "''${CLAUDE_CODE:-}" ]; then
           export CLAUDE_CODE=1
-        fi
-
-        # Use minimal prompt in Claude Code sessions (override powerline-go)
-        if [ -n "$CLAUDE_CODE" ]; then
+          # Minimal, parseable prompt for an agent-driven shell: no colour, no
+          # git call, no PROMPT_COMMAND hook.
           PROMPT_COMMAND=""
           PS1='\$ '
-        # In nix develop sessions, add a subtle indicator
-        elif [ -n "$IN_NIX_SHELL" ]; then
-          # Let powerline-go handle the prompt, but prepend [nix]
-          POWERLINE_COMMAND="$POWERLINE_COMMAND --shell-var IN_NIX_SHELL"
         fi
 
         # Disable ctrl-s/ctrl-q flow control
@@ -460,14 +456,14 @@
         locate = "plocate";
       };
     };
-    powerline-go = {
-      enable = true;
-      settings = {
-        cwd-max-depth = 5;
-        cwd-max-dir-size = 12;
-        max-width = 60;
-      };
-    };
+    # powerline-go DISABLED. It forked a subprocess on EVERY prompt (its
+    # _update_ps1 prepends itself to PROMPT_COMMAND), needed patched glyph
+    # fonts, and truncated to 60 cols -- and it fought the bash prompt in
+    # cli/bash.nix for PS1, so which one you got depended on PROMPT_COMMAND
+    # ordering. The hand-rolled prompt there is pure builtins (no fork beyond
+    # one git call) and matches the fish prompt. Re-enable only if you also
+    # remove the PS1 assignment in cli/bash.nix.
+    powerline-go.enable = false;
     zoxide = {
       enable = true;
       enableBashIntegration = true;

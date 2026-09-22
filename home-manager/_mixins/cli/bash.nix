@@ -94,57 +94,66 @@ in
     '' + ''
       export VISUAL="$EDITOR"
 
-      # ---- Prompt: match the fish prompt -------------------------------
-      # fish renders (fish's own default, wrapped by terax.fish):
+      # ---- Prompt --------------------------------------------------------
+      # Renders, matching the fish prompt:
       #   gburd@floki ~/w/nix-config (main)>
-      # i.e. user@host, fish-style abbreviated cwd, git branch in parens, then
-      # ">" ("#" for root). Reproduce that in bash.
+      #   user@host  cwd(abbrev)  git-branch  >   ("#" when root)
+      # and on a failed command the exit code is shown in red:
+      #   gburd@floki ~/w/nix-config (main) [1]>
       #
-      # fish's prompt_pwd abbreviates every INTERMEDIATE component to its first
-      # character (plus a leading dot for hidden dirs) and keeps the last
-      # component whole: ~/ws/nix-config -> ~/w/nix-config. Done with awk so
-      # there's no per-component subshell loop on every prompt.
-      __prompt_pwd() {
-        local p="$PWD"
-        case "$p" in
-          "$HOME") printf '~'; return ;;
-          "$HOME"/*) p="~/''${p#"$HOME"/}" ;;
-        esac
-        printf '%s' "$p" | awk -F/ '{
-          for (i = 1; i <= NF; i++) {
-            if (i < NF && $i != "" && $i != "~") {
-              # keep a leading dot on hidden dirs, then one char
-              if (substr($i, 1, 1) == ".") $i = substr($i, 1, 2); else $i = substr($i, 1, 1)
-            }
-            printf "%s%s", $i, (i < NF ? "/" : "")
-          }
-        }'
-      }
+      # EFFICIENCY. Everything that bash can expand itself is left to bash --
+      # \u \h \$ are builtins, and PROMPT_DIRTRIM gives cwd shortening with
+      # zero processes. The only external work is git's own __git_ps1, and only
+      # inside a repo. No subshell per component, no `git status` (that stats
+      # the whole worktree -- painful in postgres-sized trees), and no
+      # per-prompt fork like the powerline-go setup this replaces.
+      #
+      # __git_ps1 comes from git's contrib and understands worktrees, detached
+      # HEAD, rebase/merge/bisect state. Guarded so a git without it degrades to
+      # a branch-less prompt rather than erroring every prompt.
+      if [ -r ${pkgs.git}/share/bash-completion/completions/git-prompt.sh ]; then
+        . ${pkgs.git}/share/bash-completion/completions/git-prompt.sh
+      fi
 
-      # Git branch as " (name)", matching fish_vcs_prompt's plain form. Quiet
-      # and cheap: one rev-parse, no status/dirty scan (that would stat the
-      # whole worktree on every prompt in big repos like postgres).
-      __prompt_vcs() {
-        local b
-        b=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) \
-          || b=$(git rev-parse --short HEAD 2>/dev/null) \
-          || return 0
-        [ -n "$b" ] && printf ' (%s)' "$b"
-      }
+      # Shorten long paths to the last 3 components (bash-internal, no fork).
+      # Note this differs slightly from fish's prompt_pwd, which abbreviates
+      # intermediate components to one char instead of eliding them; matching
+      # that exactly needed an awk call on every prompt, which isn't worth it.
+      PROMPT_DIRTRIM=3
 
-      __set_prompt() {
-        local suffix='>'
-        [ "$EUID" -eq 0 ] && suffix='#'
-        # \[..\] wrappers keep readline's line-length math correct.
-        # No space before the suffix: fish emits "... (main)> ", not "(main) > ".
-        PS1="\[\e[97m\]\u\[\e[0m\]@\h \[\e[36m\]$(__prompt_pwd)\[\e[0m\]$(__prompt_vcs)$suffix "
+      # Colours via tput when the terminal supports them, empty strings when not
+      # (so the prompt stays readable in dumb terminals and piped contexts).
+      if [ -t 1 ] && [ "''${TERM:-dumb}" != "dumb" ] && command -v tput >/dev/null 2>&1; then
+        __p_user=$(tput bold 2>/dev/null)
+        __p_cwd=$(tput setaf 6 2>/dev/null)
+        __p_git=$(tput setaf 3 2>/dev/null)
+        __p_err=$(tput setaf 1 2>/dev/null)
+        __p_off=$(tput sgr0 2>/dev/null)
+      else
+        __p_user= __p_cwd= __p_git= __p_err= __p_off=
+      fi
+
+      # Exit status, only when non-zero. Set by PROMPT_COMMAND because $? has to
+      # be captured before anything else runs.
+      __prompt_status() {
+        local e=$?
+        if [ "$e" -ne 0 ]; then __p_status=" [$e]"; else __p_status=""; fi
+        return $e
       }
-      # Preserve anything already in PROMPT_COMMAND (other modules append to it).
       case "''${PROMPT_COMMAND:-}" in
-        *__set_prompt*) : ;;
-        "") PROMPT_COMMAND=__set_prompt ;;
-        *) PROMPT_COMMAND="__set_prompt;''${PROMPT_COMMAND}" ;;
+        *__prompt_status*) : ;;
+        "") PROMPT_COMMAND=__prompt_status ;;
+        *) PROMPT_COMMAND="__prompt_status;''${PROMPT_COMMAND}" ;;
       esac
+
+      # __git_ps1 substitutes %s; the \[..\] wrappers keep readline's
+      # line-length arithmetic correct so long lines wrap properly.
+      if type -t __git_ps1 >/dev/null; then
+        GIT_PS1_SHOWCOLORHINTS=
+        PS1='\[$__p_user\]\u\[$__p_off\]@\h \[$__p_cwd\]\w\[$__p_off\]\[$__p_git\]$(__git_ps1 " (%s)")\[$__p_off\]\[$__p_err\]$__p_status\[$__p_off\]\$ '
+      else
+        PS1='\[$__p_user\]\u\[$__p_off\]@\h \[$__p_cwd\]\w\[$__p_off\]\[$__p_err\]$__p_status\[$__p_off\]\$ '
+      fi
     '';
 
     historyControl = [ "erasedups" "ignorespace" ];
