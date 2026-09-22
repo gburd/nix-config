@@ -351,8 +351,43 @@ let
   # `zg` CLI wrapper so the same tool agents use over MCP is available in the
   # terminal (needed at least once per workspace: `zg --index <dir>`). npx-based
   # like the other fast-moving npm CLIs in this config.
+  # `zg` CLI wrapper. Two jobs beyond running the tool:
+  #
+  # 1. MEMORY GUARD. zg's indexer is a Node process that held 8-13 GB RSS on a
+  #    3.8 MB / 318-file repo and was SIGKILLed by the kernel OOM killer three
+  #    times, taking the desktop's free memory with it. Run `index` inside a
+  #    transient systemd scope with MemoryMax so a runaway kills only itself.
+  #    MemorySwapMax=0 keeps it from thrashing swap on the way down.
+  # 2. Apply the default exclude globs + max-filesize to `index` (see options).
+  #    Only `index` is wrapped; search/status/etc. are passed through untouched.
   zgCli = pkgs.writeShellScriptBin "zg" ''
-    exec ${pkgs.nodejs}/bin/npx -y ${cfg.servers.zvec-grep.package} "$@"
+    zg_run() { exec ${pkgs.nodejs}/bin/npx -y ${cfg.servers.zvec-grep.package} "$@"; }
+
+    if [ "''${1:-}" != "index" ]; then
+      zg_run "$@"
+    fi
+    shift # drop "index"
+
+    defaults=( --max-filesize ${cfg.servers.zvec-grep.maxFilesize} )
+    ${lib.concatMapStrings (g: ''defaults+=( -g ${lib.escapeShellArg g} )
+    '') cfg.servers.zvec-grep.excludeGlobs}
+
+    # --reset-paths on the command line means the caller is taking over file
+    # selection; don't fight it with our globs.
+    for a in "$@"; do
+      case "$a" in
+        --reset-paths|--no-ignore) defaults=( --max-filesize ${cfg.servers.zvec-grep.maxFilesize} ); break ;;
+      esac
+    done
+
+    if command -v systemd-run >/dev/null 2>&1; then
+      exec systemd-run --user --scope --quiet --collect \
+        -p MemoryMax=${cfg.servers.zvec-grep.memoryMax} -p MemorySwapMax=0 \
+        -- ${pkgs.nodejs}/bin/npx -y ${cfg.servers.zvec-grep.package} index \
+           "''${defaults[@]}" "$@"
+    else
+      zg_run index "''${defaults[@]}" "$@"
+    fi
   '';
 
   packages = lib.optional cfg.servers.memelord.enable cfg.servers.memelord.pkg
@@ -579,14 +614,28 @@ in
         # include client work.
         embedding = mkOption {
           type = types.str;
-          default = "local/jina-embeddings-v2-base-code";
+          default = "local/potion-code-16m-v2";
           description = ''
             Default embedding model for new indexes (ZVEC_GREP_EMBEDDING).
-            jina-embeddings-v2-base-code is the only CODE-SPECIALISED local
-            model zg ships and has the largest local input window (8,192
-            tokens, 768 dims) -- the right fit for C/Rust/PostgreSQL trees.
+
+            potion-code-16m-v2 is a Model2Vec STATIC LOOKUP model: no
+            transformer forward pass, so it is dramatically faster and needs
+            almost no RAM. That matters more than raw quality here -- measured
+            on 3 markdown files from ~/ws/pg_fts, the code-specialised
+            transformer model (local/jina-embeddings-v2-base-code) took 45s and
+            held ~1GB resident, while potion did the same 21 entities in 4s.
+            At 318 files that difference was the whole problem: jina projected
+            to ~27 minutes for the markdown alone and the run got SIGKILLed by
+            the kernel OOM killer three times (8.1 / 13.1 / 11.6 GB RSS) on a
+            30GB host that already had 19GB in use.
+
+            If you want maximum retrieval quality on a small, source-only tree
+            and can afford the time, set this to
+            "local/jina-embeddings-v2-base-code" (8,192-token window, 768 dims,
+            code-specialised) for that project.
+
             Changing this requires `zg index --rebuild`: the model, dims and
-            endpoint are part of the stored index schema and vector spaces
+            endpoint are part of the stored index schema, and vector spaces
             from different models are incompatible.
           '';
         };
@@ -608,6 +657,53 @@ in
             are static lookups that ignore the device entirely.
           '';
         };
+        maxFilesize = mkOption {
+          type = types.str;
+          default = "1M";
+          description = ''
+            Skip files larger than this (zg --max-filesize). Vector-indexing a
+            multi-megabyte generated file costs a lot of embedding passes and
+            buys nothing -- ripgrep/BM25 still find content in them.
+          '';
+        };
+
+        memoryMax = mkOption {
+          type = types.str;
+          default = "8G";
+          description = ''
+            MemoryMax for the transient systemd scope `zg index` runs in. The
+            indexer was OOM-killing the whole desktop (8-13 GB RSS on a 3.8 MB
+            repo); this caps the blast radius so a runaway index dies alone.
+          '';
+        };
+
+        excludeGlobs = mkOption {
+          type = types.listOf types.str;
+          default = [
+            # zg already honours .gitignore and its own default ignores
+            # (verified: a gitignored dir and *.log were skipped without any
+            # config), so this list is ONLY for noise that IS committed.
+            "!**/bench/**" # benchmark result dumps (pg_fts has 109 such .md)
+            "!**/benchmarks/**"
+            "!**/vendor/**" # vendored third-party source
+            "!**/node_modules/**"
+            "!**/*.lock"
+            "!**/*.min.js"
+            "!**/*.min.css"
+            "!**/*.map" # sourcemaps
+            "!**/*.snap" # test snapshots
+            "!**/expected/**" # pg regression expected-output files
+          ];
+          description = ''
+            Default exclude globs passed to `zg index` as -g '!...'. These are
+            for COMMITTED noise only: .gitignore and zg's built-in defaults are
+            already applied automatically.
+
+            Only used by the `zg` wrapper below, since the MCP search tools
+            operate on an index that was built by an explicit `zg index` run.
+          '';
+        };
+
         modelCache = mkOption {
           type = types.str;
           default = "${config.xdg.cacheHome}/zvec-grep/models";
