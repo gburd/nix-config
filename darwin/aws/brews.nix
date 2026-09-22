@@ -4,9 +4,12 @@ _: {
       "discord"
       "firefox"
       "font-fira-code"
-      "font-fira-mono-for-powerline"
+      # NOTE: font-fira-mono-for-powerline and font-meslo-for-powerlevel10k were
+      # dropped -- they were powerline-glyph fonts for prompts we no longer run
+      # (powerline-go is disabled; powerlevel10k was never used). The Nerd Font
+      # casks below stay: Zed asks for "JetBrainsMono Nerd Font" and neovim's
+      # mini.statusline keys off have_nerd_font.
       "font-fira-mono-nerd-font"
-      "font-meslo-for-powerlevel10k"
       "font-sauce-code-pro-nerd-font"
       "github"
       "kaleidoscope"
