@@ -156,6 +156,18 @@ in
       "SpellcheckEnabled" = true;
       "SpellcheckLanguage" = [ "en-US" ];
       "VoiceInteractionHotwordEnabled" = false;
+      # Hard block, not just "not installed". Deleting an extension's files and
+      # prefs is NOT enough when Chrome Sync is on: the account restores it on
+      # the next launch (observed live -- Grammarly reappeared, version bumped,
+      # seconds after removal). Policy beats sync.
+      #
+      # The NixOS chromium module writes extraOpts to BOTH
+      # /etc/chromium/policies/managed/ AND /etc/opt/chrome/policies/managed/,
+      # so this blocks the extension in Google Chrome as well as
+      # ungoogled-chromium -- which is what makes the removal stick.
+      "ExtensionInstallBlocklist" = [
+        "kbfnbcaeplbcioakkpcpgfkobkghlhen" # Grammarly (removed by request)
+      ];
     };
   };
 }
