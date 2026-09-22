@@ -34,10 +34,14 @@
     claude.enable = true;
     maki.enable = true;
     pi.enable = true;
-    # fx (vercel-labs/fx): experimental v0.0.x native agent. Same LiteLLM
-    # routing / steering / MCP / skills as the others; see ai/fx.nix for the
-    # preview-feature caveat.
-    fx.enable = true;
+    # fx (vercel-labs/fx): DISABLED. The released v0.0.10 binary only supports
+    # its built-in providers (`fx provider` = gateway|codex|grok) -- the custom
+    # model-connection feature needed to route it through our LiteLLM proxy is
+    # not compiled in (no "openai-chat-completions"/"base_url" strings in the
+    # binary; fx status reports auth "missing" and wants Vercel AI Gateway).
+    # Enabling it would just yield a broken agent. The wiring in ai/fx.nix is
+    # ready -- flip this to true once a release ships the feature.
+    fx.enable = false;
 
     # LiteLLM Bedrock proxy (per-host, loopback only). Holds the
     # bearer token from sops-nix at

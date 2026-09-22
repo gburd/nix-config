@@ -1,15 +1,27 @@
-# fx — Vercel Labs' native coding agent (https://fx.sh/), routed through the
-# per-host LiteLLM proxy like every other agent here.
+# fx — Vercel Labs' native coding agent (https://fx.sh/).
 #
-# ⚠️ EXPERIMENTAL UPSTREAM. fx is v0.0.x and self-describes as "experimental
-# (use at your own risk, we will be making frequent changes)". Worse, the
-# `providers` custom-model-connection block this module writes is a documented
-# *preview* feature ("do not assume an installed release supports these
-# settings"). So: if fx stops honouring settings.json, or the schema moves,
-# that's expected churn -- check `fx status --json` and confirm
-# provider_endpoint is our proxy before assuming routing works.
+# ⚠️ DISABLED BY DEFAULT: the released build CANNOT be routed through LiteLLM.
 #
-# Parity with pi/claude/maki/kiro:
+# fx v0.0.10 only supports its three built-in providers -- `fx provider` literally
+# answers "usage: fx provider <gateway|codex|grok>" -- and the custom
+# model-connection feature this module configures is NOT in the shipped binary.
+# Verified two ways on v0.0.10:
+#   * `fx status --json` reports auth "missing" with
+#     auth_help "fx needs access to Vercel AI Gateway", ignoring our providers
+#     block, and `fx models` lists 249 GATEWAY models rather than ours.
+#   * `strings` on the binary finds AI_GATEWAY_API_KEY and "gateway|codex|grok"
+#     but NO "openai-chat-completions" and NO "base_url" -- the custom-provider
+#     code simply isn't compiled in. Upstream's own docs say as much:
+#     "Preview build required ... do not assume an installed release supports
+#     these settings."
+#
+# So enabling this would give a broken agent that silently tries to use Vercel
+# AI Gateway (and would need a Vercel account/credits) instead of our proxy.
+# The wiring is kept, ready for when a release ships the feature: flip
+# programs.ai.fx.enable = true and re-check `fx status --json` shows
+# provider_endpoint = our proxy.
+#
+# Parity wiring (inert until enabled):
 #   - models   : the LiteLLM proxy (OpenAI /v1 chat-completions protocol),
 #                per-agent virtual key from ~/.config/litellm/keys/fx.key
 #   - steering : ~/.fx/AGENTS.md (fx reads project/global instructions)
@@ -20,6 +32,26 @@ let
   cfg = config.programs.ai.fx;
   inherit (lib) mkEnableOption mkOption types;
   litellmKey = "${config.home.homeDirectory}/.config/litellm/keys/fx.key";
+
+  # Private profile. fx requires connection definitions at the TOP LEVEL of
+  # ~/.fx/settings.json (not a repo .fx.json / nested workspace).
+  settingsFile = pkgs.writeText "fx-settings.json" (builtins.toJSON (
+    {
+      providers.${cfg.providerName} = {
+        protocol = "openai-chat-completions";
+        base_url = cfg.baseUrl;
+        # Bearer creds come from the NAMED env var, not the file -- the key
+        # never enters the Nix store. The launcher above exports it.
+        auth = {
+          type = "bearer";
+          env = "FX_LITELLM_API_KEY";
+        };
+      };
+      models.${cfg.providerName} = cfg.defaultModel;
+    }
+    // lib.optionalAttrs (cfg.mcpServers != { }) { inherit (cfg) mcpServers; }
+    // cfg.extraSettings
+  ));
 in
 {
   options.programs.ai.fx = {
@@ -119,26 +151,15 @@ in
       '')
     ];
 
-    home.file = {
-      # Private profile. fx requires connection definitions at the TOP LEVEL of
-      # ~/.fx/settings.json (not a repo .fx.json / nested workspace).
-      ".fx/settings.json".text = builtins.toJSON (
-        {
-          providers.${cfg.providerName} = {
-            protocol = "openai-chat-completions";
-            base_url = cfg.baseUrl;
-            # Bearer creds come from the NAMED env var, not the file -- the key
-            # never enters the Nix store. The launcher above exports it.
-            auth = {
-              type = "bearer";
-              env = "FX_LITELLM_API_KEY";
-            };
-          };
-          models.${cfg.providerName} = cfg.defaultModel;
-        }
-        // lib.optionalAttrs (cfg.mcpServers != { }) { inherit (cfg) mcpServers; }
-        // cfg.extraSettings
-      );
-    };
+    # fx REFUSES a settings.json that is a symlink into the read-only store:
+    # it logs "fx: config user: durable_path_unsafe" and then ignores the file
+    # entirely (falling back to Vercel AI Gateway). So copy it into place as a
+    # real, writable, mode-600 file at activation instead of using home.file.
+    # Overwritten every switch -- treat ~/.fx/settings.json as generated.
+    home.activation.fxSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p "${config.home.homeDirectory}/.fx"
+      $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m600 \
+        ${settingsFile} "${config.home.homeDirectory}/.fx/settings.json"
+    '';
   };
 }

@@ -93,6 +93,58 @@ in
 
     '' + ''
       export VISUAL="$EDITOR"
+
+      # ---- Prompt: match the fish prompt -------------------------------
+      # fish renders (fish's own default, wrapped by terax.fish):
+      #   gburd@floki ~/w/nix-config (main)>
+      # i.e. user@host, fish-style abbreviated cwd, git branch in parens, then
+      # ">" ("#" for root). Reproduce that in bash.
+      #
+      # fish's prompt_pwd abbreviates every INTERMEDIATE component to its first
+      # character (plus a leading dot for hidden dirs) and keeps the last
+      # component whole: ~/ws/nix-config -> ~/w/nix-config. Done with awk so
+      # there's no per-component subshell loop on every prompt.
+      __prompt_pwd() {
+        local p="$PWD"
+        case "$p" in
+          "$HOME") printf '~'; return ;;
+          "$HOME"/*) p="~/''${p#"$HOME"/}" ;;
+        esac
+        printf '%s' "$p" | awk -F/ '{
+          for (i = 1; i <= NF; i++) {
+            if (i < NF && $i != "" && $i != "~") {
+              # keep a leading dot on hidden dirs, then one char
+              if (substr($i, 1, 1) == ".") $i = substr($i, 1, 2); else $i = substr($i, 1, 1)
+            }
+            printf "%s%s", $i, (i < NF ? "/" : "")
+          }
+        }'
+      }
+
+      # Git branch as " (name)", matching fish_vcs_prompt's plain form. Quiet
+      # and cheap: one rev-parse, no status/dirty scan (that would stat the
+      # whole worktree on every prompt in big repos like postgres).
+      __prompt_vcs() {
+        local b
+        b=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) \
+          || b=$(git rev-parse --short HEAD 2>/dev/null) \
+          || return 0
+        [ -n "$b" ] && printf ' (%s)' "$b"
+      }
+
+      __set_prompt() {
+        local suffix='>'
+        [ "$EUID" -eq 0 ] && suffix='#'
+        # \[..\] wrappers keep readline's line-length math correct.
+        # No space before the suffix: fish emits "... (main)> ", not "(main) > ".
+        PS1="\[\e[97m\]\u\[\e[0m\]@\h \[\e[36m\]$(__prompt_pwd)\[\e[0m\]$(__prompt_vcs)$suffix "
+      }
+      # Preserve anything already in PROMPT_COMMAND (other modules append to it).
+      case "''${PROMPT_COMMAND:-}" in
+        *__set_prompt*) : ;;
+        "") PROMPT_COMMAND=__set_prompt ;;
+        *) PROMPT_COMMAND="__set_prompt;''${PROMPT_COMMAND}" ;;
+      esac
     '';
 
     historyControl = [ "erasedups" "ignorespace" ];
