@@ -27,7 +27,6 @@
   "edlifbnjlicfpckhgjhflgkeeibhhcii" = { name = "Screenshot Tool"; version = "1.0.10.0"; sha256 = "sha256-x5ptjrxCdtjlo0hB8L/9w1xFJekLyiqBHsTku/pDbgQ="; };
   "gebbhagfogifgggkldgodflihgfeippi" = { name = "Return YouTube Dislike"; version = "4.0.5.0"; sha256 = "sha256-orlCwWL0GeALQYCMxrHd71wpOWNVupLk0VrtQcxYtUk="; };
   "hjdoplcnndgiblooccencgcggcoihigg" = { name = "Terms of Service; Didn't Read"; version = "5.1.1.0"; sha256 = "sha256-fSVeehqv0ydPf8o3Q45MPJxu0xS/wDi54Q90lnnyVCc="; };
-  "kbfnbcaeplbcioakkpcpgfkobkghlhen" = { name = "Grammarly"; version = "14.1331.0.0"; sha256 = "sha256-feGp/IJ3mi4um1UH+r3aMRVG4qokcZeRkb3sppo85pY="; };
   "khgocmkkpikpnmmkgmdnfckapcdkgfaf" = { name = "1Password Beta"; version = "8.12.38.26"; sha256 = "sha256-MI0CjuqIoc69O+yNe956xkD2LWkcIRygJ5lMkFDMc8M="; };
   "mdjildafknihdffpkfmmpnpoiajfjnjd" = { name = "Consent-O-Matic"; version = "1.1.3.0"; sha256 = "sha256-qdMdkakBMffTyrLcPjN+Q/dfTyto5/3oEuDNJKgTvpg="; };
   "mnjggcdmjocbbbhaepdhchncahnbgone" = { name = "SponsorBlock for YouTube"; version = "6.1.6.0"; sha256 = "sha256-VYf+K2qZRhAcoN3nxu/nanVcXuW21uY9/EjH9zbNtP8="; };
@@ -40,5 +39,6 @@
   #   nmmhkkegccagdldgiimedpiccmgmieda  Chrome Web Store Payments
   #   hmbjbjdpkobdjplfobhljndfdfdipjhg  Zoom      (needs the Zoom desktop app)
   #   jeogkiiogjbmhklcnbgkdcjoioegiknm  Slack     (needs the Slack desktop app)
+  #   kbfnbcaeplbcioakkpcpgfkobkghlhen  Grammarly (removed from Chrome too, by request)
   # Add any of these here if you actually want them.
 }

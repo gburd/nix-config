@@ -185,8 +185,6 @@ in
       "email/google/personal/pass" = { };
       "email/google/pgus/user" = { };
       "email/google/pgus/pass" = { };
-      "email/fastmail/user" = { };
-      "email/fastmail/pass" = { };
       "email/apple/icloud/user" = { };
       "email/apple/icloud/pass" = { };
       "email/ms/outlook/user" = { };

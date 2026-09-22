@@ -6,7 +6,6 @@
     lynx # Alternative HTML viewer
     urlscan # Extract URLs from email
     isync # Optional: for offline sync via mbsync
-    imapsync # Fastmail->Proton mailbox transfer (see docs/email-migration.md)
   ];
 
   # Neomutt main configuration
@@ -24,7 +23,6 @@
   # client), which isn't set up. Re-enable this + the F3 macros in neomuttrc
   # once OAuth is sorted or app passwords are permitted.
   # xdg.configFile."neomutt/accounts/gmail-work.muttrc".source = ./accounts/gmail-work.muttrc;
-  xdg.configFile."neomutt/accounts/fastmail.muttrc".source = ./accounts/fastmail.muttrc;
   xdg.configFile."neomutt/accounts/icloud.muttrc".source = ./accounts/icloud.muttrc;
   # outlook (gregburd@outlook.com) DISABLED: personal outlook.com is
   # OAuth2-only and had no working password/gateway path (DavMail's
@@ -42,7 +40,6 @@
     ".cache/neomutt/gmail-personal/.keep".text = "";
     # gmail-work cache dir omitted while that account is disabled (see above)
     # ".cache/neomutt/gmail-work/.keep".text = "";
-    ".cache/neomutt/fastmail/.keep".text = "";
     ".cache/neomutt/icloud/.keep".text = "";
     # outlook cache dir omitted while that account is disabled (see above)
     # ".cache/neomutt/outlook/.keep".text = "";

@@ -5,25 +5,24 @@
 # Multi-Account Setup - Press F1-F7 to switch accounts
 # ============================================================================
 #
-# F1 = ProtonMail (default -- greg@burd.me)
+# F1 = Personal (ProtonMail via bridge -- greg@burd.me) [default]
 # F2 = Gmail Personal
-# F3 = Gmail Work
-# F4 = Fastmail (LEGACY -- being migrated to Proton; removed after MX cutover)
+# F3 = Gmail Work (disabled)
+# F4 = (free -- was Fastmail, account retired after the MX cutover)
 # F5 = iCloud
 # F6 = Outlook (disabled)
-# F7 = Amazon
+# F7 = Amazon (disabled)
 #
-# Default account: ProtonMail (greg@burd.me). During the Fastmail->Proton
-# migration Fastmail stays reachable on F4 so imapsync + verification can run;
-# it is removed once the burd.me MX points at Proton (see docs/email-migration.md).
+# Default account: Personal. burd.me mail is hosted at Proton and reached
+# through the local bridge; the Fastmail account it replaced has been removed
+# entirely (see docs/email-migration.md).
 source ~/.config/neomutt/accounts/protonmail.muttrc
 
   # Account Switching Macros (F1-F7)
-  macro index <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
+  macro index <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to Personal (Proton)"
 macro index <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-personal.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Personal"
 # gmail-work (F3) disabled: Workspace app-passwords blocked, no OAuth yet (see neomutt/default.nix)
 # macro index <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
-macro index <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
 macro index <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
 # outlook (F6) disabled: personal outlook.com is OAuth2-only (basic-auth
 # IMAP removed Sept 2024) and has no working password/gateway path here --
@@ -36,32 +35,29 @@ macro index <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 # macro index <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
 # Same for pager mode
-macro pager <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to ProtonMail"
+macro pager <f1> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>!<enter>' "Switch to Personal (Proton)"
 macro pager <f2> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-personal.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Personal"
 # gmail-work (F3) disabled: Workspace app-passwords blocked, no OAuth yet (see neomutt/default.nix)
 # macro pager <f3> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/gmail-work.muttrc<enter><change-folder>!<enter>' "Switch to Gmail Work"
-macro pager <f4> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/fastmail.muttrc<enter><change-folder>!<enter>' "Switch to Fastmail"
 macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/icloud.muttrc<enter><change-folder>!<enter>' "Switch to iCloud"
 # outlook (F6) disabled -- see index binding above for why.
 # macro pager <f6> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/outlook.muttrc<enter><change-folder>!<enter>' "Switch to Outlook"
 # amazon (F7) disabled for now (per request; re-enable with neomutt/default.nix)
 # macro pager <f7> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/amazon.muttrc<enter><change-folder>!<enter>' "Switch to Amazon"
 
-# --- Quick jump: pgsql-hackers list (Proton bridge: Work/Postgres/Hackers List) ---
+# --- Quick jump: pgsql-hackers list (Personal/Proton: Folders/Work/Postgres/hackers) ---
 # Press ",h" (comma then h -- "go Hackers") in either index or pager to switch
-# to Proton and open the Hackers List folder directly, no folder-name typing.
-# Comma is a free leader key (avoids the g-prefix alias warning that "gh"
-# triggers against the gg/G binds).
+# to the Personal (Proton) account and open the hackers folder directly, no
+# folder-name typing. Comma is a free leader key (avoids the g-prefix alias
+# warning that "gh" triggers against the gg/G binds).
 #
-# The folder "Hackers List" has a SPACE, which broke every inline form tried:
-# quoted (parser strips quotes -> arg splits -> 'List" is not a mailbox'),
-# backslash-escaped, and $variable (not expanded here). The fix: a FULL imap://
-# URL with the space URL-encoded as %20, so there is NO literal space in the
-# macro push-string for the parser to split on. neomutt decodes %20 and
-# resolves to .../Work/Postgres/Hackers List. A full URL needs no "+" prefix.
-# (Proton reached via the local bridge at 127.0.0.1:1143, not imaps.)
-macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>imap://127.0.0.1:1143/Work/Postgres/Hackers%20List<enter>' "Go to pgsql-hackers list"
-macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>imap://127.0.0.1:1143/Work/Postgres/Hackers%20List<enter>' "Go to pgsql-hackers list"
+# Path verified live against the bridge (IMAP LIST): user folders sit under a
+# "Folders/" prefix and the folder is lowercase "hackers" with NO space -- so
+# the old %20 escaping (needed when this was Fastmail's "Hackers List") is
+# gone. A full imap:// URL needs no "+" prefix; the bridge is plain imap on
+# 127.0.0.1:1143, not imaps.
+macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>imap://127.0.0.1:1143/Folders/Work/Postgres/hackers<enter>' "Go to pgsql-hackers list"
+macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>imap://127.0.0.1:1143/Folders/Work/Postgres/hackers<enter>' "Go to pgsql-hackers list"
 
 # ============================================================================
 # General Settings
