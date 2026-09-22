@@ -41,3 +41,6 @@ core-[0-9]*
 
 # Local-only agent / cutover notes (internal tool names) — never committed
 .agent/
+
+# imapsync run logs (operational output, contains addresses/subjects)
+LOG_imapsync/
