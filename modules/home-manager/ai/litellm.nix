@@ -348,6 +348,16 @@ let
     # ProfileNotFound. Unsetting these guarantees the bearer token wins on
     # every host regardless of what the session environment carries.
     unset AWS_PROFILE AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_DEFAULT_PROFILE
+    # Unsetting AWS_PROFILE is necessary but not sufficient: boto3.Session()
+    # (called from litellm's bedrock _auth_with_env_vars) ALWAYS loads
+    # ~/.aws/config, which is hand-maintained and not managed here. One
+    # malformed line there makes botocore raise ConfigParseError and every
+    # request 500s, which agents surface as APIConnectionError -- confirmed
+    # live on floki (a duplicate `max_attempts` key in [default] took the
+    # proxy down). The bearer token needs neither file, so point both at an
+    # empty one and keep the proxy hermetic against the user's AWS files.
+    export AWS_CONFIG_FILE=/dev/null
+    export AWS_SHARED_CREDENTIALS_FILE=/dev/null
     export LITELLM_MASTER_KEY="$(${pkgs.coreutils}/bin/cat "$MASTER_FILE")"
 
     # No DB — keep it stateless on disk. Virtual keys are minted by the
