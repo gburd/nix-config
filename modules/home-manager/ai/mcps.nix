@@ -107,6 +107,14 @@ let
     inherit mcpServers;
   };
 
+  # Embedding env for zg (both the CLI and the MCP-spawned server must agree;
+  # see the zvec-grep options for why this is LOCAL rather than via LiteLLM).
+  zvecGrepEnv = {
+    ZVEC_GREP_EMBEDDING = cfg.servers.zvec-grep.embedding;
+    ZVEC_GREP_DEVICE = cfg.servers.zvec-grep.device;
+    ZVEC_GREP_MODEL_CACHE = cfg.servers.zvec-grep.modelCache;
+  };
+
   mcpServers = { }
     // (optionalAttrs cfg.servers.filesystem.enable {
     filesystem = {
@@ -175,6 +183,10 @@ let
         "--mcp-toolset"
         cfg.servers.zvec-grep.toolset
       ];
+      # Pass the embedding config explicitly: the MCP server is spawned by an
+      # agent process that may not inherit login-shell sessionVariables, and an
+      # index built with a different model/device is unreadable.
+      env = zvecGrepEnv;
     };
   })
     // cfg.extraServers;
@@ -256,7 +268,7 @@ let
         "--mcp-toolset"
         cfg.servers.zvec-grep.toolset
       ];
-      env = { };
+      env = zvecGrepEnv;
     };
   })
     // cfg.extraServers;
@@ -554,6 +566,57 @@ in
           default = "@zvec/zvec-grep@latest";
           description = "npm spec for zg, launched via npx (fast-moving upstream).";
         };
+
+        # ---- Embeddings -------------------------------------------------
+        # `zg index` REQUIRES an embedding model. We use a LOCAL one rather
+        # than routing through our LiteLLM proxy, because zg cannot do that:
+        # its only remote embedding provider is Alibaba DashScope (qwen/*)
+        # with a provider-specific API, and ZVEC_GREP_ENDPOINT merely
+        # relocates that provider -- it does not switch the protocol to
+        # OpenAI /v1/embeddings (which is what LiteLLM serves). Local is also
+        # strictly better here: no credential, no egress, and no
+        # "Remote Embedding authorization" prompt for source trees that
+        # include client work.
+        embedding = mkOption {
+          type = types.str;
+          default = "local/jina-embeddings-v2-base-code";
+          description = ''
+            Default embedding model for new indexes (ZVEC_GREP_EMBEDDING).
+            jina-embeddings-v2-base-code is the only CODE-SPECIALISED local
+            model zg ships and has the largest local input window (8,192
+            tokens, 768 dims) -- the right fit for C/Rust/PostgreSQL trees.
+            Changing this requires `zg index --rebuild`: the model, dims and
+            endpoint are part of the stored index schema and vector spaces
+            from different models are incompatible.
+          '';
+        };
+        device = mkOption {
+          type = types.enum [ "auto" "cpu" "metal" "vulkan" "cuda" ];
+          default = "auto";
+          description = ''
+            Local embedding device (ZVEC_GREP_DEVICE). zg supports only
+            auto/cpu/metal/vulkan/cuda -- there is NO NPU/OpenVINO backend, so
+            an Intel/AMD NPU cannot be used for indexing however it's
+            configured.
+
+            Beware "vulkan": for ONNX/Transformers.js models zg reaches the GPU
+            through Transformers.js WebGPU, which has no backend in its Node
+            runtime -- on a host with a perfectly working Vulkan stack it still
+            fails with "no available backend found" and then errors every file.
+            Verified on floki (Intel Arc 140V). Keep "cpu" unless a specific
+            model/device combination is known to work. Model2Vec/Potion models
+            are static lookups that ignore the device entirely.
+          '';
+        };
+        modelCache = mkOption {
+          type = types.str;
+          default = "${config.xdg.cacheHome}/zvec-grep/models";
+          description = ''
+            Local embedding model cache (ZVEC_GREP_MODEL_CACHE). Pinned to
+            XDG cache so downloaded weights land somewhere predictable and
+            backup-excludable rather than a tool-chosen default.
+          '';
+        };
       };
     };
   };
@@ -561,6 +624,16 @@ in
   config = lib.mkIf cfg.enable {
     # Publish the resolved CORE set for sibling modules (ai/fx.nix).
     programs.ai.mcps.coreServers = coreMcpServers;
+
+    # zg reads its embedding defaults from the environment. Set them
+    # session-wide so the `zg` CLI and the MCP-spawned server agree -- an
+    # index built with one model can't be read with another (the model, dims
+    # and endpoint are baked into the index schema).
+    home.sessionVariables = lib.mkIf cfg.servers.zvec-grep.enable {
+      ZVEC_GREP_EMBEDDING = cfg.servers.zvec-grep.embedding;
+      ZVEC_GREP_DEVICE = cfg.servers.zvec-grep.device;
+      ZVEC_GREP_MODEL_CACHE = cfg.servers.zvec-grep.modelCache;
+    };
 
     # project-mcp helper for adding heavy MCP servers per project (used from
     # .envrc); core servers are loaded globally, heavy ones opt-in.

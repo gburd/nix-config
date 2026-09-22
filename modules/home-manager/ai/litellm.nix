@@ -136,33 +136,25 @@ let
     # small sibling.)
     { name = "nemotron-super-120b"; bedrock = "nvidia.nemotron-super-3-120b"; converse = false; maxInput = 128000; maxOutput = 32000; }
 
-    # Claude Max/Pro subscription, direct Anthropic API (NOT Bedrock). Set
-    # programs.ai.litellm.anthropicAuthTokenFile to a sops-deployed file
-    # holding the sk-ant-oat... token from `claude setup-token` to enable.
-    # Distinct model_name (claude-max-*) so agents opt in explicitly — it
-    # never shadows the Bedrock claude-opus-4-8 etc. rows. maxInput/maxOutput
-    # match each model's own advertised limits (confirmed live via
-    # api.anthropic.com/v1/models: 1000000/128000 for both sonnet-5 and
-    # fable-5, same as their Bedrock rows above) -- NOT a claim that the
-    # Max/Pro plan can actually reach fable-5/sonnet-5 today; that's
-    # unconfirmed (every live probe hit an account-wide 429, including the
-    # already-working opus-4-8 control, so it was inconclusive either way).
-    # These rows just make the models CALLABLE through this account once/if
-    # access is confirmed -- default routing is untouched, nothing selects
-    # these unless explicitly asked for by name.
-    { name = "claude-max-opus-4-8"; provider = "anthropic"; anthropicModel = "claude-opus-4-8"; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 200000; maxOutput = 32000; }
-    { name = "claude-max-sonnet-5"; provider = "anthropic"; anthropicModel = "claude-sonnet-5"; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
-    { name = "claude-max-fable-5"; provider = "anthropic"; anthropicModel = "claude-fable-5"; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
+    # ---- Embeddings (Bedrock) --------------------------------------------
+    # Exposed on /v1/embeddings for tools that want a vector endpoint. Both
+    # probed live (HTTP 200). embedding = true keeps them out of the chat
+    # thinking-policy map and marks them for the /v1/embeddings mode.
+    #
+    # cohere-embed-v4 is the strongest text/code retrieval embedder available
+    # on this account; titan-embed-v2 is the simpler-API fallback (1024 dims,
+    # confirmed live).
+    #
+    # NOTE: zvec-grep (zg) canNOT use these -- its only remote embedding
+    # provider is Alibaba DashScope (qwen/*) with a provider-specific API, and
+    # ZVEC_GREP_ENDPOINT only relocates that provider, it doesn't switch
+    # protocol to OpenAI /v1/embeddings. zg is configured with a LOCAL model
+    # instead (see console/ai). These rows are for everything else.
+    { name = "cohere-embed-v4"; bedrock = "cohere.embed-v4:0"; converse = false; embedding = true; maxInput = 128000; maxOutput = 0; }
+    { name = "titan-embed-v2"; bedrock = "amazon.titan-embed-text-v2:0"; converse = false; embedding = true; maxInput = 8192; maxOutput = 0; }
   ];
 
-  # Anthropic-direct (Claude Max/Pro subscription) rows are only wired in
-  # when a token file is actually configured — otherwise the proxy would
-  # advertise a model whose api_key env var is never set, and every call
-  # to it would 401. Filtered once here; every consumer below reads
-  # usableModels instead of cfg.models.
-  usableModels = lib.filter
-    (m: (m.provider or "bedrock") != "anthropic" || cfg.anthropicAuthTokenFile != null)
-    cfg.models;
+  usableModels = cfg.models;
 
   # ---------- thinking-policy map ----------------------------------------
   # Per-model thinking policy, derived from the SAME cfg.models list that
@@ -208,33 +200,25 @@ let
   # m.name (kept as a parameter so the row builder stays reusable).
   mkModelRow = m: rowName:
     let
-      isAnthropicDirect = (m.provider or "bedrock") == "anthropic";
+      isEmbedding = m.embedding or false;
     in
     {
       model_name = rowName;
-      litellm_params =
-        if isAnthropicDirect then {
-          # Direct Anthropic API via a Claude subscription (Max/Pro) OAuth
-          # token, NOT Bedrock. `claude setup-token` mints a long-lived
-          # sk-ant-oat... token; LiteLLM's anthropic provider auto-detects
-          # that prefix and swaps in the OAuth Authorization header (see
-          # optionally_handle_anthropic_oauth in litellm's anthropic
-          # common_utils.py) instead of the normal x-api-key header. No AWS
-          # region/creds involved — this bypasses Bedrock entirely.
-          model = "anthropic/" + m.anthropicModel;
-          api_key = "os.environ/ANTHROPIC_AUTH_TOKEN";
-          max_tokens = m.maxOutput or 32000;
-        } else {
-          model = (if m.converse then "bedrock/converse/" else "bedrock/") + m.bedrock;
-          # Per-model region override (some models are single-region on
-          # Bedrock, e.g. Qwen3-Coder-480B is us-west-2 only). Falls back to
-          # the proxy-wide AWS_REGION for the (majority) multi-region models.
-          aws_region_name = m.region or "os.environ/AWS_REGION";
-          # Give each agent the model's full output-token budget rather
-          # than a flat 32000. Falls back to 32000 for any model without
-          # an explicit maxOutput.
-          max_tokens = m.maxOutput or 32000;
-        };
+      litellm_params = {
+        model = (if m.converse then "bedrock/converse/" else "bedrock/") + m.bedrock;
+        # Per-model region override (some models are single-region on
+        # Bedrock, e.g. Qwen3-Coder-480B is us-west-2 only). Falls back to
+        # the proxy-wide AWS_REGION for the (majority) multi-region models.
+        aws_region_name = m.region or "os.environ/AWS_REGION";
+      }
+      # Embedding models take no max_tokens (there's no generation budget);
+      # sending one makes Bedrock reject the request.
+      // lib.optionalAttrs (!isEmbedding) {
+        # Give each agent the model's full output-token budget rather
+        # than a flat 32000. Falls back to 32000 for any model without
+        # an explicit maxOutput.
+        max_tokens = m.maxOutput or 32000;
+      };
       # NOTE: thinking / output_config are deliberately NOT set here.
       # LiteLLM merges litellm_params into the request *after* the
       # async_pre_call_hook runs, so a static thinking block here would
@@ -257,7 +241,12 @@ let
         max_input_tokens = m.maxInput or 200000;
         max_output_tokens = m.maxOutput or 32000;
         max_tokens = m.maxOutput or 32000;
-      };
+      }
+      # `mode` must live in model_info, NOT litellm_params: anything in
+      # litellm_params is forwarded to Bedrock as a request field, and Titan
+      # rejects it outright ("extraneous key [mode] is not permitted" -- Cohere
+      # happened to tolerate it, which is how this slipped through first time).
+      // lib.optionalAttrs isEmbedding { mode = "embedding"; };
     };
 
   configJson = builtins.toJSON {
@@ -351,15 +340,6 @@ let
     export LD_LIBRARY_PATH="${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib pkgs.zlib ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     export AWS_BEARER_TOKEN_BEDROCK="$(${pkgs.coreutils}/bin/cat "$BEARER_FILE")"
     export AWS_REGION="${cfg.region}"
-    ${lib.optionalString (cfg.anthropicAuthTokenFile != null) ''
-      # Claude Max/Pro subscription token (claude-max-* model rows). Direct
-      # Anthropic API, entirely separate from the Bedrock bearer token above.
-      if [ ! -r "${cfg.anthropicAuthTokenFile}" ]; then
-        echo "Anthropic auth token file ${cfg.anthropicAuthTokenFile} not readable" >&2
-        exit 78
-      fi
-      export ANTHROPIC_AUTH_TOKEN="$(${pkgs.coreutils}/bin/cat "${cfg.anthropicAuthTokenFile}")"
-    ''}
     # Bearer token is the ONLY intended auth path. Clear any AWS_PROFILE /
     # static-credential env that leaks in from the login session (e.g.
     # arnold's systemd --user manager imports AWS_PROFILE=asbxbedrock from
@@ -654,22 +634,6 @@ in
         Path to the AWS Bedrock bearer token (sops-deployed). Read at
         service start; never written into the systemd unit file or the
         Nix store.
-      '';
-    };
-
-    anthropicAuthTokenFile = mkOption {
-      type = types.nullOr types.path;
-      default = null;
-      description = ''
-        Optional path to a Claude subscription (Max/Pro) long-lived OAuth
-        token (the sk-ant-oat... value from `claude setup-token`),
-        sops-deployed like bearerTokenFile. When set, the proxy exposes
-        model rows that call the direct Anthropic API through this
-        subscription instead of Bedrock (see defaultModels' provider =
-        "anthropic" rows). Read at service start; never written into the
-        systemd unit file or the Nix store. Leave null to skip those
-        model rows are then omitted entirely (the token is required, not
-        optional, at the API layer).
       '';
     };
 

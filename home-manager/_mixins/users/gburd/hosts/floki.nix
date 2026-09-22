@@ -34,13 +34,23 @@ in
   # LMStudio NPU-accelerated local models (floki has Intel Arc NPU)
   programs.ai.lmstudio.enable = true;
 
-  # Claude Max/Pro subscription (claude-max-opus-4-8 model row in LiteLLM),
-  # alongside the existing Bedrock rows. Bedrock stays the default for every
-  # agent (claude/pi/maki' defaultModel = claude-opus-4-8);
-  # this is opt-in per-request by naming the model explicitly. Token from
-  # `claude setup-token`, sops-deployed (see sops.secrets below).
-  programs.ai.litellm.anthropicAuthTokenFile =
-    "${config.home.homeDirectory}/.config/claude-code/.anthropic_oauth_token";
+  # zvec-grep embedding device. Left at "cpu" DELIBERATELY after live testing.
+  #
+  # floki is Intel Lunar Lake (Core Ultra 7 258V) with an Arc 140V iGPU whose
+  # Vulkan stack works (Mesa, apiVersion 1.4.354 via vulkaninfo) AND a live NPU
+  # (PCI 00:0b.0, intel_vpu, /dev/accel/accel0). Neither is usable by zg:
+  #
+  #   * device=vulkan FAILS. zg's ONNX/Transformers.js models reach the GPU via
+  #     Transformers.js WebGPU, which has no backend in its Node runtime:
+  #     "webgpu embedding initialization failed (no available backend found)",
+  #     and its CPU fallback then failed too -- every file errored with
+  #     TRANSFORMERS_JS_EMBED_FAILED. Verified by indexing a 2-file tree.
+  #   * There is no NPU path at all: zg's device options are only
+  #     auto/cpu/metal/vulkan/cuda (no OpenVINO/NPU backend).
+  #
+  # device=cpu indexes cleanly (verified: 1 file / 1 entity / 2s). Revisit if
+  # zg gains a real ONNX-Runtime GPU or OpenVINO backend.
+  programs.ai.mcps.servers.zvec-grep.device = "cpu";
 
   # Local voice I/O — ENABLED. The original feedback-loop risk (dictate's
   # ydotool auto-typing runaway) is now bounded: a hard maxRecordSeconds cap
@@ -116,9 +126,11 @@ in
       "aws/bearer_token_bedrock" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
       };
-      "anthropic/claude_max_oauth_token" = {
-        path = "${config.home.homeDirectory}/.config/claude-code/.anthropic_oauth_token";
-      };
+      # NOTE: anthropic/claude_max_oauth_token is deliberately NOT deployed
+      # anymore -- the Claude Max/Pro subscription model rows (claude-max-*)
+      # were removed from LiteLLM, so nothing reads this token. The encrypted
+      # VALUE is still in secrets.yaml if the subscription path is ever wanted
+      # again; re-add the declaration + litellm rows together.
       # Dedicated Tailscale auth key for the agent-sandbox ec2 tier --
       # deliberately SEPARATE from the tailscale-auth-key used to join
       # real, long-lived hosts (nixos/_mixins/services/tailscale-autoconnect.nix):
