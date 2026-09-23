@@ -119,3 +119,35 @@ These are explicit, repeated requirements for any series aimed at -hackers. Trea
 - **Do not assert "behavior-preserving" or "fixed" without evidence.** Prove it: compare the failing artifact at the commit-before vs commit-after; show the test going from red to green; show the standalone repro now returning the right answer.
 - **When asked to "verify first," verify and present the evidence before implementing.** Reason through alternatives explicitly and say why the chosen one wins; don't silently pick one.
 
+## Comment Conventions (PostgreSQL house style)
+
+These are the project's conventions for comments in patches to core and in
+extension code written to match it. They are stricter than general-purpose
+commenting advice and they are what reviewers on pgsql-hackers expect.
+
+- No comment is the default. Code should explain itself, and a comment
+  that states the obvious is noise in the diff.
+- A comment earns its place by telling the reader something non-obvious
+  — the why, the constraint, the case the code can't show — pitched a
+  level above the code, in simple words. Usually that takes a sentence
+  or two; when a subtlety obviously demands a long comment, write the
+  long comment.
+- Comments describe the code as it stands — noting previous behavior is
+  rarely needed. Leave comments outside the patch's footprint alone,
+  unless the patch has made them out-of-date or inaccurate; updating
+  those is part of the change.
+- A fix restores intended behavior; it's rarely an occasion to add
+  comments the original code did without. Don't comment defensively
+  against edits that haven't happened.
+- The default above is for patches to existing code. New code I write
+  is commented generously: a header comment on nearly every new
+  function (summary, then the caller contract), a short full-sentence
+  step comment above each phase of a nontrivial one ("Quick exit if
+  we already did this."), and multi-sentence blocks for the why and
+  the constraints.
+- Block comments sit above the code, in complete sentences with a
+  capital and a period. Trailing same-line comments are only for
+  struct members and short guards, as telegraphic fragments.
+- "Note that ..." is the house connective. "NB:" flags a caller
+  contract or trap. "XXX" marks an acknowledged hack, nothing else.
+  Never "FIXME", never a "Note:" label.
