@@ -52,6 +52,14 @@ let
     # Opus 5 + Fable 5.1 landed on Bedrock since the note above was written --
     # both verified reachable (HTTP 200 via the us. inference profile,
     # 2026-08). Opus 5 is the new flagship.
+    # Opus 5.5 -- the current flagship and the DEFAULT for every agent.
+    # Verified live 2026-09 on us.anthropic.claude-opus-5-5 (both us-east-1 and
+    # us-west-2 have the profile): HTTP 200, and adaptive thinking with
+    # output_config.effort=xhigh genuinely engages (the Converse response comes
+    # back with a reasoningContent block, not just text). Output ceiling probed
+    # directly -- maxTokens=128000 accepted, 200000 rejected with "exceeds the
+    # model limit of 128000".
+    { name = "claude-opus-5-5"; bedrock = "us.anthropic.claude-opus-5-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
     { name = "claude-opus-5"; bedrock = "us.anthropic.claude-opus-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
     { name = "claude-fable-5-1"; bedrock = "us.anthropic.claude-fable-5-1"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
 

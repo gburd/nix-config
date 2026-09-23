@@ -68,7 +68,7 @@ in
       type = types.str;
       # Same default as pi/claude/maki: the 1M-window Opus 5 on Bedrock via the
       # proxy. NOT gpt-6-astra -- its ~256K window wedges long sessions.
-      default = "claude-opus-5";
+      default = "claude-opus-5-5";
       description = "Model id fx requests from the LiteLLM proxy.";
     };
 
