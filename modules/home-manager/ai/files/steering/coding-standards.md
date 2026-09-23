@@ -27,7 +27,47 @@ Fix every warning from every tool — linters, type checkers, compilers, tests. 
 
 ## Comments
 
-Code should be self-documenting. No commented-out code — delete it. If you need a comment to explain WHAT the code does, refactor the code instead.
+Code should be self-documenting. No commented-out code, delete it. If you
+need a comment to explain WHAT the code does, refactor the code instead.
+
+The bar differs for existing code versus new code:
+
+- **Patching existing code:** no comment is the default. A comment that
+  states the obvious is noise in the diff. A comment earns its place by
+  telling the reader something non-obvious: the why, the constraint, the
+  case the code cannot show, pitched a level above the code.
+- **Writing new code:** comment generously. A header comment on nearly
+  every new function (summary, then the caller contract), a short
+  full-sentence step comment above each phase of a nontrivial one, and
+  multi-sentence blocks for the why and the constraints.
+- Comments describe the code as it stands. Noting previous behavior is
+  rarely useful. Leave comments outside the change's footprint alone
+  unless the change made them inaccurate; updating those is part of the
+  work.
+- A fix restores intended behavior; it is rarely an occasion to add
+  comments the original code did without. Do not comment defensively
+  against edits that have not happened.
+- Block comments sit above the code in complete sentences. Trailing
+  same-line comments are for struct members and short guards only, as
+  telegraphic fragments.
+- "Note that ..." is the house connective. "NB:" flags a caller contract
+  or trap. "XXX" marks an acknowledged hack and nothing else. Never
+  "FIXME", never a "Note:" label.
+
+## Minimization
+
+- Aim for the smallest change that does the job well: code, comments, and
+  tests alike. It reads faster in review and keeps needless churn out of
+  the history.
+- Exceptions exist but are earned. Put real effort into making the change
+  fit the existing shape before concluding that it cannot.
+- Split large work into a framework change, then one conversion per
+  commit. Mechanical reformatting is its own commit.
+- One adjacent cleanup may ride along if the commit message flags it.
+  Anything more is deferred and named explicitly rather than silently
+  bundled.
+- Comment-only and typo-only fixes are their own commits, never
+  passengers on a behavior change.
 
 ## Error Handling
 
@@ -42,6 +82,16 @@ Code should be self-documenting. No commented-out code — delete it. If you nee
 - **Test edges and errors, not just the happy path.** Empty inputs, boundaries, malformed data, missing files, network failures.
 - **Mock boundaries, not logic.** Only mock things that are slow, non-deterministic, or external.
 - **Verify tests catch failures.** Break the code, confirm the test fails, then fix.
+- **A warranted test is minimal, not exhaustive.** Cover the case that
+  matters and skip variations that prove nothing new; redundant coverage
+  is a cost, not a safety margin.
+- **Blend into the existing suite.** Extend a nearby test in its own style
+  rather than building new scaffolding. A new file is sometimes right, but
+  treat it as the exception.
+- **Not every fix needs a test.** In mature codebases with a high review
+  bar (PostgreSQL being the example here), simple fixes routinely ship
+  without one. Judge by whether the test would catch a realistic
+  regression, not by reflex.
 
 ## Reviewing Code
 

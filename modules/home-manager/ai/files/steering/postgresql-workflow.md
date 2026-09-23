@@ -151,3 +151,119 @@ commenting advice and they are what reviewers on pgsql-hackers expect.
 - "Note that ..." is the house connective. "NB:" flags a caller
   contract or trap. "XXX" marks an acknowledged hack, nothing else.
   Never "FIXME", never a "Note:" label.
+
+## Tests (community norms)
+
+- The bar for adding a test is high. Simple fixes routinely ship without
+  one; that is the community norm, not a corner cut.
+- A warranted test is minimal and simple, not exhaustive. Cover the case
+  that matters and skip variations that prove nothing new; redundant
+  coverage is a cost, not a safety margin.
+- Blend new tests into the existing suite. Extend a nearby block in its
+  own style rather than building new scaffolding. A new block or file is
+  sometimes right, but treat it as the exception.
+- Calibration: roughly one in six behavior fixes ships with a test. When
+  one does, it is a graft — single statements inside an existing block,
+  reusing its roles and fixtures and copying its local idioms (e.g., the
+  "-- fail" markers).
+- TAP description strings are lowercase and telegraphic, echoing the
+  thing under test: 'vacuumdb --dry-run'. Comments inside test files are
+  still full sentences.
+
+## Docs (SGML)
+
+- Present tense, one point per <para>. Caveats become "Note that ..."
+  sentences or a <note>.
+- GUC descriptions follow the skeleton: "Specifies the ...  The default
+  is X.  This parameter can only be set ...".
+- Prefer a varlistentry list over a table when items deserve anchors.
+  Alphabetize where order carries no meaning.
+- A missing word is a standalone "doc:" commit, not a passenger on
+  another change.
+
+## Commit messages (PostgreSQL house style)
+
+Extends the generic rules in prose-mechanics.md; where they differ, these
+win.
+
+- Subject: "area: Imperative summary." — capitalized, about 50
+  characters, and yes, the trailing period. The area prefix is a tool or
+  module name in its in-tree lowercase spelling (pg_upgrade:, vacuumdb:,
+  doc:). Backend changes get no prefix.
+- Body prose is hard-wrapped at 67 columns. One or two paragraphs is the
+  norm; a "* " list only for genuinely enumerable sub-changes.
+- Fix shape: the broken behavior in present tense ("Presently, ..."),
+  then its consequence, then "To fix, ...".
+- Attribution closes as its own paragraph: "Oversight in commit
+  <10-hex-hash>.", plus "Per buildfarm." or "Per Coverity." when that is
+  the source. Trivial fixups can be a subject line and little else.
+- Prior commits are "commit " + 10-hex hash, including in lists
+  ("commits 30e7c175b8, e469f0aaf3, and 492046fa9e").
+- The palette, used naturally and never all at once: "This commit ...",
+  "While at it, ...", "In passing, ...", "teach X to Y", "left as a
+  future exercise", "This is preparatory work for a follow-up commit
+  that will ...", "Bumps catversion." Risk is hedged by understatement:
+  "seems unlikely to cause too much trouble in practice".
+- Trailers, one person per line as Name <email>, in this order: Bug /
+  Reported-by / Suggested-by, then Author / Co-authored-by, Reviewed-by,
+  Tested-by, Security, Discussion, and Backpatch-through always last. No
+  Author: line for sole-author work. Discussion is a percent-encoded
+  https://postgr.es/m/ link, omitted on CVE commits and trivial fixups.
+- Scale to the change; model commits worth imitating: 626d7236b65 (a big
+  feature), 158408fef8b (a subtle fix), 1fbe2066dcc (a bug fix).
+
+## Minimization
+
+- Aim for the smallest patch that does the job well — code, comments, and
+  tests alike. It reads faster in review and keeps needless churn off the
+  tree.
+- There are exceptions, but they are earned. Put real effort into making
+  the patch fit nicely before concluding that it cannot.
+- Split series: a framework commit, then one conversion per commit.
+  Re-pgindent and .git-blame-ignore-revs updates are their own commits.
+- One adjacent cleanup may ride along if the message flags it with
+  "While at it, ...". Anything more is deferred and named ("left as a
+  future exercise").
+- Comment-only fixes are their own commits, never passengers.
+
+## E-mail to the pgsql lists
+
+Plain text wrapped near 72 columns, interleaved under trimmed quotes. No
+greeting and no closing, ever: the client supplies the attribution line
+and the signature, so a draft starts with content and just ends.
+
+- Default to short. The median reply is about four lines, and a one-line
+  reply is normal ("Committed.", "WFM.", "Done.", "Agreed.").
+- Content goes below the quote it answers. The only thing above the first
+  quote is a one-line meta note: "Thanks for the report.", "Thanks for
+  taking a look.", "Committed." Trim quotes hard and mark cuts with
+  "> [...]".
+- Thread-starts open cold with the discovery ("While <doing X>, I noticed
+  that ..."), then evidence (commit hashes, [0]-indexed footnote URLs
+  above the sig), then the proposal and patch, ending "Thoughts?" or "Am
+  I missing something?".
+- Reviews anchor on pasted diff hunks with the comment underneath,
+  per-patch verdicts like "Otherwise, 0001 looks good.", and minor points
+  as "nitpick:  ..." with an out ("but others might find your version
+  easier to read").
+- Approvals: "WFM.", "Seems reasonable.", "Looks reasonable to me.",
+  "+1", "Agreed." Never "LGTM", never a "-1" vote.
+- Disagreement: "I don't think we want to ...", "I'm not seeing why we
+  wouldn't just ...", "I am quite dubious we need to do anything here."
+  Retraction ends with "Sorry for the noise."
+- Process formulas: "Here is what I have staged for commit."; "Barring
+  additional feedback, I plan to commit this soon."; "I'd like to proceed
+  with committing this in the next couple of days if there are no
+  objections."; close the loop with "Committed." plus any caveats.
+- Asks are "Would you mind ...?" / "Can you ...?", almost never "please".
+- In stock: IIUC, AFAICT, IMHO (never IMO), FWIW, "folks", "Yeah," and
+  "Ah," openers. Same voice to everyone; newcomers just additionally get
+  the process spelled out (commitfest entry, cfbot).
+
+## Postgres-specific prose mechanics
+
+Extends prose-mechanics.md for this project only.
+
+- Versions are "v17". Maintenance branches are "the back-branches".
+  "back-patch" is hyphenated. The product is "Postgres" in casual prose.
+- GUCs, options, and file names stay bare, unquoted and unmarked.

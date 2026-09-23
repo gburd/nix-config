@@ -8,10 +8,17 @@
 
 ## Commits
 
-- Imperative mood, ≤72 char subject line, one logical change per commit
+- Imperative mood, one logical change per commit. Keep the subject line
+  short; see prose-mechanics.md for message shape and register, and the
+  domain steering for project-specific formats (PostgreSQL has its own).
+- The message must stand alone and carry what the diff cannot: why the
+  change is needed, caveats and how they are handled, alternatives
+  considered and why they lost, and work deliberately deferred.
 - Never amend/rebase commits already pushed to shared branches
 - Never push directly to main — use feature branches and PRs
 - Never commit secrets, API keys, or credentials
+- Stage explicitly by path. `git add -A` / `git add .` sweep in untracked
+  junk; see must-rules.md.
 
 ## Git Safety
 

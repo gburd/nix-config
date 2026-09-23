@@ -15,6 +15,7 @@ let
     "mcp-config.md" = ./files/steering/mcp-config.md;
     "postgresql-workflow.md" = ./files/steering/postgresql-workflow.md;
     "voice.md" = ./files/steering/voice.md;
+    "prose-mechanics.md" = ./files/steering/prose-mechanics.md;
   };
 
   # Per-project context scoping. The GLOBAL Claude CLAUDE.md should only
@@ -31,6 +32,7 @@ let
     "tools.md"
     "opinions.md"
     "voice.md"
+    "prose-mechanics.md"
     "mcp-config.md"
   ];
   domainSteering = {
