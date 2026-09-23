@@ -42,6 +42,7 @@
       entr # Modern Unix `watch`
       fd # Modern Unix `find`
       ffmpeg-headless # Terminal video encoder
+      fossil # Self-contained DVCS (repo, wiki, tickets, CI in one SQLite file)
       # treehouse (Kun Chen): reusable git-worktree pool for parallel agents
       # — worktrees preserved with deps + build cache intact. Go binary from
       # the treehouse flake.
@@ -85,6 +86,7 @@
       nyancat # Terminal rainbow spewing feline
       optipng # Terminal PNG optimizer
       page # Modern pager
+      pijul # Patch-based DVCS (sound theory of patches; commutative merges)
       procs # Modern Unix `ps`
       quilt # Terminal patch manager
       ripgrep # Modern Unix `grep`
