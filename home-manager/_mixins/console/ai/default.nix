@@ -171,6 +171,83 @@
     function maki;   env -u LD_PRELOAD (command -s maki) $argv;   end
   '';
 
+  # terax writes its own ~/.config/fish/conf.d/terax.fish on first run, and
+  # that generated copy is buggy: __terax_urlencode_path ends with
+  # `string join '/' $out`, with no `--` end-of-options separator. Any path
+  # component that starts with a dash is then parsed as a flag, so the prompt
+  # breaks in such a directory with:
+  #
+  #   string join: --home-gburd-ws-osv--: unknown option
+  #
+  # Pi's own session directories are named exactly that way
+  # (~/.pi/agent/sessions/--home-gburd-ws-osv--), so this fires routinely.
+  # Note that the same function already passes `--` correctly to `string split`
+  # and `string escape`; only the join was missed.
+  #
+  # Own the file here with `--` added, so the fix survives and terax cannot
+  # silently reinstate the broken version. The rest is faithful to what terax
+  # generates: OSC 7 for cwd reporting and OSC 133 A/B/C/D for prompt and
+  # command boundaries.
+  home.file.".config/fish/conf.d/terax.fish".text = ''
+    # terax-shell-integration (fish)
+    # Emits OSC 7 (cwd) + OSC 133 A/B/C/D so the host tracks cwd and prompt
+    # boundaries without re-parsing the prompt.
+    #
+    # Managed by home-manager/_mixins/console/ai/default.nix -- do not edit.
+    # terax regenerates this file on first run; the managed copy fixes a
+    # `string join` quoting bug in its version.
+
+    if set -q __TERAX_HOOKS_LOADED
+        exit 0
+    end
+    set -g __TERAX_HOOKS_LOADED 1
+
+    set -g __TERAX_HOST (uname -n 2>/dev/null; or echo localhost)
+
+    # URL-encode a path keeping `/` intact so it stays valid inside file://.
+    function __terax_urlencode_path
+        set -l parts (string split '/' -- $argv[1])
+        set -l out
+        for p in $parts
+            if test -n "$p"
+                set out $out (string escape --style=url -- $p)
+            else
+                set out $out ""
+            end
+        end
+        # The `--` is the fix: without it a component beginning with a dash
+        # (e.g. pi's --home-gburd-ws-osv-- session dirs) is read as a flag.
+        string join -- '/' $out
+    end
+
+    function __terax_restore_status
+        return $argv[1]
+    end
+
+    if functions -q fish_prompt
+        functions -c fish_prompt __terax_user_prompt
+    end
+
+    function fish_prompt
+        set -l __terax_status $status
+        printf '\e]133;D;%d\e\\' $__terax_status
+        printf '\e]7;file://%s%s\e\\' "$__TERAX_HOST" (__terax_urlencode_path "$PWD")
+        printf '\e]133;A\e\\'
+        __terax_restore_status $__terax_status
+        if functions -q __terax_user_prompt
+            __terax_user_prompt
+        else
+            printf '%s > ' (prompt_pwd)
+        end
+        printf '\e]133;B\e\\'
+    end
+
+    function __terax_preexec --on-event fish_preexec
+        set -l cmd (string replace -ra '[\x00-\x1f\x7f]' ' ' -- "$argv")
+        printf '\e]133;C;%s\e\\' (string sub -l 256 -- "$cmd")
+    end
+  '';
+
   home.packages = with pkgs; [
     awscli2
     aws-vault

@@ -357,6 +357,9 @@ in
       unstable.lmstudio # LM Studio (unstable: near-current; stable is stuck on 0.4.1)
       # maki installed (wrapped) by modules/home-manager/ai/maki.nix
       terax-ai # AI assistant UI (Bedrock support pending upstream issue #138)
+      # NOTE: terax writes ~/.config/fish/conf.d/terax.fish itself on first
+      # run, and its generated copy has a bug (see the managed replacement
+      # below, which this config now owns).
 
       # PostgreSQL community
       pan # GTK NNTP newsreader (pg.ddx.io PostgreSQL mailing lists)
