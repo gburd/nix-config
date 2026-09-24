@@ -7,13 +7,58 @@ return {
     -- below); without this pin a plugin update silently breaks the whole
     -- spec. `master` keeps the configs API.
     branch = 'master',
-    -- :TSUpdate recompiles parsers against the running neovim. Stale `.so`
-    -- parsers compiled for an OLDER neovim ABI cause
-    -- `attempt to call method 'range' (a nil value)` crashes after a neovim
-    -- upgrade. If that ever recurs after bumping neovim, run :TSUpdate (or
-    -- wipe ~/.local/share/nvim/lazy/nvim-treesitter/parser/*.so and reopen).
+    -- :TSUpdate recompiles parsers against the running neovim.
     build = ':TSUpdate',
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
+
+    -- Neovim 0.12 ships its own treesitter queries for c, lua, markdown,
+    -- markdown_inline, query, vim and vimdoc, and nvim-treesitter's master
+    -- branch does not support 0.12 (its README says so outright: "Neovim 0.10
+    -- or 0.11 (Neovim 0.12 is not supported)"). Where both provide a query the
+    -- plugin's copy sits earlier on the runtimepath and wins.
+    --
+    -- For markdown that combination is broken. The plugin's injections.scm
+    -- captures the fence language as @_lang and resolves it with its own
+    -- (#set-lang-from-info-string!) directive, while 0.12's query uses the
+    -- standard @injection.language capture. When the directive is not applied
+    -- the capture yields no node, and highlighting a fenced code block dies
+    -- with "attempt to call method 'range' (a nil value)" from
+    -- vim/treesitter.lua:get_range. Verified by isolation: plain prose and
+    -- inline code are fine, only fenced blocks fail.
+    --
+    -- The only lever that actually works is removing the plugin's query files
+    -- for the languages the runtime already owns. Two other approaches were
+    -- tried and measured as ineffective: prepending VIMRUNTIME to the
+    -- runtimepath in init() (lazy.nvim adds the plugin path afterwards), and
+    -- re-registering the runtime text with vim.treesitter.query.set() in
+    -- config() (query.get_files still resolved the plugin's copy).
+    --
+    -- So prune them here. This runs at startup, is idempotent, and re-applies
+    -- after a plugin update reinstates the files. The plugin is kept for what
+    -- it is still good for: compiling and updating parsers, since 0.12 bundles
+    -- none.
+    init = function()
+      -- ONLY markdown/markdown_inline. Pruning every language the runtime
+      -- ships was measured to break lua and vim: the runtime's newer queries
+      -- reference node types the plugin's older compiled parsers do not have
+      -- ("Invalid field name 'operator'", "Invalid node type 'tab'"). Queries
+      -- and parsers have to come from the same generation, and for these two
+      -- languages the plugin supplies both consistently. Markdown is the
+      -- exception because there the plugin's own query is the thing that is
+      -- broken under 0.12.
+      local runtime_owned = { 'markdown', 'markdown_inline' }
+      local base = vim.fn.stdpath 'data' .. '/lazy/nvim-treesitter/queries/'
+      for _, lang in ipairs(runtime_owned) do
+        -- Only prune when the runtime genuinely provides this language, so a
+        -- future neovim that drops a query does not leave us with none.
+        if vim.uv.fs_stat(vim.env.VIMRUNTIME .. '/queries/' .. lang) then
+          local dir = base .. lang
+          if vim.uv.fs_stat(dir) then
+            vim.fn.delete(dir, 'rf')
+          end
+        end
+      end
+    end,
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
       ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },

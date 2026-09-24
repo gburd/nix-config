@@ -10,6 +10,17 @@
       ../modules/home-manager/ai
       ./_mixins/console/ai
       ../home-manager/_mixins/emacs
+      # Narrow import of the shared neomutt config. The rest of
+      # home-manager/_mixins/console is NOT imported on darwin (that tree
+      # assumes Linux in places), so this is deliberately just the mail client
+      # rather than the whole console mixin.
+      #
+      # NB: the Proton account in that config talks to imap://127.0.0.1:1143,
+      # the local Proton Bridge, and reads credentials from
+      # ~/.config/sops-nix/secrets/email/proton/*. Neither the bridge nor those
+      # secrets are set up on this host yet, so neomutt installs and runs but
+      # cannot reach a mailbox until they are.
+      ../home-manager/_mixins/console/neomutt
     ];
 
     home.username = lib.mkForce username;
