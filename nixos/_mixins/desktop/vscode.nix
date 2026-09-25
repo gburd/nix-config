@@ -297,7 +297,11 @@ in
 
   environment.systemPackages = with pkgs; [
     (vscode-with-extensions.override {
-      inherit (trunk) vscode;
+      # From unstable, the same channel as the extensions below, so the editor
+      # and its extensions stay on one nixpkgs. This used nixpkgs-trunk
+      # (master), which was dropped as an input; unstable carries a current
+      # vscode (1.137.0 at the time, vs 1.119.0 on the stable channel).
+      inherit (unstable) vscode;
       vscodeExtensions = with unstable.vscode-extensions;
         # globally enabled extensions
         getListIf g.cpp [ ms-vscode.cpptools ms-vscode.cpptools-extension-pack ms-vscode.cmake-tools ms-vscode.makefile-tools ]

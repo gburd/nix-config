@@ -21,6 +21,7 @@ in
     ../../../desktop/sublime-merge.nix
     ../../../desktop/sublime-license.nix
     ../../../desktop/proton-apps.nix
+    ../../../desktop/protonvpn.nix
     ../../../desktop/typora.nix
     ../../../desktop/wezterm.nix
     ../../../desktop/voice.nix

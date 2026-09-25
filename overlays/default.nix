@@ -91,10 +91,4 @@
       config.allowUnfree = true;
     };
   };
-  trunk-packages = final: _prev: {
-    trunk = import inputs.nixpkgs-trunk {
-      inherit (final.stdenv.hostPlatform) system;
-      config.allowUnfree = true;
-    };
-  };
 }

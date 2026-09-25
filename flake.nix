@@ -17,7 +17,6 @@
     # You can access packages and modules from different nixpkgs revs at the
     # same time. See 'unstable-packages' overlay in 'overlays/default.nix'.
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-trunk.url = "github:nixos/nixpkgs/master";
 
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
@@ -26,8 +25,6 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     # Chaotic's Nyx provides many additional packages like NordVPN
-    chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
-    chaotic.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-formatter-pack.url = "github:Gerschtli/nix-formatter-pack";
     nix-formatter-pack.inputs.nixpkgs.follows = "nixpkgs";
@@ -384,8 +381,7 @@
       # (was never wired into outputs; release-23.11 dragged in a stale
       # nixpkgs + home-manager chain).
 
-      # Devshell for bootstrapping; acessible via 'nix develop' or 'nix-shell' (legacy)
-      #inherit (devshells) devShells;
+      # Devshell for bootstrapping; accessible via 'nix develop' or 'nix-shell' (legacy)
       devShells = libx.forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
         in import ./shell.nix { inherit pkgs; }
