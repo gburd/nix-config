@@ -46,7 +46,20 @@
     # were also renamed into settings.Resolve.DNSOverTLS/FallbackDNS. This is
     # the [Resolve] section of resolved.conf.
     settings.Resolve = {
-      DNSOverTLS = "true";
+      # "opportunistic", not "true"/strict. Strict DNS-over-TLS refuses to fall
+      # back to plaintext, which is the right posture on a trusted network but
+      # makes captive portals (hotel, airplane, conference wifi) impossible to
+      # join: a portal works by hijacking plaintext DNS on port 53 to point you
+      # at its sign-in page, and it cannot touch an encrypted session on 853.
+      # Under strict mode the hijack never lands, so lookups just fail and no
+      # login page ever appears.
+      #
+      # Opportunistic still uses DoT to NextDNS wherever DoT actually works,
+      # which is the normal case. The trade is real and deliberate: on a
+      # hostile network DNS can degrade to cleartext instead of failing closed.
+      # That window is the couple of minutes before you authenticate, and the
+      # alternative was a laptop that cannot join public wifi at all.
+      DNSOverTLS = "opportunistic";
       FallbackDNS = [
         "1.1.1.1"
         "8.8.8.8"
@@ -61,13 +74,34 @@
       Domains = "~local";
     };
   };
-  # Tell NetworkManager to use systemd-resolved, but don't let per-link
-  # DHCP DNS override the global NextDNS config in resolved.conf
+
+  # NetworkManager connectivity checking. Without a URI to probe, NM cannot
+  # tell "connected" from "connected but behind a portal": it reported
+  # connectivity=full on a network that had not been joined yet, so GNOME was
+  # never told to raise the sign-in window. With this set, NM fetches the URI,
+  # sees a redirect or wrong body, reports connectivity=portal, and GNOME
+  # offers the captive-portal login.
+  #
+  # NB: the probe must be plain HTTP. An HTTPS probe cannot be intercepted by a
+  # portal, which defeats the point. This endpoint exists for exactly this
+  # purpose and returns a known short body.
+  # Tell NetworkManager to use systemd-resolved. DHCP-provided DNS is still
+  # ignored so NextDNS stays authoritative on ordinary networks; the portal case
+  # is handled by opportunistic DoT plus the connectivity check above rather
+  # than by trusting whatever resolver the network hands out.
   networking.networkmanager.dns = "systemd-resolved";
   networking.networkmanager.settings = {
     connection = {
       "ipv4.ignore-auto-dns" = true;
       "ipv6.ignore-auto-dns" = true;
+    };
+    # NB: there is no networking.networkmanager.connectivity option in NixOS;
+    # this is NetworkManager's own [connectivity] .conf section, passed through
+    # via settings (same mechanism as [connection] above).
+    connectivity = {
+      uri = "http://networkcheck.kde.org/";
+      response = "OK";
+      interval = 300;
     };
   };
 
