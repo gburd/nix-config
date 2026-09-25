@@ -26,8 +26,12 @@ in
 lib.mkIf (tokenFile != null) {
   # Written at activation, not via home.file: home.file would place the token
   # in the Nix store, which is world-readable.
+  # Must run AFTER sops-nix, not merely after writeBoundary: sops-nix is what
+  # decrypts tokenFile, and ordering only on writeBoundary let this step read a
+  # STALE token (observed live after rotating the secret -- credentials.toml
+  # kept the old value while the decrypted file already had the new one).
   home.activation.cargoCredentials =
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    lib.hm.dag.entryAfter [ "writeBoundary" "sops-nix" ] ''
       if [ -r ${tokenFile} ]; then
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/mkdir -p "$HOME/.cargo"
         $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m600 /dev/null \

@@ -12,6 +12,7 @@ let
     "tools.md" = ./files/steering/tools.md;
     "opinions.md" = ./files/steering/opinions.md;
     "aws-builder.md" = ./files/steering/aws-builder.md;
+    "aws-burner-accounts.md" = ./files/steering/aws-burner-accounts.md;
     "mcp-config.md" = ./files/steering/mcp-config.md;
     "postgresql-workflow.md" = ./files/steering/postgresql-workflow.md;
     "voice.md" = ./files/steering/voice.md;
@@ -37,7 +38,7 @@ let
   ];
   domainSteering = {
     postgresql = [ "postgresql-workflow.md" ];
-    aws = [ "aws-builder.md" ];
+    aws = [ "aws-builder.md" "aws-burner-accounts.md" ];
     rust = [ "rust-conventions.md" ];
     c = [ "c-conventions.md" ];
   };
