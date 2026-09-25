@@ -137,41 +137,6 @@ in
     ];
   };
 
-  mkSdImage = { hostname, username, platform ? "armv7l-linux" }: inputs.nixos-generators.nixosGenerate {
-    specialArgs = {
-      inherit self inputs outputs hostname username platform stateVersion sshMatrix;
-    };
-
-    pkgs = inputs.nixpkgs.legacyPackages.${platform};
-    format =
-      if platform == "armv7l-linux"
-      then "sd-armv7l-installer"
-      else "sd-aarch64-installer";
-
-    modules = [
-      ../nixos
-    ];
-  };
-
-  mkRawImage = { hostname, username, systemType, desktop ? null, platform ? "x86_64-linux" }: inputs.nixos-generators.nixosGenerate {
-    specialArgs = {
-      inherit self inputs outputs desktop hostname username stateVersion systemType sshMatrix;
-    };
-
-    pkgs = inputs.nixpkgs.legacyPackages.${platform};
-    format =
-      if platform == "x86_64-linux"
-      then "raw-efi"
-      else "raw";
-
-    modules = [
-      ../nixos
-      {
-        boot.kernelParams = [ "console=tty0" ]; # enable physical display tty, not serial port
-      }
-    ];
-  };
-
   forAllSystems = inputs.nixpkgs.lib.genAttrs [
     "armv7l-linux" # 32-bit ARM Linux
     "aarch64-linux" # 64-bit ARM Linux

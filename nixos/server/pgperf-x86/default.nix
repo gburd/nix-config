@@ -1,7 +1,8 @@
 # pgperf-x86 — EC2 x86_64 PostgreSQL performance-test host.
 # Target: the fastest current x86 metal/large instance (e.g. r8i.metal-48xl
 # / m7i.metal-48xl) for at-scale DB benchmarks. Managed via Colmena (deploy)
-# and built as an AMI via nixos-generators (mkEc2Image, platform x86_64).
+# and built as an AMI with `nixos-rebuild build-image --image-variant amazon`
+# (x86_64; the output is system.build.images.amazon).
 { modulesPath, ... }:
 {
   imports = [

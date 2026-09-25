@@ -1,7 +1,8 @@
 # pgperf-arm — EC2 Graviton (aarch64) PostgreSQL performance-test host.
 # Target: the fastest current Graviton metal/large instance (e.g. r8g.metal
 # / r8g.48xlarge) for at-scale DB benchmarks. Managed via Colmena (deploy)
-# and built as an AMI via nixos-generators (mkEc2Image, platform aarch64).
+# and built as an AMI with `nixos-rebuild build-image --image-variant amazon`
+# (aarch64; the output is system.build.images.amazon).
 { modulesPath, ... }:
 {
   imports = [

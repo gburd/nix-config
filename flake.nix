@@ -82,12 +82,6 @@
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    # nixos-generators for sdcard and raw disk install generation.
-    # Upstream nix-community (the tcarrio fork was ~930d stale; upstream is
-    # actively maintained and provides the same nixosGenerate interface).
-    nixos-generators.url = "github:nix-community/nixos-generators";
-    nixos-generators.inputs.nixpkgs.follows = "nixpkgs-unstable";
-
     sops-nix.url = "github:mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -323,7 +317,7 @@
         #      --build-host  ${USERNAME}@${HOST}.${TAILNET}
 
         # EC2 PostgreSQL performance-test hosts (managed via Colmena; AMIs
-        # built via packages.<platform>.ec2-pgperf-{arm,x86} below).
+        # built with `nixos-rebuild build-image --image-variant amazon`).
         pgperf-arm = libx.mkHost { systemType = "server"; hostname = "pgperf-arm"; username = "gburd"; };
         pgperf-x86 = libx.mkHost { systemType = "server"; hostname = "pgperf-x86"; username = "gburd"; };
 

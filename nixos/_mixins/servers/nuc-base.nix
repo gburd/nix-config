@@ -11,7 +11,8 @@
     ../../_mixins/virt
   ];
 
-  # based on nixos-generators raw + raw-efi formats, see linked references
+  # Based on the (now archived) nixos-generators raw + raw-efi formats; the
+  # pinned links below still resolve.
   fileSystems = {
     # https://github.com/nix-community/nixos-generators/blob/c1590ae68664e11c1acd03ec76c193a5c151a657/formats/raw.nix#L9
     "/" = {
