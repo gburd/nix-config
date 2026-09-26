@@ -79,9 +79,23 @@ export default async function (pi: ExtensionAPI) {
 
   let payload: { data: Array<{ id: string }> };
   try {
-    const resp = await fetch(`${LITELLM_URL}/models`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
+    // Wait for the proxy if it is down. A home-manager switch restarts
+    // litellm.service and it takes ~45s to come back; a pi started in that
+    // window used to skip registration and report "No models available" /
+    // "No API key found" for the rest of the session. 20 x 3s covers it.
+    let resp: Response | null = null;
+    for (let attempt = 0; attempt < 20; attempt++) {
+      try {
+        resp = await fetch(`${LITELLM_URL}/models`, {
+          headers: { Authorization: `Bearer ${key}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        break;
+      } catch {
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
+    if (!resp) throw new Error("proxy not reachable after 60s");
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     payload = (await resp.json()) as { data: Array<{ id: string }> };
   } catch (err) {
