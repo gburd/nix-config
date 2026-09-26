@@ -30,6 +30,18 @@ let
       enabled = true;
       reserveTokens = 16384;
       keepRecentTokens = 20000;
+      # Pi compacts once context > window - reserveTokens, and its summary
+      # request re-sends that whole history. With a 16K reserve on a 1M window
+      # the threshold sat at 98.4%; a pgesq session on arnold crossed it after
+      # a single large tool result, the summary request itself was then
+      # 1,002,641 tokens, and Bedrock rejected every retry. 150K of headroom
+      # (compact at ~85%) leaves room for one more big turn plus the summary
+      # prompt. Keyed per model because the proxy also serves 128K-256K models,
+      # where a 150K reserve would mean compacting constantly.
+      modelOverrides = lib.genAttrs
+        (map (m: "litellm/${m.name}")
+          (builtins.filter (m: (m.maxInput or 0) >= 1000000) config.programs.ai.litellm.models))
+        (_: { reserveTokens = 150000; });
     };
     retry = {
       enabled = true;

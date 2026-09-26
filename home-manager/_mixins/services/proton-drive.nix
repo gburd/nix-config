@@ -43,6 +43,14 @@ in
         Description = "Mount Proton Drive via rclone (native protondrive backend)";
         After = [ "network-online.target" ];
         Wants = [ "network-online.target" ];
+        # Every start is a fresh Proton login. At RestartSec=30s this made
+        # thousands of logins a day, which earned HTTP 429 (retry in 3601s)
+        # and then CAPTCHA (Code=9001) that rclone cannot answer; the retries
+        # themselves kept the account rate-limited. Allow 3 starts per 6h,
+        # then leave the unit failed until `systemctl --user reset-failed
+        # proton-drive-mount && systemctl --user start proton-drive-mount`.
+        StartLimitIntervalSec = 6 * 3600;
+        StartLimitBurst = 3;
       };
 
       Service = {
@@ -74,7 +82,8 @@ in
         ExecStart = "${pkgs.rclone}/bin/rclone mount protondrive: ${c.mountPoint} --config ${conf} --vfs-cache-mode writes --dir-cache-time 30s";
         ExecStop = "${pkgs.fuse}/bin/fusermount -u ${c.mountPoint}";
         Restart = "on-failure";
-        RestartSec = "30s";
+        # Proton's 429 asks for an hour; retrying sooner only extends it.
+        RestartSec = "1h";
 
         # --- sandbox (FUSE needs the setuid fusermount, so no
         # NoNewPrivileges/RestrictSUIDSGID; --allow-other not used so no

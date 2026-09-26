@@ -10,7 +10,6 @@
     # Email and productivity services (CLI / daemon)
     ../../../services/protonmail-bridge.nix
     ../../../services/vdirsyncer.nix
-    ../../../services/proton-drive.nix
     ../../../console/khal.nix
     # SSH key management with rotation
     (inputs.self + "/modules/home-manager/ssh-management")
@@ -75,10 +74,6 @@
       "calendar/apple/icloud/pass" = { };
       "calendar/ms/outlook/user" = { };
       "calendar/ms/outlook/pass" = { };
-
-      # Proton Drive credentials (nested structure)
-      "drive/proton/user" = { };
-      "drive/proton/pass" = { };
     };
   };
 
@@ -90,9 +85,10 @@
   # (Sublime Merge is a GUI app; meh is headless, so this is intentionally
   # a no-op: the sops secret is no longer declared on this host.)
 
-  # Proton Drive (rclone native protondrive backend; on-demand FUSE mount,
-  # fine on a headless host — it's just a filesystem).
-  services.protonDrive.enable = true;
+  # No Proton Drive here. rclone's protondrive backend can pass a 2FA code on
+  # the command line (--protondrive-2fa), but Proton answers repeated logins
+  # with a CAPTCHA (Code=9001) that only a browser can solve, and a headless
+  # host has no way to clear it. meh sat in that state from August on.
 
   # SSH key management with rotation support (replaces 1Password SSH agent)
   services.ssh-management = {
