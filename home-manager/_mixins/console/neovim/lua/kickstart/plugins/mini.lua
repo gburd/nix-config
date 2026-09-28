@@ -8,7 +8,37 @@ return {
       --  - va)  - [V]isually select [A]round [)]paren
       --  - yinq - [Y]ank [I]nside [N]ext [Q]uote
       --  - ci'  - [C]hange [I]nside [']quote
-      require('mini.ai').setup { n_lines = 500 }
+      -- `ac` / `ic`: the whole comment under the cursor, found by asking the
+      -- treesitter parser for the enclosing comment node. `gwac` reflows
+      -- just that comment; `gwap` also takes any code that directly
+      -- follows the comment, because a paragraph ends only at a blank line.
+      -- Linewise either way, so gw sees whole lines. Falls back to nothing
+      -- (no selection) outside a comment or in a buffer without a parser.
+      local function comment_block()
+        -- get_node() reads the last parse; force one so this works on a
+        -- freshly opened buffer before highlighting has run.
+        local okp, parser = pcall(vim.treesitter.get_parser)
+        if okp and parser then
+          parser:parse()
+        end
+        local ok, node = pcall(vim.treesitter.get_node)
+        while ok and node and node:type() ~= 'comment' do
+          node = node:parent()
+        end
+        if not (ok and node) then
+          return nil
+        end
+        local srow, _, erow = node:range()
+        return {
+          from = { line = srow + 1, col = 1 },
+          to = { line = erow + 1, col = math.max(vim.fn.getline(erow + 1):len(), 1) },
+          vis_mode = 'V',
+        }
+      end
+      require('mini.ai').setup {
+        n_lines = 500,
+        custom_textobjects = { c = comment_block },
+      }
 
       -- Add/delete/replace surroundings (brackets, quotes, etc.)
       --

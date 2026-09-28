@@ -71,7 +71,15 @@ return {
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
         additional_vim_regex_highlighting = { 'ruby' },
       },
-      indent = { enable = true, disable = { 'ruby' } },
+      -- c and cpp: nvim-treesitter master's C indents.scm uses its
+      -- #not-kind-eq? predicate, whose handler reads match[id] as a single
+      -- node. Neovim 0.12 removed the `all = false` option and now always
+      -- passes a list, so the handler dies on `node:type()`, the indent
+      -- expression errors, and Vim takes that as indent 0. gw/gq then
+      -- reflowed PostgreSQL block comments to column 0 and flattened
+      -- adjacent code. cpp inherits the C query. Vim's own cindent is
+      -- right for C anyway.
+      indent = { enable = true, disable = { 'ruby', 'c', 'cpp' } },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:

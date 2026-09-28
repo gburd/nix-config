@@ -77,4 +77,47 @@ vim.o.scrolloff = 10
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.o.hlsearch = true
 
+-- C: wrap and indent the PostgreSQL way. textwidth 79 matches pgindent's
+-- comment width; cinoptions (0 aligns continuation lines with the open
+-- paren, as in src/tools/editors/vim.samples. Tab width comes from each
+-- project's .editorconfig (PostgreSQL's sets 4).
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('c-postgres-style', { clear = true }),
+  pattern = { 'c', 'cpp' },
+  callback = function()
+    vim.opt_local.textwidth = 79
+    vim.opt_local.cinoptions = '(0'
+  end,
+})
+
+-- Patch files. Neovim already highlights them: *.patch from git
+-- format-patch opens as `gitsendemail` (mail headers plus the diff
+-- syntax), a plain *.diff as `diff`. Add folding from the diff
+-- treesitter parser, one level per file and one per hunk, starting
+-- open: zc folds the hunk under the cursor, zM collapses everything to
+-- a file list, zR opens it all again.
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('patch-folding', { clear = true }),
+  pattern = { 'diff', 'gitsendemail' },
+  callback = function(ev)
+    if not pcall(vim.treesitter.start, ev.buf, 'diff') then
+      return
+    end
+    -- gitsendemail keeps its own syntax for the mail headers.
+    if vim.bo[ev.buf].filetype == 'gitsendemail' then
+      vim.bo[ev.buf].syntax = 'gitsendemail'
+    end
+    vim.wo.foldmethod = 'expr'
+    vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+    vim.wo.foldlevel = 99
+  end,
+})
+
+-- A patch series saved with `git format-patch --stdout > x.mbox` has
+-- no filetype by default.
+vim.filetype.add { extension = { mbox = 'gitsendemail' } }
+-- Treesitter picks a parser from the filetype, and gitsendemail has
+-- none; without this the fold code above finds no parser and no folds.
+vim.treesitter.language.register('diff', 'gitsendemail')
+
 -- vim: ts=2 sts=2 sw=2 et
