@@ -83,8 +83,20 @@ sh:/mnt/c/**/Templates
 sh:/mnt/c/**/Start Menu
 sh:/mnt/c/**/My Documents
 
-# ---- OneDrive placeholders (cloud-backed already) ------------------------
+# ---- storage/sync service folders (the service already keeps the data) -
+# OneDrive covers "OneDrive - <Org>" business folders too.
 sh:/mnt/c/**/OneDrive
+sh:/mnt/c/**/OneDrive - *
+sh:/mnt/c/**/Dropbox
+sh:/mnt/c/**/Google Drive
+sh:/mnt/c/**/iCloudDrive
+sh:/mnt/c/**/iCloud Drive
+sh:/mnt/c/**/Box
+sh:/mnt/c/**/Proton Drive
+sh:/mnt/c/**/Keybase
+sh:/mnt/c/**/MEGA
+sh:/mnt/c/**/Nextcloud
+sh:/mnt/c/**/pCloud Drive
 
 # ---- agent scratch we archived (kept once, not forever) ------------------
 # _agent_scratch is fine to keep (small); no exclude.

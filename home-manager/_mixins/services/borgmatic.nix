@@ -22,6 +22,31 @@ let
     arnold = { onCalendar = "05:00"; randomizedDelaySec = "15min"; };
   }.${hostname} or { onCalendar = "02:30"; randomizedDelaySec = "30min"; };
 
+  # Folders owned by a storage or sync service. The service already keeps
+  # the data, so a copy here only duplicates it, and a FUSE mount such as
+  # KBFS can also fail mid-read (floki and meh logged EIO on a Keybase
+  # folder every night). Mount points the config defines come from their
+  # modules; the rest are each client's default folder and match nothing
+  # on a host without that client.
+  storageServiceExcludes =
+    let h = config.home.homeDirectory; in
+    map (d: "pp:${d}") ([
+      "${h}/${config.services.kbfs.mountPoint or "Keybase"}"
+      (config.services.protonDrive.mountPoint or "${h}/ProtonDrive")
+    ] ++ map (d: "${h}/${d}") [
+      "Dropbox" # Dropbox, Maestral
+      "OneDrive" # onedrive, onedriver
+      "Nextcloud"
+      "ownCloud"
+      "Google Drive"
+      "Insync"
+      "pCloudDrive"
+      "MEGA"
+      "Box"
+      "Seafile"
+      "Sync" # Syncthing's default folder
+    ]);
+
   # rubo77/rsync-homedir-excludes — vendored snapshot of
   # https://raw.githubusercontent.com/rubo77/rsync-homedir-excludes/master/rsync-homedir-excludes.txt
   # sha256: 3f73592de0903df36a30842914b3a82af94a666c1da4bce9258195b3b910fb77
@@ -179,7 +204,7 @@ let
         "sh:${h}/ws/**/.mypy_cache"
         "sh:${h}/ws/**/.tox"
         "sh:${h}/ws/**/.direnv"
-      ] ++ rubo77ExcludePatterns;
+      ] ++ storageServiceExcludes ++ rubo77ExcludePatterns;
     exclude_if_present = [ ".nobackup" ".borgignore" ];
     keep_within = "2d";
     keep_daily = 7;
