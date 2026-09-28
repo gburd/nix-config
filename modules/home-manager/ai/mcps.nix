@@ -105,6 +105,22 @@ let
   ### MCP Server configuration file ###
   mcpJsonText = builtins.toJSON {
     inherit mcpServers;
+    # Trust the MCP servers a project's own ./.mcp.json declares.
+    # pi-mcp-adapter defaults this to "ask" and blocks every project-scoped
+    # server until it is approved in an interactive session, so `pi -p` runs
+    # and sub-agents silently lost the postgresq server in every PostgreSQL
+    # project ("blocked: project server approval required").
+    #
+    # This goes here, not in ~/.mcp.json: the adapter only honours the key in
+    # the user-global config it actually reads, which for Pi is
+    # ~/.config/mcp/mcp.json (see the targets.pi description below), and it
+    # warns and ignores the key when a project file sets it. Keeping it out of
+    # coreMcpJsonText also leaves Kiro's schema-validated
+    # ~/.kiro/settings/mcp.json untouched.
+    #
+    # The project files this trusts are written by the project-mcp helper from
+    # this module's own server definitions.
+    settings.projectServers = "allow";
   };
 
   # Embedding env for zg (both the CLI and the MCP-spawned server must agree;

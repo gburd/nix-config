@@ -165,16 +165,22 @@ def main() -> int:
         return 1
     db = sqlite3.connect(args.db, timeout=30)
     db.row_factory = sqlite3.Row
-    # memelord (Turso/libSQL) keeps this DB in WAL mode and may have it open
-    # concurrently. Match its journal mode + wait on locks instead of failing
-    # or racing it -- a plain rollback-journal connection fighting libSQL's
-    # WAL is a corruption source ("short read on WAL frame" on memelord's next
-    # open). busy_timeout lets us block on its writes rather than tearing the
-    # WAL; synchronous=FULL avoids leaving a half-written frame if we're
-    # interrupted (reboot/switch mid-run).
+    # memelord (Turso/libSQL) owns this database and keeps it in ITS OWN WAL
+    # format, indexed by a `-tshm` file rather than sqlite's `-shm`. Python's
+    # stock sqlite3 cannot read or write that WAL.
+    #
+    # An earlier attempt to cooperate with it (journal_mode=WAL plus
+    # wal_checkpoint(TRUNCATE), commit ec34e57) made things worse: the
+    # checkpoint emptied the WAL file while libSQL's -tshm index still
+    # referenced frames inside it, so memelord's next open died with "short
+    # read on WAL frame ... got 0" and that project silently lost its memory
+    # tools. Eight projects were in that state, every one last written at the
+    # rollup's Monday 00:00 run.
+    #
+    # So do not touch the journal at all: no journal_mode, no checkpoint.
+    # libSQL folds its own WAL back in on its next open. busy_timeout still
+    # makes concurrent writes wait rather than fail.
     db.execute("PRAGMA busy_timeout=30000")
-    db.execute("PRAGMA journal_mode=WAL")
-    db.execute("PRAGMA synchronous=FULL")
     ensure_schema(db)
 
     if args.show:
@@ -234,13 +240,6 @@ def main() -> int:
             written += 1
     if not args.dry_run:
         db.commit()
-        # Fold our writes back into the main DB and shrink the WAL, so we
-        # never leave a large/half-written WAL for memelord to short-read on
-        # its next open (the failure this hardening prevents).
-        try:
-            db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        except sqlite3.OperationalError:
-            pass  # memelord holds a read lock -> checkpoint deferred, harmless
         print(f"wrote {written} L1 summaries to {args.db} (rollup_summaries table)")
     db.close()
     return 0
