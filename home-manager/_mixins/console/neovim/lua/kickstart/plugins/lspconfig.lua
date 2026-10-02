@@ -252,6 +252,11 @@ return {
           -- both C comments and gitcommit buffers.
           settings = {
             ['harper-ls'] = {
+              -- Point at the dictionary generated in
+              -- home-manager/_mixins/console/neovim/default.nix (pgindent's
+              -- typedefs.list plus personal words). harper did NOT pick this
+              -- up from its default location, so name it explicitly.
+              userDictPath = vim.fn.expand '~/.config/harper-ls/dictionary.txt',
               -- Check only the parts of a chunk that are actually English,
               -- skipping tokens that don't look like prose. This alone
               -- silences commit hashes and most snake_case identifiers.

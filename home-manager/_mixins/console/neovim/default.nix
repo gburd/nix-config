@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   programs.neovim = {
     enable = true;
@@ -76,6 +76,40 @@
     "nvim/init.lua".source = ./init.lua;
     "nvim/lua".source = ./lua;
   };
+  # harper-ls user dictionary. harper reads prose in comments, docs and
+  # commit messages, so PostgreSQL type names quoted in a comment
+  # (HeapTuple, TupleDesc, BufferAccessStrategy, ...) were reported as
+  # misspellings. Seed the dictionary from pgindent's typedefs.list, which
+  # is exactly the set of type names that appear in PG prose, plus a few
+  # personal words.
+  #
+  # Case: harper derives the capitalised form from a lowercase entry, so a
+  # single lowercase "burd" covers both "Greg Burd" and "burd.me". Listing
+  # both forms is worse than useless -- with "burd" followed by "Burd" the
+  # word is flagged again, and "Burd" alone never matches (measured). Add
+  # lowercase unless a word is only ever written capitalised.
+  #
+  # To refresh the vendored list (kept in sync by hand, like the rubo77
+  # borgmatic excludes):
+  #   cp ~/ws/postgres/master/src/tools/pgindent/typedefs.list \
+  #     home-manager/_mixins/console/neovim/harper-dictionary-pgindent.txt
+  # Vendored at postgres ddce1da5b1b (2026-09-15), 4572 entries,
+  # sha256 83440bf71e27dfc819fdca5d7c14c666c4d08f1a3f87f4c728c7a276957204cd
+  #
+  # Editors read this via harper's userDictPath (set in
+  # lua/kickstart/plugins/lspconfig.lua), so the "add to dictionary" code
+  # action appends here too -- which means this file is REPLACED on every
+  # switch and hand-added words are lost. Add durable words to
+  # extraHarperWords below instead.
+  xdg.configFile."harper-ls/dictionary.txt".text =
+    let
+      pgindentTypedefs = builtins.readFile ./harper-dictionary-pgindent.txt;
+      extraHarperWords = [
+        "burd" # surname; also covers "Burd" and burd.me
+      ];
+    in
+    pgindentTypedefs + lib.concatMapStrings (w: w + "\n") extraHarperWords;
+
   # Global markdownlint config (nvim-lint runs markdownlint on .md buffers).
   # markdownlint's prose defaults are noisy: MD010 flags every leading hard
   # tab ("Hard tabs [Column: 1]"), MD013 flags long lines, MD041 demands an
