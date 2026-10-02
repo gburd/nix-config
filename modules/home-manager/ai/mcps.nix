@@ -178,6 +178,35 @@ let
       args = [ "-y" "@upstash/context7-mcp@latest" ];
     };
   })
+    // (optionalAttrs cfg.servers.ui-ux-pro.enable {
+    # Two entries over the SAME upstream server (redf0x1/ui-ux-pro-mcp, MIT,
+    # ~1500 curated design resources served from local CSVs -- no network
+    # calls, no API key). Both are heavy/opt-in per project.
+    #
+    # design-guidelines: the framework-neutral subset, for native UIs such as
+    # ~/ws/improv (Rust + egui/eframe, with a ratatui TUI). Measured against
+    # the live server: search_patterns returns WCAG/UX rules tagged
+    # Platform: All, search_styles returns palettes and colour values, and
+    # search_components returns chart and icon guidance -- none of it
+    # web-specific. Excluded: search_platforms (Flutter/React-Native code
+    # equivalents), search_stack (React/Vue/Next/Svelte/Tailwind/shadcn) and
+    # get_design_system (emits CSS and Tailwind config).
+    #
+    # NB the upstream README advertises 13 tools; the server actually exposes
+    # 7 (checked with tools/list), and these globs use the real names.
+    design-guidelines = {
+      command = "npx";
+      args = [ "-y" "ui-ux-pro-mcp" "--stdio" ];
+      includeTools = [ "search_patterns" "search_styles" "search_components" "search_all" ];
+      toolPrefix = "design";
+    };
+    # ui-ux-pro: the whole thing, including the web/mobile framework tools.
+    # For the actual websites, not for native work.
+    ui-ux-pro = {
+      command = "npx";
+      args = [ "-y" "ui-ux-pro-mcp" "--stdio" ];
+    };
+  })
     // (optionalAttrs cfg.servers.sequential-thinking.enable {
     sequential-thinking = {
       command = "npx";
@@ -263,6 +292,22 @@ let
       env = { };
     };
   })
+    // (optionalAttrs cfg.servers.ui-ux-pro.enable {
+    # See the comment on the matching pair above: neutral subset vs the full
+    # web/mobile server, both opt-in per project.
+    design-guidelines = {
+      type = "stdio";
+      command = "npx";
+      args = [ "-y" "ui-ux-pro-mcp" "--stdio" ];
+      env = { };
+    };
+    ui-ux-pro = {
+      type = "stdio";
+      command = "npx";
+      args = [ "-y" "ui-ux-pro-mcp" "--stdio" ];
+      env = { };
+    };
+  })
     // (optionalAttrs cfg.servers.sequential-thinking.enable {
     sequential-thinking = {
       type = "stdio";
@@ -306,7 +351,7 @@ let
   # discovery), so Pi keeps the full set; only the schema-eager agents
   # (claude/kiro/default/maki) get the core-only global config.
   ###
-  heavyNames = [ "github" "postgresq" "context7" ]
+  heavyNames = [ "github" "postgresq" "context7" "design-guidelines" "ui-ux-pro" ]
     ++ lib.optionals cfg.servers.llms-docs.enable (lib.attrNames llmWrappers);
   coreMcpServers = removeAttrs mcpServers heavyNames;
   coreClaudeMcpServers = removeAttrs claudeUserMcpServers heavyNames;
@@ -589,6 +634,17 @@ in
 
       sequential-thinking = {
         enable = mkEnableOption "Sequential thinking (structured multi-step reasoning)";
+      };
+
+      ui-ux-pro = {
+        enable = mkEnableOption ''
+          UI/UX design resources (redf0x1/ui-ux-pro-mcp). Registers TWO
+          per-project servers: `design-guidelines` (framework-neutral --
+          WCAG/UX rules, palettes, chart and icon guidance; for native UIs
+          like improv's egui front-end) and `ui-ux-pro` (the full set,
+          including React/Vue/Next/Tailwind/Flutter/SwiftUI guidance; for
+          web work). Both are opt-in via `use project_mcp <name>`
+        '';
       };
 
       zvec-grep = {

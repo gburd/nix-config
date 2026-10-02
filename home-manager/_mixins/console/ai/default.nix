@@ -144,6 +144,14 @@
         # Structured multi-step reasoning for complex decisions
         sequential-thinking.enable = true;
 
+        # UI/UX design resources. Defines two heavy, per-project servers:
+        # `design-guidelines` (framework-neutral: WCAG/UX rules, palettes,
+        # chart + icon guidance -- the useful part for improv's egui/ratatui
+        # front-end) and `ui-ux-pro` (everything, web/mobile frameworks
+        # included). Neither loads until a project asks for it with
+        # `use project_mcp design-guidelines` / `use project_mcp ui-ux-pro`.
+        ui-ux-pro.enable = true;
+
         # zvec-grep (zg): local-first hybrid search (ripgrep + BM25 + vector)
         # over the workspace, exposed to every agent over MCP. Index a tree
         # once with `zg --index <dir>` before search tools return results.

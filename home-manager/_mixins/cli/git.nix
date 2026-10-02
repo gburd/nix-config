@@ -103,6 +103,78 @@ let
     '';
   };
 
+  # Last line of defence before anything becomes public: scan the commits
+  # actually being pushed. pre-commit alone is not enough -- a commit made
+  # with --no-verify, created by a tool that bypasses hooks, or merged in
+  # from another branch reaches the remote unchecked. That is how an
+  # imapsync log containing credentials reached the public GitHub repo.
+  #
+  # git feeds pre-push "<local ref> <local sha> <remote ref> <remote sha>"
+  # on stdin, one line per ref. For each, scan the range the remote does not
+  # have yet. For a new branch (remote sha all zeroes) there is no base, so
+  # scan the commits unique to it rather than its entire history.
+  #
+  # Escape hatches:
+  #   ALLOW_DUMP_PUSH=1 git push ...   (skip the scan, keep chaining)
+  #   git push --no-verify             (skip all hooks)
+  git-push-guard = pkgs.writeShellApplication {
+    name = "git-push-guard";
+    runtimeInputs = [ pkgs.git pkgs.gnugrep pkgs.coreutils pkgs.gitleaks ];
+    text = ''
+      zero='0000000000000000000000000000000000000000'
+      failed=0
+
+      if [ "''${ALLOW_DUMP_PUSH:-}" != "1" ]; then
+        while read -r _local_ref local_sha _remote_ref remote_sha; do
+          # Deleting a ref pushes no content.
+          [ "$local_sha" = "$zero" ] && continue
+
+          if [ "$remote_sha" = "$zero" ]; then
+            # New branch: only what no other remote-tracking ref already has.
+            others=$(git for-each-ref --format='%(refname)' refs/remotes 2>/dev/null | tr '\n' ' ')
+            log_opts="$local_sha --not $others"
+          else
+            log_opts="$remote_sha..$local_sha"
+          fi
+
+          # Nothing to scan (already up to date, or an unreadable range).
+          # shellcheck disable=SC2086
+          if [ -z "$(git rev-list $log_opts 2>/dev/null | head -1)" ]; then
+            continue
+          fi
+
+          # gitleaks exits non-zero on a finding. --redact keeps the secret
+          # itself out of the terminal and out of any CI log.
+          if ! gitleaks git --log-opts "$log_opts" --redact --no-banner 2>/dev/null; then
+            printf '\npush-guard: BLOCKED - a commit being pushed looks like it has a secret.\n' >&2
+            printf 'Range: %s\n' "$log_opts" >&2
+            failed=1
+          fi
+        done
+      fi
+
+      if [ "$failed" = "1" ]; then
+        printf '\npush-guard: push aborted. False positive?\n' >&2
+        printf '  ALLOW_DUMP_PUSH=1 git push ...   or   git push --no-verify\n' >&2
+        printf 'If it is real, rewrite the history first -- a push to a public remote\n' >&2
+        printf 'cannot be taken back; the object stays fetchable by its SHA.\n' >&2
+        exit 1
+      fi
+
+      # Chain to a repo-local hook so we never shadow project hook managers.
+      git_dir=$(git rev-parse --git-dir 2>/dev/null || printf '.git')
+      local_hook="$git_dir/hooks/pre-push"
+      self=$(readlink -f "$0" 2>/dev/null || printf '%s' "$0")
+      if [ -x "$local_hook" ]; then
+        local_real=$(readlink -f "$local_hook" 2>/dev/null || printf '%s' "$local_hook")
+        if [ "$local_real" != "$self" ]; then
+          exec "$local_hook" "$@"
+        fi
+      fi
+      exit 0
+    '';
+  };
+
   # Patterns that must never be committed in any repo. Crash/profile
   # dumps head the list (root cause of past AWS token leaks: perf /
   # Valgrind / core dumps captured the shell env). Used both for
@@ -151,6 +223,12 @@ in
   # Global pre-commit hook (core.hooksPath points here below).
   xdg.configFile."git/hooks/pre-commit".source =
     "${git-dump-guard}/bin/git-dump-guard";
+
+  # Global pre-push hook: the same gitleaks scan over the commits being
+  # pushed, so a secret that got committed anyway still cannot reach a
+  # remote.
+  xdg.configFile."git/hooks/pre-push".source =
+    "${git-push-guard}/bin/git-push-guard";
 
   # Mirror the ignore list to ~/.gitignore_global so any tool or config
   # referencing that conventional path resolves to a real file.
