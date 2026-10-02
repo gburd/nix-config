@@ -722,7 +722,16 @@
         ;; harper-ls: offline, privacy-first grammar/prose checker for
         ;; markdown/text/org (nix-provided; also wired into neovim + zed).
         (add-to-list 'eglot-server-programs
-                     '((markdown-mode text-mode org-mode) . ("harper-ls" "--stdio"))))
+                     '((markdown-mode text-mode org-mode) . ("harper-ls" "--stdio")))
+
+        ;; Same noise filter as neovim + zed. isolateEnglish checks only the
+        ;; parts of a chunk that read as English, so a commit hash or a
+        ;; snake_case identifier quoted in prose is left alone; SplitWords is
+        ;; off because its "elog -> e log" suggestions are always wrong on
+        ;; code prose. SpellCheck stays on, so real typos are still flagged.
+        (setq-default eglot-workspace-configuration
+                      '(:harper-ls (:isolateEnglish t
+                                    :linters (:SplitWords :json-false)))))
     #+end_src
 
 *** Flycheck

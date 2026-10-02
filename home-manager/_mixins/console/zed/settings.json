@@ -199,6 +199,19 @@
     "harper-ls": {
       "binary": {
         "path": "harper-ls"
+      },
+      // Same noise filter as neovim (see lspconfig.lua): isolateEnglish
+      // skips non-prose tokens like commit hashes and snake_case
+      // identifiers quoted in a comment, and SplitWords is off because its
+      // "elog -> e log" suggestions are always wrong on code prose.
+      // SpellCheck stays on, so genuine typos are still reported.
+      "settings": {
+        "harper-ls": {
+          "isolateEnglish": true,
+          "linters": {
+            "SplitWords": false
+          }
+        }
       }
     }
   },

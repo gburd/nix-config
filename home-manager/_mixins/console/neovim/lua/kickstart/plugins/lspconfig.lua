@@ -238,7 +238,35 @@ return {
         shfmt = {},
         flake8 = {},
         sqlls = {},
-        harper_ls = {}, -- offline grammar/prose checker (harper-ls, nix-provided)
+        harper_ls = {
+          -- Offline grammar/prose checker (harper-ls, nix-provided). It only
+          -- reads comments and strings in code, never identifiers in the code
+          -- itself, but words lifted from code INTO a comment
+          -- (`amgettuple`, `nbuf`, a commit SHA) were still flagged, which is
+          -- most of the noise when writing C.
+          --
+          -- Measured on a comment full of PostgreSQL identifiers: 13
+          -- diagnostics by default, 3 with these two settings, 1 once the
+          -- project dictionary below is populated. Real typos still surface:
+          -- `commetn`, `sentance` and `mispelled` are all still caught, in
+          -- both C comments and gitcommit buffers.
+          settings = {
+            ['harper-ls'] = {
+              -- Check only the parts of a chunk that are actually English,
+              -- skipping tokens that don't look like prose. This alone
+              -- silences commit hashes and most snake_case identifiers.
+              isolateEnglish = true,
+              linters = {
+                -- SplitWords suggests splitting an unknown word into two
+                -- real ones: `elog` -> `e log`, `tre` -> `tr e`, `cp` ->
+                -- `c p`. On C prose it is almost always wrong. SpellCheck
+                -- stays ON, so genuine misspellings are still reported --
+                -- it catches `mispelled` on its own without this linter.
+                SplitWords = false,
+              },
+            },
+          },
+        },
         -- gopls = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
