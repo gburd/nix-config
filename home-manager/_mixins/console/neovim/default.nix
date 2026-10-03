@@ -106,6 +106,15 @@
       pgindentTypedefs = builtins.readFile ./harper-dictionary-pgindent.txt;
       extraHarperWords = [
         "burd" # surname; also covers "Burd" and burd.me
+
+        # PostgreSQL identifiers that pgindent's typedefs.list does not
+        # carry, because they are macros, struct-field prefixes or function
+        # names rather than typedefs. All verified present in the PG source.
+        "SelfItemPointerAttributeNumber" # system attnum macro (14 files)
+        "getsysattr" # slot callback name (10 files)
+        "BUFFERTUPLE" # from TTS_FLAG_BUFFERTUPLE (5 files)
+        "TID" # tuple id; also covers the plural TIDs (222 uses)
+        "tts" # TupleTableSlot field prefix: tts_values, tts_isnull, ...
       ];
     in
     pgindentTypedefs + lib.concatMapStrings (w: w + "\n") extraHarperWords;

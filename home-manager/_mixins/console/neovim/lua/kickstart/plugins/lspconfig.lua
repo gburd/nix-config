@@ -268,6 +268,19 @@ return {
                 -- stays ON, so genuine misspellings are still reported --
                 -- it catches `mispelled` on its own without this linter.
                 SplitWords = false,
+                -- SentenceCapitalization fires on hand-wrapped prose. Any
+                -- digit followed by a period reads as a sentence end, so
+                -- "patch 1. applies cleanly" flags `applies`, and the same
+                -- for "2.3", "10." and numbered lists. Measured: 2 false
+                -- positives on one comment, 0 with it off.
+                --
+                -- Upstream has at least four open false-positive reports
+                -- against this linter (Automattic/harper #3180, #3224,
+                -- #3836, #3961), none fixed as of 2.12, so this is not
+                -- waiting on a version bump. The cost is real but small:
+                -- a genuinely lowercase sentence start is no longer
+                -- flagged. Spelling, grammar and the rest still are.
+                SentenceCapitalization = false,
               },
             },
           },

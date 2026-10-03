@@ -728,10 +728,14 @@
         ;; parts of a chunk that read as English, so a commit hash or a
         ;; snake_case identifier quoted in prose is left alone; SplitWords is
         ;; off because its "elog -> e log" suggestions are always wrong on
-        ;; code prose. SpellCheck stays on, so real typos are still flagged.
+        ;; code prose; SentenceCapitalization is off because a digit followed
+        ;; by a period ("patch 1.", "2.3", "10.") reads as a sentence end and
+        ;; then flags the next word in hand-wrapped paragraphs. SpellCheck
+        ;; stays on, so real typos are still flagged.
         (setq-default eglot-workspace-configuration
                       '(:harper-ls (:isolateEnglish t
-                                    :linters (:SplitWords :json-false)))))
+                                    :linters (:SplitWords :json-false
+                                              :SentenceCapitalization :json-false)))))
     #+end_src
 
 *** Flycheck
