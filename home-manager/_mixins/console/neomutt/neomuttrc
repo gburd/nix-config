@@ -59,6 +59,25 @@ macro pager <f5> '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts
 macro index ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>imap://127.0.0.1:1143/Folders/Work/Postgres/hackers<enter>' "Go to pgsql-hackers list"
 macro pager ,h '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/protonmail.muttrc<enter><change-folder>imap://127.0.0.1:1143/Folders/Work/Postgres/hackers<enter>' "Go to pgsql-hackers list"
 
+# --- The PostgreSQL lists over NNTP (pg.ddx.io) ---
+# ,h above reads the hackers mail that landed in YOUR mailbox. These read the
+# server-side archive instead: 56 groups, pgsql-hackers alone ~663k articles
+# back to 1997, nothing subscribed and nothing synced.
+#
+#   ,n  open pgsql-hackers directly
+#   ,N  browse all 56 groups and pick one
+#
+# Read-only: the server answers "201 Posting prohibited". To reply to a list,
+# switch back to F1 (Proton) and send over SMTP as usual.
+#
+# <change-newsgroup> is the news-mode counterpart of <change-folder>; sourcing
+# the account file first is what puts neomutt in news mode (it sets
+# news_server). Group names use hyphens -- pgsql-hackers, not pgsql.hackers.
+macro index ,n '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/pg-nntp.muttrc<enter><change-newsgroup>pgsql-hackers<enter>' "Go to pgsql-hackers (NNTP)"
+macro pager ,n '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/pg-nntp.muttrc<enter><change-newsgroup>pgsql-hackers<enter>' "Go to pgsql-hackers (NNTP)"
+macro index ,N '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/pg-nntp.muttrc<enter><change-newsgroup>?' "Browse PostgreSQL newsgroups"
+macro pager ,N '<sync-mailbox><enter-command>source ~/.config/neomutt/accounts/pg-nntp.muttrc<enter><change-newsgroup>?' "Browse PostgreSQL newsgroups"
+
 # ============================================================================
 # General Settings
 # ============================================================================

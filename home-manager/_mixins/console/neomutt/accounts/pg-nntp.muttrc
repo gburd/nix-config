@@ -1,0 +1,54 @@
+# pg.ddx.io NNTP -- the PostgreSQL mailing lists as newsgroups.
+#
+# 56 groups mirrored from the pgsql lists (pgsql-hackers alone has ~663k
+# articles going back to 1997). This is the fast way to read or search list
+# history without subscribing to anything or waiting on IMAP: the server
+# keeps the archive, neomutt fetches only overviews on demand.
+#
+# READ-ONLY. The server answers MODE READER with "201 Posting prohibited"
+# and its banner says "post via email", so <post> and <followup> will fail.
+# Reply to a list the normal way, over SMTP from the Proton account -- the
+# F1 account. That is deliberate: posting here would bypass the list's own
+# subscriber checks.
+#
+# No credentials: the server accepts anonymous readers, so nothing from sops
+# is needed. Port 563 with implicit TLS (certificate CN pg.ddx.io, verified);
+# plain 119 also works but is unencrypted.
+#
+# Pan is configured against the same server in floki.nix
+# (~/.pan2/servers.xml) -- this is the terminal equivalent.
+set news_server = "snews://nntp.pg.ddx.io:563"
+
+# Where read/unread state per group is remembered. Plain text, one line per
+# group, same format every newsreader has used since the 1980s.
+set newsrc = "~/.neomutt/newsrc-pg"
+
+# Cache group lists and article overviews so re-entering a group does not
+# refetch 663k headers.
+set news_cache_dir = "~/.cache/neomutt/nntp"
+
+# Fetch at most this many article headers when entering a group. The lists
+# are huge; without a cap, opening pgsql-hackers would pull decades of
+# overviews. Raise it in-session with `:set nntp_context=5000` when digging
+# further back.
+set nntp_context = 1000
+
+# Load the one-line group descriptions in the browser. Cheap, and it makes
+# the 56 groups legible (the LIST NEWSGROUPS response is cached).
+set nntp_load_description = yes
+
+# Check for new articles in the open group this often (seconds).
+set nntp_poll = 60
+
+# Don't ask about catching up (marking a whole group read) on exit -- these
+# are archives being browsed, not a personal inbox to keep clean.
+set catchup_newsgroup = no
+
+# Identity for anything composed here. Same From as the Proton account, so a
+# reply sent over SMTP is consistent with the rest of the setup.
+set from = `cat $HOME/.config/sops-nix/secrets/email/proton/from 2>/dev/null || echo greg@burd.me`
+set realname = "Greg Burd"
+
+# Threading suits list archives; newest activity first.
+set sort = threads
+set sort_aux = reverse-last-date-received

@@ -24,6 +24,10 @@
   # once OAuth is sorted or app passwords are permitted.
   # xdg.configFile."neomutt/accounts/gmail-work.muttrc".source = ./accounts/gmail-work.muttrc;
   xdg.configFile."neomutt/accounts/icloud.muttrc".source = ./accounts/icloud.muttrc;
+  # pg.ddx.io NNTP: the PostgreSQL lists as newsgroups (read-only; the
+  # server prohibits posting and says "post via email"). Not an email
+  # account -- a news source reached with ,n / ,N. Needs no credentials.
+  xdg.configFile."neomutt/accounts/pg-nntp.muttrc".source = ./accounts/pg-nntp.muttrc;
   # outlook (gregburd@outlook.com) DISABLED: personal outlook.com is
   # OAuth2-only and had no working password/gateway path (DavMail's
   # device-code flow is broken for personal MS accounts; Azure app /
@@ -41,6 +45,11 @@
     # gmail-work cache dir omitted while that account is disabled (see above)
     # ".cache/neomutt/gmail-work/.keep".text = "";
     ".cache/neomutt/icloud/.keep".text = "";
+    # NNTP group list + article overview cache (news_cache_dir).
+    ".cache/neomutt/nntp/.keep".text = "";
+    # Dir for the NNTP newsrc (read/unread state per group); neomutt will
+    # not create a missing parent directory for it.
+    ".neomutt/.keep".text = "";
     # outlook cache dir omitted while that account is disabled (see above)
     # ".cache/neomutt/outlook/.keep".text = "";
     # amazon cache dir omitted while that account is disabled (see above)
