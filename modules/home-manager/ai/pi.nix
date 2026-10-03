@@ -57,7 +57,17 @@ let
     # ineffective.
     skills = [ "~/.kiro/skills" ];
     prompts = [ "~/.pi/agent/prompts" ];
-    extensions = [ "~/.pi/agent/extensions" ];
+    # "-builtin:mcp" turns OFF Pi's built-in MCP extension. pi-mcp-adapter
+    # (below) registers the same `/mcp` command, and with both loaded Pi warns
+    # on every start: 'registers command /mcp, so built-in extension mcp was
+    # not loaded ... We recommend only having one or the other loaded'.
+    #
+    # The adapter tries to disable the built-in itself by rewriting
+    # ~/.pi/agent/settings.json, which fails here because Nix makes that file
+    # a read-only store symlink -- the agent reported 'could not turn off
+    # Pi's built-in MCP: EROFS: read-only file system'. Declaring it here is
+    # the equivalent that survives a read-only settings file.
+    extensions = [ "~/.pi/agent/extensions" "-builtin:mcp" ];
     themes = [ ];
     packages = [
       "npm:@gotgenes/pi-subagents"

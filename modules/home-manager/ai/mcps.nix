@@ -42,6 +42,14 @@ let
   '';
 
   ### llms.txt doc wrappers ###
+  # `--with 'mcp<2'` is load-bearing. mcpdoc 0.0.10 (last released 2025-07-22)
+  # declares `mcp[cli]>=1.4.1` with no upper bound and still imports the v1
+  # API (`from mcp.server.fastmcp import FastMCP`). Once the mcp SDK published
+  # 2.x, uv resolved that by default and every one of these servers died at
+  # import with "No module named 'mcp.server.fastmcp' ... FastMCP was renamed
+  # to MCPServer". Pinning the SDK below 2 is what upstream's own error
+  # message recommends; drop the pin when mcpdoc ships an mcp 2.x-compatible
+  # release.
   mcpdoc-wrapper-of = name: projectUrlMap:
     let
       urlArgs = builtins.concatStringsSep " " (
@@ -53,7 +61,7 @@ let
       # `#!${runtimeShell}` shebang. Without it, kiro-cli's direct execve()
       # fails with ENOEXEC ("Exec format error (os error 8)").
     pkgs.writeShellScript "mcpdoc-wrapper-${name}" ''
-      exec ${pkgs.uv}/bin/uvx --from mcpdoc mcpdoc \
+      exec ${pkgs.uv}/bin/uvx --from mcpdoc --with 'mcp<2' mcpdoc \
         --urls \
         ${urlArgs} \
         --transport stdio \
@@ -222,9 +230,14 @@ let
       args = [
         "-y"
         cfg.servers.zvec-grep.package
-        "--server"
-        "--mcp-transport"
-        "stdio"
+        # zg 0.2.x moved the server behind a SUBCOMMAND and dropped
+        # --mcp-transport: it is `zg server --stdio`, not `zg --server
+        # --mcp-transport stdio`. The old form now fails at startup with
+        # "Unknown command: --server". `server --stdio` starts or reuses the
+        # shared daemon and proxies MCP over stdin/stdout, which is the
+        # behaviour this module already wanted.
+        "server"
+        "--stdio"
         "--mcp-toolset"
         cfg.servers.zvec-grep.toolset
       ];
@@ -323,9 +336,14 @@ let
       args = [
         "-y"
         cfg.servers.zvec-grep.package
-        "--server"
-        "--mcp-transport"
-        "stdio"
+        # zg 0.2.x moved the server behind a SUBCOMMAND and dropped
+        # --mcp-transport: it is `zg server --stdio`, not `zg --server
+        # --mcp-transport stdio`. The old form now fails at startup with
+        # "Unknown command: --server". `server --stdio` starts or reuses the
+        # shared daemon and proxies MCP over stdin/stdout, which is the
+        # behaviour this module already wanted.
+        "server"
+        "--stdio"
         "--mcp-toolset"
         cfg.servers.zvec-grep.toolset
       ];
