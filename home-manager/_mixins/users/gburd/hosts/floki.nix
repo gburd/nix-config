@@ -206,6 +206,10 @@ in
       # Proton Drive credentials (nested structure)
       "drive/proton/user" = { };
       "drive/proton/pass" = { };
+
+      # Codeberg PAT for the tea CLI; cli/tea.nix renders
+      # ~/.config/tea/config.yml from it at activation.
+      "codeberg/tea_token" = { };
     };
   };
 

@@ -74,6 +74,10 @@
       "calendar/apple/icloud/pass" = { };
       "calendar/ms/outlook/user" = { };
       "calendar/ms/outlook/pass" = { };
+
+      # Codeberg PAT for the tea CLI; cli/tea.nix renders
+      # ~/.config/tea/config.yml from it at activation.
+      "codeberg/tea_token" = { };
     };
   };
 

@@ -58,6 +58,10 @@ with lib.hm.gvariant;
       "email/proton/user" = { };
       "email/proton/pass" = { };
       "email/proton/from" = { };
+
+      # Codeberg PAT for the tea CLI; cli/tea.nix renders
+      # ~/.config/tea/config.yml from it at activation.
+      "codeberg/tea_token" = { };
     };
   };
 
