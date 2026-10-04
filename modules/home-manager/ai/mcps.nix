@@ -86,14 +86,34 @@ let
         timeout = 10;
       }];
     }];
-    PostToolUse = [{
-      matcher = "*";
-      hooks = [{
-        type = "command";
-        command = "memelord hook post-tool-use";
-        timeout = 5;
-      }];
-    }];
+    # PostToolUse fires on EVERY tool call, and memelord's auto-detector
+    # writes a "correction" memory whenever a command fails and a later one
+    # succeeds. That produced 11,531 of 11,621 memories in nix-config, 28,079
+    # of 28,136 in noxu and 89,448 of 89,617 in osv -- 17MB of embeddings in
+    # one project -- and almost none of it is worth remembering ("Failed
+    # approach: git push --no-verify / Working approach: git push").
+    #
+    # The bloat is not merely untidy: a ~29MB memory.db made libSQL panic in
+    # its WAL layer ("shared WAL frame ids must increase monotonically",
+    # core/storage/wal.rs:2235) on memory_end_task, 3 of 3 trials, which
+    # killed the server mid-write and left a zero-byte WAL beside a live
+    # -tshm index. The next open then failed with "short read on WAL frame".
+    # Pruning the auto-detected rows took nix-config from 29MB to 912KB and
+    # end_task went 3-of-3 failing to 2-of-2 passing.
+    #
+    # `memelord purge` does NOT help: every one of those rows sits at weight
+    # >= 0.5, so the default threshold keeps all of them.
+    #
+    # Keep the hook on Stop and SessionEnd (session-level summaries, a
+    # handful per session) but not on every tool call. Real corrections are
+    # still recorded -- the agent calls memory_report with type=correction
+    # deliberately, which is the documented path.
+    # Keep the hook on Stop and SessionEnd (session-level summaries, a
+    # handful per session) but not on every tool call. Real corrections are
+    # still recorded -- the agent calls memory_report with type=correction
+    # deliberately, which is the documented path. The key is omitted
+    # entirely rather than set to [], so nothing writes an empty
+    # PostToolUse array into claude/kiro settings.
     Stop = [{
       hooks = [{
         type = "command";
@@ -846,7 +866,7 @@ in
               -type f -name memory.db -path '*/.memelord/*' 2>/dev/null \
             | while read -r db; do
                 echo "rollup: $db"
-                ${cfg.servers.memelord.pkg}/bin/memelord-rollup --db "$db" || true
+                ${cfg.servers.memelord.pkg}/bin/memelord-rollup --prune-auto --db "$db" || true
               done
           '');
         };

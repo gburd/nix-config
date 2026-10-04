@@ -158,6 +158,10 @@ def main() -> int:
                     help="cluster only; use a mechanical summary, no LLM call")
     ap.add_argument("--show", action="store_true", help="print L1 summaries and exit")
     ap.add_argument("--stats", action="store_true", help="print L0/L1 counts and exit")
+    ap.add_argument(
+        "--prune-auto", action="store_true",
+        help="delete auto-detected 'correction' rows (and VACUUM) before rolling up",
+    )
     args = ap.parse_args()
 
     if not os.path.exists(args.db):
@@ -196,6 +200,37 @@ def main() -> int:
         print(f"L0 raw memories: {l0}\nL1 summaries:    {l1}"
               f"\nL0 rows covered: {covered} ({100*covered//max(l0,1)}%)")
         return 0
+
+    # Drop the auto-detected noise before clustering. memelord's PostToolUse
+    # hook used to write a "correction" memory on every failed-then-retried
+    # command; that produced 11.5k rows (of 11.6k) in nix-config, 28k in noxu
+    # and 89k in osv, almost all of it worthless ("Failed approach: git push
+    # --no-verify / Working approach: git push"). The hook is disabled now,
+    # but prune on every run so the pile cannot quietly rebuild if a project
+    # still has the old hook in its own agent settings.
+    #
+    # This matters beyond tidiness: a ~29MB memory.db reliably panicked
+    # libSQL's WAL layer ("shared WAL frame ids must increase monotonically")
+    # on memory_end_task, killing the server mid-write and leaving a
+    # zero-byte WAL that the next open could not read. `memelord purge` does
+    # not help -- these rows all sit at weight >= 0.5.
+    if args.prune_auto and not args.dry_run:
+        n = db.execute(
+            "SELECT count(*) c FROM memories "
+            "WHERE content LIKE 'Auto-detected correction%'"
+        ).fetchone()["c"]
+        if n:
+            db.execute("DELETE FROM memories "
+                       "WHERE content LIKE 'Auto-detected correction%'")
+            db.execute("DELETE FROM memory_retrievals "
+                       "WHERE memory_id NOT IN (SELECT id FROM memories)")
+            db.commit()
+            # Reclaim the space; the embeddings are the bulk of it. VACUUM
+            # cannot run inside a transaction.
+            db.isolation_level = None
+            db.execute("VACUUM")
+            db.isolation_level = ""
+            print(f"pruned {n} auto-detected correction rows from {args.db}")
 
     rows = db.execute("SELECT id, content, category FROM memories").fetchall()
     buckets = cluster(rows)
