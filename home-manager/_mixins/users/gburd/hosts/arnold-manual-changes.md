@@ -119,7 +119,10 @@ that won't silence a warning for a setting `/etc/nix/nix.conf` already sets.
 
 ---
 
-## Wifi at boot, without a gburd login (2026-10-03)
+## Wifi at boot, without a gburd login (2026-10-03, verified 2026-10-04)
+
+Status: APPLIED and CONFIRMED. After applying the change below, a cold
+reboot brought wifi up with nobody logged in.
 
 Arnold would not join wifi until gburd logged in. Two properties on the
 `sedgwick` NetworkManager connection caused it, both confirmed with `nmcli`:
@@ -152,6 +155,16 @@ sudo nmcli con reload && sudo nmcli con up sedgwick
 `/etc/NetworkManager/system-connections/sedgwick.nmconnection`, which is
 root-owned mode 600. That is the standard trade for pre-login wifi: the
 secret moves from a user wallet to a root-only file.
+
+Verifying afterwards, do not be misled by this: `nmcli --show-secrets -g
+802-11-wireless-security.psk con show sedgwick` STILL returns an empty
+string over an ordinary SSH session, which is the same surface symptom as the
+original fault. It is not a regression -- reading the stored secret back
+needs root, and a session-less SSH shell has none. Check
+`nmcli -f 802-11-wireless-security con show sedgwick` instead: `psk:
+<hidden>` together with `psk-flags: 0 (none)` means the secret is stored
+system-wide. Before the fix the secret did not exist outside the wallet;
+after it, it exists but is not readable unprivileged.
 
 Note arnold uses `key-mgmt=sae` (WPA3) while floki uses `wpa-psk` (WPA2) for
 the same SSID; the passphrase is the same, so it can be copied from floki
