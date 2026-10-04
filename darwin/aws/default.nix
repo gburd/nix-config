@@ -6,6 +6,7 @@
 { username, ... }: {
   imports = [
     ../_mixins/console/homebrew.nix
+    ../_mixins/services/tailscale.nix
     ./brews.nix
   ];
 
