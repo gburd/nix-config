@@ -116,3 +116,50 @@ that won't silence a warning for a setting `/etc/nix/nix.conf` already sets.
 - Sops on arnold decrypts via the `~/.ssh/id_ed25519` age key and reuses
   floki's `secrets.yaml` (see `arnold.nix`) — the age key must exist for the
   bedrock token / borg secrets to render.
+
+---
+
+## Wifi at boot, without a gburd login (2026-10-03)
+
+Arnold would not join wifi until gburd logged in. Two properties on the
+`sedgwick` NetworkManager connection caused it, both confirmed with `nmcli`:
+
+```
+connection.permissions = user:gburd        # only activates for that user
+802-11-wireless-security.psk-flags = 1     # agent-owned secret
+```
+
+`psk-flags=1` means the passphrase is held by a logged-in user's secret agent
+rather than stored on disk. On arnold that agent is KDE's wallet
+(`org.freedesktop.secrets`, owned by `session-3.scope`), which does not exist
+before login, so at boot NetworkManager had the connection but no secret.
+`nmcli --show-secrets` returned an empty psk outside a session, which is the
+symptom. NetworkManager and NetworkManager-wait-online were already enabled,
+and the radio was on, so the service was never the problem.
+
+The fix (needs root; arnold has no passwordless sudo, so run it by hand):
+
+```sh
+sudo nmcli con modify sedgwick \
+  connection.permissions '' \
+  connection.autoconnect yes \
+  802-11-wireless-security.psk-flags 0 \
+  802-11-wireless-security.psk '<passphrase>'
+sudo nmcli con reload && sudo nmcli con up sedgwick
+```
+
+`psk-flags=0` writes the passphrase into
+`/etc/NetworkManager/system-connections/sedgwick.nmconnection`, which is
+root-owned mode 600. That is the standard trade for pre-login wifi: the
+secret moves from a user wallet to a root-only file.
+
+Note arnold uses `key-mgmt=sae` (WPA3) while floki uses `wpa-psk` (WPA2) for
+the same SSID; the passphrase is the same, so it can be copied from floki
+with `nmcli --show-secrets -g 802-11-wireless-security.psk con show sedgwick`
+rather than retyped.
+
+This is NOT fixable from nix-config: arnold is Fedora and only its
+home-manager layer is managed here. The other saved networks (Amtrak_WiFi,
+Hilton Honors, CONVENE, ...) are still `user:gburd`-scoped; the same two
+properties would need clearing per connection if any of them should also come
+up pre-login.
