@@ -70,7 +70,7 @@
   # So this installs the apps and the session environment. Expect no desktop.
   # `compositor` is deliberately left null: the module warns when it is null, and
   # that warning is accurate.
-  solnix.desktop.cosmic.enable = true;
+  solnix.desktop.cosmic.enable = false;
 
   # What a `home-manager switch --flake .#gburd@dixi` needs present BEFORE it can
   # run. nix itself comes from modules/config/nix.nix.
