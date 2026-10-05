@@ -189,6 +189,23 @@ in
     # from home.packages is on PATH.
     home.activation.piUpdateExtensions =
       lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+        # A globally-installed @earendil-works/pi-coding-agent in
+        # ~/.npm-global SHADOWS the `npx -y` line in the wrapper above:
+        # NPM_CONFIG_PREFIX points there, so npx reuses whatever version is
+        # installed rather than fetching the current one. arnold had 0.87.1
+        # pinned that way (from a `pi update` on 2026-09-26) while floki,
+        # which has no global copy, resolved 1.0.3. The consequence is a hard
+        # startup failure once an extension needs a newer API than the pinned
+        # pi exports -- pi-subagents 23.0.0 peer-depends on pi >=1.0.0 and
+        # calls createCodemodeExtension(), which does not exist in 0.87.1:
+        #   Failed to load extension ... createCodemodeExtension is not a function
+        # The npm packages pi's own extensions live in are meant to be here;
+        # pi itself is not. Remove it so npx stays authoritative.
+        if [ -e "$HOME/.npm-global/lib/node_modules/@earendil-works/pi-coding-agent" ]; then
+          echo "pi: removing a globally-installed pi that would shadow npx" >&2
+          run ${pkgs.nodejs}/bin/npm --prefix "$HOME/.npm-global" \
+            uninstall -g @earendil-works/pi-coding-agent > /dev/null 2>&1 || true
+        fi
         if command -v pi >/dev/null 2>&1; then
           run pi update --extensions --no-approve > /dev/null 2>&1 \
             || echo "pi update --extensions failed (offline/npm?); skipped" >&2
