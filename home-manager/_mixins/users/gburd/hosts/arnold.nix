@@ -113,7 +113,24 @@ with lib.hm.gvariant;
   # Arnold-specific SSH hosts. 26.05: matchBlocks -> settings; block key is
   # the Host pattern (multi-word -> literal "Host ..." key), upstream
   # directive names, extraOptions merges flat.
+  # hel1 (95.216.76.41) is the pgesq prod box in Helsinki: same agora-deploy
+  # key and root login as fra/gva, but a NON-STANDARD SSH PORT (2202), so it
+  # needs its own block rather than joining the pattern above. Without this,
+  # `ssh hel1` matched no block at all and fell through to the defaults
+  # (user gburd, port 22, id_rsa...), which simply hangs — an agent hitting
+  # that misread it as "~/.ssh/config is broken" and worked around it with
+  # `ssh -F /dev/null -i ~/.ssh/agora-deploy -p 2202 root@95.216.76.41`.
+  # That bypass succeeded only because it supplied by hand exactly what was
+  # missing from the config; the GSSAPIKexAlgorithms theory was a red herring
+  # (openssh_gssapi above already parses Fedora's crypto-policies file).
   programs.ssh.settings = {
+    "Host hel1 hel1.pg.ddx.io 95.216.76.41" = lib.hm.dag.entryBefore [ "*" ] {
+      User = "root";
+      Port = 2202;
+      IdentityFile = "~/.ssh/agora-deploy";
+      IdentitiesOnly = true;
+      IdentityAgent = "none";
+    };
     "Host fra fra.pg.ddx.io 89.145.162.3 gva gva.pg.ddx.io 185.19.30.253" = lib.hm.dag.entryBefore [ "*" ] {
       User = "root";
       IdentityFile = "~/.ssh/agora-deploy";
