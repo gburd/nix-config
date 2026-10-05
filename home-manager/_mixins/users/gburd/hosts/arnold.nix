@@ -125,6 +125,10 @@ with lib.hm.gvariant;
   # (openssh_gssapi above already parses Fedora's crypto-policies file).
   programs.ssh.settings = {
     "Host hel1 hel1.pg.ddx.io 95.216.76.41" = lib.hm.dag.entryBefore [ "*" ] {
+      # Neither `hel1` nor hel1.pg.ddx.io resolves (getent returns nothing for
+      # both, unlike fra/gva whose .pg.ddx.io names are in DNS), so the
+      # address has to be pinned here or the bare name just fails to resolve.
+      HostName = "95.216.76.41";
       User = "root";
       Port = 2202;
       IdentityFile = "~/.ssh/agora-deploy";
