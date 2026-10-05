@@ -151,10 +151,20 @@ with lib.hm.gvariant;
     };
 
     gtk4 = {
-      # 26.05 changed gtk4.theme's default from config.gtk.theme to null.
-      # Pin it to the shared gtk theme to keep gtk4 apps themed as before
-      # (and silence the "default value changed" eval warning).
-      theme = config.gtk.theme;
+      # Deliberately null (the 26.05 default). It was previously pinned to
+      # config.gtk.theme to "keep gtk4 apps themed as before", but that
+      # could never work: numix-solarized-gtk-theme ships gtk-2.0, gtk-3.0
+      # and gtk-3.20 only — there is NO gtk-4.0 directory in the package.
+      # HM's gtk4 theme support writes an @import of
+      # <theme>/gtk-4.0/gtk.css into ~/.config/gtk-4.0/gtk.css, so every
+      # GTK4/libadwaita app logged, on each start:
+      #   Theme parser error: gtk.css:5:1-147: Failed to import:
+      #   Error opening file .../org.gnome.theme/gtk-4.0/gtk.css:
+      #   No such file or directory
+      # GTK4 apps were therefore ALREADY falling back to libadwaita's
+      # built-in styling; dropping the import changes nothing visually and
+      # just stops the error spam.
+      theme = null;
       extraConfig = {
         gtk-application-prefer-dark-theme = 1;
       };
