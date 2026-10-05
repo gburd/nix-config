@@ -56,9 +56,13 @@ let
     # byte). At the default, any turn that needs more than five minutes of
     # thought times out, and so does every retry, since a retry repeats the
     # same thinking; that killed five sub-agents in a row at the point they
-    # began designing. Twenty minutes covers the longest successful turns
-    # observed (~20 min).
-    httpIdleTimeoutMs = 1200000;
+    # began designing. Measured after raising it: of 250 sub-agent turns the
+    # longest real one took 478 s (p99 419 s; thinking streams at ~85
+    # tokens/s), while dead Bedrock streams (bursts of 3-4 requests that never
+    # return, about hourly) hang until this limit. Ten minutes clears every
+    # real turn with headroom and recovers from a dead stream twice as fast as
+    # twenty.
+    httpIdleTimeoutMs = 600000;
     # All `litellm:*` ids the proxy exposes are enabled. The dynamic
     # extension below registers each one with metadata derived from the
     # model id, so we don't need to keep a parallel list here. We omit
