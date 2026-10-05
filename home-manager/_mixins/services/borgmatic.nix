@@ -49,7 +49,7 @@ let
 
   # rubo77/rsync-homedir-excludes — vendored snapshot of
   # https://raw.githubusercontent.com/rubo77/rsync-homedir-excludes/master/rsync-homedir-excludes.txt
-  # sha256: 3f73592de0903df36a30842914b3a82af94a666c1da4bce9258195b3b910fb77
+  # sha256: bccff7e4264e795fd52b26563f214a0e2e6b3ba335291fb9ba25fa3d51354f42
   # To refresh:
   #   curl -fsS https://raw.githubusercontent.com/rubo77/rsync-homedir-excludes/master/rsync-homedir-excludes.txt \
   #     -o home-manager/_mixins/services/borgmatic-excludes-rubo77.txt
