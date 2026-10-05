@@ -48,6 +48,17 @@ let
       maxRetries = 3;
       baseDelayMs = 2000;
     };
+    # How long Pi waits on a silent model stream before failing the request
+    # (Pi's default is 300000). The proxy's thinking_normalizer forces
+    # effort=xhigh on every adaptive Claude model, and the model sends
+    # nothing while it reasons: hard design turns on claude-opus-5-5 stay
+    # silent for 4-5+ minutes (one probe was silent 218 s before its first
+    # byte). At the default, any turn that needs more than five minutes of
+    # thought times out, and so does every retry, since a retry repeats the
+    # same thinking; that killed five sub-agents in a row at the point they
+    # began designing. Twenty minutes covers the longest successful turns
+    # observed (~20 min).
+    httpIdleTimeoutMs = 1200000;
     # All `litellm:*` ids the proxy exposes are enabled. The dynamic
     # extension below registers each one with metadata derived from the
     # model id, so we don't need to keep a parallel list here. We omit

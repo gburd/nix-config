@@ -264,7 +264,13 @@ let
     litellm_settings = {
       drop_params = true;
       modify_params = true;
-      request_timeout = 600;
+      # Read timeout on the Bedrock stream (LiteLLM hands this to httpx as
+      # the socket read timeout), so it bounds how long a model may stay
+      # silent, not just the total request. With effort=xhigh (see
+      # thinking_normalizer.py) Claude sends no bytes while it reasons, and
+      # a hard turn can think for well over 10 minutes. Kept equal to pi's
+      # httpIdleTimeoutMs (pi.nix) so neither side gives up first.
+      request_timeout = 1200;
       # Resilience against transient Bedrock 503s ("Bedrock is unable to
       # process your request" / "system encountered an unexpected error").
       # Retry the SAME model a few times with exponential backoff — a 503 is
