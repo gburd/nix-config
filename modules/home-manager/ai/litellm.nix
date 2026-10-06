@@ -777,20 +777,45 @@ in
                 fi
               '') cfg.agents}
 
-            # config.yaml — generated, overwritten on every switch. JSON is
+            # config.yaml — generated. Written to a temp file first and only
+            # swapped in when the CONTENT actually differs, so an unrelated
+            # switch (a package bump, a shell tweak) doesn't look like a
+            # config change and doesn't trigger the restart below. JSON is
             # valid YAML, so we emit JSON to bypass any indent hazards.
-            ${pkgs.coreutils}/bin/cat > "$DIR/config.yaml" <<'LITELLM_CONFIG'
+            #
+            # NOTE cmp comes from pkgs.diffutils, NOT pkgs.coreutils —
+            # coreutils ships no `cmp`, so a ${"$"}{pkgs.coreutils}/bin/cmp path
+            # does not exist and the `if` fails on EVERY run, which silently
+            # takes the "changed" branch and restarts the proxy every switch:
+            # exactly the bug this block exists to prevent.
+            NEEDS_RESTART=0
+            ${pkgs.coreutils}/bin/cat > "$DIR/.config.yaml.new" <<'LITELLM_CONFIG'
       ${configJson}
       LITELLM_CONFIG
+            if ${pkgs.diffutils}/bin/cmp -s "$DIR/.config.yaml.new" "$DIR/config.yaml"; then
+              ${pkgs.coreutils}/bin/rm -f "$DIR/.config.yaml.new"
+            else
+              ${pkgs.coreutils}/bin/mv "$DIR/.config.yaml.new" "$DIR/config.yaml"
+              NEEDS_RESTART=1
+            fi
             ${pkgs.coreutils}/bin/chmod 600 "$DIR/config.yaml"
 
             # thinking_normalizer.py — the pre-call hook referenced by
             # litellm_settings.callbacks. Lives next to config.yaml; the proxy
             # is launched with cwd=$DIR (and $DIR on PYTHONPATH) so LiteLLM can
             # import it as the top-level module `thinking_normalizer`.
-            ${pkgs.coreutils}/bin/cat > "$DIR/thinking_normalizer.py" <<'LITELLM_HOOK'
+            # Same compare-then-swap as config.yaml: the proxy imports this at
+            # startup, so a real change needs a restart, but an unchanged file
+            # must not cause one.
+            ${pkgs.coreutils}/bin/cat > "$DIR/.thinking_normalizer.py.new" <<'LITELLM_HOOK'
       ${thinkingHookPy}
       LITELLM_HOOK
+            if ${pkgs.diffutils}/bin/cmp -s "$DIR/.thinking_normalizer.py.new" "$DIR/thinking_normalizer.py"; then
+              ${pkgs.coreutils}/bin/rm -f "$DIR/.thinking_normalizer.py.new"
+            else
+              ${pkgs.coreutils}/bin/mv "$DIR/.thinking_normalizer.py.new" "$DIR/thinking_normalizer.py"
+              NEEDS_RESTART=1
+            fi
             ${pkgs.coreutils}/bin/chmod 600 "$DIR/thinking_normalizer.py"
 
             # custom_auth.py — DB-free per-agent key validation + model
@@ -798,9 +823,15 @@ in
             # live per-agent keyfiles at request time (values never enter the
             # Nix store). Imported as top-level module `custom_auth` (cwd=$DIR
             # + $DIR on PYTHONPATH, same as the thinking hook).
-            ${pkgs.coreutils}/bin/cat > "$DIR/custom_auth.py" <<'LITELLM_AUTH'
+            ${pkgs.coreutils}/bin/cat > "$DIR/.custom_auth.py.new" <<'LITELLM_AUTH'
       ${customAuthPy}
       LITELLM_AUTH
+            if ${pkgs.diffutils}/bin/cmp -s "$DIR/.custom_auth.py.new" "$DIR/custom_auth.py"; then
+              ${pkgs.coreutils}/bin/rm -f "$DIR/.custom_auth.py.new"
+            else
+              ${pkgs.coreutils}/bin/mv "$DIR/.custom_auth.py.new" "$DIR/custom_auth.py"
+              NEEDS_RESTART=1
+            fi
             ${pkgs.coreutils}/bin/chmod 600 "$DIR/custom_auth.py"
 
             # Install / upgrade litellm[proxy] via pipx, pinned to our commit.
@@ -828,8 +859,20 @@ in
             # the proxy that ends up running always matches what we just
             # wrote. No-op if the unit isn't loaded yet (first-ever switch;
             # reloadSystemd's own systemctl start handles that case).
-            if ${pkgs.systemd}/bin/systemctl --user is-enabled --quiet litellm.service 2>/dev/null; then
-              ${pkgs.systemd}/bin/systemctl --user restart litellm.service || true
+            #
+            # ONLY when something the proxy reads actually changed. A restart
+            # drops every in-flight request, which KILLS RUNNING AGENTS
+            # mid-task — so an unrelated `home-manager switch` (a package
+            # fix, a shell tweak) must not touch the proxy. The flags above
+            # are set only by a real content change to config.yaml, the
+            # hooks, or the per-agent keys.
+            if [ "$NEEDS_RESTART" = 1 ]; then
+              if ${pkgs.systemd}/bin/systemctl --user is-enabled --quiet litellm.service 2>/dev/null; then
+                echo "litellm: config changed — restarting the proxy"
+                ${pkgs.systemd}/bin/systemctl --user restart litellm.service || true
+              fi
+            else
+              echo "litellm: config unchanged — leaving the running proxy alone"
             fi
     '';
 
