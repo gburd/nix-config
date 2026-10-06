@@ -14,11 +14,17 @@ _: {
       "github"
       "kaleidoscope"
       "keepassxc"
-      # Mailspring GUI mail client. On darwin this is the upstream cask (a
-      # notarized .app) -- it does NOT carry the Nix asar patches our Linux
-      # build applies (Message-ID domain from sender, "Mailspring"->"Other"
-      # mailbox); those only apply to the nixpkgs .deb build on floki. If the
-      # unpatched Message-ID matters here too, revisit.
+      # Mailspring GUI mail client, darwin ONLY. This is the upstream cask (a
+      # notarized .app), unrelated to the Linux build, which was REMOVED from
+      # floki: the nixpkgs .deb wrapper is broken at runtime (a renderer-side
+      # dlopen of libstdc++.so.6 fails because upstream's runtimeDependencies
+      # omits the C++ runtime, so the app never finishes loading). The cask
+      # does not share that packaging and is unaffected.
+      #
+      # It also never carried the Nix asar patches the Linux build applied
+      # (Message-ID domain from sender, "Mailspring" -> "Other" mailbox), so
+      # mail sent from here still advertises @getmailspring.com in its
+      # Message-ID. Revisit if that matters on this host.
       "mailspring"
       "podman-desktop"
       "serial"

@@ -13,12 +13,6 @@ Last updated: 2026-03-21
 
 ## Important (Incomplete Features)
 
-### Mailspring Message-ID Patch
-- **Location**: pkgs/mailspring/default.nix:1-13
-- **Status**: Entire feature unimplemented
-- **Details**: Requires patching `app/src/flux/stores/draft-factory.ts` to randomize Message-ID headers
-- **Priority**: Medium if using Mailspring for privacy-sensitive email
-
 ### Docker Rootless Mode
 - **Location**: nixos/_mixins/virt/docker.nix:14-17
 - **Status**: Configuration commented out

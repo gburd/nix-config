@@ -350,7 +350,6 @@ in
       colibri # pure-C MoE inference engine (coli chat/serve/web); models fetched separately (COLI_MODEL=<dir>)
       flatpak # CLI for the Orion browser bundle install below (flatpak run com.kagi.OrionGtk)
       harper # harper-ls on PATH for Zed + Emacs (eglot); neovim gets it via its own extraPackages
-      mailspring # GUI mail client (patched: randomized Message-ID, see overlays/default.nix)
       plocate
       telegram-desktop
       unstable.element-desktop

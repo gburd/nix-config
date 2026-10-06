@@ -24,8 +24,5 @@
   memelord = pkgs.callPackage ./memelord { };
   tly = pkgs.callPackage ./tly { };
   umami = pkgs.callPackage ./umami { };
-  # mailspring: overridden in overlays/default.nix (modifications), not here
-  # -- it wraps the EXISTING nixpkgs mailspring, which recurses if resolved
-  # via callPackage against the final (additions) pkg set.
   terax-ai = pkgs.callPackage ./terax-ai { };
 }
