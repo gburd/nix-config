@@ -380,11 +380,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1791048980,
-        "narHash": "sha256-KgItSKML8Xvte0B7/uGnBDsYzSnnKHcOaiUbgWBXLXw=",
+        "lastModified": 1791260994,
+        "narHash": "sha256-Miqqk/ammqnTUxaoCyvtwoPeLbI1ksFyLxi/CazZpWY=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "a7868a727837f3c09cee2ce0ca671c76b1589fed",
+        "rev": "151fa4e8ddfdd8dd25d945ad94ed54a13de9f6e4",
         "type": "github"
       },
       "original": {
@@ -425,11 +425,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1791031588,
-        "narHash": "sha256-/FGDr01siZ8txrVzkOz6CYjiz0XR27JuVJP+aWchi4s=",
+        "lastModified": 1791254437,
+        "narHash": "sha256-qMSsgG+9tIdx282dMqGuJAUK3t6F36clM6efd0rXfes=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "825e2028c29b702a4a5f085f08095d12099784f2",
+        "rev": "b25309931cfda5f0b8805f462a29897eeae50168",
         "type": "github"
       },
       "original": {
@@ -506,11 +506,11 @@
     "no-mistakes": {
       "flake": false,
       "locked": {
-        "lastModified": 1791162828,
-        "narHash": "sha256-IonKlE2X12iNqPNm1xsrJKo/RdbtUgdtsoY80ZF1Vvs=",
+        "lastModified": 1791278215,
+        "narHash": "sha256-BXPRF+q3DTePKklENKiQbpfvSzCViY1ngwRU3gIUBqY=",
         "owner": "kunchenguid",
         "repo": "no-mistakes",
-        "rev": "4cf8134b853b218af70c7f4d60a9a5e7c1822d84",
+        "rev": "2232578802081c0b07d42c970866e7b1eac25514",
         "type": "github"
       },
       "original": {
@@ -522,11 +522,11 @@
     "ponytail": {
       "flake": false,
       "locked": {
-        "lastModified": 1791162849,
-        "narHash": "sha256-s2h37Qzt8aMpNrW1yiX18i8UaeBg8EhmQoDPbzGEjJs=",
+        "lastModified": 1791233199,
+        "narHash": "sha256-w6qwghKJYH3D6tQ3xUO7TtPXhYWiilId0BIEQSaUkNg=",
         "owner": "DietrichGebert",
         "repo": "ponytail",
-        "rev": "5c21d7e9c6cf7ac5bb62dbabcd325223125314ad",
+        "rev": "552acd5efd0aeae2583a12efe39373d2f076f25e",
         "type": "github"
       },
       "original": {
@@ -637,11 +637,11 @@
         "solnix-pkgs": "solnix-pkgs"
       },
       "locked": {
-        "lastModified": 1791159474,
-        "narHash": "sha256-zYdR6lerfelQ87jTzDcCwwF74+ZUs7mvbdOETRpos0c=",
+        "lastModified": 1791259859,
+        "narHash": "sha256-W86rDXQdTcFw4ktoW65zlvC3fOJqpKeth+6xSVhOM5o=",
         "ref": "main",
-        "rev": "16d87f65a1cca035ce68452241017a57396321b1",
-        "revCount": 1723,
+        "rev": "6ce7b7da7513ed3295290c276daaf843b4cb07c1",
+        "revCount": 1741,
         "type": "git",
         "url": "https://codeberg.org/gregburd/solnix.git"
       },
