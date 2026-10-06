@@ -261,6 +261,31 @@ let
     model_list =
       map (m: mkModelRow m m.name) usableModels;
 
+    # Router-level retry pacing. num_retries (in litellm_settings below) sets
+    # HOW MANY times a failed call is retried; this sets how long to WAIT
+    # between those attempts, which litellm_settings cannot express.
+    #
+    # Why it matters here: Router._time_to_sleep_before_retry() returns 0 --
+    # i.e. retries instantly -- when the model group has a single healthy
+    # deployment, which is every model in this config (one Bedrock row each,
+    # the `us.` inference profile doing its own cross-region balancing). It
+    # then falls through to litellm._calculate_retry_after(min_timeout =
+    # self.retry_after), and Router's default retry_after is 0. Measured with
+    # num_retries=3: min_timeout=0 gives waits of 0.64s/1.32s/2.25s, so all
+    # three retries are spent inside ~4.2 seconds. A Bedrock capacity blip
+    # ("Bedrock is unable to process your request") routinely outlasts that,
+    # so the burst is wasted and the 503 still reaches the agent -- observed
+    # 51 such 503s against 3675 successes in one hour on opus-5-5.
+    # min_timeout=2 stretches the same 3 retries to 2.67s/2.00s/2.29s
+    # (~7s of cover) without changing the attempt count.
+    #
+    # Deliberately still NO `fallbacks` here: see the num_retries comment
+    # below. A sustained outage must fail loudly rather than silently
+    # downgrade the model behind the user's back.
+    router_settings = {
+      retry_after = 2;
+    };
+
     litellm_settings = {
       drop_params = true;
       modify_params = true;
