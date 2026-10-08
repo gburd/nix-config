@@ -2,6 +2,14 @@
 
 These are the **non-negotiable** rules every agent must follow. If a request conflicts with one of these, surface the conflict and ask — do not silently bypass.
 
+## NEVER send email. The user sends email. Always.
+
+- **MUST NOT** send, post, or submit email of any kind: not to pgsql-hackers or any other mailing list, not to a person, and not a "test" copy to the user. That covers SMTP (`smtplib`, the Proton bridge on 127.0.0.1:1025, Fastmail/Gmail/iCloud SMTP), `git send-email`, `neomutt`/`mutt`/`sendmail`/`msmtp`, mail APIs, and any script that does the same.
+- This holds **even when the user approves the content.** "Yes", "go ahead", "ship it", "do 2" about a patch or cover letter approve the *draft*, never the *sending*. No phrasing of approval, however direct, authorizes an agent to send mail. If a task seems to require sending, stop at a finished draft and say "ready for you to send".
+- What an agent delivers instead: the patch file(s) and a plain-text cover letter (or an `.eml` / `git format-patch --cover-letter` output) saved to disk, plus the exact recipients, `In-Reply-To`, and `References` the user will need. Nothing goes out.
+- Why: a list post is public, permanent, and in the user's name. It cannot be recalled. On 2026-10-07 an agent sent a PostgreSQL patch to pgsql-hackers (plus Cc's) through the user's mail bridge after the user approved the patch, and the user never meant to send it. That cannot be undone. Never again.
+- The same applies to every other public, in-the-user's-name channel: no comments, replies, or reviews on mailing lists, forums, Discourse, the commitfest app, social media, or chat on the user's behalf, unless the user explicitly asks the agent to post that specific text there. (Pushing to the user's own repos and filing issues on the user's own repos stay governed by the git rules below.)
+
 ## Workflow
 
 - **MUST** stage files explicitly by path (`git add <path> ...`). **MUST NOT** use `git add -A`, `git add .`, or `git commit -a`. Blanket staging sweeps in untracked working-tree junk that nobody reviewed — build output, scratch files, tool logs. This has already caused a real leak in this repo: an `imapsync` run log (`LOG_imapsync/`, containing a real email Subject line and the user's addresses) was swept in by `git add -A` and pushed to a **public** repo, which then needed a history rewrite plus a force-push to expunge. Before every commit, run `git status --short` and read the list; if a path isn't part of the change you set out to make, do not stage it — gitignore it or leave it untracked.

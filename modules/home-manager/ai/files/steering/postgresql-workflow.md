@@ -25,6 +25,8 @@ If `postgresq` returns insufficient results, *then* fall back to web search or m
 
 When the user asks for a patch or patch series targeting upstream PostgreSQL or one of their extensions:
 
+> **The deliverable is files on disk, never a sent message.** Agents **NEVER** send anything to pgsql-hackers (or any list, or any person): no `git send-email`, no SMTP, no mail client, no "test" copy. That holds even after the user approves the patch and the cover letter. Finish with `git format-patch` output plus a plain-text cover letter, recipients and `In-Reply-To`, and say "ready for you to send". The user sends. See `must-rules.md` § "NEVER send email" (an agent sent a patch to -hackers on 2026-10-07; it can't be recalled).
+
 1. **Phase 0 — Context gathering** (before touching code)
    - `postgresq` search for prior threads on the topic. Read the top 3–5.
    - `postgresq` git history for the area being modified — understand recent churn.

@@ -5,6 +5,8 @@ description: Research the PostgreSQL community via the agora MCP server (https:/
 
 # PostgreSQL Community Research
 
+> **Read-only.** This skill researches the lists; it never posts to them. Agents NEVER send email to pgsql-hackers or anyone else, even after the user approves a patch. Leave the patch and cover letter on disk; the user sends (see steering `must-rules.md` § "NEVER send email").
+
 Use the postgresq MCP server (https://pg.ddx.io/mcp/) to research PostgreSQL community discussions, patches, and development history.
 
 ## Capabilities
