@@ -56,30 +56,18 @@ in
   # REALISED on an illumos host (the gate proto and the slices carved from it are
   # x86_64-solaris store paths). Do not read a successful `nix eval` as a build.
   mkSolnixHost = { hostname, modules ? [ ], platform ? "x86_64-solaris" }:
-    let
-      # The patched nixpkgs that knows about the *-solaris platforms. Same source
-      # mkHome uses, for the same reason: stock nixpkgs has no *-solaris system.
-      solnixNixpkgs = inputs.solnix-pkgs.lib.nixpkgsSrc;
-      pkgs = import solnixNixpkgs {
-        system = platform;
-        # solnix-pkgs.overlays.default is only the BOOTSTRAP half of pkgs.solnix.
-        # A toplevel also needs worldOverlay (wires pkgs.solnix.systemPath, read by
-        # solnix's activation/default.nix) and shellPathOverlay (restores
-        # bashNonInteractive.shellPath); without them dixi's drvPath throws
-        # "attribute 'systemPath' missing" and solnix-install reports "no system
-        # configuration names dixi". solnix exports both from its lib so we apply
-        # the SAME layers its own pkgsFor does rather than drifting a copy.
-        overlays = [
-          inputs.solnix-pkgs.overlays.default
-          inputs.solnix.lib.shellPathOverlay
-          inputs.solnix.lib.worldOverlay
-        ];
-        config.allowUnsupportedSystem = true;
-      };
-    in
+    # solnix.lib.mkPkgs is the package set solnix evaluates its own systems with
+    # (pkgs.solnix.* + plain-derivation writers). It needs no import-from-derivation:
+    # the old `import solnix-pkgs.lib.nixpkgsSrc` here is an x86_64-linux build, so a
+    # `solnix-install --flake .#dixi` ON ILLUMOS failed before evaluating anything
+    # ("a 'x86_64-linux' is required to build ...-nixpkgs-solnix-patched.drv"), and
+    # its nixpkgs writers dragged ~200 uncached stdenv-bootstrap builds into the
+    # toplevel. With mkPkgs the toplevel is the same derivation solnix's own build
+    # host produces, so the install reuses what is already built.
     inputs.solnix.lib.solnixSystem {
       system = platform;
-      inherit pkgs;
+      pkgs = inputs.solnix.lib.mkPkgs { system = platform; };
+      specialArgs = { inherit inputs; };
       modules = [{ networking.hostName = hostname; }] ++ modules;
     };
 
