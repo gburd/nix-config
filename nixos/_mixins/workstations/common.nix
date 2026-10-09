@@ -133,6 +133,16 @@
   # Provides /lib64/ld-linux-x86-64.so.2 and other standard library paths
   programs.nix-ld.enable = true;
 
+  # trippy (`trip`) needs raw sockets. This upstream module installs a
+  # setcap wrapper at /run/wrappers/bin/trip with capabilities
+  # "cap_net_raw+p", owner root, so `trip` runs unprivileged without sudo.
+  # /run/wrappers/bin precedes ~/.nix-profile/bin on PATH, so this wrapper
+  # shadows the plain binary the home-manager console mixin installs --
+  # which is what we want; the HM copy stays as the fallback on non-NixOS
+  # hosts (arnold is Fedora and has no security.wrappers, so `trip` still
+  # needs sudo there).
+  programs.trippy.enable = true;
+
   # Enable core dumps in current directory with pattern core.<pid>
   # 26.05: systemd.coredump.extraConfig removed in favor of .settings.Coredump.
   systemd.coredump.settings.Coredump.Storage = "none";

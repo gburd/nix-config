@@ -37,6 +37,7 @@ let
     "release-tagging"
     "nix-agent-configs"
     "subagent-teams"
+    "libumem"
   ];
 
   # Kiro skills with nested reference directories (subdirs under references/)
@@ -67,6 +68,7 @@ let
     release-tagging = ./files/claude-skills/release-tagging;
     nix-agent-configs = ./files/claude-skills/nix-agent-configs;
     subagent-teams = ./files/claude-skills/subagent-teams;
+    libumem = ./files/claude-skills/libumem;
   };
 
   # Recursively collect all files from a directory tree

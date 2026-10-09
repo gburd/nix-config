@@ -25,6 +25,7 @@
   tly = pkgs.callPackage ./tly { };
   umami = pkgs.callPackage ./umami { };
   kudu = pkgs.callPackage ./kudu { };
+  hylki = pkgs.callPackage ./hylki { };
   netwatch = pkgs.callPackage ./netwatch { };
   terax-ai = pkgs.callPackage ./terax-ai { };
 }

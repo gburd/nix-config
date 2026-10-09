@@ -188,6 +188,13 @@ with lib.hm.gvariant;
     readline
     zlib
 
+    # Hylki -- GNOME-native mail client (pkgs/hylki). arnold passes no
+    # `desktop` arg so _mixins/desktop is NOT imported here; the package is
+    # named directly instead of via desktop/hylki.nix. arnold runs GUI apps
+    # over X11, and its Proton Bridge (file vault, see the import above) is
+    # what Hylki would connect to.
+    hylki
+
     # AI tools
     unstable.lmstudio # LM Studio (unstable: near-current; stable is stuck on 0.4.1)
     # maki installed (wrapped) by modules/home-manager/ai/maki.nix
