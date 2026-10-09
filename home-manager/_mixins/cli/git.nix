@@ -254,13 +254,8 @@ in
       signByDefault = true;
     };
     lfs.enable = true;
-    # Aliases live in console/default.nix (richer set already there).
+    # Aliases live in git-common.nix.
     settings = {
-      user = {
-        name = "Greg Burd";
-        email = "greg@burd.me";
-      };
-      init.defaultBranch = "main";
       gpg.format = "ssh";
       # Sign with the sops-deployed on-disk signing key via OpenSSH's own
       # ssh-keygen signer — no dependency on 1Password's op-ssh-sign (which
@@ -271,22 +266,10 @@ in
       commit.gpgsign = true;
       tag.gpgsign = true;
 
-      # --- migrated from the old hand-maintained ~/.gitconfig ---
-      # (push.default / pull.* / aliases / init are owned by
-      # console/default.nix; not redefined here to avoid merge conflicts.)
-      color = {
-        ui = "auto";
-        diff = "auto";
-        status = "auto";
-        branch = "auto";
-      };
-      format.pretty = "format:%C(yellow)%h%Creset | %C(green)%ad (%ar)%Creset | %C(blue)%an%Creset | %s";
-      push.autoSetupRemote = true;
-      branch.autosetuprebase = "always";
-      receive.denyCurrentBranch = "warn";
+      # Identity, aliases, push/pull policy, colours and format live in
+      # git-common.nix (shared with the solnix hosts).
       core = {
         editor = "nvim";
-        quotepath = false;
         # core.pager is left to git's default (delta is disabled — see
         # programs.delta in console/default.nix). `git diff` shows a plain
         # colored diff through the normal pager, not the side-by-side TUI.

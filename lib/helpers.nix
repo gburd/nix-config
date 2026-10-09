@@ -35,6 +35,43 @@ in
     modules = [ ../home-manager ];
   };
 
+  # mkSolnixHome -- the home-manager half of a solnix (Nix-on-illumos) host.
+  #
+  # Same package set as mkSolnixHost: solnix's own (pkgs.solnix.* from source plus
+  # plain-derivation writers, solnix/lib/home-manager-pkgs.nix), NOT nixpkgs. The
+  # mkHome solnixReady path imported solnix-pkgs.lib.nixpkgsSrc, an x86_64-linux
+  # applyPatches derivation: import-from-derivation that cannot build on illumos,
+  # and behind it a nixpkgs x86_64-solaris stdenv that does not evaluate (home-
+  # manager's nixpkgs module re-imports pkgs.path and recurses). nixpkgs here is
+  # only a SOURCE for lib and pkgs-lib's formats; nothing from it is built.
+  #
+  # The profile is home-manager/solnix.nix, a small command-line set (bash prompt
+  # and aliases, git, ssh, tmux), not ../home-manager: that tree names ~200 Linux
+  # packages solnix does not build.
+  #
+  # EVAL ANYWHERE, BUILD ON ILLUMOS: activationPackage is x86_64-solaris.
+  mkSolnixHome = { username, hostname, platform ? "x86_64-solaris" }:
+    let
+      pkgs = import "${inputs.solnix}/lib/home-manager-pkgs.nix" {
+        hostPkgs = inputs.solnix.lib.mkPkgs { system = platform; };
+        nixpkgs = inputs.nixpkgs.outPath;
+        system = platform;
+      };
+    in
+    inputs.home-manager.lib.homeManagerConfiguration {
+      inherit pkgs;
+      extraSpecialArgs = {
+        inherit inputs outputs hostname platform username stateVersion sshMatrix;
+        desktop = null;
+      };
+      modules = [
+        ../home-manager/solnix.nix
+        # home-manager's nixpkgs module re-imports pkgs.path for the target
+        # system; solnix's set is final, so pin it.
+        { _module.args.pkgs = inputs.nixpkgs.lib.mkForce pkgs; }
+      ];
+    };
+
   # mkSolnixHost -- the SYSTEM half of a solnix (Nix-on-illumos) host.
   #
   # ⚠️ WHY THIS IS NOT mkHost. mkHost is inputs.nixpkgs.lib.nixosSystem, which

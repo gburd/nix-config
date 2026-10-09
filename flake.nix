@@ -227,7 +227,9 @@
         #
         # Three "dix" hosts:
         #   * dixi -- x86_64, EC2 (permanent account), HEADLESS (no COSMIC).
-        "gburd@dixi" = libx.mkHome { hostname = "dixi"; username = "gburd"; platform = "x86_64-solaris"; inherit solnixReady; };
+        #     A small command-line profile on solnix's own package set
+        #     (lib/helpers.nix mkSolnixHome, home-manager/solnix.nix), built on dixi.
+        "gburd@dixi" = libx.mkSolnixHome { hostname = "dixi"; username = "gburd"; };
         #   * dixa -- aarch64, EC2 (permanent account), HEADLESS (no COSMIC).
         "gburd@dixa" = libx.mkHome { hostname = "dixa"; username = "gburd"; platform = "aarch64-solaris"; inherit solnixReady; };
         #   * dixr -- RISC-V, PHYSICAL dev box (kbd/mouse/monitor), COSMIC
