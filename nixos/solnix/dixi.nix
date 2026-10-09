@@ -83,7 +83,10 @@
   # cache-only pkgs.solnix.starter.{git,curl} were retired from the cache. df,
   # useradd, reboot, zpool (the old core-utils/oamuser/halt/zfs slices) are in the
   # illumos world every solnix system ships, so they are not listed.
-  environment.systemPackages = with pkgs.solnix; [ git curl ];
+  # home-manager is in the system so `home-manager switch` works on a fresh
+  # install, before the user's home generation exists (it is built from source,
+  # pkgs/illumos/base-src.nix).
+  environment.systemPackages = with pkgs.solnix; [ git curl home-manager ];
 
   # WARNING: NETWORK IS A HARD PREREQUISITE AND WIFI CANNOT SATISFY IT ON THIS MACHINE.
   # The Intel AX2xx has no illumos driver and no OpenSolaris-family fork has one
