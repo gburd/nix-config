@@ -132,52 +132,28 @@ let
   ###
   # Upstream skills.git blend
   #
-  # Each agent branch of https://codeberg.org/ddx/skills.git is a flake
-  # input (see flake.nix). We deploy each branch as a single recursive
-  # symlink under the corresponding agent skills dir, in a clearly-named
-  # subdir so it can't collide with the in-tree operator skills above.
+  # The single-branch https://codeberg.org/ddx/skills.git (flake input
+  # `postgresq-skills`) is deployed as one recursive symlink under each agent
+  # skills dir, in a clearly-named subdir so it can't collide with the in-tree
+  # operator skills above.
   #
-  # The 13 SKILL.md files at each branch root land at depth 2
-  # (e.g. ~/.kiro/skills/skills-git-kiro/btw/SKILL.md), so the agent
-  # skill discoverers (which scan depth 1) won't surface them as
-  # invokable skills. They're reference material, available to operator
-  # skills that want to cite them.
-  #
-  # The shared content (community/, examples/, generic/) and per-agent
-  # extras (claude/, pi/, kiro/, maki/) become available under
-  # the skills-git-<branch>/ namespace.
+  # Skill SKILL.md files live at depth 3 now
+  # (e.g. ~/.kiro/skills/skills-git/postgres/dba/SKILL.md), well below the
+  # depth-1 scan the agent skill discoverers use, so they won't surface as
+  # invokable skills -- they're reference material. The collections
+  # (postgres/, tooling/, ai-life-skills/) and shared content (community/,
+  # examples/, generic/) all become available under skills-git/.
   ###
-  skillsGitDeployments = {
-    claude = {
-      input = inputs.postgresq-skills-claude or null;
-      target = ".claude/skills/skills-git-claude";
-    };
-    pi = {
-      input = inputs.postgresq-skills-pi or null;
-      # Pi reads ~/.kiro/skills/ (see modules/home-manager/ai/pi.nix);
-      # use a Pi-specific subdir to avoid colliding with the kiro branch.
-      target = ".kiro/skills/skills-git-pi";
-    };
-    kiro = {
-      input = inputs.postgresq-skills-kiro or null;
-      target = ".kiro/skills/skills-git-kiro";
-    };
-    maki = {
-      input = inputs.postgresq-skills-maki or null;
-      target = ".maki/skills/skills-git-maki";
-    };
-  };
+  skillsGitInput = inputs.postgresq-skills or null;
 
-  enabledSkillsGitBranches = lib.filterAttrs
-    (name: _: cfg.skillsGit.branches.${name}.enable)
-    skillsGitDeployments;
+  skillsGitTargets = lib.optionals cfg.targets.claude [ ".claude/skills/skills-git" ]
+    ++ lib.optionals cfg.targets.kiro [ ".kiro/skills/skills-git" ]
+    ++ [ ".maki/skills/skills-git" ".fx/skills/skills-git" ];
 
-  skillsGitFiles = lib.mapAttrs'
-    (_name: spec: lib.nameValuePair spec.target {
-      source = spec.input;
-      recursive = false;
-    })
-    enabledSkillsGitBranches;
+  skillsGitFiles = lib.optionalAttrs (cfg.skillsGit.enable && skillsGitInput != null)
+    (builtins.listToAttrs (map
+      (target: lib.nameValuePair target { source = skillsGitInput; recursive = false; })
+      skillsGitTargets));
 
   ###
   # ponytail (Part 3) — cross-agent "lazy senior dev" skill/ruleset.
@@ -347,32 +323,11 @@ in
         type = types.bool;
         default = true;
         description = ''
-          Deploy upstream PostgreSQL community skills from
-          https://codeberg.org/ddx/skills.git as a blend over the in-tree
-          operator skills. Per-branch toggles below.
+          Deploy the single-branch PostgreSQL agent skills from
+          https://codeberg.org/ddx/skills.git (flake input `postgresq-skills`)
+          as a blend over the in-tree operator skills — one `skills-git/`
+          symlink per agent skills dir. Not a replacement.
         '';
-      };
-      branches = {
-        claude.enable = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Deploy skills.git claude branch to ~/.claude/skills/skills-git-claude/";
-        };
-        pi.enable = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Deploy skills.git pi branch to ~/.kiro/skills/skills-git-pi/ (Pi reads ~/.kiro/skills/)";
-        };
-        kiro.enable = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Deploy skills.git kiro branch to ~/.kiro/skills/skills-git-kiro/";
-        };
-        maki.enable = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Deploy skills.git maki branch to ~/.maki/skills/skills-git-maki/";
-        };
       };
     };
 

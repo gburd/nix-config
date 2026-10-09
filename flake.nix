@@ -94,25 +94,14 @@
     colmena.url = "github:zhaofengli/colmena";
     colmena.inputs.nixpkgs.follows = "nixpkgs";
 
-    # PostgreSQL community agent skills (https://codeberg.org/ddx/skills.git).
-    # One input per agent branch — content overlaps but each branch ships its
-    # own per-agent extras (claude/, pi/, kiro/, maki/ subdirs).
-    # Deployed by modules/home-manager/ai/skills.nix as a blend over the
-    # in-tree operator skills, not a replacement.
-    postgresq-skills-claude = {
-      url = "git+https://codeberg.org/ddx/skills.git?ref=claude";
-      flake = false;
-    };
-    postgresq-skills-pi = {
-      url = "git+https://codeberg.org/ddx/skills.git?ref=pi";
-      flake = false;
-    };
-    postgresq-skills-kiro = {
-      url = "git+https://codeberg.org/ddx/skills.git?ref=kiro";
-      flake = false;
-    };
-    postgresq-skills-maki = {
-      url = "git+https://codeberg.org/ddx/skills.git?ref=maki";
+    # PostgreSQL agent skills (https://codeberg.org/ddx/skills.git).
+    # Single branch: skills are written once for every agent (Agent Skills Open
+    # Standard). Collections: postgres/, tooling/, ai-life-skills/, plus shared
+    # community/, generic/, examples/. Deployed by
+    # modules/home-manager/ai/skills.nix as a blend over the in-tree operator
+    # skills, not a replacement.
+    postgresq-skills = {
+      url = "git+https://codeberg.org/ddx/skills.git?ref=main";
       flake = false;
     };
 
