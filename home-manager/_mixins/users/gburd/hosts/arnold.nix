@@ -11,9 +11,14 @@ with lib.hm.gvariant;
     # console and cli are imported by users/gburd/default.nix for all hosts
     ../../../console/ai # AI tools (opt-in; sops `or null` fallbacks safe without sops)
     ../../../services/borgmatic.nix
-    # ProtonMail Bridge -- local IMAP/SMTP gateway for greg@burd.me. arnold
-    # has NO gnome-keyring/secret-service, so the bridge uses its file-based
-    # vault fallback; the ONE-TIME account login still needs an interactive
+    # ProtonMail Bridge -- local IMAP/SMTP gateway for greg@burd.me.
+    # CORRECTED 2026-10-09: arnold does NOT use a file vault. It has no
+    # gnome-keyring, but KDE's KWallet serves org.freedesktop.secrets here
+    # (busctl --user shows org.kde.kwalletd6 + the kwallet portal), and the
+    # bridge picked that: ~/.config/protonmail/bridge-v3/keychain.json reads
+    # {"Helper": "secret-service-dbus"}. So the secret-service path is what
+    # is live, and the vault.enc beside it is unlocked through KWallet.
+    # The ONE-TIME account login still needs an interactive
     # `protonmail-bridge --cli` + `login` on the box (see arnold-manual-changes.md).
     ../../../services/protonmail-bridge.nix
     # Sublime Text + Merge (GUI; arnold forwards X11) and their licenses
@@ -191,7 +196,8 @@ with lib.hm.gvariant;
     # Hylki -- GNOME-native mail client (pkgs/hylki). arnold passes no
     # `desktop` arg so _mixins/desktop is NOT imported here; the package is
     # named directly instead of via desktop/hylki.nix. arnold runs GUI apps
-    # over X11, and its Proton Bridge (file vault, see the import above) is
+    # over X11, and its Proton Bridge (secret-service via KWallet, see the
+    # import above) is
     # what Hylki would connect to.
     hylki
 
