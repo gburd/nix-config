@@ -538,11 +538,11 @@
     "postgresq-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1791555201,
-        "narHash": "sha256-pgtL1OZwB5ax7ZMizKb3u9IbSiyWcU/DfGuc9B0kMuI=",
+        "lastModified": 1791563686,
+        "narHash": "sha256-wW4QGVx7Ar+LmbsSX93XoBWTU9YwG5zl3ueTCx2drXQ=",
         "ref": "main",
-        "rev": "237e310be05ea199dc614f405b77979bbc9681e7",
-        "revCount": 19,
+        "rev": "e5232e1b0642dc46915895fd25010dcaa44cf8f6",
+        "revCount": 23,
         "type": "git",
         "url": "https://codeberg.org/ddx/skills.git"
       },

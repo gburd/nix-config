@@ -32,12 +32,8 @@ let
       {"id":"claude-opus-4-8",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-fable-5-1","tier":"strong", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-fable-5",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-opus-4-7",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-opus-4-6",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-opus-4-1",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-sonnet-5-5","tier":"medium", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-sonnet-5",  "tier":"medium", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-sonnet-4-6","tier":"medium", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-haiku-5-5", "tier":"weak",   "context_window":200000, "max_output_tokens":32000}
     ]'';
 

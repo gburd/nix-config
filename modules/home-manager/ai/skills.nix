@@ -18,16 +18,13 @@ let
   # pg.ddx.io URL while skills.git still uses postgr.esq).
   ###
   kiroSkillNames = [
-    "aws-benchmark"
     "btw"
     "checkpoint"
     "coccinelle"
     "dream"
     "flex-bison-to-lime"
     "maintain-docs"
-    "memelord-init"
     "pg-numa-benchmark"
-    "postgresq"
     "review-diff"
     "stop-slop"
     "think-hard"
@@ -51,7 +48,6 @@ let
     "coccinelle"
     "dream"
     "maintain-docs"
-    "memelord-init"
     "pg-numa-benchmark"
     "review-diff"
     "think-hard"
@@ -60,9 +56,7 @@ let
 
   # Claude skills deployed as directories (multiple files per skill)
   claudeSkillDirs = {
-    aws-benchmark = ./files/claude-skills/aws-benchmark;
     hegel = ./files/claude-skills/hegel;
-    postgresq = ./files/claude-skills/postgresq;
     stop-slop = ./files/claude-skills/stop-slop;
     # workflow.md progressive-disclosure skills (see kiroSkillNames).
     release-tagging = ./files/claude-skills/release-tagging;

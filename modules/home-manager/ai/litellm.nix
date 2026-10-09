@@ -31,10 +31,11 @@ let
   #     `effort=xhigh` ("is not supported by this model") at the
   #     LiteLLM-validation layer, so we omit output_config entirely.
   #
-  #   - Opus 4.5 / 4.1, Sonnet 4.5, Haiku 4.5 → legacy `enabled` thinking
-  #     mode with explicit `budget_tokens`. These reject adaptive
-  #     ("adaptive thinking is not supported"). budget_tokens=16000 with
-  #     max_tokens=32000 leaves headroom for response text.
+  #   - Every model older than 4.8 → REMOVED 2026-10-09 at the user's
+  #     request. That retired the whole legacy `enabled`-thinking family
+  #     (Opus 4.5/4.1, Sonnet 4.5/4.6, Haiku 4.5) plus the intermediate
+  #     Opus 4.6/4.7 rungs. Every tier remaining takes adaptive thinking,
+  #     so nothing here needs explicit `budget_tokens` any more.
   #
   #   - Haiku 3-5 / Sonnet 4 → dropped: Bedrock returns
   #     "Access denied. This Model is marked by provider as Legacy" for
@@ -63,7 +64,7 @@ let
     { name = "claude-opus-5"; bedrock = "us.anthropic.claude-opus-5"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
     { name = "claude-fable-5-1"; bedrock = "us.anthropic.claude-fable-5-1"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
 
-    # Adaptive-thinking models (Opus 4.6+, Sonnet 4.6, Haiku 4.5+)
+    # Adaptive-thinking models — now the ONLY kind here (4.8 and newer).
     #
     # maxInput  = context window (input-token ceiling on Bedrock)
     # maxOutput = output-token ceiling. We set max_tokens to maxOutput so
@@ -71,27 +72,17 @@ let
     #             than a flat 32000. budget_tokens (legacy thinking) still
     #             fits because it's carved out of maxOutput, not on top.
     { name = "claude-opus-4-8"; bedrock = "us.anthropic.claude-opus-4-8"; converse = true; thinkingMode = "adaptive"; effort = "xhigh"; maxInput = 1000000; maxOutput = 128000; }
-    # Sunset opus-4-6/4-7: transient intermediate rungs, fully superseded by
-    # 4-8 (last 4.x, kept) and the new opus-5 default. 4-1/4-5 stay as the
-    # cheaper legacy-thinking fallbacks (different thinking mode + smaller
-    # ctx, still occasionally useful).
-    { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6"; converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 64000; }
-
-    # Newer Anthropic tiers. All four verified reachable on us-east-1
+    # opus-4-8 is the oldest Claude kept: the user's floor is "nothing older
+    # than 4.8". opus-4-6/4-7 were briefly added earlier the same day and then
+    # retired by that rule, along with sonnet-4-6 (which was one of only two
+    # 1M-context Sonnets — sonnet-5-5 below now covers that) and opus-4-1.
+    #
+    # sonnet-5-5 and haiku-5-5 were verified reachable on us-east-1
     # 2026-10-09 by calling us.<id>/converse directly with the proxy's own
-    # bearer token, and all four report ACTIVE in Bedrock's
-    # foundation-models inventory.
-    { name = "claude-opus-4-7"; bedrock = "us.anthropic.claude-opus-4-7"; converse = true; thinkingMode = "adaptive"; maxInput = 200000; maxOutput = 64000; }
-    { name = "claude-opus-4-6"; bedrock = "us.anthropic.claude-opus-4-6-v1"; converse = true; thinkingMode = "adaptive"; maxInput = 200000; maxOutput = 64000; }
+    # bearer token, and both report ACTIVE in Bedrock's foundation-models
+    # inventory.
     { name = "claude-sonnet-5-5"; bedrock = "us.anthropic.claude-sonnet-5-5"; converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 128000; }
     { name = "claude-haiku-5-5"; bedrock = "us.anthropic.claude-haiku-5-5"; converse = true; thinkingMode = "adaptive"; maxInput = 200000; maxOutput = 64000; }
-
-    # Opus 4.1 is the only 4.x tier kept: Bedrock reports it LEGACY rather
-    # than ACTIVE, but it still answers and it is the last model on the older
-    # explicit-thinking-budget semantics. The 4.5 trio (claude-opus-4-5,
-    # claude-sonnet-4-5, claude-haiku-4-5) was REMOVED 2026-10-09 at the
-    # user's request, superseded by 4-6/4-7/5-5 above.
-    { name = "claude-opus-4-1"; bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 32000; }
 
     # DeepSeek
     { name = "deepseek-r1"; bedrock = "us.deepseek.r1-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }
