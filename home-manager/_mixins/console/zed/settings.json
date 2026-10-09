@@ -390,7 +390,7 @@
           { "name": "claude-opus-5", "max_tokens": 1000000 },
           { "name": "claude-sonnet-5", "max_tokens": 1000000 },
           { "name": "claude-fable-5-1", "max_tokens": 1000000 },
-          { "name": "claude-haiku-4-5", "max_tokens": 200000 },
+          { "name": "claude-haiku-5-5", "max_tokens": 200000 },
           { "name": "gpt-6-astra", "max_tokens": 256000 },
           { "name": "gpt-5-6-terra", "max_tokens": 256000 },
           { "name": "grok-4-6", "max_tokens": 256000 },

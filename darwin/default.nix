@@ -138,6 +138,12 @@
       gh
       nodejs
       uv
+      # Kudu (system cleaner/scanner). On darwin pkgs/kudu installs the
+      # notarized Kudu.app from upstream's arm64 zip into
+      # $out/Applications -- nix-darwin does not merge that into
+      # /Applications automatically, so launch it from the store path or add
+      # an alias if you want it in Spotlight.
+      kudu
       # curated CLI dev tools, migrated from Homebrew to nixpkgs
       ripgrep
       eza

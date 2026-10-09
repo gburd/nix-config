@@ -32,12 +32,13 @@ let
       {"id":"claude-opus-4-8",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-fable-5-1","tier":"strong", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-fable-5",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-opus-4-5",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-opus-4-7",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-opus-4-6",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-opus-4-1",  "tier":"strong", "context_window":200000, "max_output_tokens":32000},
+      {"id":"claude-sonnet-5-5","tier":"medium", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-sonnet-5",  "tier":"medium", "context_window":200000, "max_output_tokens":32000},
       {"id":"claude-sonnet-4-6","tier":"medium", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-sonnet-4-5","tier":"medium", "context_window":200000, "max_output_tokens":32000},
-      {"id":"claude-haiku-4-5", "tier":"weak",   "context_window":200000, "max_output_tokens":32000}
+      {"id":"claude-haiku-5-5", "tier":"weak",   "context_window":200000, "max_output_tokens":32000}
     ]'';
 
   # Subcommand contract is documented at
@@ -268,7 +269,7 @@ in
               -e 's#"model":"bedrock/#"model":"litellm/#g' \
               -e 's#"model":"litellm/us\.anthropic\.#"model":"litellm/#g' \
               -e 's#"model":"litellm/bedrock\.rs"#"model":"litellm/claude-opus-4-8"#g' \
-              -e 's#"model":"litellm/claude-haiku-4\.5"#"model":"litellm/claude-haiku-4-5"#g' \
+              -e 's#"model":"litellm/claude-haiku-4[.-]5"#"model":"litellm/claude-haiku-5-5"#g' \
               -e 's#"model":"litellm/claude-opus-4-"#"model":"litellm/claude-opus-4-8"#g' \
               "$f"
           fi

@@ -64,7 +64,7 @@
       (
         let
           thPkgs = inputs.treehouse.packages;
-          th = if thPkgs ? ${platform} then thPkgs.${platform} else thPkgs.x86_64-linux;
+          th = thPkgs.${platform} or thPkgs.x86_64-linux;
         in
         th.default.overrideAttrs (_: { doCheck = false; })
       )
@@ -78,6 +78,13 @@
       gping # Modern Unix `ping`
       hexyl # Modern Unix `hexedit`
       hyperfine # Terminal benchmarking
+      # netwatch: real-time network diagnostics TUI ("htop for your network").
+      # Custom package (pkgs/netwatch) -- not in nixpkgs.
+      netwatch
+      # trippy: TUI traceroute/ping combined (`trip`). Note it needs raw
+      # sockets -- either run it with sudo or grant the binary CAP_NET_RAW;
+      # unprivileged `trip` exits with a permissions error.
+      trippy
       jpegoptim # Terminal JPEG optimizer
       jiq # Modern Unix `jq`
       lazygit # Terminal Git client

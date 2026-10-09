@@ -77,11 +77,21 @@ let
     # ctx, still occasionally useful).
     { name = "claude-sonnet-4-6"; bedrock = "us.anthropic.claude-sonnet-4-6"; converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 64000; }
 
-    # Legacy-thinking models (Opus 4.5/4.1, Sonnet 4.5, Haiku 4.5)
-    { name = "claude-opus-4-5"; bedrock = "us.anthropic.claude-opus-4-5-20251101-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
+    # Newer Anthropic tiers. All four verified reachable on us-east-1
+    # 2026-10-09 by calling us.<id>/converse directly with the proxy's own
+    # bearer token, and all four report ACTIVE in Bedrock's
+    # foundation-models inventory.
+    { name = "claude-opus-4-7"; bedrock = "us.anthropic.claude-opus-4-7"; converse = true; thinkingMode = "adaptive"; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-opus-4-6"; bedrock = "us.anthropic.claude-opus-4-6-v1"; converse = true; thinkingMode = "adaptive"; maxInput = 200000; maxOutput = 64000; }
+    { name = "claude-sonnet-5-5"; bedrock = "us.anthropic.claude-sonnet-5-5"; converse = true; thinkingMode = "adaptive"; maxInput = 1000000; maxOutput = 128000; }
+    { name = "claude-haiku-5-5"; bedrock = "us.anthropic.claude-haiku-5-5"; converse = true; thinkingMode = "adaptive"; maxInput = 200000; maxOutput = 64000; }
+
+    # Opus 4.1 is the only 4.x tier kept: Bedrock reports it LEGACY rather
+    # than ACTIVE, but it still answers and it is the last model on the older
+    # explicit-thinking-budget semantics. The 4.5 trio (claude-opus-4-5,
+    # claude-sonnet-4-5, claude-haiku-4-5) was REMOVED 2026-10-09 at the
+    # user's request, superseded by 4-6/4-7/5-5 above.
     { name = "claude-opus-4-1"; bedrock = "us.anthropic.claude-opus-4-1-20250805-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 32000; }
-    { name = "claude-sonnet-4-5"; bedrock = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
-    { name = "claude-haiku-4-5"; bedrock = "us.anthropic.claude-haiku-4-5-20251001-v1:0"; converse = true; thinkingMode = "enabled"; thinkingBudget = 16000; maxInput = 200000; maxOutput = 64000; }
 
     # DeepSeek
     { name = "deepseek-r1"; bedrock = "us.deepseek.r1-v1:0"; converse = false; maxInput = 128000; maxOutput = 32000; }

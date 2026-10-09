@@ -1,6 +1,7 @@
 { desktop, ... }: {
   imports = [
     ./alacritty.nix
+    ./kudu.nix
     ./neovide.nix
     # ./emote.nix  # Disabled - user doesn't want emoticons
     ./tilix.nix
