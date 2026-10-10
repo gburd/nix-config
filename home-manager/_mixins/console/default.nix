@@ -79,7 +79,14 @@
       hexyl # Modern Unix `hexedit`
       hyperfine # Terminal benchmarking
       # netwatch: real-time network diagnostics TUI ("htop for your network").
-      # Custom package (pkgs/netwatch) -- not in nixpkgs.
+      # CORRECTION (2026-10-09): netwatch IS in nixpkgs, as the attr
+      # `netwatch` (pname netwatch-tui) in pkgs/by-name/ne/netwatch. An
+      # earlier `nix eval nixpkgs#netwatch` miss was against our 2023-era
+      # `nixpkgs` input, not `unstable` -- pkgs.unstable.netwatch resolves
+      # fine at 0.30.0. We keep the local pkgs/netwatch only because it is
+      # 0.35.3; NixOS/nixpkgs#572316 bumps upstream to the same version.
+      # RETIRE pkgs/netwatch and switch this to unstable.netwatch once that
+      # PR merges.
       netwatch
       # trippy: TUI traceroute/ping combined (`trip`). Note it needs raw
       # sockets -- either run it with sudo or grant the binary CAP_NET_RAW;
