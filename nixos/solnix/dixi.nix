@@ -105,21 +105,25 @@
   # pkgs/illumos/base-src.nix).
   environment.systemPackages = with pkgs.solnix; [ git curl home-manager ];
 
-  # WARNING: NETWORK IS A HARD PREREQUISITE AND WIFI CANNOT SATISFY IT ON THIS MACHINE.
-  # The Intel AX2xx has no illumos driver and no OpenSolaris-family fork has one
-  # (illumos-gate, omnios, joyent, nexenta all checked -- newest Intel support is
-  # the iwn/iwp 6000-series era; zero forks claim 0x2723/0x2725/0x02f0), and the
-  # OpenBSD iwx port was abandoned after measuring that it needs a BSD
-  # network-interface layer illumos never had.
+  # WIFI: the X1 carries an Intel Wireless-AC 9560 (8086:a370), an iwm device
+  # (NOT the undrivable AX2xx -- that is a different, newer part). solnix drives
+  # it with the OpenBSD iwm port (src/wifi-port/iwm): the card attaches as iwm0,
+  # loads firmware and associates with WPA2. e1000g0 wired stays the primary
+  # link; wifi is a convenience, not the install prerequisite.
   #
-  # USB-ETHERNET IS THE ANSWER. illumos has four USB-ethernet drivers and all are
-  # Fast Ethernet: axf (ASIX AX88172/88178/88772), udmf (Davicom DM9601E), upf
-  # (Prolific), urf (Realtek RTL8150). NONE claims RTL8153, which is what a modern
-  # Lenovo dongle usually is -- so an ASIX AX88772-based adapter is the safe buy.
-  #
+  # The pre-shared key is NOT in this file or the Nix store. It lives at
+  # /etc/wifi/sedgwick.psk (root, 0600, first line = passphrase), placed on the
+  # machine out of band. hardware.wirelessIwm.networks references the path; the
+  # solnix-wifi-join SMF service reads it at boot and runs dladm connect-wifi.
+  hardware.wirelessIwm = {
+    enable = true;
+    allowUnfreeFirmware = true;
+    networks.sedgwick.pskFile = "/etc/wifi/sedgwick.psk";
+  };
+
   # The X1's ONBOARD wired NIC is e1000g0 (measured on this machine with
-  # `dladm show-phys`); a USB dongle would appear as axf0/udmf0/upf0/urf0. solnix's
-  # base.nix enables EC2's ena0, which this machine does not have.
+  # `dladm show-phys`). solnix's base.nix enables EC2's ena0, which this machine
+  # does not have.
   networking.interfaces = { ena0.dhcp = false; e1000g0.dhcp = true; };
   # DNS comes from the LAN's DHCP lease, not from this file. base.nix sets EC2's
   # resolver (169.254.169.253); an empty list generates no /etc/resolv.conf, so
