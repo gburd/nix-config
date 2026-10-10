@@ -77,6 +77,23 @@
   # that warning is accurate.
   solnix.desktop.cosmic.enable = false;
 
+  # Kernel crash dumps: the 4 GB dedicated zvol rpool/dump (created once with
+  # `zfs create -V 4G rpool/dump`; it lives in the pool, outside every boot
+  # environment). Declared here so a new generation keeps it: dumpadm's own
+  # /etc/dumpadm.conf is per-BE state that a switch would otherwise drop.
+  # savecore writes to /var/crash/dixi on the boot after a panic.
+  solnix.dumpadm = {
+    enable = true;
+    device = "/dev/zvol/dsk/rpool/dump";
+  };
+
+  # Core files for development: each crashing process also writes its core with
+  # its own credentials to /var/cores/<uid>/, which gburd owns, so cores of
+  # programs gburd runs are readable at /var/cores/1000/. (The global copy under
+  # /var/cores stays root-owned.) /var/cores is a shared dataset, so cores
+  # survive a generation switch.
+  solnix.coreadm.developerUsers = [ "gburd" ];
+
   # What a `home-manager switch --flake .#gburd@dixi` needs present BEFORE it can
   # run. nix itself comes from solnix's modules/config/nix.nix. git and curl are
   # built from source by solnix (pkgs/illumos/base-src.nix, nix-src.nix); the
