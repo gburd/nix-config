@@ -129,16 +129,20 @@
 
   # WIFI: the X1 carries an Intel Wireless-AC 9560 (8086:a370), an iwm device
   # (NOT the undrivable AX2xx -- that is a different, newer part). solnix drives
-  # it with the OpenBSD iwm port (src/wifi-port/iwm): the card attaches as iwm0,
-  # loads firmware and associates with WPA2. e1000g0 wired stays the primary
-  # link; wifi is a convenience, not the install prerequisite.
+  # it with the OpenBSD iwm port (src/ports/wifi/iwm): the card attaches as iwm0,
+  # loads firmware, associates with WPA2/CCMP and passes encrypted traffic.
+  # e1000g0 wired stays the primary link; wifi is a convenience, not the install
+  # prerequisite.
   #
   # The pre-shared key is NOT in this file or the Nix store. It lives at
   # /etc/wifi/sedgwick.psk (root, 0600, first line = passphrase), placed on the
   # machine out of band. hardware.wirelessIwm.networks references the path; the
-  # solnix-wifi-join SMF service reads it at boot and runs dladm connect-wifi.
+  # solnix-wifi-join SMF service reads it at boot and joins (ESSID-only, retry).
+  # attachAtBoot renders the name_to_major/alias/minor_perm + lays the module +
+  # firmware into the BE kernel tree so iwm0 binds at boot (opt-in per host).
   hardware.wirelessIwm = {
     enable = true;
+    attachAtBoot = true;
     allowUnfreeFirmware = true;
     networks.sedgwick.pskFile = "/etc/wifi/sedgwick.psk";
   };
