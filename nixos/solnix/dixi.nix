@@ -103,7 +103,29 @@
   # home-manager is in the system so `home-manager switch` works on a fresh
   # install, before the user's home generation exists (it is built from source,
   # pkgs/illumos/base-src.nix).
-  environment.systemPackages = with pkgs.solnix; [ git curl home-manager ];
+  #
+  # solnix-dev-full is the build toolchain: gcc 14.3.0 + gas + GNU make +
+  # pkg-config (all from-source derivations), so this workstation can rebuild
+  # solnix packages on the image -- the "build host in the image" capability (an
+  # illumos system otherwise has no /usr/gnu or /usr/gcc to build with; see
+  # solnix docs/devtools-in-closure.md). It puts cc/gcc/g++/as/make/gmake and
+  # pkg-config on PATH after a switch. (Rust and autoconf/automake/libtool are
+  # NOT in it yet -- the Rust cache seed is a retired-payload stub and the
+  # autotools need a from-source perl; both are tracked in that doc.)
+  environment.systemPackages = with pkgs.solnix; [ git curl home-manager solnix-dev-full ];
+
+  # Man pages + the `man` command: on by default (documentation.man.enable),
+  # which puts the illumos base man pages (pkgs.solnix.worldMan) into the system
+  # profile and makes MANPATH + /etc/man.conf resolve both base and profile man
+  # pages. Left at its default here; stated so the behaviour is self-describing.
+  # documentation.man.enable = true;  # (default)
+
+  # Separate debug symbols: install the `debug` output of every package that
+  # ships one (mk-userland-pkg packages do) into the system profile at
+  # sw/lib/debug/.build-id, and point gdb there by build-id (NIX_DEBUG_INFO_DIRS
+  # + /etc/gdbinit). The solnix analog of NixOS's environment.enableDebugInfo.
+  # On here so a crash on gburd's X1 is debuggable with real source-level symbols.
+  environment.enableDebugInfo = true;
 
   # WIFI: the X1 carries an Intel Wireless-AC 9560 (8086:a370), an iwm device
   # (NOT the undrivable AX2xx -- that is a different, newer part). solnix drives
