@@ -114,6 +114,14 @@
   # autotools need a from-source perl; both are tracked in that doc.)
   environment.systemPackages = with pkgs.solnix; [ git curl home-manager solnix-dev-full ];
 
+  # solnix-dev-full puts the from-source gcc + its gate-proto sysroot into the
+  # runtime closure (the "build host in the image" role). The toplevel's
+  # disallowed-runtime-refs gate forbids the gate proto + compiler by default
+  # (so minimal/production images can't accidentally drag in the 219 MB build
+  # proto); a system that INTENTIONALLY ships the toolchain must declare it, or
+  # the gate FATALs. dixi is a workstation build host, so: buildCapable = true.
+  system.buildCapable = true;
+
   # Man pages + the `man` command: on by default (documentation.man.enable),
   # which puts the illumos base man pages (pkgs.solnix.worldMan) into the system
   # profile and makes MANPATH + /etc/man.conf resolve both base and profile man
