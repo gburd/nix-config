@@ -164,4 +164,55 @@
 
   # Support for cross-platform NixOS builds
   boot.binfmt.emulatedSystems = [ "armv7l-linux" "aarch64-linux" ];
+
+  # --- Memory: survive an OOM with the session's plumbing intact ----------
+  #
+  # floki 2026-10-14 10:10: a pg_fts installcheck build (postgres, uid
+  # nixbld) pushed the box to global OOM. floki has 31 GiB, no swap and no
+  # zram. Resident at the time: 18 pi sessions 7.95 GiB, the build's
+  # postgres 3.18 GiB, chrome 2.08 GiB, litellm 1.85 GiB.
+  #
+  # The kernel's first pick was right (chrome, adj 300). The pressure held,
+  # though, and its next picks were the SESSION DAEMONS. systemd gives every
+  # user-manager service oom_score_adj=200 (DefaultOOMScoreAdjust) but apps
+  # and terminals 100, so a 3 MiB dbus-broker ranked above a 2 GiB pi. Lost:
+  # dbus-broker, gpg-agent, scdaemon, the ssh-agent child of gcr-ssh-agent,
+  # gnome-keyring's secrets service, protonmail-bridge and litellm. Then:
+  #   * ssh/git: gcr-ssh-agent's child could not respawn (stale socket; see
+  #     desktop/gnome.nix). Every agent login failed for 4h.
+  #   * neomutt/Proton: the bridge restarted while the keyring was gone,
+  #     found "no keychain", and fell back to a NEW EMPTY vault
+  #     (bridge-v3/insecure/). Every IMAP login got "no such user".
+  #
+  # Fix 1, zram. Compressed swap in RAM gives the kernel room to reclaim
+  # before it must kill. It is the NixOS-recommended answer for swapless
+  # desktops. 50% means up to ~15.5 GiB uncompressed can be parked in about a
+  # third of that; zstd is the default algorithm.
+  zramSwap = {
+    enable = true;
+    memoryPercent = 50;
+  };
+
+  # Fix 2, rank the session's single points of failure BELOW the apps. Lower
+  # adj = killed later. 0 puts them under every app/terminal (100) and
+  # user-service default (200). It is not negative, so they stay killable if
+  # they themselves are the ones leaking.
+  #
+  # gnome-keyring has NO unit to put an OOMScoreAdjust on. dbus-broker asks
+  # the user manager to start it as a TRANSIENT unit with a changing name
+  # (dbus-:1.2-org.freedesktop.secrets@0), so it gets the manager's
+  # DefaultOOMScoreAdjust. That default is the manager's own adj plus 100
+  # (systemd-system.conf(5)); measured, the keyring sat at 200 under a
+  # manager at 100. So the keyring is covered by lowering the user manager's
+  # DEFAULT to 100, the same rank as apps and terminals.
+  #
+  # The default is 100, not 0, on purpose. It applies to every user service,
+  # and a leaking service must still lose to the session plumbing. The three
+  # named below get 0, so they outlast everything else in the session.
+  systemd.user.extraConfig = "DefaultOOMScoreAdjust=100";
+  systemd.user.services = {
+    dbus-broker.serviceConfig.OOMScoreAdjust = 0;
+    gpg-agent.serviceConfig.OOMScoreAdjust = 0;
+    gcr-ssh-agent.serviceConfig.OOMScoreAdjust = 0;
+  };
 }
