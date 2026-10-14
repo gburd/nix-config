@@ -202,23 +202,26 @@
     memoryPercent = 50;
   };
 
-  # Fix 2, rank the session's single points of failure BELOW the apps. Lower
-  # adj = killed later. 0 puts them under every app/terminal (100) and
-  # user-service default (200). It is not negative, so they stay killable if
-  # they themselves are the ones leaking.
+  # Fix 2, rank the BUILD below the session, from the system manager.
   #
-  # gnome-keyring has NO unit to put an OOMScoreAdjust on. dbus-broker asks
-  # the user manager to start it as a TRANSIENT unit with a changing name
-  # (dbus-:1.2-org.freedesktop.secrets@0), so it gets the manager's
-  # DefaultOOMScoreAdjust. That default is the manager's own adj plus 100
-  # (systemd-system.conf(5)); measured, the keyring sat at 200 under a
-  # manager at 100. So the keyring is covered by lowering the user manager's
-  # DEFAULT to 100, the same rank as apps and terminals.
+  # The first version of this set OOMScoreAdjust=0 on dbus-broker, gpg-agent
+  # and gcr-ssh-agent as USER units, and DefaultOOMScoreAdjust in user.conf.
+  # It did not work, and cannot. The user manager runs unprivileged
+  # (CapEff=CAP_AUDIT_READ only, no CAP_SYS_RESOURCE), and the kernel lets an
+  # unprivileged process RAISE oom_score_adj but never LOWER it. Those units
+  # stayed at 100/200 after the switch, and gpg-agent's unit is
+  # home-manager's, so the drop-in never reached it anyway.
   #
-  # The default is 100, not 0, on purpose. It applies to every user service,
-  # and a leaking service must still lose to the session plumbing. The three
-  # named below get 0, so they outlast everything else in the session.
-  systemd.user.extraConfig = "DefaultOOMScoreAdjust=100";
+  # The system manager IS privileged, so ranks are set there instead:
+  #   * user@.service sits at 100 upstream; its children inherit that as
+  #     a floor. Lowering it to 0 makes the session daemons rank like
+  #     normal processes. User units then land at 0+100 (the user manager's
+  #     own default), which is still well below the build.
+  #   * nix-daemon gets +500. Its sandbox builds (the pg_fts postgres that
+  #     triggered all three 2026-10-14 OOMs, 3.2 / 8.3 / 16.2 GiB) inherit
+  #     that, so when memory runs out the kernel picks the BUILD first, not
+  #     dbus-broker or the ssh-agent.
+  systemd.services."user@".serviceConfig.OOMScoreAdjust = 0;
 
   # Fix 3, cap the builds. Both floki OOMs on 2026-10-14 (10:10, then 17:08)
   # came from the same place: Nix builds of pg_fts running Postgres TAP and
@@ -237,10 +240,6 @@
   systemd.services.nix-daemon.serviceConfig = {
     MemoryHigh = "60%";
     MemoryMax = "75%";
-  };
-  systemd.user.services = {
-    dbus-broker.serviceConfig.OOMScoreAdjust = 0;
-    gpg-agent.serviceConfig.OOMScoreAdjust = 0;
-    gcr-ssh-agent.serviceConfig.OOMScoreAdjust = 0;
+    OOMScoreAdjust = 500;
   };
 }
