@@ -13,7 +13,13 @@ in
     # sources it as an absolute path outside $HOME/.ssh's usual relative
     # includes; touch once so a fresh host has an empty-but-valid file
     # before agent-sandbox ever runs (ssh errors on a missing Include).
-    includes = [ "~/.ssh/agent-sandbox-ec2.conf" ];
+    # ~/.ssh/ec2/*.conf: per-project EC2 hosts that test harnesses write at
+    # runtime (e.g. ~/ws/dbsql's dbsql-kiwi.conf). They were being added by
+    # hand-editing ~/.ssh/config, which turned home-manager's symlink into a
+    # plain file and blocked the next switch ("would be clobbered"). A glob
+    # Include with no matches is not an error, so this is safe on hosts with
+    # no ~/.ssh/ec2.
+    includes = [ "~/.ssh/agent-sandbox-ec2.conf" "~/.ssh/ec2/*.conf" ];
     # 26.05: programs.ssh.matchBlocks -> programs.ssh.settings. The block key
     # IS the Host pattern (multi-word patterns use a literal "Host ..." key),
     # and fields use upstream OpenSSH directive names (HostName, User,
