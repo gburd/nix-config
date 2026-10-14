@@ -61,6 +61,10 @@ in
       outputs.overlays.additions
       outputs.overlays.modifications
       outputs.overlays.unstable-packages
+      # riscv64-only overrides (no-op elsewhere): build eza/httpie without
+      # their pandoc-rendered man pages, since pandoc needs GHC and nixpkgs
+      # has no riscv64 GHC bootstrap. See overlays/riscv64.nix.
+      (import ../overlays/riscv64.nix)
 
       # You can also add overlays exported from other flakes:
       # neovim-nightly-overlay.overlays.default

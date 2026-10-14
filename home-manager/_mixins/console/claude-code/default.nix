@@ -21,7 +21,10 @@ in
     ../../languages/rust.nix
   ];
 
-  home.packages = with pkgs; [
+  # Wrapped in lib/evaluates.nix so packages that cannot evaluate on this
+  # platform (riscv64 has no GHC, no Chromium, no qtwebengine) drop out
+  # instead of failing the whole generation. A no-op on x86_64/aarch64.
+  home.packages = import ../../../../lib/evaluates.nix (with pkgs; [
     claude-wrapped
     bubblewrap
     socat
@@ -79,5 +82,5 @@ in
     deadnix # Find dead code
     nix-tree # Visualize dependencies
     nix-diff # Compare derivations
-  ];
+  ]);
 }

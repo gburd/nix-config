@@ -20,7 +20,10 @@
     };
     # A Modern Unix experience
     # https://jvns.ca/blog/2022/04/12/a-list-of-new-ish--command-line-tools/
-    packages = with pkgs; [
+    # Wrapped in lib/evaluates.nix: packages that cannot evaluate on this
+    # platform (riscv64 has no GHC, no Chromium, no qtwebengine) drop out
+    # instead of failing the generation. A no-op on x86_64/aarch64.
+    packages = import ../../../lib/evaluates.nix (with pkgs; [
       # `heavy <cmd>`: run a memory-hungry command as the OOM killer's FIRST
       # victim (oom_score_adj=900 via choom, allowed unprivileged). If it
       # runs the system out of RAM, the kernel reaps IT — not wezterm-gui
@@ -168,7 +171,7 @@
 
       # Cloud tools
       unstable.flyctl # Fly.io CLI
-    ];
+    ]);
 
     sessionVariables = {
       EDITOR = "nvim";

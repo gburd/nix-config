@@ -190,6 +190,10 @@
         "gburd@floki" = libx.mkHome { hostname = "floki"; username = "gburd"; desktop = "gnome"; };
         "gburd@meh" = libx.mkHome { hostname = "meh"; username = "gburd"; }; # headless
         "gburd@arnold" = libx.mkHome { hostname = "arnold"; username = "gburd"; };
+        # lixr: LOCAL riscv64 (SpacemiT K3 Pico ITX, 192.168.1.179). Bianbu +
+        # home-manager, like arnold; no `desktop` arg because Bianbu runs
+        # LXQt/labwc, not GNOME. Built from source: no riscv64 binary cache.
+        "gburd@lixr" = libx.mkHome { hostname = "lixr"; username = "gburd"; platform = "riscv64-linux"; };
         # santorini: NixOS-WSL guest on the ARM64 Windows host. aarch64, headless.
         # Activate inside the distro: home-manager switch -b backup --flake .#"gburd@santorini"
         "gburd@santorini" = libx.mkHome { hostname = "santorini"; username = "gburd"; platform = "aarch64-linux"; };

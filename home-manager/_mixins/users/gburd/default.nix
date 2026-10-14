@@ -36,7 +36,10 @@ in
     # (GUI apps, kiro-cli/lmstudio/terax-ai/pan on floki, etc.) stay in the
     # per-host files; CLI basics already in console/default.nix are NOT
     # repeated here.
-    packages = with pkgs; [
+    # Wrapped in lib/evaluates.nix: packages that cannot evaluate on this
+    # platform (riscv64 has no GHC, no Chromium, no qtwebengine) drop out
+    # instead of failing the generation. A no-op on x86_64/aarch64.
+    packages = import ../../../../lib/evaluates.nix (with pkgs; [
       _1password-cli
       cfssl
       dig
@@ -54,7 +57,7 @@ in
       rebar3
       tree-sitter
       xclip
-    ];
+    ]);
   };
 
   programs = {

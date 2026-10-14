@@ -16,7 +16,10 @@
     # eval warnings (we deliberately keep home.stateVersion < 26.05).
     withRuby = true;
     withPython3 = true;
-    extraPackages = with pkgs; [
+    # Wrapped in lib/evaluates.nix: on riscv64 vscode-langservers-extracted
+    # (Electron), bash-language-server and shellcheck (both Haskell) cannot
+    # evaluate; they drop out instead of failing neovim. No-op elsewhere.
+    extraPackages = import ../../../../lib/evaluates.nix (with pkgs; [
       # Language servers
       lua-language-server
       nixd # Nix LSP (more complete than nil)
@@ -70,7 +73,7 @@
       # gcc  # Removed: provided by console/default.nix as gcc14
       nnn
       zig
-    ];
+    ]);
   };
   xdg.configFile = {
     "nvim/init.lua".source = ./init.lua;
