@@ -5,7 +5,16 @@ let
   # repo name because we share one repo across floki/meh.
   repoUrl = "ssh://zh6216@zh6216.rsync.net/./borg";
   repoName = "rsync-net";
-  borgKey = "${config.home.homeDirectory}/.config/borgmatic/.rsync-key";
+  # Vorta resolves a profile's ssh_key as expanduser("~/.ssh/<ssh_key>")
+  # (vorta/borg/borg_job.py) and offers only plain files in ~/.ssh
+  # (vorta/utils.py get_private_keys). It needs a bare NAME of a file in
+  # ~/.ssh, not an absolute path. With the old absolute path the floki
+  # profile ended up with ssh_key NULL, Vorta fell back to plain `ssh`
+  # (id_auth_ed25519 / id_ed25519), and rsync.net accepts neither. Every
+  # list/check/create failed from 2026-06-19 (returncode 2). The archive tab
+  # froze at 37 of the repo's 87 archives.
+  borgKeyName = "rsync-net_ed25519";
+  borgKeySrc = "${config.home.homeDirectory}/.config/borgmatic/.rsync-key";
   borgPassFile = "${config.home.homeDirectory}/.config/borgmatic/.passphrase";
 in
 {
@@ -135,7 +144,7 @@ in
                    prune_keep_within, new_archive_name, prune_prefix,
                    pre_backup_cmd, post_backup_cmd,
                    dont_run_on_metered_networks, compaction_on, compaction_weeks)
-                SELECT 'Default', datetime('now'), r.id, '${borgKey}', 'lz4',
+                SELECT 'Default', datetime('now'), r.id, '${borgKeyName}', 'lz4',
                        NULL, ''',
                        'off', 3, 'hours',
                        3, 42,
@@ -173,10 +182,32 @@ in
                   "$SQLITE" "$DB" "INSERT OR IGNORE INTO repopassword (url, password) VALUES ('${repoUrl}', '$ESC_PASS');"
                 fi
 
+                # Existing DBs: the INSERT above is WHERE NOT EXISTS, so it never
+                # repairs a profile whose ssh_key is NULL, empty or an absolute
+                # path. Fix only those; a key picked in the GUI is left alone.
+                "$SQLITE" "$DB" <<SQL
+                UPDATE backupprofilemodel SET ssh_key = '${borgKeyName}'
+                  WHERE repo_id IN (SELECT id FROM repomodel WHERE url = '${repoUrl}')
+                    AND (ssh_key IS NULL OR ssh_key = ''' OR substr(ssh_key, 1, 1) = '/');
+        SQL
+
                 ${pkgs.coreutils}/bin/chmod 600 "$DB"
+
+                # The sops rsync.net key, copied into ~/.ssh under that name as a
+                # regular 0600 file (what Vorta's key picker accepts). Refreshed
+                # when the sops value changes.
+                KEY_DST=${config.home.homeDirectory}/.ssh/${borgKeyName}
+                if [ -r "${borgKeySrc}" ]; then
+                  if ! ${pkgs.diffutils}/bin/cmp -s "${borgKeySrc}" "$KEY_DST"; then
+                    ${pkgs.coreutils}/bin/install -m 600 "${borgKeySrc}" "$KEY_DST"
+                    echo "vorta-seed: installed $KEY_DST"
+                  fi
+                else
+                  echo "vorta-seed: ${borgKeySrc} not readable yet; skipping key copy"
+                fi
       '';
     in
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    lib.hm.dag.entryAfter [ "writeBoundary" "sops-nix" ] ''
       ${seedScript}
     '';
 }
