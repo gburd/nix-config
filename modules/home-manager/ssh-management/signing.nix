@@ -10,7 +10,20 @@ in
     # Configure git to use SSH signing
     programs.git = {
       signing = {
-        key = mkForce cfg.signingKey.publicKey;
+        # A PATH, not the literal public key. With gpg.format=ssh, git treats
+        # a literal "ssh-ed25519 AAAA..." signingkey as "ask the ssh-agent
+        # for the private half" -- and nothing loads id_signing_ed25519 into
+        # any agent. So every commit failed with:
+        #   error: Couldn't find key in agent?
+        #   fatal: failed to write commit object
+        # whenever the agent this shell happened to point at (gcr-ssh-agent,
+        # wezterm's, 1Password's) did not hold it -- i.e. almost always.
+        # Earlier sessions only worked because a shell inherited a fat agent
+        # that once had it. A path makes ssh-keygen read the key file
+        # directly, so signing no longer depends on agent state at all.
+        # verifySshSigning below already signs with this same path, which is
+        # why its self-test passed while real commits failed.
+        key = mkForce cfg.signingKey.path;
         signByDefault = mkForce true;
       };
 

@@ -250,7 +250,15 @@ in
     enable = true;
     package = pkgs.gitFull;
     signing = {
-      key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKCqHOIyYwbp42C7MxnRFxOcy+ZE8cNOWdsdvCgVFm1L";
+      # A PATH to the private key, not the literal public key. With
+      # gpg.format=ssh a literal "ssh-ed25519 AAAA..." makes git ask the
+      # ssh-agent for the private half, and every commit then fails with
+      # "error: Couldn't find key in agent?" whenever the agent the shell
+      # points at does not hold it. A path is read directly by ssh-keygen.
+      # This is the id_ed25519 keypair (pubkey ...IKCqHOIyYwbp42C7MxnRFxOcy...).
+      # On hosts running the ssh-management module (floki/meh) signing.nix
+      # overrides this with mkForce to the rotating signing key's path.
+      key = "${config.home.homeDirectory}/.ssh/id_ed25519";
       signByDefault = true;
     };
     lfs.enable = true;
