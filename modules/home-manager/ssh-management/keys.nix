@@ -80,8 +80,15 @@ in
     # (HostName/User/IdentityFile/IdentitiesOnly) instead of the old
     # HM-specific lowercase field names.
     programs.ssh.settings = mkIf (cfg.authKey.publicKey != null) {
+      # BOTH key files, auth key first. Hosts disagree on which one is
+      # authorized: meh and santorini accept ONLY id_ed25519, arnold/rv/nuc
+      # accept both (checked 2026-10-14 with SSH_AUTH_SOCK unset). Listing
+      # only the auth key worked only while id_ed25519 also sat in the agent,
+      # so every agent outage (three gcr-ssh-agent wedges after OOM kills
+      # that day) broke ssh to meh and santorini. With both files here, a
+      # login never depends on agent state. The agent is still offered too.
       "*" = {
-        IdentityFile = [ cfg.authKey.path ];
+        IdentityFile = [ cfg.authKey.path "~/.ssh/id_ed25519" ];
       };
 
       # Specific configurations for git hosting services

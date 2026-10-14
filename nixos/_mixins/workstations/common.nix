@@ -115,8 +115,17 @@
   networking.hosts = {
     "192.168.1.185" = [ "meh" "meh.local" ];
     "192.168.1.206" = [ "sun" "icarus" ];
-    # arnold  — fill in IP when static/reserved (currently resolves via mDNS)
-    # greenfly (rv) — fill in IP when connected to LAN
+    # LAN addresses for hosts that otherwise resolve only through the
+    # tailnet's MagicDNS. During the Tailscale -> Headscale move, a host
+    # still on the OLD tailnet resolved `arnold` / `rv` to their old
+    # 100.x SaaS addresses (arnold.tail09c91d.ts.net). Those are dead once
+    # the peer moves, so `ssh arnold` failed. Over the LAN they keep working
+    # whichever control server either side is on. Observed 2026-10-14; set
+    # DHCP reservations on the router if these ever change.
+    "192.168.1.37" = [ "arnold" ];
+    "192.168.1.126" = [ "rv" ];
+    "192.168.1.61" = [ "nuc" ];
+    "192.168.1.179" = [ "lixr" ];
   };
 
   # Disable sudo lecture message and use_pty (fails in non-TTY contexts)
