@@ -25,6 +25,17 @@ in
       meh = lib.hm.dag.entryBefore [ "net" ] {
         HostName = "192.168.1.185";
         ForwardAgent = true;
+        # meh needs its identity PINNED, unlike the other LAN hosts. The
+        # agent here holds ~95 keys (1Password plus the signing keys) and
+        # sshd disconnects after ~6 failed offers with "Too many
+        # authentication failures", so `ssh meh` died with exit 255 before
+        # ever reaching the key that works -- while `ping` succeeded. That
+        # read as "meh is offline" for much of one session; it was not.
+        # IdentitiesOnly + IdentityAgent=none offers exactly one key.
+        IdentitiesOnly = true;
+        IdentityAgent = "none";
+        IdentityFile = "~/.ssh/id_ed25519";
+        PreferredAuthentications = "publickey";
         StreamLocalBindUnlink = "yes";
         RemoteForward = [
           {
