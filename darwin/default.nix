@@ -69,7 +69,7 @@
         meh = { HostName = "192.168.1.185"; User = "gburd"; };
         "Host rv greenfly" = { HostName = "192.168.1.126"; User = "gburd"; };
         "Host sun icarus" = { HostName = "192.168.1.206"; User = "gburd"; };
-        "Host santorini win unicorn" = { HostName = "100.112.230.126"; User = "gburd"; };
+        "Host santorini win unicorn" = { HostName = "santorini.ts.burd.me"; User = "gburd"; };
       };
     };
 

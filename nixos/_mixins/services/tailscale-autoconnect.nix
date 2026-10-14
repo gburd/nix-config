@@ -28,12 +28,17 @@
   # gets wiped (re-install, /var disk reformat, etc.).
   #
   # To provision the key:
-  #   1. https://login.tailscale.com/admin/settings/keys → Generate
-  #      auth key. Pick "Reusable" + tag with the host's name. Copy
-  #      the `tskey-auth-...` value.
-  #   2. `sops nixos/_mixins/secrets.yaml` → add or replace
-  #         tailscale-auth-key: tskey-auth-XXXXXXXXXXXX...
+  #   1. Mint a reusable key on OUR Headscale (not tailscale.com):
+  #        flyctl ssh console -a burd-headscale \
+  #          -C "headscale preauthkeys create --user 1 --reusable -e 2160h"
+  #      (--user takes the numeric id; `headscale users list`.)
+  #   2. Store it without putting it on argv:
+  #        sops set --value-stdin nixos/_mixins/secrets.yaml \
+  #          '["tailscale-auth-key"]' <<< '"hskey-auth-..."'
   #   3. `sudo nixos-rebuild switch --flake .#<host>`
+  #
+  # A leftover tskey-* (Tailscale SaaS) key is refused below: it would make
+  # a fresh host fail against Headscale with "invalid key" anyway.
   #
   # If the secret is missing the activation will fail loudly. To opt
   # back to manual `tailscale up`, drop this import and import
@@ -41,67 +46,77 @@
   # ---------------------------------------------------------------
 
   config = {
-  sops.secrets.tailscale-auth-key = {
-    sopsFile = ../../_mixins/secrets.yaml;
-    owner = "root";
-    group = "root";
-    mode = "0400";
-    restartUnits = [ "tailscale-autoconnect.service" ];
-  };
-
-  systemd.services.tailscale-autoconnect = {
-    description = "Bring Tailscale up automatically (one-shot, idempotent)";
-
-    after = [ "network-pre.target" "tailscale.service" "sops-nix.service" ];
-    wants = [ "network-pre.target" "tailscale.service" "sops-nix.service" ];
-    wantedBy = [ "multi-user.target" ];
-
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      # Surface failures clearly in journalctl rather than silently retrying
-      # forever; the user re-runs `nixos-rebuild switch` after fixing the key.
-      Restart = "no";
+    sops.secrets.tailscale-auth-key = {
+      sopsFile = ../../_mixins/secrets.yaml;
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      restartUnits = [ "tailscale-autoconnect.service" ];
     };
 
-    # Inline script: wait for tailscaled, check state, conditionally up.
-    script = ''
-      set -eu
+    systemd.services.tailscale-autoconnect = {
+      description = "Bring Tailscale up automatically (one-shot, idempotent)";
 
-      # Give tailscaled a moment to settle (it's started just before us).
-      for _ in 1 2 3 4 5 6 7 8 9 10; do
-        ${pkgs.tailscale}/bin/tailscale status >/dev/null 2>&1 && break
-        sleep 1
-      done
+      after = [ "network-pre.target" "tailscale.service" "sops-nix.service" ];
+      wants = [ "network-pre.target" "tailscale.service" "sops-nix.service" ];
+      wantedBy = [ "multi-user.target" ];
 
-      state="$(${pkgs.tailscale}/bin/tailscale status -json 2>/dev/null \
-                 | ${pkgs.jq}/bin/jq -r '.BackendState // "Unknown"')"
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        # Surface failures clearly in journalctl rather than silently retrying
+        # forever; the user re-runs `nixos-rebuild switch` after fixing the key.
+        Restart = "no";
+      };
 
-      case "$state" in
-        Running)
-          echo "tailscale already running, nothing to do"
-          exit 0
-          ;;
-        NeedsLogin|Stopped|NoState|Unknown)
-          echo "tailscale state=$state, attempting auth-key login"
-          ;;
-        *)
-          echo "tailscale state=$state, attempting auth-key login anyway"
-          ;;
-      esac
+      # Inline script: wait for tailscaled, check state, conditionally up.
+      script = ''
+        set -eu
 
-      key=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets.tailscale-auth-key.path})
-      if [ -z "$key" ] || [ "$key" = "REPLACE_WITH_REAL_KEY" ]; then
-        echo "tailscale-auth-key is empty or placeholder; refusing to call tailscale up" >&2
-        exit 1
-      fi
+        # Give tailscaled a moment to settle (it's started just before us).
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+          ${pkgs.tailscale}/bin/tailscale status >/dev/null 2>&1 && break
+          sleep 1
+        done
 
-      ${pkgs.tailscale}/bin/tailscale up \
-        --auth-key="$key" \
-        --hostname=${config.services.tailscaleAutoconnect.hostname} \
-        --accept-routes \
-        --reset
-    '';
-  };
+        state="$(${pkgs.tailscale}/bin/tailscale status -json 2>/dev/null \
+                   | ${pkgs.jq}/bin/jq -r '.BackendState // "Unknown"')"
+
+        case "$state" in
+          Running)
+            # "Running" against tailscale.com is NOT done: that host is still
+            # on the old SaaS tailnet. Only skip if it is on OUR control server.
+            ctrl="$(${pkgs.tailscale}/bin/tailscale debug prefs 2>/dev/null \
+                      | ${pkgs.jq}/bin/jq -r '.ControlURL // ""')"
+            if [ "$ctrl" = "${config.services.tailscale.loginServer}" ]; then
+              echo "tailscale already running on $ctrl, nothing to do"
+              exit 0
+            fi
+            echo "tailscale running on '$ctrl', moving to ${config.services.tailscale.loginServer}"
+            ;;
+          NeedsLogin|Stopped|NoState|Unknown)
+            echo "tailscale state=$state, attempting auth-key login"
+            ;;
+          *)
+            echo "tailscale state=$state, attempting auth-key login anyway"
+            ;;
+        esac
+
+        key=$(${pkgs.coreutils}/bin/cat ${config.sops.secrets.tailscale-auth-key.path})
+        if [ -z "$key" ] || [ "$key" = "REPLACE_WITH_REAL_KEY" ] || [ "''${key#tskey-}" != "$key" ]; then
+          echo "tailscale-auth-key is empty or placeholder; refusing to call tailscale up" >&2
+          exit 1
+        fi
+
+        # --auth-key=file: keeps the key out of argv / ps.
+        ${pkgs.tailscale}/bin/tailscale up \
+          --login-server=${config.services.tailscale.loginServer} \
+          --auth-key=file:${config.sops.secrets.tailscale-auth-key.path} \
+          --hostname=${config.services.tailscaleAutoconnect.hostname} \
+          --accept-routes \
+          --reset \
+          --force-reauth
+      '';
+    };
   };
 }
