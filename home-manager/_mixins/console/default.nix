@@ -88,6 +88,12 @@
       # RETIRE pkgs/netwatch and switch this to unstable.netwatch once that
       # PR merges.
       netwatch
+      # pcompress: parallel compressor/archiver with dedup, delta compression
+      # and encryption. Local package (pkgs/pcompress) ONLY because it is not
+      # in nixpkgs yet -- NixOS/nixpkgs#573443 is open with CI green. Switch
+      # this to `unstable.pcompress` and delete pkgs/pcompress once that
+      # merges and lands in our nixpkgs-unstable input.
+      pcompress
       # trippy: TUI traceroute/ping combined (`trip`). Note it needs raw
       # sockets -- either run it with sudo or grant the binary CAP_NET_RAW;
       # unprivileged `trip` exits with a permissions error.

@@ -27,5 +27,6 @@
   kudu = pkgs.callPackage ./kudu { };
   hylki = pkgs.callPackage ./hylki { };
   netwatch = pkgs.callPackage ./netwatch { };
+  pcompress = pkgs.callPackage ./pcompress { };
   terax-ai = pkgs.callPackage ./terax-ai { };
 }
