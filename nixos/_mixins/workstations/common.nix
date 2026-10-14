@@ -210,6 +210,25 @@
   # and a leaking service must still lose to the session plumbing. The three
   # named below get 0, so they outlast everything else in the session.
   systemd.user.extraConfig = "DefaultOOMScoreAdjust=100";
+
+  # Fix 3, cap the builds. Both floki OOMs on 2026-10-14 (10:10, then 17:08)
+  # came from the same place: Nix builds of pg_fts running Postgres TAP and
+  # installcheck suites in the sandbox. At 17:08 the build's postgres held
+  # 8.33 GiB, more than the 20 pi sessions (8.01 GiB), and nix-daemon peaked
+  # at 11.8 GiB with no memory limit at all.
+  #
+  # MemoryHigh makes the kernel reclaim and throttle the BUILD cgroup when
+  # it goes over, so pressure lands on the build and not on the desktop.
+  # MemoryMax is the hard ceiling. A build that tries to exceed it is
+  # OOM-killed INSIDE nix-daemon.service, which fails that one build with a
+  # clear error, instead of the global OOM killer picking through the
+  # session. 60% / 75% of RAM leaves room for the session and the pi fleet.
+  # A build that legitimately needs more can be run with `systemd-run`, or
+  # these can be raised per host.
+  systemd.services.nix-daemon.serviceConfig = {
+    MemoryHigh = "60%";
+    MemoryMax = "75%";
+  };
   systemd.user.services = {
     dbus-broker.serviceConfig.OOMScoreAdjust = 0;
     gpg-agent.serviceConfig.OOMScoreAdjust = 0;

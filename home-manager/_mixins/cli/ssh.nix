@@ -51,6 +51,14 @@ in
       #  with `ssh -o RemoteCommand=none -o RequestTTY=no santorini ...`.)
       "Host win santorini" = lib.hm.dag.entryBefore [ "net" ] {
         HostName = "santorini";
+        # santorini's Windows sshd authorizes ONLY id_ed25519 (m19Q...). The
+        # "Host *" default offers id_auth_ed25519, which it rejects. That
+        # worked only while id_ed25519 also sat in the ssh-agent. When the
+        # agent died (gcr child OOM-killed), santorini started saying
+        # "Permission denied". Pin the key FILE so login no longer depends
+        # on agent state. Verified 2026-10-14: m19Q is accepted; yaU3 (auth)
+        # and H31v (signing) are not.
+        IdentityFile = "~/.ssh/id_ed25519";
         ForwardAgent = true;
         RequestTTY = "yes";
         RemoteCommand = "powershell -NoProfile";
@@ -58,6 +66,7 @@ in
       # wix — same Windows host, but log straight into the NixOS-WSL distro as gburd.
       wix = lib.hm.dag.entryBefore [ "net" ] {
         HostName = "santorini";
+        IdentityFile = "~/.ssh/id_ed25519"; # same sshd as santorini, see above
         ForwardAgent = true;
         RequestTTY = "yes";
         RemoteCommand = "wsl.exe -d NixOS --user gburd";
