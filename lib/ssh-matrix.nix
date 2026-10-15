@@ -5,6 +5,14 @@ in
 rec {
   # user@host matrix
   systems = {
+    # gburd's EVERYDAY key, ~/.ssh/id_ed25519 (SHA256:m19Q...). It is on
+    # floki, arnold and nuc, and is what the Windows host santorini
+    # authorizes. NixOS hosts listed only the 2023 key below (cBEQ...), so
+    # they accepted m19Q only if a hand-made ~/.ssh/authorized_keys added it.
+    # meh had one; wix did not, so `ssh wix` failed with Permission denied
+    # from every tailnet node (2026-10-14). Declared here, it reaches every
+    # host that uses privileged_users.
+    gburd.everyday = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKCqHOIyYwbp42C7MxnRFxOcy+ZE8cNOWdsdvCgVFm1L greg@burd.me";
     floki.gburd = parseFriendlyKey ''
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGSNy/vMr2Zk9pvfjQnxiU9F8CGQ
       JwCiXDxPecKG9/q+ Greg Burd <greg@burd.me> - 2023-01-23
@@ -43,6 +51,7 @@ rec {
   # logical groups
   groups = {
     privileged_users = with systems; [
+      gburd.everyday
       floki.gburd
       floki.host
       floki.root
