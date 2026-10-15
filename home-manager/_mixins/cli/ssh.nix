@@ -56,7 +56,13 @@ in
       # (RemoteCommand needs RequestTTY; to run a one-off command or scp, override
       #  with `ssh -o RemoteCommand=none -o RequestTTY=no santorini ...`.)
       "Host win santorini" = lib.hm.dag.entryBefore [ "net" ] {
-        HostName = "santorini";
+        # By its Headscale MagicDNS name. Windows Firewall allows sshd only
+        # on the Private profile. santorini's Wi-Fi ("sedgwick") is Public,
+        # its Tailscale adapter is Private, so sshd is reachable over the
+        # tailnet and NOT over the LAN (192.168.1.158:22 drops). A bare
+        # "santorini" resolved through the OLD tailnet's MagicDNS to a dead
+        # 100.x address once santorini moved to Headscale.
+        HostName = "santorini.ts.burd.me";
         # santorini's Windows sshd authorizes ONLY id_ed25519 (m19Q...). The
         # "Host *" default offers id_auth_ed25519, which it rejects. That
         # worked only while id_ed25519 also sat in the ssh-agent. When the
@@ -69,13 +75,17 @@ in
         RequestTTY = "yes";
         RemoteCommand = "powershell -NoProfile";
       };
-      # wix — same Windows host, but log straight into the NixOS-WSL distro as gburd.
+      # wix: the NixOS-WSL distro on santorini, its OWN tailnet node with its
+      # own sshd (100.64.0.3). It used to be reached by ssh-ing to Windows and
+      # running `wsl.exe -d NixOS`, which needs Windows' sshd, a TTY and a
+      # RemoteCommand, so `ssh wix <cmd>` failed with "Cannot execute
+      # command-line and remote command". Direct now. A Windows scheduled
+      # task (wix-keepalive, runs as gburd at boot) keeps the distro
+      # running, so wix stays on the tailnet with nobody logged in.
       wix = lib.hm.dag.entryBefore [ "net" ] {
-        HostName = "santorini";
-        IdentityFile = "~/.ssh/id_ed25519"; # same sshd as santorini, see above
+        HostName = "wix.ts.burd.me";
+        IdentityFile = "~/.ssh/id_ed25519";
         ForwardAgent = true;
-        RequestTTY = "yes";
-        RemoteCommand = "wsl.exe -d NixOS --user gburd";
       };
       # PostgreSQL build-farm animal hosts (not NixOS, so not covered by `net`).
       # Force publickey auth with our standard key and disable the password
