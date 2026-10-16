@@ -862,9 +862,22 @@ in
               export MEMELORD_ROLLUP_API_KEY_FILE=${cfg.servers.memelord.rollup.apiKeyFile}
             ''}
             export MEMELORD_ROLLUP_BASE_URL=http://127.0.0.1:4000
+            # Skip any DB a running memelord server has open. rollup.py goes
+            # through stock sqlite3, which does not understand Turso's
+            # multiprocess WAL (-tshm). Writing or VACUUMing underneath a live
+            # Turso server can leave a 0-byte -wal while -tshm still indexes
+            # frames in it. The next memelord open then fails with "short read
+            # on WAL frame ... got 0", surfaced to agents as "MCP: Failed to
+            # connect to memelord: Connection closed (code: 'GenericFailure')".
+            # 2026-10-16: 19 project DBs were in that state; rolling up only
+            # idle DBs removes this source.
             find ${cfg.servers.memelord.rollup.searchRoot} \
               -type f -name memory.db -path '*/.memelord/*' 2>/dev/null \
             | while read -r db; do
+                if ${pkgs.psmisc}/bin/fuser -s "$db" "$db-wal" 2>/dev/null; then
+                  echo "rollup: skip (in use) $db"
+                  continue
+                fi
                 echo "rollup: $db"
                 ${cfg.servers.memelord.pkg}/bin/memelord-rollup --prune-auto --db "$db" || true
               done

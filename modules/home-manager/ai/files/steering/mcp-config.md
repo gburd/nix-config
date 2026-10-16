@@ -42,6 +42,19 @@
 Also automatic via hooks: handles session start/end, embedding-based memory
 search. Project-scoped (.memelord/ inside the project dir).
 
+**Never open `.memelord/memory.db` with stock SQLite** (the `sqlite3` CLI,
+Python's `sqlite3`, DB Browser, `datasette`). memelord stores it in Turso,
+whose WAL is indexed by `memory.db-tshm`, a format stock SQLite does not
+know. A stock-SQLite read can checkpoint and truncate `memory.db-wal` while
+`-tshm` still points into it. Every later memelord start in that project then
+fails, which agents see as `MCP: Failed to connect to memelord: Connection
+closed (code: 'GenericFailure' ...)`. One agent's `for db in ...; do sqlite3
+...` loop broke 13 projects at once (2026-10-15). To inspect memory, use the
+memelord tools or `memelord status` / `memelord memories`. To query it
+offline, copy the `.memelord/` directory elsewhere first and query the copy.
+The memelord wrapper now repairs this state on its next start, but don't
+cause it.
+
 ### sequential-thinking — Structured Reasoning
 **Use when** facing complex architectural decisions:
 - Buffer manager design trade-offs
