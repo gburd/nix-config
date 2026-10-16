@@ -130,9 +130,11 @@ let
           [ "$local_sha" = "$zero" ] && continue
 
           if [ "$remote_sha" = "$zero" ]; then
-            # New branch: only what no other remote-tracking ref already has.
-            others=$(git for-each-ref --format='%(refname)' refs/remotes 2>/dev/null | tr '\n' ' ')
-            log_opts="$local_sha --not $others"
+            # New branch: only what no remote-tracking ref already has.  Let
+            # git expand --remotes itself: listing the refs here overflows
+            # ARG_MAX in repos that track many remotes (gitleaks then fails
+            # to exec, which read as a finding).
+            log_opts="$local_sha --not --remotes"
           else
             log_opts="$remote_sha..$local_sha"
           fi
