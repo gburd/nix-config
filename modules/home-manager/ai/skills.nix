@@ -35,6 +35,7 @@ let
     "nix-agent-configs"
     "subagent-teams"
     "libumem"
+    "alignment-hunt"
   ];
 
   # Kiro skills with nested reference directories (subdirs under references/)
@@ -63,6 +64,7 @@ let
     nix-agent-configs = ./files/claude-skills/nix-agent-configs;
     subagent-teams = ./files/claude-skills/subagent-teams;
     libumem = ./files/claude-skills/libumem;
+    alignment-hunt = ./files/claude-skills/alignment-hunt;
   };
 
   # Recursively collect all files from a directory tree

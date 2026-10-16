@@ -48,6 +48,16 @@
   into the build.
 - A crash reproducer is worth more than a plausible-sounding theory — get a
   minimal repro before proposing a fix.
+- **Alignment.** x86_64 hides misaligned access, and gcc's `-Wcast-align` is
+  silent on x86_64 and riscv64. Before calling code that casts a byte buffer
+  to a wider type portable, or after any SIGBUS/SIGSEGV seen only off x86, use
+  the `alignment-hunt` skill:
+  - clang `-Wcast-align -Watomic-alignment -Waddress-of-packed-member`;
+  - UBSan `-fsanitize=alignment`;
+  - a run on a strict-alignment host (`sun` UltraSPARC, `lixr` riscv64,
+    aarch64).
+  Launder a cast through `(void *)` only with a written proof that it is
+  aligned.
 
 ## Structural Search & Refactoring
 
