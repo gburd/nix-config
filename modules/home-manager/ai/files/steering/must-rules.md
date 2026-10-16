@@ -73,7 +73,7 @@ Do continue to ask before:
 - Force-push, hard-reset, or any history-rewriting operation
 - Deploying to production or any non-development environment
 - Spending money (paid API calls outside Bedrock, cloud resource creation)
-- Deleting anything outside `<project>/.local/` or `/tmp/`
+- Deleting anything you did not create. What your own task created (its worktrees, `/scratch/<proj>/` output, `<project>/.agent/` notes, cores you made, EC2 resources you launched) is yours to clean up without asking; see the `cleanup` skill
 
 ## Sub-Agent Coordination
 

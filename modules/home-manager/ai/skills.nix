@@ -36,6 +36,7 @@ let
     "subagent-teams"
     "libumem"
     "alignment-hunt"
+    "cleanup"
   ];
 
   # Kiro skills with nested reference directories (subdirs under references/)
@@ -65,6 +66,7 @@ let
     subagent-teams = ./files/claude-skills/subagent-teams;
     libumem = ./files/claude-skills/libumem;
     alignment-hunt = ./files/claude-skills/alignment-hunt;
+    cleanup = ./files/claude-skills/cleanup;
   };
 
   # Recursively collect all files from a directory tree
@@ -119,6 +121,21 @@ let
         refFiles
     )
     kiroSkillNames);
+
+  # Skills EVERY agent must have, not just Kiro/Claude/Pi. maki and fx read
+  # ~/.maki/skills and ~/.fx/skills, which get the skills-git, ponytail and
+  # superpowers blends but not the in-tree kiro skills. A rule like "clean
+  # up after yourself" has to reach them too, so these are also linked
+  # there. Same source file as the kiro copy.
+  allAgentSkillNames = [ "cleanup" ];
+  allAgentSkillFiles = builtins.listToAttrs (builtins.concatMap
+    (name: map
+      (dir: {
+        name = "${dir}/${name}/SKILL.md";
+        value = { source = ./files/kiro-skills/${name}/SKILL.md; };
+      })
+      [ ".maki/skills" ".fx/skills" ])
+    allAgentSkillNames);
 
   claudeSkillFiles = builtins.listToAttrs (map
     (name: {
@@ -384,6 +401,7 @@ in
       (lib.mkIf cfg.skillsGit.enable skillsGitFiles)
       ponytailFiles
       superpowersFiles
+      allAgentSkillFiles
       asmFiles
     ];
   };
