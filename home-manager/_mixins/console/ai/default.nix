@@ -104,14 +104,19 @@
           # pkgs.memelord (pkgs/memelord) bundles the npm memelord MCP server
           # + the local memelord-rollup tool (flat-pile -> pattern summaries).
           pkg = pkgs.memelord;
-          # Weekly timer: distill every ~/ws project's flat memelord pile into
-          # pattern summaries via the local LiteLLM proxy. pi.key is minted at
-          # activation into ~/.config/litellm/keys/ and readable by the user
-          # unit (not a sops path -- the key file is already local).
-          rollup = {
-            enable = true;
-            apiKeyFile = "${config.home.homeDirectory}/.config/litellm/keys/pi.key";
-          };
+          # The weekly memelord-rollup timer is OFF (2026-10-16). It cost more
+          # than it gave:
+          #  - nothing reads its output. memelord never queries the
+          #    rollup_summaries table, and no hook, extension or steering does
+          #    either. The last six runs wrote 0 summaries 18 times and 1 summary
+          #    2 times; 44 rows exist in total, all unread.
+          #  - its other job is gone. --prune-auto deleted the "Auto-detected
+          #    correction" flood from memelord's old PostToolUse hook. That hook
+          #    is disabled, and 0 such rows remain anywhere.
+          #  - it damaged memory. It opens Turso DBs through stock sqlite3, and
+          #    the Oct 12 run left 6 project DBs with an empty WAL, so memelord
+          #    could not start there.
+          # pkgs/memelord still ships the memelord-rollup CLI for manual use.
         };
 
         filesystem = {
