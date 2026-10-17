@@ -110,9 +110,11 @@ let
   # imapsync log containing credentials reached the public GitHub repo.
   #
   # git feeds pre-push "<local ref> <local sha> <remote ref> <remote sha>"
-  # on stdin, one line per ref. For each, scan the range the remote does not
-  # have yet. For a new branch (remote sha all zeroes) there is no base, so
-  # scan the commits unique to it rather than its entire history.
+  # on stdin, one line per ref. For each, scan the commits no remote-tracking
+  # ref has yet. Not remote_sha..local_sha: after a rebase that range holds
+  # every upstream commit since the old base (already public, and upstream
+  # test fixtures trip gitleaks), and it is unreadable when remote_sha was
+  # never fetched, which skipped the scan entirely.
   #
   # Escape hatches:
   #   ALLOW_DUMP_PUSH=1 git push ...   (skip the scan, keep chaining)
@@ -125,19 +127,19 @@ let
       failed=0
 
       if [ "''${ALLOW_DUMP_PUSH:-}" != "1" ]; then
-        while read -r _local_ref local_sha _remote_ref remote_sha; do
+        # $1 is the remote's name, or its URL for "git push <url>" (which
+        # matches no refs, so everything reachable is scanned).
+        remote_name="''${1:-origin}"
+        while read -r _local_ref local_sha _remote_ref _remote_sha; do
           # Deleting a ref pushes no content.
           [ "$local_sha" = "$zero" ] && continue
 
-          if [ "$remote_sha" = "$zero" ]; then
-            # New branch: only what no remote-tracking ref already has.  Let
-            # git expand --remotes itself: listing the refs here overflows
-            # ARG_MAX in repos that track many remotes (gitleaks then fails
-            # to exec, which read as a finding).
-            log_opts="$local_sha --not --remotes"
-          else
-            log_opts="$remote_sha..$local_sha"
-          fi
+          # Only the target remote's refs count as already public: a commit
+          # fetched from some other (maybe private) remote is still scanned.
+          # Let git expand the refs itself: listing them here overflows
+          # ARG_MAX in repos that track many (gitleaks then fails to exec,
+          # which read as a finding).
+          log_opts="$local_sha --not --remotes=$remote_name"
 
           # Nothing to scan (already up to date, or an unreadable range).
           # shellcheck disable=SC2086
