@@ -144,13 +144,18 @@
       flake = false;
     };
 
-    # maki -- my fork of the maki coding agent, built by pkgs/maki. `main`
-    # is kept at the latest release tag, so tracking it here picks up the
-    # newest tagged version whenever the lock is updated (`nix flake update`
-    # or the scheduled lock-updater CI). Not a flake itself; consumed as a
-    # source tree, threaded in via pkgs/default.nix.
+    # maki -- my fork of the maki coding agent, built by pkgs/maki.
+    # PINNED to 6767244 (0.5.5, rust-version 1.88). The branch tip has moved
+    # to 0.6.3 (e29d548), whose workspace Cargo.toml demands rust-version
+    # 1.99, but our nixpkgs ships rustc 1.95 -- that version cannot compile.
+    # Pinning the rev here (not just the lock) stops a bare `nix flake update`
+    # or the lock-updater CI from dragging it forward again, which is what
+    # broke the HM build (vendor-hash mismatch, then an MSRV wall behind it).
+    # Lift the pin once nixpkgs-unstable carries rustc >= 1.99, bump to the
+    # newest tag, and refresh pkgs/maki cargoHash. Not a flake itself;
+    # consumed as a source tree, threaded in via pkgs/default.nix.
     maki-src = {
-      url = "github:gburd/maki";
+      url = "github:gburd/maki/6767244a3acf2c883d111bf24b01418bb3a74c1f";
       flake = false;
     };
 

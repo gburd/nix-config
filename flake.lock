@@ -194,16 +194,17 @@
     "maki-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791990279,
-        "narHash": "sha256-CW5OCDmBpUkhY/ALcFiyHbQXhrMEzv5JwbnpRqBsjNo=",
+        "lastModified": 1790019147,
+        "narHash": "sha256-gbYSO9I6BDOmG8HN9yV5YhIKZTqztaMjnPtUzD9uF0U=",
         "owner": "gburd",
         "repo": "maki",
-        "rev": "e29d548d1a992753cf1d3740313960587e3bf7a9",
+        "rev": "6767244a3acf2c883d111bf24b01418bb3a74c1f",
         "type": "github"
       },
       "original": {
         "owner": "gburd",
         "repo": "maki",
+        "rev": "6767244a3acf2c883d111bf24b01418bb3a74c1f",
         "type": "github"
       }
     },
