@@ -29,11 +29,27 @@ in
     ../../../services/vdirsyncer.nix
     ../../../services/proton-drive.nix
     ../../../console/khal.nix
+    ../../../services/unison-sync.nix
     # SSH key management with rotation
     (inputs.self + "/modules/home-manager/ssh-management")
   ];
   # LMStudio NPU-accelerated local models (floki has Intel Arc NPU)
   programs.ai.lmstudio.enable = true;
+
+  # Live sync of chosen project dirs + their pi/claude session state across
+  # hosts. The matching entry on arnold completes the pair; both sides must
+  # list the same hosts. See services/unison-sync.nix for the exclusions.
+  programs.ai.sync = {
+    enable = true;
+    host = "floki";
+    directories = [
+      {
+        name = "pure-lang";
+        path = "~/ws/pure-lang";
+        hosts = [ "arnold" "floki" ];
+      }
+    ];
+  };
 
   # zvec-grep embedding device. Left at "cpu" DELIBERATELY after live testing.
   #

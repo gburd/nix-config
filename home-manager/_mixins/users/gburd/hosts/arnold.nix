@@ -28,7 +28,23 @@ with lib.hm.gvariant;
     ../../../desktop/proton-apps.nix
     ../../../desktop/typora.nix
     ../../../desktop/wezterm.nix
+    ../../../services/unison-sync.nix
   ];
+
+  # Live sync of chosen project dirs + their pi/claude session state across
+  # hosts. See services/unison-sync.nix for what is and isn't synced (the
+  # memelord DB, maki, zed and codex state are deliberately out).
+  programs.ai.sync = {
+    enable = true;
+    host = "arnold";
+    directories = [
+      {
+        name = "pure-lang";
+        path = "~/ws/pure-lang";
+        hosts = [ "arnold" "floki" ];
+      }
+    ];
+  };
 
   # Sops secrets — reuses floki's secrets.yaml (encrypted to gburd-user age key)
   sops = {
