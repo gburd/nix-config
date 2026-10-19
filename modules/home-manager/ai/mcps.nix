@@ -149,6 +149,18 @@ let
     # The project files this trusts are written by the project-mcp helper from
     # this module's own server definitions.
     settings.projectServers = "allow";
+
+    # Make pi-mcp-adapter 5.3.x actually READ this file. It reads the
+    # user-global standard config (~/.config/mcp/mcp.json, its "shared-global"
+    # import) ONLY when hostConfigDiscovery is "on"; the adapter default is
+    # "off". With it off, pi 1.3.0 ignored all 14 servers written here --
+    # `pi mcp list` in a fresh project reported "No MCP servers configured",
+    # and a session saw a server only after a project .mcp.json was added by
+    # hand. The adapter reads this `settings` block from the shared-global
+    # file itself (getMergedSettings iterates every source, including this
+    # one), so declaring it here is self-activating -- no change to pi's
+    # settings.json. Verified against pi-mcp-adapter 5.3.2.
+    settings.hostConfigDiscovery = "on";
   };
 
   # Embedding env for zg (both the CLI and the MCP-spawned server must agree;
