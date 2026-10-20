@@ -1,4 +1,24 @@
-{ pkgs, ... }:
+{ pkgs, lib, desktop ? null, ... }:
+let
+  isDesktop = builtins.isString desktop;
+  # Launch neomutt in a terminal on a mailto: click. neomutt parses the
+  # mailto: URL itself (RFC 6068: to, cc, subject, body), so we hand the URL
+  # straight through. wezterm is the terminal on the GUI hosts (floki); its
+  # `start -- CMD` runs CMD in a fresh window and exits when neomutt does.
+  # %u is the mailto: URL xdg passes; keep it quoted so a subject/body with
+  # spaces survives.
+  neomuttMailto = pkgs.makeDesktopItem {
+    name = "neomutt-mailto";
+    desktopName = "neomutt (compose)";
+    genericName = "Email";
+    exec = ''${pkgs.wezterm}/bin/wezterm start -- ${pkgs.neomutt}/bin/neomutt %u'';
+    terminal = false; # wezterm IS the terminal; don't let the DE wrap it again
+    type = "Application";
+    categories = [ "Network" "Email" ];
+    mimeTypes = [ "x-scheme-handler/mailto" ];
+    noDisplay = true; # a handler, not a menu entry
+  };
+in
 {
   home.packages = with pkgs; [
     neomutt # Email client
@@ -6,7 +26,17 @@
     lynx # Alternative HTML viewer
     urlscan # Extract URLs from email
     isync # Optional: for offline sync via mbsync
-  ];
+  ]
+  # The mailto: launcher only on GUI hosts (needs a terminal + a browser to
+  # click from). On headless hosts neomutt is run directly, no handler needed.
+  ++ lib.optional isDesktop neomuttMailto;
+
+  # Make neomutt the default mailto: handler so Firefox (and anything else
+  # using xdg) opens a compose window. GUI hosts only.
+  xdg.mimeApps = lib.mkIf isDesktop {
+    enable = true;
+    defaultApplications."x-scheme-handler/mailto" = "neomutt-mailto.desktop";
+  };
 
   # Neomutt main configuration
   xdg.configFile."neomutt/neomuttrc".source = ./neomuttrc;
