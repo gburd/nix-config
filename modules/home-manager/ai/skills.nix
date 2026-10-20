@@ -274,6 +274,66 @@ let
   ];
 
   ###
+  # mp-skills (mattpocock/skills) — CURATED SUBSET.
+  #
+  # Vendored in-tree (files/mp-skills/) from mattpocock/skills @ 5beb35b
+  # (2026-10-19, MIT). The whole repo is ~40 skills, many tied to his issue-
+  # tracker workflow (to-spec/to-tickets/triage/wayfinder) or TypeScript
+  # tooling (shoehorn, pre-commit), and several overlap ours (tdd ->
+  # superpowers-test-driven-development). We take the nine that fill a real
+  # gap, each deployed as its own mp-<name> subdir so it reads as an
+  # independent skill, same shape as the superpowers subset:
+  #
+  #   writing-for-agents  framework for writing skills/AGENTS.md (multi-file:
+  #                       SKILL-MECHANICS.md)
+  #   diagnosing-bugs     structured hard-bug/perf loop (scripts/ template)
+  #   code-review         standards + correctness review (tracker lines
+  #                       adapted to gh-axi/github MCP; see the SKILL.md diff)
+  #   research            investigate against primary sources -> Markdown
+  #   codebase-design     deep-module design (multi-file: DEEPENING.md,
+  #                       DESIGN-IT-TWICE.md)
+  #   handoff             compact a conversation for another agent
+  #   grilling, grill-me  adversarial plan/design stress-test (grill-me
+  #                       invokes grilling; both taken so the link resolves)
+  #   git-guardrails      Claude-Code PreToolUse hook blocking destructive git.
+  #                       REDUNDANT with our pi safety-hooks.ts + git-push-guard
+  #                       and Claude-only; kept because the user asked for it.
+  #
+  # Each skill's own files (agents/openai.yaml, scripts/, sibling .md) ride
+  # along via collectFiles; all internal links are same-folder, so a per-skill
+  # recursive copy resolves them. Deployed to all four agents.
+  ###
+  mpSkillNames = [
+    "writing-for-agents"
+    "diagnosing-bugs"
+    "code-review"
+    "research"
+    "codebase-design"
+    "handoff"
+    "grilling"
+    "grill-me"
+    "git-guardrails"
+  ];
+
+  mpSkillFilesFor = root:
+    builtins.listToAttrs (builtins.concatMap
+      (name:
+        map
+          (f: {
+            name = "${root}/mp-${name}${f.path}";
+            value = { inherit (f) source; };
+          })
+          (collectFiles "" (./files/mp-skills/${name})))
+      mpSkillNames);
+
+  mpSkillFiles = lib.mkMerge [
+    (lib.mkIf cfg.targets.claude (mpSkillFilesFor ".claude/skills"))
+    (lib.mkIf cfg.targets.kiro (mpSkillFilesFor ".kiro/skills"))
+    # maki + fx always get them, mirroring ponytail/superpowers.
+    ((mpSkillFilesFor ".maki/skills") // (mpSkillFilesFor ".fx/skills"))
+  ];
+
+  ###
   # asm (Part 2) — agent-skill-manager as the cross-agent management layer.
   #
   # asm is installed as a CLI (npm wrapper, like memelord) and its config is
@@ -401,6 +461,7 @@ in
       (lib.mkIf cfg.skillsGit.enable skillsGitFiles)
       ponytailFiles
       superpowersFiles
+      mpSkillFiles
       allAgentSkillFiles
       asmFiles
     ];
