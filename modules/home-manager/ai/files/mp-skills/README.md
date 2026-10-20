@@ -47,5 +47,6 @@ the deployed set small and lets us adapt the few author-specific lines.
 ## Updating
 
 Re-fetch at a newer upstream commit, re-apply the code-review adaptation,
-update the pin above and in `skills.nix`. The agents/openai.yaml files are
-upstream's OpenAI-format mirrors; harmless to carry, not read by our agents.
+update the pin above and in `skills.nix`. Drop the `agents/openai.yaml` files
+upstream ships beside each SKILL.md: they are OpenAI-format mirrors our agents
+never read, so they are not vendored here.

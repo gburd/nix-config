@@ -299,7 +299,7 @@ let
   #                       REDUNDANT with our pi safety-hooks.ts + git-push-guard
   #                       and Claude-only; kept because the user asked for it.
   #
-  # Each skill's own files (agents/openai.yaml, scripts/, sibling .md) ride
+  # Each skill's own files (scripts/, sibling .md) ride
   # along via collectFiles; all internal links are same-folder, so a per-skill
   # recursive copy resolves them. Deployed to all four agents.
   ###
