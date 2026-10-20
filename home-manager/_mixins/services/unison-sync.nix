@@ -96,33 +96,49 @@ let
         "${config.home.homeDirectory}/.claude/projects/${claudeSlug a}"
       ];
       sshUser = entry.sshUser or "gburd";
-      # unison profile-less invocation: two roots at a time. We sync each of
-      # the three roots to the peer in its own unison call so an absent
-      # session dir on one side doesn't block the project tree.
-      # One unison invocation, backgrounded, resilient to its own failure.
-      # `-repeat watch` is long-lived; the trailing `|| true &` MUST sit on
-      # the same logical line as the command (hence it closes the final
-      # backslash-continued line), or bash sees the command end at the newline.
-      unisonFor = localRoot: remoteRoot: ''
-        ${pkgs.unison}/bin/unison \
-          ${lib.escapeShellArg localRoot} \
-          "ssh://${sshUser}@${peer}.ts.burd.me/${remoteRoot}" \
-          -batch -prefer newer -times -perms 0 \
-          -sshargs ${lib.escapeShellArg "-o IdentitiesOnly=yes -i ${config.home.homeDirectory}/.ssh/id_ed25519"} \
+      sshArgs = "-o IdentitiesOnly=yes -i ${config.home.homeDirectory}/.ssh/id_ed25519";
+      # Common unison flags. Paths are identical on both sides (same $HOME),
+      # so local root == remote root for each of the three.
+      commonArgs = root: ''\
+          ${lib.escapeShellArg root} \
+          "ssh://${sshUser}@${peer}.ts.burd.me/${root}" \
+          -batch -prefer newer -times -perms 0 -auto \
+          -sshargs ${lib.escapeShellArg sshArgs} \
           -servercmd ${lib.escapeShellArg "${pkgs.unison}/bin/unison"} \
-          ${ignoreArgs} \
-          -repeat watch -ui text || true &'';
-      # The remote absolute paths equal the local ones (same $HOME layout).
-      # Each of the three roots syncs in its own backgrounded watcher so an
-      # absent session dir on one side doesn't block the project tree.
+          ${ignoreArgs}'';
+      # A one-time NON-watch sync, to SEED a root. unison -repeat watch dies
+      # immediately if a local root is missing ('Filesystem watcher error:
+      # Path ... does not exist'); a plain run instead creates the absent side
+      # from the present one. Run until it succeeds once, so it also waits out
+      # a peer that is mid-switch.
+      seedOne = root: ''
+        until ${pkgs.unison}/bin/unison ${commonArgs root}; do
+          echo "seed ${root} -> ${peer} failed; retrying in 30s" >&2
+          sleep 30
+        done'';
+      # The long-lived watcher for one root, backgrounded and self-restarting.
+      # The trailing `&` MUST close the final continued line.
+      watchOne = root: ''
+        ( while :; do
+            ${pkgs.unison}/bin/unison ${commonArgs root} -repeat watch -ui text
+            echo "watch ${root} -> ${peer} exited ($?); restarting in 30s" >&2
+            sleep 30
+          done ) &'';
       syncScript = pkgs.writeShellScript "unison-${entry.name}-${peer}" ''
         set -u
-        # Project tree (always present on at least one side).
-        ${unisonFor (builtins.elemAt roots 0) (builtins.elemAt roots 0)}
-        # pi session state for this tree, if the dirs exist on either side.
-        ${unisonFor (builtins.elemAt roots 1) (builtins.elemAt roots 1)}
-        # claude session state for this tree.
-        ${unisonFor (builtins.elemAt roots 2) (builtins.elemAt roots 2)}
+        # Ensure the local parents exist so a first sync has somewhere to land.
+        mkdir -p ${lib.escapeShellArg (builtins.dirOf (builtins.elemAt roots 0))} \
+                 ${lib.escapeShellArg (builtins.dirOf (builtins.elemAt roots 1))} \
+                 ${lib.escapeShellArg (builtins.dirOf (builtins.elemAt roots 2))}
+        # SEED each root once (no watcher), so both sides exist before watching.
+        # These run in series; each waits out a peer that is mid-switch.
+        ${seedOne (builtins.elemAt roots 0)}
+        ${seedOne (builtins.elemAt roots 1)}
+        ${seedOne (builtins.elemAt roots 2)}
+        # Now the live watchers (each self-restarting), held by `wait`.
+        ${watchOne (builtins.elemAt roots 0)}
+        ${watchOne (builtins.elemAt roots 1)}
+        ${watchOne (builtins.elemAt roots 2)}
         wait
       '';
     in
