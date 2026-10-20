@@ -35,6 +35,43 @@
 # NOTE no darwin build. Upstream publishes no macOS artifact and the stack is
 # GTK4/libadwaita against the GNOME 50 runtime, so the aws Mac cannot run this
 # -- see the comment where it is (not) imported in darwin/default.nix.
+#
+# ---------------------------------------------------------------------------
+# USING HYLKI WITH PROTONMAIL BRIDGE (greg@burd.me)
+#
+# Hylki is NOT configured declaratively. It owns its own ~/.config/hylki/*.toml
+# and rewrites them as you use it (folder seeding, aliases, flags), so a
+# read-only Nix symlink would break it. The Bridge password is NOT stored in
+# those files either -- Hylki keeps it in the secret-service keyring -- and it
+# is a machine-local credential that the Bridge regenerates on every re-login,
+# so it must never be committed (the Nix store is world-readable). This block
+# is therefore documentation, not managed config: the fixed settings to enter
+# once, and how to recover the password.
+#
+# The Bridge runs as the systemd user service protonmail-bridge.service
+# (home-manager/_mixins/services/protonmail-bridge.nix) and listens on
+# loopback only, so Hylki must run on the same host.
+#
+# Account settings to enter in Hylki (Add Account -> IMAP):
+#   Email / Username : greg@burd.me
+#   IMAP host / port : 127.0.0.1 / 1143   security: STARTTLS
+#   SMTP host / port : 127.0.0.1 / 1025   security: STARTTLS
+#   Password         : the BRIDGE password (below), NOT the Proton account pw
+#
+# The Bridge serves a self-signed cert on those ports. Hylki connected with
+# tls_accept_hostname_mismatch = false, so no override was needed; if a future
+# re-auth fails on the cert, that flag in accounts.toml is where it would go.
+#
+# Recover the Bridge password (it only prints in the Bridge's own CLI):
+#   systemctl --user stop protonmail-bridge.service   # free the single-instance lock
+#   protonmail-bridge --cli
+#     >>> login     # only if 'info' shows the account logged out
+#     >>> info      # prints username + the IMAP/SMTP (bridge) password
+#     >>> exit      # MUST exit, or the daemon can't retake the lock
+#   systemctl --user start protonmail-bridge.service
+# "Connection refused (os error 111)" in Hylki means the daemon is stopped
+# (e.g. left down after a --cli session) -- start the service above.
+# ---------------------------------------------------------------------------
 rustPlatform.buildRustPackage rec {
   pname = "hylki";
   version = "1.43.1";
