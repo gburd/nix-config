@@ -295,9 +295,13 @@ let
   #   handoff             compact a conversation for another agent
   #   grilling, grill-me  adversarial plan/design stress-test (grill-me
   #                       invokes grilling; both taken so the link resolves)
-  #   git-guardrails      Claude-Code PreToolUse hook blocking destructive git.
-  #                       REDUNDANT with our pi safety-hooks.ts + git-push-guard
-  #                       and Claude-only; kept because the user asked for it.
+  #
+  # NOT taken: git-guardrails. It is a Claude-Code-only PreToolUse hook that
+  # blocks ALL `git push` on a flat denylist. Our own guards are better and
+  # cover every agent: pi's safety-hooks.ts allows normal push, blocks bare
+  # --force always and --force-with-lease unless a project opts in, and the
+  # git-push-guard pre-push hook scans pushed commits for secrets. So it was
+  # dropped as redundant and weaker.
   #
   # Each skill's own files (scripts/, sibling .md) ride
   # along via collectFiles; all internal links are same-folder, so a per-skill
@@ -312,7 +316,6 @@ let
     "handoff"
     "grilling"
     "grill-me"
-    "git-guardrails"
   ];
 
   mpSkillFilesFor = root:

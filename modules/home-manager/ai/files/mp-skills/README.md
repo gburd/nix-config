@@ -13,7 +13,7 @@ workflow or TypeScript tooling, or overlap skills this repo already ships.
 Taking a curated subset in-tree (rather than a whole-repo flake input) keeps
 the deployed set small and lets us adapt the few author-specific lines.
 
-## The subset (9 skills)
+## The subset (8 skills)
 
 | skill | why | extra files |
 |---|---|---|
@@ -25,7 +25,6 @@ the deployed set small and lets us adapt the few author-specific lines.
 | handoff | compact a conversation for another agent | — |
 | grilling | adversarial plan/design stress-test | — |
 | grill-me | thin wrapper that invokes `grilling` | — |
-| git-guardrails | Claude-Code PreToolUse hook blocking destructive git | scripts/block-dangerous-git.sh |
 
 ## Local adaptations (diffs from upstream)
 
@@ -36,11 +35,13 @@ the deployed set small and lets us adapt the few author-specific lines.
 
 ## Notes
 
-- **git-guardrails is redundant here.** This repo already blocks destructive
-  git from pi via `pi-extensions/safety-hooks.ts` and the `git-push-guard`
-  pre-push hook; the vendored skill is Claude-Code-specific
-  (`.claude/settings.json` PreToolUse). Kept because it was explicitly
-  requested, but the pi guards are the live defence.
+- **git-guardrails was considered and dropped.** It is a Claude-Code-only
+  PreToolUse hook that blocks all `git push` on a flat denylist. This repo
+  already blocks destructive git across every agent: pi's
+  `pi-extensions/safety-hooks.ts` (allows normal push, blocks bare `--force`
+  always and `--force-with-lease` unless a project opts in) and the
+  `git-push-guard` pre-push secret scan. Those are smarter and broader, so
+  the vendored skill earned no place.
 - **grill-me depends on grilling** (it calls the `grilling` skill); both are
   vendored so the reference resolves.
 
