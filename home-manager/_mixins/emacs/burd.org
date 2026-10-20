@@ -63,6 +63,66 @@
            user-mail-address "greg@burd.me")
    #+end_src
 
+** Sending mail (ProtonMail Bridge)
+   :PROPERTIES:
+   :CUSTOM_ID: sending-mail
+   :END:
+
+   Send as greg@burd.me through the local ProtonMail Bridge, the same path
+   neomutt uses: plain SMTP submission on 127.0.0.1:1025 (loopback only, no
+   TLS -- matches neomutt's ssl_starttls=no). The login and the per-machine
+   *bridge* password (NOT the Proton account password) come from the sops
+   secrets home-manager deploys at ~/.config/sops-nix/secrets/email/proton/.
+   They are read at send time, so nothing secret lives in this config or the
+   Nix store, and a rotated bridge password is picked up with no change here.
+
+   Only wired up when the bridge secrets are actually present (desktop hosts
+   with the bridge), so a host without them doesn't get a broken send path.
+
+   The password reaches smtpmail by advising =auth-source-search=: for the
+   loopback bridge host it answers from the sops files, and for every other
+   host it falls through to the normal auth-source lookup. (A literal
+   in-memory auth-source entry is not a valid backend spec -- that path was
+   tried and rejected with "invalid backend spec" -- so the advice is the
+   working mechanism.)
+   #+begin_src emacs-lisp
+     (require 'smtpmail)
+     (require 'auth-source)
+
+     (defun burd/sops-secret (name)
+       "Return the trimmed contents of sops secret NAME, or nil if absent."
+       (let ((f (expand-file-name
+                 (concat "~/.config/sops-nix/secrets/email/proton/" name))))
+         (when (file-readable-p f)
+           (string-trim
+            (with-temp-buffer (insert-file-contents f) (buffer-string))))))
+
+     (when (and (burd/sops-secret "user") (burd/sops-secret "pass"))
+       (setq send-mail-function 'smtpmail-send-it
+             message-send-mail-function 'smtpmail-send-it
+             smtpmail-smtp-server "127.0.0.1"
+             smtpmail-smtp-service 1025
+             ;; Bridge on loopback speaks plain SMTP on 1025 (no STARTTLS),
+             ;; exactly as neomutt is configured.
+             smtpmail-stream-type 'plain
+             smtpmail-smtp-user (burd/sops-secret "user"))
+
+       ;; Answer auth-source for the bridge host from sops; pass everything
+       ;; else through. Both user and secret are re-read at call time, so a
+       ;; rotated bridge password is picked up with no restart. The :secret is
+       ;; a plain string (auth-source accepts that), so this needs no closure.
+       (defun burd/bridge-auth (orig &rest spec)
+         (let ((host (plist-get spec :host)))
+           (if (and host (member host '("127.0.0.1" "localhost"))
+                    (equal (format "%s" (plist-get spec :port)) "1025"))
+               (let ((u (burd/sops-secret "user"))
+                     (p (burd/sops-secret "pass")))
+                 (when (and u p)
+                   (list (list :host host :port "1025" :user u :secret p))))
+             (apply orig spec))))
+       (advice-add 'auth-source-search :around #'burd/bridge-auth))
+   #+end_src
+
 ** Environment
    :PROPERTIES:
    :CUSTOM_ID: environment
