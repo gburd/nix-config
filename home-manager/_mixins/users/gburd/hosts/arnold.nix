@@ -216,6 +216,12 @@ with lib.hm.gvariant;
     # import above) is
     # what Hylki would connect to.
     hylki
+    # Spell-check for Hylki's WebKit composer: enchant + the en_US hunspell
+    # dict, mirroring desktop/hylki.nix (which arnold does not import). See
+    # that file for why the dict is the missing piece and why harper grammar
+    # can't integrate.
+    enchant
+    hunspellDicts.en_US
 
     # AI tools
     unstable.lmstudio # LM Studio (unstable: near-current; stable is stuck on 0.4.1)
