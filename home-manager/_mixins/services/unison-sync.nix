@@ -70,7 +70,10 @@ let
     "Name node_modules"
     "Name .DS_Store"
     "Name *.o"
-    "Name *.lock"
+    # NB do NOT ignore *.lock: lockfiles (flake.lock, Cargo.lock) are exactly
+    # what should stay in sync -- they pin dependencies. A blanket *.lock also
+    # swallowed flake.lock, which silently went un-synced. unison's own lock is
+    # covered by the .unison* path rule below, not by name.
     "Path .unison*"
   ];
 
