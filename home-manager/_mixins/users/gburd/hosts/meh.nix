@@ -11,9 +11,26 @@
     ../../../services/protonmail-bridge.nix
     ../../../services/vdirsyncer.nix
     ../../../console/khal.nix
+    ../../../services/unison-sync.nix
     # SSH key management with rotation
     (inputs.self + "/modules/home-manager/ssh-management")
   ];
+
+  # Live sync of chosen project dirs across hosts. meh joins the nix-config
+  # three-way (floki/meh/arnold). See services/unison-sync.nix for what is and
+  # isn't synced, and floki.nix for the git caveat. meh is headless, but the
+  # sync is a plain systemd user service that needs no GUI.
+  programs.ai.sync = {
+    enable = true;
+    host = "meh";
+    directories = [
+      {
+        name = "nix-config";
+        path = "~/ws/nix-config";
+        hosts = [ "floki" "meh" "arnold" ];
+      }
+    ];
+  };
 
   # Sops secrets configuration
   sops = {

@@ -48,6 +48,18 @@ in
         path = "~/ws/pure-lang";
         hosts = [ "arnold" "floki" ];
       }
+      {
+        # This very repo, synced across all three workstations so an edit on
+        # one machine is there on the next. .git is IGNORED by the sync module
+        # (it races the index), so git history is NOT synced -- only the
+        # working tree. Keep the hosts on the same commit with `git pull`; then
+        # unison carries uncommitted edits between them. If two hosts edit the
+        # same file between ticks, unison flags a conflict (prefer=newer wins
+        # the handoff case) -- commit before switching machines to avoid it.
+        name = "nix-config";
+        path = "~/ws/nix-config";
+        hosts = [ "floki" "meh" "arnold" ];
+      }
     ];
   };
 

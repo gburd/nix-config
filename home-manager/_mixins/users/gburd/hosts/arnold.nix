@@ -43,6 +43,12 @@ with lib.hm.gvariant;
         path = "~/ws/pure-lang";
         hosts = [ "arnold" "floki" ];
       }
+      {
+        # See the matching entry in floki.nix for the git caveat.
+        name = "nix-config";
+        path = "~/ws/nix-config";
+        hosts = [ "floki" "meh" "arnold" ];
+      }
     ];
   };
 
