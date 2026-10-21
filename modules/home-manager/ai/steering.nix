@@ -15,6 +15,8 @@ let
     "aws-burner-accounts.md" = ./files/steering/aws-burner-accounts.md;
     "mcp-config.md" = ./files/steering/mcp-config.md;
     "postgresql-workflow.md" = ./files/steering/postgresql-workflow.md;
+    "benchmarking.md" = ./files/steering/benchmarking.md;
+    "postgresql-benchmarking.md" = ./files/steering/postgresql-benchmarking.md;
     "voice.md" = ./files/steering/voice.md;
     "prose-mechanics.md" = ./files/steering/prose-mechanics.md;
   };
@@ -37,10 +39,13 @@ let
     "mcp-config.md"
   ];
   domainSteering = {
-    postgresql = [ "postgresql-workflow.md" ];
+    postgresql = [ "postgresql-workflow.md" "postgresql-benchmarking.md" ];
     aws = [ "aws-builder.md" "aws-burner-accounts.md" ];
     rust = [ "rust-conventions.md" ];
-    c = [ "c-conventions.md" ];
+    # Generic benchmarking rigor lives with the C domain: it is the group that
+    # does performance work (PostgreSQL, libraries). postgresql adds the
+    # Postgres-specific layer on top.
+    c = [ "c-conventions.md" "benchmarking.md" ];
   };
 
   # Concatenated steering for agents that use a single instructions file
