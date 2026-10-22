@@ -6,7 +6,12 @@
 { username, ... }: {
   imports = [
     ../_mixins/console/homebrew.nix
-    ../_mixins/services/tailscale.nix
+    # Tailscale/Headscale REMOVED from the aws Mac (2026-10-21, per request).
+    # It never registered a node on the Headscale server (no 'aws' node ever
+    # appeared), and the config is dropped so a darwin-rebuild switch stops
+    # configuring and starting tailscaled here. The module and
+    # docs/tailscale-darwin.md are kept for reference / possible re-enable.
+    #   ../_mixins/services/tailscale.nix
     ./brews.nix
   ];
 
