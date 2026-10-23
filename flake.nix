@@ -252,7 +252,7 @@
         # of the fork supporting their platforms.
         #
         # Three "dix" hosts:
-        #   * dixi -- x86_64, EC2 (permanent account), HEADLESS (no COSMIC).
+        #   * dixi -- x86_64, EC2, HEADLESS (no COSMIC). Also used on the X1 Carbon.
         #     A small command-line profile on solnix's own package set
         #     (lib/helpers.nix mkSolnixHome, home-manager/solnix.nix), built on dixi.
         "gburd@dixi" = libx.mkSolnixHome {
@@ -266,13 +266,11 @@
           platform = "aarch64-solaris";
           inherit solnixReady;
         };
-        #   * dixr -- RISC-V, PHYSICAL dev box (kbd/mouse/monitor), COSMIC
-        #     desktop (the Pop!_OS COSMIC experience, illumos underneath).
+        #   * dixr -- aarch64, EC2 Graviton, HEADLESS.
         "gburd@dixr" = libx.mkHome {
           hostname = "dixr";
           username = "gburd";
-          desktop = "cosmic";
-          platform = "riscv64-solaris";
+          platform = "aarch64-solaris";
           inherit solnixReady;
         };
 
@@ -300,24 +298,40 @@
       # campaign produced four bugs from blurring them.
       #
       # Per-host honesty is in each file, and is not uniform:
-      #   dixi -- x86_64, real hardware. Slices are real; COSMIC is not a desktop.
-      #   dixa -- aarch64, headless EC2. GICv3/_CRS confirmed on metal, userland NOT built.
-      #   dixr -- riscv64 Milk-V (SpacemiT K3, not K1). ASPIRATIONAL SCAFFOLDING ONLY.
+      #   dixi      -- x86_64 EC2, from the public DP AMI. Builds on illumos.
+      #   dixa/dixr -- aarch64 EC2 (dixr = Graviton). Root mounts on metal; no userland built.
+      #   x1-carbon -- x86_64, the maintainer's X1 Carbon (was dixi). COSMIC is not a desktop.
+      #   lixr      -- riscv64 Milk-V (SpacemiT K3, not K1). ASPIRATIONAL SCAFFOLDING ONLY.
       solnixConfigurations = {
+        # dixi: x86_64 EC2 (the public DP AMI + this config).
         dixi = libx.mkSolnixHost {
           hostname = "dixi";
           platform = "x86_64-solaris";
           modules = [ ./nixos/solnix/dixi.nix ];
         };
+        # dixa: aarch64 EC2.
         dixa = libx.mkSolnixHost {
           hostname = "dixa";
           platform = "aarch64-solaris";
           modules = [ ./nixos/solnix/dixa.nix ];
         };
+        # dixr: aarch64 EC2 Graviton.
         dixr = libx.mkSolnixHost {
           hostname = "dixr";
-          platform = "riscv64-solaris";
+          platform = "aarch64-solaris";
           modules = [ ./nixos/solnix/dixr.nix ];
+        };
+        # The maintainer's Lenovo X1 Carbon (was "dixi"; placeholder name).
+        x1-carbon = libx.mkSolnixHost {
+          hostname = "x1-carbon";
+          platform = "x86_64-solaris";
+          modules = [ ./nixos/solnix/x1-carbon.nix ];
+        };
+        # lixr: the Milk-V K3 board, riscv64 (was "dixr").
+        lixr = libx.mkSolnixHost {
+          hostname = "lixr";
+          platform = "riscv64-solaris";
+          modules = [ ./nixos/solnix/lixr.nix ];
         };
       };
 

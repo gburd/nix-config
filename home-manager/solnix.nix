@@ -35,6 +35,14 @@
       "htop"
       "jq"
       "curl"
+      "wget"
+      "tree"
+      "nano"
+      "tmux"
+      "git"
+      "rsync"
+      "xz"
+      "gnumake"
       "home-manager"
     ]);
 

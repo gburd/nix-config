@@ -104,7 +104,7 @@ in
     inputs.solnix.lib.solnixSystem {
       system = platform;
       pkgs = inputs.solnix.lib.mkPkgs { system = platform; };
-      specialArgs = { inherit inputs; };
+      specialArgs = { inherit inputs sshMatrix; };
       modules = [{ networking.hostName = hostname; }] ++ modules;
     };
 

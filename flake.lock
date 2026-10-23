@@ -584,11 +584,11 @@
         "solnix-pkgs": "solnix-pkgs"
       },
       "locked": {
-        "lastModified": 1792039978,
-        "narHash": "sha256-mNdQ948INWFs83B4u92/FZjQM1LquGRZITUfiiJXkWY=",
+        "lastModified": 1792785819,
+        "narHash": "sha256-JCMm/SZt6qZFnfX05s9cnKd4LhF3H5nQI1+Zni3m0eI=",
         "ref": "main",
-        "rev": "235fc122487d3d54c5eedd67900073fad0b4bc83",
-        "revCount": 1036,
+        "rev": "7366f59d9a085a140880f208462a33ed1c954e66",
+        "revCount": 1088,
         "type": "git",
         "url": "https://codeberg.org/solnix/solnix.git"
       },
@@ -608,13 +608,15 @@
         "ref": "main",
         "rev": "2678fafe6b517199cb35b90e52cbd09a0335fbdf",
         "revCount": 110,
+        "shallow": false,
         "type": "git",
-        "url": "https://codeberg.org/gregburd/solnix-pkgs.git"
+        "url": "https://git.solnix.io/solnix-pkgs.git"
       },
       "original": {
         "ref": "main",
+        "shallow": false,
         "type": "git",
-        "url": "https://codeberg.org/gregburd/solnix-pkgs.git"
+        "url": "https://git.solnix.io/solnix-pkgs.git"
       }
     },
     "solnix-pkgs_2": {
