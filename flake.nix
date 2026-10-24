@@ -252,7 +252,7 @@
         # of the fork supporting their platforms.
         #
         # Three "dix" hosts:
-        #   * dixi -- x86_64, EC2, HEADLESS (no COSMIC). Also used on the X1 Carbon.
+        #   * dixi -- x86_64, EC2, HEADLESS (no COSMIC). Also the solnix home on arnold and lixi.
         #     A small command-line profile on solnix's own package set
         #     (lib/helpers.nix mkSolnixHome, home-manager/solnix.nix), built on dixi.
         "gburd@dixi" = libx.mkSolnixHome {
@@ -300,7 +300,8 @@
       # Per-host honesty is in each file, and is not uniform:
       #   dixi      -- x86_64 EC2, from the public DP AMI. Builds on illumos.
       #   dixa/dixr -- aarch64 EC2 (dixr = Graviton). Root mounts on metal; no userland built.
-      #   x1-carbon -- x86_64, the maintainer's X1 Carbon (was dixi). COSMIC is not a desktop.
+      #   arnold    -- x86_64, ThinkPad X1 Extreme Gen 1 (was dixi). COSMIC is not a desktop.
+      #   lixi      -- x86_64, ThinkPad X1 Extreme Gen 5. iwx bound; i915/nvidia shipped unbound.
       #   lixr      -- riscv64 Milk-V (SpacemiT K3, not K1). ASPIRATIONAL SCAFFOLDING ONLY.
       solnixConfigurations = {
         # dixi: x86_64 EC2 (the public DP AMI + this config).
@@ -321,11 +322,17 @@
           platform = "aarch64-solaris";
           modules = [ ./nixos/solnix/dixr.nix ];
         };
-        # The maintainer's Lenovo X1 Carbon (was "dixi"; placeholder name).
-        x1-carbon = libx.mkSolnixHost {
-          hostname = "x1-carbon";
+        # arnold: ThinkPad X1 Extreme Gen 1 (was "dixi"). Also runs Fedora + gburd@arnold.
+        arnold = libx.mkSolnixHost {
+          hostname = "arnold";
           platform = "x86_64-solaris";
-          modules = [ ./nixos/solnix/x1-carbon.nix ];
+          modules = [ ./nixos/solnix/arnold.nix ];
+        };
+        # lixi: ThinkPad X1 Extreme Gen 5 (iwx wifi bound; GPUs shipped unbound).
+        lixi = libx.mkSolnixHost {
+          hostname = "lixi";
+          platform = "x86_64-solaris";
+          modules = [ ./nixos/solnix/lixi.nix ];
         };
         # lixr: the Milk-V K3 board, riscv64 (was "dixr").
         lixr = libx.mkSolnixHost {

@@ -1,9 +1,9 @@
-# nixos/solnix/x1-carbon.nix -- the maintainer's Lenovo X1 Carbon, running solnix (formerly "dixi";
-# dixi is now the EC2 x86_64 host. "x1-carbon" is a placeholder name until the maintainer picks one).
-# (Nix on illumos). The target of:
+# nixos/solnix/arnold.nix -- arnold, the maintainer's ThinkPad X1 Extreme Gen 1 (i7-8850H, UHD 630, GTX 1050 Ti,
+# Intel AC 9560 wifi), running solnix (Nix on illumos). This was "dixi" until 2026-10-24; dixi is now the EC2 host.
+# arnold also runs Fedora with home-manager (homeConfigurations."gburd@arnold"). The target of:
 #
 #   solnix-install --git https://github.com/gburd/nix-config.git \
-#                  --flake .#x1-carbon --home-manager .#gburd@dixi
+#                  --flake .#arnold --home-manager .#gburd@dixi
 #
 # Evaluated by lib/helpers.nix:mkSolnixHost through solnix's own evaluator, NOT
 # nixosSystem -- see that function's header for why.

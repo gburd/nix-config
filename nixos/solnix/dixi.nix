@@ -9,7 +9,7 @@
 #
 # Evaluated by lib/helpers.nix:mkSolnixHost through solnix's own evaluator, NOT
 # nixosSystem. It EVALUATES on a Linux dev box and only BUILDS on an illumos host.
-# The Lenovo X1 Carbon that used to be called dixi is nixos/solnix/x1-carbon.nix.
+# The ThinkPad X1 Extreme Gen 1 that used to be called dixi is nixos/solnix/arnold.nix (lixi.nix is the Gen 5).
 { inputs, pkgs, sshMatrix, ... }:
 
 {
