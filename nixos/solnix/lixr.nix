@@ -1,5 +1,5 @@
-# nixos/solnix/lixr.nix -- the Milk-V board (lixr), riscv64, running solnix (formerly "dixr";
-# dixr is now the EC2 Graviton host).
+# nixos/solnix/lixr.nix -- the Milk-V K3 board (lixr), riscv64, running solnix (formerly "dixr";
+# dixr is now the hosted riscv64 server).
 #
 # =============================================================================
 # ASPIRATIONAL SCAFFOLDING. THIS CANNOT BUILD OR BOOT ANYTHING TODAY.

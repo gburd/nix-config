@@ -266,11 +266,11 @@
           platform = "aarch64-solaris";
           inherit solnixReady;
         };
-        #   * dixr -- aarch64, EC2 Graviton, HEADLESS.
+        #   * dixr -- riscv64 hosted SERVER (likely qemu-system-riscv64 on EC2), HEADLESS, no GPU.
         "gburd@dixr" = libx.mkHome {
           hostname = "dixr";
           username = "gburd";
-          platform = "aarch64-solaris";
+          platform = "riscv64-solaris";
           inherit solnixReady;
         };
 
@@ -299,7 +299,8 @@
       #
       # Per-host honesty is in each file, and is not uniform:
       #   dixi      -- x86_64 EC2, from the public DP AMI. Builds on illumos.
-      #   dixa/dixr -- aarch64 EC2 (dixr = Graviton). Root mounts on metal; no userland built.
+      #   dixa      -- aarch64 EC2. Reaches login on c6g.metal; an EL0 SError panic blocks sshd; no userland built.
+      #   dixr      -- riscv64 hosted server (qemu virt on EC2), headless. Shell session works; no nix/ZFS yet.
       #   arnold    -- x86_64, ThinkPad X1 Extreme Gen 1 (was dixi). COSMIC is not a desktop.
       #   lixi      -- x86_64, ThinkPad X1 Extreme Gen 5. iwx bound; i915/nvidia shipped unbound.
       #   lixr      -- riscv64 Milk-V (SpacemiT K3, not K1). ASPIRATIONAL SCAFFOLDING ONLY.
@@ -316,10 +317,10 @@
           platform = "aarch64-solaris";
           modules = [ ./nixos/solnix/dixa.nix ];
         };
-        # dixr: aarch64 EC2 Graviton.
+        # dixr: riscv64 hosted server, headless (likely qemu-system-riscv64 on EC2).
         dixr = libx.mkSolnixHost {
           hostname = "dixr";
-          platform = "aarch64-solaris";
+          platform = "riscv64-solaris";
           modules = [ ./nixos/solnix/dixr.nix ];
         };
         # arnold: ThinkPad X1 Extreme Gen 1 (was "dixi"). Also runs Fedora + gburd@arnold.

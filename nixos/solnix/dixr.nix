@@ -1,12 +1,15 @@
-# nixos/solnix/dixr.nix -- dixr, the aarch64 solnix host on EC2 Graviton.
+# nixos/solnix/dixr.nix -- dixr, a hosted riscv64 solnix SERVER: headless, many cores, lots of RAM, no GPU.
 #
-# HONEST STATE (2026-10-23): this EVALUATES and does not build a bootable system.
-#   * aarch64 solnix boots on c6g.metal through root mount (GICv3 ITS, ECAM, NVMe
-#     MSIs all fixed on real metal); the console then goes silent, so sshd has not
-#     been reached and there is no aarch64 AMI.
-#   * There is no aarch64 nix or userland built from source, so pkgs.solnix has no
-#     aarch64 packages to list. Add packages here when it does, not before.
-# The Milk-V board that used to be called dixr is nixos/solnix/lixr.nix.
+# Where it runs (maintainer, 2026-10-24): most likely an EC2 instance running qemu-system-riscv64 with a server-like
+# virt machine (high -smp, large -m, virtio-blk + virtio-net), until real RISC-V server hardware is rented.
+#
+# HONEST STATE (2026-10-24), from solnix's docs/riscv64-shell-session-2026-10-23.md:
+#   * the uts riscv64 kernel boots under qemu virt (OpenSBI fw_payload, SMP), with virtio-blk/virtio-net drivers;
+#   * userland is static newlib binaries: dash, sbase (ls/rm/mv/... with real getdents/unlink/rename), ed, less,
+#     zlib, ncurses. A full shell session (pipes, redirects, $( )) works in one boot;
+#   * NOT yet: nix, ZFS/boot environments, a dynamic loader, sshd, termios, illumos signal numbers.
+# So this EVALUATES and does not build a bootable system. It records the target so the server work has a shape:
+# headless, gburd's account and keys, the virtio NIC, EC2's resolver.
 { sshMatrix, ... }:
 
 {
@@ -20,7 +23,10 @@
     openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
   };
 
-  # Graviton's NIC is ena0, as on x86 EC2; EC2's own resolver.
-  networking.interfaces.ena0.dhcp = true;
+  # qemu virt's virtio-net is vioif on illumos; DHCP from qemu's user/tap network. EC2's resolver.
+  networking.interfaces.vioif0.dhcp = true;
   networking.nameservers = [ "169.254.169.253" ];
+
+  # No packages yet: pkgs.solnix has no riscv64 derivations (the riscv64 userland is built outside Nix, see above).
+  # No desktop: a server.
 }
