@@ -80,6 +80,17 @@ find <dirs-you-worked-in> -xdev -type f \( -name core -o -name 'core.[0-9]*' -o 
   -exec sh -c 'file -b "$1" | grep -q "core file" && ! fuser -s "$1" 2>/dev/null && echo "$1"' _ {} \;
 ```
 
+**When the user asks to tidy up / reclaim disk (not just end one task),
+sweep ALL leftover cores, not only the ones you made.** Old dumps pile up in
+test build trees and get forgotten; a core whose exact binary no longer
+exists is useless. Find every real core dump under the workspace by content
+(the `file` check above) and delete the ones nobody is debugging. The
+2026-10-24 sweep removed 73 (~520 MiB) from `~/ws/libxtc`, `~/ws/osv`,
+`~/ws/pg_turbovec`, the `~/ws/postgres/tepid-*` TAP build dirs and
+`/scratch`. Never delete a git-TRACKED file named `core` (e.g. osv's
+`conf/kconfig/core` is a real source file) -- the `*.core` / `core.<pid>`
+patterns above avoid it, and `git ls-files` confirms.
+
 Look in the directories your crashing processes ran in. Hosts that use
 systemd-coredump (arnold) write compressed cores to
 `/var/lib/systemd/coredump/` instead. They are owned by root, and

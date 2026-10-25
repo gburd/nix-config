@@ -182,6 +182,16 @@ floki on 2026-10-15 found 278 stray cores totalling 6.7 GiB, months old, in
     `/var/lib/systemd/coredump/` (root-owned; systemd-tmpfiles ages them
     out). Use `coredumpctl list` and `coredumpctl debug <pid>`.
   - lixr: none by default (`ulimit -c 0`).
+- **Sweep leftover cores during any tidy/cleanup pass.** When cleaning up a
+  project (or running the cleanup skill), don't stop at the cores this
+  session made: find every core dump under the workspace by content and
+  delete the ones no longer needed for diagnosis (nobody debugging them, the
+  backtrace already captured, the build they came from long gone). A core
+  whose exact binary no longer exists is useless and should go. The
+  2026-10-24 sweep removed 73 dumps (~520 MiB) left in `~/ws/libxtc`,
+  `~/ws/osv`, `~/ws/pg_turbovec`, the `~/ws/postgres/tepid-*` TAP build dirs
+  and `/scratch`. Keep only a core you are actively using, in a deliberate
+  `/scratch/<proj>/cores/` with a note.
 
 ## Non-Interactive Tools
 
