@@ -10,6 +10,15 @@
 #      same on both hosts, so the slug matches);
 #   3. claude's session state, at ~/.claude/projects/-<slug>  (same idea,
 #      single leading '-', no trailing).
+#   4. the repo's .git/config and .git/info/exclude ONLY (not the rest of
+#      .git). This keeps remotes, branch tracking, core settings and the
+#      local-only ignore list identical across hosts, while each host keeps
+#      its OWN objects/refs/HEAD/index (synced via git push/pull, not here).
+#      FIRST TIME a synced repo lands on a host, `git clone` it once so the
+#      object store/refs exist and git commands work; thereafter the two .git
+#      dirs are independent except for config + info/exclude. Do NOT add a
+#      repo that uses `git worktree` on some host -- that writes an absolute
+#      [core] worktree path into .git/config, which would then fight.
 #
 # WHAT IT DELIBERATELY DOES NOT SYNC, and why:
 #   * <project>/.memelord/ -- memelord's SQLite (libSQL) DB. No file-sync tool
@@ -61,21 +70,65 @@ let
     else "${config.home.homeDirectory}/${lib.removePrefix "~/" (lib.removePrefix "./" p)}";
 
   # unison ignore patterns common to every root (build cruft + the DBs/state
-  # we must not sync). `Name` matches a path component anywhere.
+  # we must not sync). `Name` matches a path component anywhere; `Path` is the
+  # full path from the replica root.
+  #
+  # .git is NOT ignored wholesale. git's history is per-host (each host has its
+  # own objects/refs/HEAD/index and keeps them in step via git push/pull), so
+  # syncing those would corrupt the index or fight the per-host checkout. But a
+  # repo's IDENTITY -- its remotes, branch tracking, core settings, and the
+  # local-only .git/info/exclude ignore list -- should match across hosts and
+  # is static enough to sync safely. So we sync exactly .git/config and
+  # .git/info/exclude and ignore every other .git child. (Proven: with these
+  # per-path ignores unison copies only those two and leaves HEAD/index/
+  # objects/refs untouched.) NB the first time a repo lands on a host you still
+  # `git clone` it once to populate objects/refs so git commands work; after
+  # that the two .git dirs are independent except for config + info/exclude.
+  # A host that runs `git worktree add` writes an absolute [core] worktree path
+  # into .git/config -- don't sync such repos, or that path will fight.
+  gitChildIgnores = [
+    "Path */.git/HEAD"
+    "Path */.git/index"
+    "Path */.git/objects"
+    "Path */.git/refs"
+    "Path */.git/logs"
+    "Path */.git/packed-refs"
+    "Path */.git/ORIG_HEAD"
+    "Path */.git/FETCH_HEAD"
+    "Path */.git/MERGE_HEAD"
+    "Path */.git/COMMIT_EDITMSG"
+    "Path */.git/hooks"
+    "Path */.git/worktrees"
+    "Path */.git/branches"
+    "Path */.git/modules"
+    "Path */.git/lfs"
+    # .git/*.lock transient locks, matched narrowly by Path (NOT a blanket
+    # Name *.lock, which would swallow flake.lock / Cargo.lock).
+    "Path */.git/config.lock"
+    "Path */.git/index.lock"
+    "Path */.git/HEAD.lock"
+    "Path .git/config.lock"
+    "Path .git/index.lock"
+    "Path .git/HEAD.lock"
+    # The repo's own .git (root of the synced dir) uses unprefixed paths too.
+    "Path .git/HEAD" "Path .git/index" "Path .git/objects" "Path .git/refs"
+    "Path .git/logs" "Path .git/packed-refs" "Path .git/ORIG_HEAD"
+    "Path .git/FETCH_HEAD" "Path .git/MERGE_HEAD" "Path .git/COMMIT_EDITMSG"
+    "Path .git/hooks" "Path .git/worktrees" "Path .git/branches"
+    "Path .git/modules" "Path .git/lfs"
+  ];
   baseIgnores = [
-    "Name .git" # git handles its own history; syncing .git races the index
     "Name .memelord" # live SQLite DB -- see header
     "Name .direnv"
     "Name target" # rust/C build output
     "Name node_modules"
     "Name .DS_Store"
     "Name *.o"
-    # NB do NOT ignore *.lock: lockfiles (flake.lock, Cargo.lock) are exactly
-    # what should stay in sync -- they pin dependencies. A blanket *.lock also
-    # swallowed flake.lock, which silently went un-synced. unison's own lock is
-    # covered by the .unison* path rule below, not by name.
+    # NB do NOT ignore *.lock by Name as a blanket -- that swallowed flake.lock,
+    # which must stay in sync (it pins dependencies). The .git/*.lock case is
+    # handled narrowly above. unison's own lock is covered by .unison* below.
     "Path .unison*"
-  ];
+  ] ++ gitChildIgnores;
 
   # The host this config is being built for. We can't read `hostname` at
   # eval, so each host sets programs.ai.sync.host explicitly (its short name).
