@@ -53,7 +53,18 @@
   solnix.coreadm.developerUsers = [ "gburd" ];
   environment.enableDebugInfo = true;
 
-  # No ena0 here; DHCP on the wifi link once joined. DNS from the lease.
-  networking.interfaces = { ena0.dhcp = false; iwx0.dhcp = true; };
+  # Wired networking: a USB-C ethernet adapter (Belkin RTL8153 on usbecm). It attaches about 2 min after boot, and its
+  # instance number is not stable (usbecm0 on one boot, usbecm1 on the next when its first connect failed), so DHCP runs
+  # on whatever wired link appears (networking.useDHCP, as NixOS does) instead of a named one. solnix's bring-up waits
+  # for it. ena0 (EC2's NIC, from base.nix) is off. iwx0 gets its own entry in the wifi step. DNS from the lease.
+  networking.hostName = "lixi";
+  networking.useDHCP = true;
+  networking.interfaces = { ena0.dhcp = false; };
   networking.nameservers = lib.mkForce [ ];
+
+  # EC2-only services from base.nix: off on a laptop. The first-boot IMDS key fetch retries (and times out) when there
+  # is no instance metadata, and the MTU raise is for ena's jumbo frames. NixOS likewise only imports its amazon-image
+  # module on EC2.
+  solnix.cloud.ec2.firstBootAuthKeys = false;
+  solnix.mtu.enable = false;
 }
