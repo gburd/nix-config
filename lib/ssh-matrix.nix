@@ -19,6 +19,10 @@ rec {
     # (pam_ssh_agent_auth) across hosts; declared here so it reaches every
     # host that uses privileged_users.
     gburd.auth = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO6HS8oDnpvGKTisMx38pq1I3YJP4+ds7WIYF+L578dW greg@burd.me-auth-floki-202604";
+    # gburd's work laptop (macOS, 80a99738d7e2), ~/.ssh/id_ecdsa
+    # (SHA256:emnU...).  EC2 can't import ECDSA keys, so hosts launched with
+    # gburd.auth only accept this key once it is declared here.
+    gburd.laptop = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJF+rlM1Iwj6TsDCndPQ5Pec0Np8uFBIutDLaeAqwWKujhYwnT3hLiHGoCewbYJYt+YsO9YhddhKO/Ai+G5CqwM= gregburd@80a99738d7e2";
     floki.gburd = parseFriendlyKey ''
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGSNy/vMr2Zk9pvfjQnxiU9F8CGQ
       JwCiXDxPecKG9/q+ Greg Burd <greg@burd.me> - 2023-01-23
@@ -59,6 +63,7 @@ rec {
     privileged_users = with systems; [
       gburd.everyday
       gburd.auth
+      gburd.laptop
       floki.gburd
       floki.host
       floki.root
