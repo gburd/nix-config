@@ -381,7 +381,11 @@ in
       plocate
       telegram-desktop
       unstable.element-desktop
-      unstable.minio-client
+      # rclone comes from services/proton-drive.nix (pkgs.rclone) already, so
+      # it is NOT re-added here (adding unstable.rclone collided). This slot
+      # replaced minio-client (abandoned upstream, unfixed CVEs); rclone is
+      # the recommended successor and is already present.
+      awscli2 # S3/object-store CLI alongside rclone
 
       # AI tools
       kiro-cli # Kiro CLI agent for the terminal

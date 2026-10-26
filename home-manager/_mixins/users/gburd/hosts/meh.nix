@@ -175,7 +175,8 @@
       cmake
       plocate
       unstable.element-desktop
-      unstable.minio-client
+      unstable.rclone # replaced minio-client (abandoned upstream, unfixed CVEs)
+      awscli2 # S3/object-store CLI alongside rclone
     ];
   };
 }
