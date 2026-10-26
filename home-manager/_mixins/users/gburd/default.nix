@@ -41,6 +41,12 @@ in
     # instead of failing the generation. A no-op on x86_64/aarch64.
     packages = import ../../../../lib/evaluates.nix (with pkgs; [
       _1password-cli
+      # uutils coreutils (Rust reimplementation of GNU coreutils) for gburd on
+      # Linux. -noprefix installs ls/cp/mv/... under their plain names so they
+      # take PATH precedence over the GNU coreutils from the system/profile.
+      # Scoped to this Linux-only shared list (floki/meh/arnold); not on
+      # darwin, which doesn't import this file. Being tested on meh first.
+      uutils-coreutils-noprefix
       cfssl
       dig
       elixir

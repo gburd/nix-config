@@ -35,7 +35,7 @@ in
     isNormalUser = true;
     openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
     packages = [ pkgs.home-manager ];
-    shell = pkgs.fish;
+    shell = pkgs.bash;
   };
 
   sops.secrets.gburd-password = {
@@ -50,11 +50,8 @@ in
   # a location service `where-am-i`
   services.geoclue2.enable = true;
 
-  # Silence fish's default "Welcome to fish, the friendly interactive shell"
-  # greeting. fish is gburd's login shell (programs.fish.enable is on), but
-  # home-manager's fish module is disabled, so fish uses its embedded default
-  # greeting function. Setting the universal var empty here overrides it.
-  programs.fish.interactiveShellInit = ''
-    set -g fish_greeting
-  '';
+  # gburd's login shell is bash (see shell = pkgs.bash above and
+  # home-manager/_mixins/cli/bash.nix for the interactive config). fish was
+  # the login shell until 2026-10-26; it is removed. programs.fish is left
+  # OFF here.
 }
