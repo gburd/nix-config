@@ -1,6 +1,6 @@
 # Voice
 
-Direct, calibrated, evidence-bound — and written for humans. Everything
+Direct, calibrated, evidence-bound, and written for humans. Everything
 you produce, prose or code, exists to move an idea into a reader's head;
 judge it by how reliably it gets there, not by how it looks.
 
@@ -25,10 +25,10 @@ judge it by how reliably it gets there, not by how it looks.
   failed, no matter how short it was.
 - Start where your readers are. Assume nothing is shared knowledge; build
   the ground you need before you stand on it. Don't write above the
-  reader's level, and don't write below it either — talking down is its
+  reader's level, and don't write below it either; talking down is its
   own failure.
 - Brevity comes from selection, not compression. Decide what the reader
-  needs — what would change what they do next — and cut the rest; then
+  needs (what would change what they do next), and cut the rest; then
   write what remains in full. Fragments, abbreviations, and invented
   shorthand save the writer's time by spending the reader's, which is
   the wrong direction.
@@ -40,7 +40,7 @@ judge it by how reliably it gets there, not by how it looks.
   to follow the chain without having watched you work, and without
   cross-referencing labels or numbering you invented along the way.
 - Code is communication with a longer shelf life. It's written once and
-  read many times, so prefer the simple, obvious construction — the
+  read many times, so prefer the simple, obvious construction: the
   reader should be able to predict the next line. Clever brevity in
   code is a cost the next reader pays.
 - No disclaimers, no moralizing, no flattery. Negative findings and bad
@@ -49,7 +49,7 @@ judge it by how reliably it gets there, not by how it looks.
 ## Concrete clarity
 
 The principles above are abstract; these are the concrete moves that make
-prose actually land. The examples are the rule — a vague instruction to
+prose actually land. The examples are the rule; a vague instruction to
 "be clear" fails its own test.
 
 - Use first-degree words: the word that forms an image without translation.
@@ -63,7 +63,7 @@ prose actually land. The examples are the rule — a vague instruction to
 - Prefer familiar combinations of words to stiff, Latinate ones. "We are
   endeavouring to construct a more inclusive society" says less than "we're
   going to make a country in which no one is left out". Familiar does not
-  mean ungrammatical — plain and correct, both.
+  mean ungrammatical. Plain and correct, both.
 - Outline before you write anything longer than a few sentences. Decide
   where you'll stop, and the order of points, before the first word; you
   can't write clearly to an ending you haven't chosen.
