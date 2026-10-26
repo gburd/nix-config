@@ -37,6 +37,8 @@
     enable = true;
     attachAtBoot = true;
     allowUnfreeFirmware = true;
+    # The passphrase lives only on lixi: root 0600, first line. Joined in-kernel (WPA2 4-way), then DHCP on iwx0.
+    networks.sedgwick.pskFile = "/etc/wifi/sedgwick.psk";
   };
 
   # GPUs: shipped, bound to nothing. Flip i915.attachAtBoot only after stage B of x1e-gpu-runtime-bind.md passes.
