@@ -212,6 +212,12 @@
           hostname = "arnold";
           username = "gburd";
         };
+        # werk: headless x86_64 NixOS on EC2 (m6idn.12xlarge). See
+        # home-manager/_mixins/users/gburd/hosts/werk.nix.
+        "gburd@werk" = libx.mkHome {
+          hostname = "werk";
+          username = "gburd";
+        }; # headless
         # lixr: LOCAL riscv64 (SpacemiT K3 Pico ITX, 192.168.1.179). Bianbu +
         # home-manager, like arnold; no `desktop` arg because Bianbu runs
         # LXQt/labwc, not GNOME. Built from source: no riscv64 binary cache.
@@ -412,6 +418,17 @@
         pgperf-x86 = libx.mkHost {
           systemType = "server";
           hostname = "pgperf-x86";
+          username = "gburd";
+        };
+
+        # werk: x86_64 NixOS on EC2 (m6idn.12xlarge), HEADLESS. A headless
+        # floki -- same nixos/ tree, no desktop, amazon-image boot layer, and
+        # an instance-store NVMe RAID0 stripe for /home + /scratch. See
+        # nixos/server/werk/default.nix. On our Headscale via
+        # tailscale-autoconnect (werk's age key is enrolled in .sops.yaml).
+        werk = libx.mkHost {
+          systemType = "server";
+          hostname = "werk";
           username = "gburd";
         };
 
