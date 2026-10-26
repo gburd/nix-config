@@ -217,6 +217,55 @@ let
   services = lib.listToAttrs (lib.flatten (map
     (entry: map (peer: mkPairService entry peer) (peersOf entry))
     (lib.filter participates cfg.directories)));
+
+  # The synced project roots this host participates in (absolute paths). Used
+  # by the git-ff helper below.
+  syncedRoots = map (e: abs e.path) (lib.filter participates cfg.directories);
+
+  # unison syncs the working TREE but not git history (see header), so after a
+  # sync a repo's files can be ahead of its own .git HEAD until you pull. This
+  # helper fast-forwards each synced repo's branch to its upstream, but ONLY
+  # when it is safe: a clean tree (ignoring untracked), a real upstream, and an
+  # actual fast-forward. It never merges, rebases, stashes or discards; a
+  # dirty or diverged repo is reported and skipped. Safe to run on a timer.
+  gitFfHelper = pkgs.writeShellApplication {
+    name = "ai-sync-git-ff";
+    runtimeInputs = [ pkgs.git ];
+    text = ''
+      set -u
+      roots=(${lib.concatMapStringsSep " " lib.escapeShellArg syncedRoots})
+      rc=0
+      for d in "''${roots[@]}"; do
+        [ -d "$d/.git" ] || { echo "skip (no .git): $d"; continue; }
+        cd "$d" || { echo "skip (cd failed): $d"; rc=1; continue; }
+        # A unison-synced .git holds only config + info/exclude until the
+        # one-time `git clone` populates objects/refs; guard the hollow case.
+        git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+          || { echo "skip (hollow .git, needs one-time git clone): $d"; continue; }
+        br=$(git symbolic-ref --quiet --short HEAD) || { echo "skip (detached HEAD): $d"; continue; }
+        up=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null) \
+          || { echo "skip (no upstream for $br): $d"; continue; }
+        # Dirty tracked tree means a human is mid-edit; leave it alone.
+        if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+          echo "skip (dirty): $d"; continue
+        fi
+        git fetch --quiet "''${up%%/*}" 2>/dev/null || { echo "skip (fetch failed): $d"; rc=1; continue; }
+        local_sha=$(git rev-parse HEAD); up_sha=$(git rev-parse "$up")
+        if [ "$local_sha" = "$up_sha" ]; then
+          continue # already current
+        elif git merge-base --is-ancestor HEAD "$up"; then
+          if git merge --ff-only --quiet "$up"; then
+            echo "ff: $d  $br -> $(git rev-parse --short HEAD)"
+          else
+            echo "skip (ff-only merge failed): $d"; rc=1
+          fi
+        else
+          echo "skip (diverged, needs manual reconcile): $d"
+        fi
+      done
+      exit "$rc"
+    '';
+  };
 in
 {
   options.programs.ai.sync = {
@@ -263,7 +312,26 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ pkgs.unison ];
-    systemd.user.services = services;
+    home.packages = [ pkgs.unison gitFfHelper ];
+    systemd.user.services = services // {
+      # Periodic safe fast-forward of each synced repo (see gitFfHelper).
+      ai-sync-git-ff = {
+        Unit.Description = "Fast-forward unison-synced git repos to upstream";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${gitFfHelper}/bin/ai-sync-git-ff";
+          Environment = [ "PATH=${lib.makeBinPath [ pkgs.git pkgs.openssh ]}" ];
+        };
+      };
+    };
+    systemd.user.timers.ai-sync-git-ff = {
+      Unit.Description = "Periodic fast-forward of unison-synced git repos";
+      Timer = {
+        OnBootSec = "5min";
+        OnUnitActiveSec = "30min";
+        Persistent = true;
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
   };
 }
