@@ -20,4 +20,10 @@
     plocate
     unstable.rclone
   ];
+
+  # werk has no aarch64 builder, so it can't build the agent-sandbox Arm EC2
+  # config template (cross-building aarch64 on x86_64 without emulation fails
+  # with a platform mismatch). Same as arnold. The x86_64 template still works;
+  # `agent-sandbox --arch aarch64` just reports unavailable here.
+  programs.ai.sandbox.ec2.buildAarch64 = false;
 }

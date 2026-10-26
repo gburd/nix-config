@@ -57,6 +57,12 @@
 
   networking.hostName = "meh";
 
+  # Passwordless sudo for wheel (gburd). meh is a trusted single-user
+  # workstation reached over plain SSH (no forwarded agent for
+  # pam_ssh_agent_auth); gburd still has a login password (sops
+  # gburd-password).
+  security.sudo.wheelNeedsPassword = false;
+
   # Firewall disabled. The `trustedInterfaces = [ "tailscale0" ]` setting
   # from nixos/_mixins/services/tailscale.nix should be enough in theory,
   # but in practice meh hits packet drops with the firewall on — likely

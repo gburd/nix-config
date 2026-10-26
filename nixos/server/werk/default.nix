@@ -35,6 +35,12 @@
   console.useXkbConfig = lib.mkForce false;
   console.keyMap = lib.mkForce "us";
 
+  # Passwordless sudo for wheel (gburd). The nix-config tree otherwise relies
+  # on pam_ssh_agent_auth, which needs a forwarded agent; on a headless EC2
+  # box reached over plain SSH that is awkward, and werk is a trusted
+  # single-user host. gburd still has a login password (sops gburd-password).
+  security.sudo.wheelNeedsPassword = false;
+
   # amazon-image gives us grub + the ENA/NVMe initrd modules; keep root login
   # off (key-only gburd + wheel passwordless sudo come from the nixos/ tree).
   services.openssh.settings.PermitRootLogin = lib.mkForce "prohibit-password";
