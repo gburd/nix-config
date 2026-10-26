@@ -43,6 +43,10 @@ in
 
       # Locate
       locate = "plocate";
+
+      # minio-client (mc) was removed (abandoned upstream); s5cmd is the
+      # drop-in-ish S3 client. Interactive-only; scripts must call s5cmd.
+      mc = "s5cmd";
     } // optionalAttrs hasEza {
       # Modern Unix tools
       ls = "eza";

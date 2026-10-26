@@ -34,6 +34,7 @@
     httpie # Better curl
     diffsitter # Better diff
     jq # JSON pretty printer and manipulator
+    s5cmd # Fast S3/object-store client; the mc replacement (aliased to `mc`)
     timer # To help with my ADHD paralysis
 
     nil # Nix LSP
