@@ -13,6 +13,12 @@ rec {
     # from every tailnet node (2026-10-14). Declared here, it reaches every
     # host that uses privileged_users.
     gburd.everyday = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKCqHOIyYwbp42C7MxnRFxOcy+ZE8cNOWdsdvCgVFm1L greg@burd.me";
+    # gburd's AUTH key, ~/.ssh/id_auth_ed25519 (SHA256:yaU3...). The EC2 launch
+    # key (gburd-floki-auth); ECDSA can't be imported to EC2, so this ed25519
+    # is the key pair new instances boot with. Used for admin login + sudo
+    # (pam_ssh_agent_auth) across hosts; declared here so it reaches every
+    # host that uses privileged_users.
+    gburd.auth = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO6HS8oDnpvGKTisMx38pq1I3YJP4+ds7WIYF+L578dW greg@burd.me-auth-floki-202604";
     floki.gburd = parseFriendlyKey ''
       ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGSNy/vMr2Zk9pvfjQnxiU9F8CGQ
       JwCiXDxPecKG9/q+ Greg Burd <greg@burd.me> - 2023-01-23
@@ -52,6 +58,7 @@ rec {
   groups = {
     privileged_users = with systems; [
       gburd.everyday
+      gburd.auth
       floki.gburd
       floki.host
       floki.root
