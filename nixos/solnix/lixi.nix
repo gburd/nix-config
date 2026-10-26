@@ -49,7 +49,10 @@
 
   solnix.dumpadm = {
     enable = true;
-    device = "/dev/zvol/dsk/rpool/dump";
+    device = "/dev/zvol/dsk/rpool/dump";   # created 2026-10-26 (8 GiB); solnix-install creates <pool>/dump since 8c9afe0
+    # lixi went silent twice (10-25 ~20:47Z, 10-26 ~12:41Z) and left nothing. The deadman turns a hard hang into a
+    # panic and a dump. It is also stage B's precondition for the GPU attach (docs/x1e-gpu-runtime-bind.md).
+    deadman = true;
   };
   solnix.coreadm.developerUsers = [ "gburd" ];
   environment.enableDebugInfo = true;
