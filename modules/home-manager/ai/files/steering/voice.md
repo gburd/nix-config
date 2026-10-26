@@ -70,3 +70,8 @@ prose actually land. The examples are the rule — a vague instruction to
 - Stick to the point. If a sentence doesn't support the idea, cut it or fix
   the outline. Prefer active verbs, and don't spend words telling the
   reader what they already know.
+- Write the way you talk. Picture the reader in front of you and say it to
+  them; if a phrase would sound stiff out loud, it reads stiff too.
+- Keep it simple, especially when the subject is hard. The profound
+  sentence is usually the plain one; complexity in the prose is not
+  evidence of depth in the thought.

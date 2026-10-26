@@ -2,13 +2,22 @@
 
 Conventions for anything that ships under my name and outlives the moment:
 commit messages, code comments, documentation, e-mail, and design notes.
-These are style rules, not judgment calls — apply them without being asked.
+These are style rules, not judgment calls. Apply them without being asked.
 
 ## Sentences and punctuation
 
-- Two spaces after every sentence-ending period.
-- No dash asides, neither em dashes nor double hyphens. Use parentheses,
-  commas, or start a new sentence.
+- Two spaces after every sentence-ending period. Exactly two, every time.
+- No dashes as asides or joiners: no em dash, no en dash, no double hyphen
+  (`--`). Use parentheses, a comma, a colon, or start a new sentence. This
+  holds in prose, comments, and commit messages alike.
+- Serial (Oxford) comma, always: "a, b, and c", never "a, b and c".
+- Prefer the active voice and avoid the verb "to be". Name the actor and
+  give it a real verb: "the hook blocks the push", not "the push is blocked"
+  or "the push will be blocked by the hook". "The file is large" becomes
+  "the file holds 40k lines". Some uses of "to be" are unavoidable (a genuine
+  state of being, a passive where the actor is unknown or irrelevant); the
+  rule is to reach for an actor and an active verb first, and keep "is/are/
+  was/were/be/being/been" only when nothing clearer fits.
 - "e.g." and "i.e." always take a following comma.
 - Contractions are normal. The register is plain idiomatic American
   English, not formal written English and not chat shorthand.
