@@ -41,6 +41,67 @@ See the **release-tagging** skill for the date-based tag conventions
 (vYYYY.MM.DD, commit→push→tag→push-tag, dual-remote, maintainer exceptions).
 Load it when actually cutting a release.
 
+## Release Artefacts (formal release checklist)
+
+When a project ships through `git tag` triggers, the release pipeline must
+produce **all** of the following artefacts and attach them to the release page
+on every forge the project mirrors to (Codeberg + GitHub today; add others as
+the project grows):
+
+1. **Source tarball**: `<project>-<version>.tar.xz` (or `.tar.gz`) generated
+   from `meson dist` / `make dist` / equivalent. The single canonical artefact
+   every downstream packager pulls from.
+2. **SHA256 checksum**: `<tarball>.sha256sum` next to the tarball.
+3. **Detached signature** (when the maintainer signs releases): `<tarball>.asc`
+   or `<tarball>.minisig` next to the tarball.
+4. **Linux distribution packages** when the project ships C/C++ tooling that
+   distros consume:
+   - `.rpm` (Fedora/RHEL/openSUSE), built from `packaging/<project>.spec`
+   - `.deb` (Debian/Ubuntu), built from `packaging/debian/`
+   - `.apk` (Alpine), built from `packaging/APKBUILD`
+   - `.pkg.tar.zst` (Arch), built from `packaging/PKGBUILD`
+5. **macOS packages** when applicable:
+   - Homebrew formula bump PR (or rendered `.rb` snapshot) using
+     `packaging/Formula/<project>.rb`
+6. **Project-specific binaries** when applicable:
+   - Static binaries for headless deployment (musl-built when possible)
+   - Docker images pushed to ghcr.io / quay.io when the project has a server
+     component
+   - WASM bundles for projects with a browser/Edge target
+7. **Generated documentation tarball** when the docs are non-trivial: ships
+   next to the source tarball, named `<project>-<version>-docs.tar.xz`.
+
+### Implementation
+
+- The release CI workflow MUST do all of the above automatically when a
+  `vX.Y.Z` (or `vYYYY.MM.DD`) tag is pushed. Manual release-day work is a code
+  smell; the artefacts must be reproducible from the tag.
+- For projects with `packaging/` recipes already in place: the release workflow
+  consumes those recipes directly, runs them in distro-matching containers
+  (fedora:latest for `.rpm`, debian:stable for `.deb`, alpine:latest for
+  `.apk`, archlinux:latest for `.pkg.tar.zst`), and uploads each package as a
+  release asset.
+- The release workflow runs in parallel jobs per distro so a single failing
+  build doesn't block the others. The release page is published with whatever
+  succeeds; missing distros surface in the workflow run output for manual
+  investigation.
+- Both forges (Codeberg + GitHub) get the same artefacts. The forgejo workflow
+  mirrors the github workflow's distro matrix.
+
+### Why this matters
+
+A release that produces only a tag and a release page (with the body text but
+no artefacts) is not a release; it's a code freeze announcement. Downstream
+consumers (`brew install`, `dnf install`, `apt install`, distro maintainers,
+air-gapped installs, deterministic-build pipelines) all depend on the
+platform-specific packages being present and matching the source tarball's
+checksum.
+
+When adopting a new project: confirm the release workflow produces all
+artefacts the project's audience needs **before** cutting the first release.
+Document the matrix in `packaging/README.md` so the requirement is visible to
+any future contributor wiring up CI.
+
 ## Lessons: Nix-managed AI Agent Configs
 
 See the **nix-agent-configs** skill (telemetry-off, Bedrock auth paths,
