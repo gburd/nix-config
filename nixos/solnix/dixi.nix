@@ -39,11 +39,15 @@
   environment.systemPackages = with pkgs.solnix; [ git home-manager solnix-dev-full ];
   system.buildCapable = true;
 
-  # Crash dumps to the dedicated zvol, kept across generations; per-user cores.
-  solnix.dumpadm = {
-    enable = true;
-    device = "/dev/zvol/dsk/rpool/dump";
-  };
+  # Crash dumps: DISABLED by default. The dump device is pool- and size-
+  # specific (the DP AMI roots on `spool`, ~7.5 GiB, not `rpool`; an 8 GiB
+  # dump zvol doesn't fit until the pool is expanded onto the 32 GiB EBS root
+  # and/or the instance-store NVMe). Re-enable per deployment once a dump zvol
+  # exists, e.g.:
+  #   zpool set autoexpand=on spool && zpool online -e spool c1t1d0
+  #   zfs create -V 8G spool/dump
+  # then set enable = true and device = "/dev/zvol/dsk/spool/dump".
+  solnix.dumpadm.enable = false;
   solnix.coreadm.developerUsers = [ "gburd" ];
 
   environment.enableDebugInfo = true;
