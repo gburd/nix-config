@@ -259,6 +259,12 @@
           hostname = "dixi";
           username = "gburd";
         };
+        #   * lixi -- x86_64 solnix on the ThinkPad X1 Extreme Gen 5 (solnixConfigurations.lixi's home half). Same
+        #     command-line profile as dixi; built on lixi itself (system.buildCapable) or a solnix build host.
+        "gburd@lixi" = libx.mkSolnixHome {
+          hostname = "lixi";
+          username = "gburd";
+        };
         #   * dixa -- aarch64, EC2 (permanent account), HEADLESS (no COSMIC).
         "gburd@dixa" = libx.mkHome {
           hostname = "dixa";

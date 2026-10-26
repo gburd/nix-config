@@ -26,13 +26,12 @@
     description = "Greg Burd";
     extraGroups = [ "sysadmin" ];
     profiles = [ "Primary Administrator" ];
-    shell = "/usr/bin/ksh93";
+    # bash, as on the Linux hosts since b00d562 (base.nix ships bash; /usr/bin is the system sw/bin).
+    shell = "/usr/bin/bash";
     openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
   };
 
-  # AX211 (iwx), bound at boot. Joining is still manual: the solnix-wifi-join service reads
-  # hardware.wirelessIwm.networks only, and iwx has no networks option yet. After boot:
-  #   wpa-pmk -f /etc/wifi/sedgwick.psk sedgwick iwx0      (the PSK file: root, 0600, never in the store)
+  # AX211 (iwx), bound at boot, joins sedgwick at boot (site/solnix-wifi-join-iwx, solnix b0e4974).
   hardware.wirelessIwx = {
     enable = true;
     attachAtBoot = true;
