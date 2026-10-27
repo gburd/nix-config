@@ -2,19 +2,15 @@
 #
 # Evaluated by lib/helpers.nix:mkSolnixHost (solnix's evaluator, not nixosSystem).
 #
-# HONEST STATE OF aarch64 SOLNIX, so this file is not read as more than it is:
-#
-#   * The GICv3 interrupt-controller and ACPI `_CRS` fixes are CONFIRMED ON REAL
-#     METAL -- that is a measured result, not a hope.
-#   * A FULL USERLAND IS NOT BUILT. The aarch64 proto is banked at
-#     s3://solnix-cache/ami/aarch64-proto-20260912/ and is a proto, not a set of
-#     sliced derivations. There is no aarch64 equivalent of the x86_64
-#     core-utils/oamuser/halt/zfs slices, so this config deliberately lists NO
-#     illumos core-OS slices: naming x86_64 ones here would be an eval error at
-#     best and a wrong-architecture closure at worst.
-#   * So: expect this to EVALUATE. Do not expect it to build a bootable system
-#     today. The gap is the userland, and it is a build campaign, not a config
-#     change.
+# STATE OF aarch64 SOLNIX (2026-10-27, solnix 915b3d7, docs/aarch64-nix-derivations-2026-10-26.md):
+#   * There is a real-Nix aarch64 AMI, ami-07fbc4867d02c9b2b in the permanent account (us-west-2). nix 2.24.15,
+#     gcc 14.3.0, git and the eleven tools are real aarch64-solaris derivations, the registry fetch works, and it
+#     boots on c6g.metal (about 20 min; the first cycle is a boot-archive reboot). Launch dixa from it.
+#   * Its toplevel is pkgs/illumos/aarch64/system.nix, NOT this module-system configuration. The solnix activation
+#     module still hard-codes x86 paths and there are no aarch64 world/kernel slices. So THIS file evaluates (it
+#     records the target: gburd, keys, the NIC, EC2's resolver), but its toplevel does not build yet, and
+#     `solnix-rebuild switch --flake .#dixa` is not possible on dixa today.
+#   * What works on dixa now: nix (single-user) and the home-manager half, gburd@dixa, built on the box.
 #
 # Headless deliberately: no COSMIC, nothing graphical. This is a build/test node.
 _:

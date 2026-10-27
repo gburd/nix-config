@@ -26,9 +26,9 @@
     # root-equivalent; sysadmin (gid 14) is the group half.
     extraGroups = [ "sysadmin" ];
     profiles = [ "Primary Administrator" ];
-    # ksh93: bash is not in the gate proto. The home-manager profile adds bash
-    # for interactive use; the login shell must exist before the first switch.
-    shell = "/usr/bin/ksh93";
+    # bash, as on the Linux hosts and lixi: base.nix ships bash and /usr/bin is the system sw/bin, so it exists
+    # from the first boot of the DP AMI.
+    shell = "/usr/bin/bash";
     # Key login only. No password hash in a git-tracked file.
     openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
   };
