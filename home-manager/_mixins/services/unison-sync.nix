@@ -155,20 +155,32 @@ let
       sshArgs = "-o IdentitiesOnly=yes -i ${config.home.homeDirectory}/.ssh/id_ed25519";
       # Common unison flags. Paths are identical on both sides (same $HOME),
       # so local root == remote root for each of the three.
-      commonArgs = root: ''\
+      rootPair = root: ''\
           ${lib.escapeShellArg root} \
           "ssh://${sshUser}@${peer}.ts.burd.me/${root}" \
-          -batch -prefer newer -times -perms 0 -auto \
           -sshargs ${lib.escapeShellArg sshArgs} \
           -servercmd ${lib.escapeShellArg "${pkgs.unison}/bin/unison"} \
           ${ignoreArgs}'';
+      # The long-lived WATCH flags: -prefer newer handles the "I moved to the
+      # other laptop" handoff of real edits.
+      commonArgs = root: ''${rootPair root} -batch -prefer newer -times -perms 0 -auto'';
+      # SEED flags: -nodeletion on BOTH roots so the first sync can only ADD,
+      # never delete. A first sync against an EMPTY or partial replica with
+      # -prefer newer -auto cannot tell "present here, absent there" apart from
+      # a deletion (no prior archive to disambiguate create-vs-delete), and
+      # propagated deletions back to the FULL side -- it gutted larql/libumem/
+      # mailspring on floki when seeding the empty werk/arnold replicas
+      # (2026-10-26). -nodeletion makes the seed a union: both sides end up
+      # with every file, nothing is ever removed. The watch phase (above) then
+      # takes over with -prefer newer for ongoing edits.
+      seedArgs = root: ''${rootPair root} -batch -times -perms 0 -auto -nodeletion ${lib.escapeShellArg root} -nodeletion "ssh://${sshUser}@${peer}.ts.burd.me/${root}"'';
       # A one-time NON-watch sync, to SEED a root. unison -repeat watch dies
       # immediately if a local root is missing ('Filesystem watcher error:
       # Path ... does not exist'); a plain run instead creates the absent side
       # from the present one. Run until it succeeds once, so it also waits out
       # a peer that is mid-switch.
       seedOne = root: ''
-        until ${pkgs.unison}/bin/unison ${commonArgs root}; do
+        until ${pkgs.unison}/bin/unison ${seedArgs root}; do
           echo "seed ${root} -> ${peer} failed; retrying in 30s" >&2
           sleep 30
         done'';
