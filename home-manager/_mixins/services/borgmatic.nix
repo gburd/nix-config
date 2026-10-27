@@ -20,6 +20,10 @@ let
     floki = { onCalendar = "02:00"; randomizedDelaySec = "15min"; };
     meh = { onCalendar = "03:30"; randomizedDelaySec = "15min"; };
     arnold = { onCalendar = "05:00"; randomizedDelaySec = "15min"; };
+    # werk at 06:30 so it doesn't fight floki (02:00) for the shared rsync.net
+    # repo lock. werk's /home is an ephemeral instance-store stripe, so this
+    # backup is the only thing between an EC2 stop and total /home loss.
+    werk = { onCalendar = "06:30"; randomizedDelaySec = "15min"; };
   }.${hostname} or { onCalendar = "02:30"; randomizedDelaySec = "30min"; };
 
   # Folders owned by a storage or sync service. The service already keeps

@@ -34,6 +34,14 @@ creation_rules:
       pgp:
       - *gburd
       - *greg
+  - path_regex: nixos/workstation/werk/secrets.ya?ml$
+    key_groups:
+    - age:
+      - *werk
+      - *gburd-user
+      pgp:
+      - *gburd
+      - *greg
   - path_regex: nixos/iso-console/secrets.ya?ml$
     key_groups:
     - age:
