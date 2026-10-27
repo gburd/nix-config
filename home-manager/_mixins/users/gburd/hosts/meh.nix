@@ -28,6 +28,7 @@
         name = "nix-config";
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
+        sessionRoots = false;
       }
     ];
   };

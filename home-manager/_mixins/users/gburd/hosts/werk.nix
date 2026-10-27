@@ -50,6 +50,7 @@
         name = "nix-config";
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
+        sessionRoots = false;
       }
       {
         # ~/src: project checkouts shared with floki/arnold. werk seeds from
@@ -58,7 +59,18 @@
         name = "src";
         path = "~/src";
         hosts = [ "floki" "werk" "arnold" ];
+        sessionRoots = false;
         ignores = [ "documentdb" "tre" ];
+      }
+    ];
+    # werk joins the ~/ws tree sync later in the staged enable order (after
+    # arnold<->floki is consistent). For now it syncs per-project sessions
+    # under ~/src only.
+    sessionTrees = [
+      {
+        path = "~/src";
+        hosts = [ "floki" "werk" "arnold" ];
+        exclude = [ "documentdb" "tre" ];
       }
     ];
   };

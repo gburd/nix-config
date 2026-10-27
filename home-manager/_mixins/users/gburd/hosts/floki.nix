@@ -59,6 +59,7 @@ in
         name = "nix-config";
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
+        sessionRoots = false; # the ~/ws/nix-config path has no agent sessions of its own
       }
       {
         # ~/src: the project checkouts shared across floki/werk/arnold. floki
@@ -68,9 +69,48 @@ in
         name = "src";
         path = "~/src";
         hosts = [ "floki" "werk" "arnold" ];
+        sessionRoots = false; # per-project sessions handled by sessionTrees below
         # documentdb + tre use `git worktree` (absolute [core] worktree paths
         # in .git/config that fight the sync); keep them per-host via git.
         ignores = [ "documentdb" "tre" ];
+      }
+      {
+        # ~/ws: the whole work tree as ONE root. Excludes: the git-worktree
+        # repos (absolute [core] worktree paths that fight the sync),
+        # nix-config (synced as its own entry above), and postgres (handled
+        # separately later). Everything else in ~/ws syncs -- active and
+        # dormant repos, non-git dirs, backups. Starts floki<->arnold; werk
+        # and meh join per the staged enable order. sessionRoots = false; the
+        # per-project pi/claude sessions come from sessionTrees below.
+        # NB arnold's ~/ws/pgesq is the DEFINITIVE copy (and its agent
+        # context); arnold is enabled first so its version propagates.
+        name = "ws";
+        path = "~/ws";
+        hosts = [ "floki" "arnold" ];
+        sessionRoots = false;
+        ignores = [
+          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
+          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+        ];
+      }
+    ];
+    # Per-project pi/claude session sync under the parent trees (runtime
+    # enumeration; maki/codex/zed not handled -- not path-mappable). The
+    # excludes mirror the tree entries' ignores so skipped projects also get
+    # no session sync.
+    sessionTrees = [
+      {
+        path = "~/ws";
+        hosts = [ "floki" "arnold" ];
+        exclude = [
+          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
+          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+        ];
+      }
+      {
+        path = "~/src";
+        hosts = [ "floki" "werk" "arnold" ];
+        exclude = [ "documentdb" "tre" ];
       }
     ];
   };

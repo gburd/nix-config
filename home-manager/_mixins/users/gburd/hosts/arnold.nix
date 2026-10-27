@@ -48,6 +48,7 @@ with lib.hm.gvariant;
         name = "nix-config";
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
+        sessionRoots = false;
       }
       {
         # ~/src: project checkouts shared with floki/werk. arnold's old ~/src
@@ -56,7 +57,36 @@ with lib.hm.gvariant;
         name = "src";
         path = "~/src";
         hosts = [ "floki" "werk" "arnold" ];
+        sessionRoots = false;
         ignores = [ "documentdb" "tre" ];
+      }
+      {
+        # ~/ws tree -- mirror of floki's entry (see it for rationale). arnold
+        # holds the DEFINITIVE ~/ws/pgesq and its agent context, and is
+        # enabled first so its version seeds floki.
+        name = "ws";
+        path = "~/ws";
+        hosts = [ "floki" "arnold" ];
+        sessionRoots = false;
+        ignores = [
+          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
+          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+        ];
+      }
+    ];
+    sessionTrees = [
+      {
+        path = "~/ws";
+        hosts = [ "floki" "arnold" ];
+        exclude = [
+          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
+          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+        ];
+      }
+      {
+        path = "~/src";
+        hosts = [ "floki" "werk" "arnold" ];
+        exclude = [ "documentdb" "tre" ];
       }
     ];
   };

@@ -145,12 +145,17 @@ let
       a = abs entry.path;
       ignores = baseIgnores ++ (map (i: "Name ${i}") entry.ignores);
       ignoreArgs = lib.concatMapStringsSep " " (p: "-ignore ${lib.escapeShellArg p}") ignores;
-      # The three roots that travel together for this directory.
-      roots = [
-        a
-        "${config.home.homeDirectory}/.pi/agent/sessions/${piSlug a}"
-        "${config.home.homeDirectory}/.claude/projects/${claudeSlug a}"
-      ];
+      # The roots that travel together for this directory. With
+      # sessionRoots = true (default) that is the project tree PLUS its pi and
+      # claude session state (single-project entries). With false it is JUST
+      # the tree -- used for PARENT trees like ~/ws and ~/src whose own path
+      # has no meaningful session dir; per-project session state under them is
+      # handled by the separate sessionTrees mechanism (mkSessionService).
+      roots = [ a ]
+        ++ lib.optionals entry.sessionRoots [
+          "${config.home.homeDirectory}/.pi/agent/sessions/${piSlug a}"
+          "${config.home.homeDirectory}/.claude/projects/${claudeSlug a}"
+        ];
       sshUser = entry.sshUser or "gburd";
       sshArgs = "-o IdentitiesOnly=yes -i ${config.home.homeDirectory}/.ssh/id_ed25519";
       # Common unison flags. Paths are identical on both sides (same $HOME),
@@ -183,24 +188,21 @@ let
       syncScript = pkgs.writeShellScript "unison-${entry.name}-${peer}" ''
         set -u
         # Ensure the local parents exist so a first sync has somewhere to land.
-        mkdir -p ${lib.escapeShellArg (builtins.dirOf (builtins.elemAt roots 0))} \
-                 ${lib.escapeShellArg (builtins.dirOf (builtins.elemAt roots 1))} \
-                 ${lib.escapeShellArg (builtins.dirOf (builtins.elemAt roots 2))}
+        ${lib.concatMapStringsSep "\n        "
+          (r: "mkdir -p ${lib.escapeShellArg (builtins.dirOf r)}") roots}
         # SEED each root once (no watcher), so both sides exist before watching.
         # These run in series; each waits out a peer that is mid-switch.
-        ${seedOne (builtins.elemAt roots 0)}
-        ${seedOne (builtins.elemAt roots 1)}
-        ${seedOne (builtins.elemAt roots 2)}
+        ${lib.concatMapStringsSep "\n        " seedOne roots}
         # Now the live watchers (each self-restarting), held by `wait`.
-        ${watchOne (builtins.elemAt roots 0)}
-        ${watchOne (builtins.elemAt roots 1)}
-        ${watchOne (builtins.elemAt roots 2)}
+        ${lib.concatMapStringsSep "\n        " watchOne roots}
         wait
       '';
     in
     lib.nameValuePair "unison-${entry.name}-${peer}" {
       Unit = {
-        Description = "Unison live sync of ${entry.path} (+ pi/claude session state) to ${peer}";
+        Description = "Unison live sync of ${entry.path}"
+          + lib.optionalString entry.sessionRoots " (+ pi/claude session state)"
+          + " to ${peer}";
         After = [ "network-online.target" ];
       };
       Service = {
@@ -219,6 +221,112 @@ let
   services = lib.listToAttrs (lib.flatten (map
     (entry: map (peer: mkPairService entry peer) (peersOf entry))
     (lib.filter participates cfg.directories)));
+
+  # ---- Per-project session sync (pi/claude) under a PARENT tree -----------
+  # The ~/ws and ~/src trees are synced as single roots (sessionRoots = false),
+  # so their per-project pi/claude session state is NOT carried by those
+  # entries. This service fills that gap: at runtime it enumerates the
+  # immediate sub-projects under each configured sessionTrees parent (on BOTH
+  # sides), and for each sub-project that already HAS a pi or claude session
+  # dir on either side, syncs those small roots. Enumeration is at START time
+  # + a slow re-poll, so projects can come and go without a rebuild.
+  #
+  # maki/codex/zed session state is NOT handled: maki keys projects by
+  # name+opaque-hash (not a path slug; confirmed not md5/sha1/sha256 of the
+  # path), codex/zed store cwd inside flat files / a global LMDB. Only pi and
+  # claude key sessions by the absolute path, so only they are mappable.
+  #
+  # SAFETY: this service NEVER pre-creates (mkdir) a session root. It only
+  # runs unison for a root that exists on >=1 side, letting unison CREATE the
+  # absent side from the present one (never delete the present side). This is
+  # what keeps the empty-replica deletion hazard (which gutted ~/src in an
+  # earlier incident) from recurring. No -nodeletion (reverted upstream).
+  sessionHost = host;
+  sessionPeersOf = tree: lib.filter (h: h != sessionHost) tree.hosts;
+  sessionParticipates = tree: lib.elem sessionHost tree.hosts;
+  # For a peer, the trees that include BOTH this host and that peer.
+  treesForPeer = peer:
+    lib.filter (t: sessionParticipates t && lib.elem peer t.hosts) cfg.sessionTrees;
+  allSessionPeers =
+    lib.unique (lib.concatMap sessionPeersOf (lib.filter sessionParticipates cfg.sessionTrees));
+
+  mkSessionService = peer:
+    let
+      trees = treesForPeer peer;
+      sshUser = (builtins.head trees).sshUser or "gburd";
+      sshArgs = "-o IdentitiesOnly=yes -i ${config.home.homeDirectory}/.ssh/id_ed25519";
+      # "<absParent>|<space-joined-excludes>" per tree.
+      treeSpecs = map (t: "${abs t.path}|${lib.concatStringsSep " " t.exclude}") trees;
+      script = pkgs.writeShellScript "unison-sessions-${peer}" ''
+        set -u
+        PEER=${lib.escapeShellArg peer}
+        SSHUSER=${lib.escapeShellArg sshUser}
+        SSHARGS=${lib.escapeShellArg sshArgs}
+        UNISON=${pkgs.unison}/bin/unison
+        REMOTE="$SSHUSER@$PEER.ts.burd.me"
+
+        # Sync one session root if it exists on EITHER side. Never mkdir it:
+        # unison creates the absent side from the present one (no deletion of
+        # the present side). $1 = absolute root (identical path both hosts).
+        sync_root() {
+          root="$1"
+          here=0; [ -d "$root" ] && here=1
+          there=0
+          if ssh $SSHARGS "$REMOTE" "test -d '$root'" 2>/dev/null; then there=1; fi
+          [ "$here" = 0 ] && [ "$there" = 0 ] && return 0
+          "$UNISON" "$root" "ssh://$REMOTE/$root" \
+            -batch -prefer newer -times -perms 0 -auto \
+            -sshargs "$SSHARGS" -servercmd "$UNISON" \
+            -ignore 'Path .unison*' \
+            || echo "session sync $root -> $PEER failed" >&2
+        }
+
+        enumerate_once() {
+          for spec in ${lib.concatMapStringsSep " " lib.escapeShellArg treeSpecs}; do
+            parent="''${spec%%|*}"
+            excl=" ''${spec#*|} "
+            names=$( { ls -1 "$parent" 2>/dev/null; \
+                       ssh $SSHARGS "$REMOTE" "ls -1 '$parent' 2>/dev/null"; } \
+                     | sort -u )
+            for n in $names; do
+              case "$excl" in *" $n "*) continue ;; esac
+              p="$parent/$n"
+              # pi slug: only '/' -> '-', leading+trailing '--'.
+              pislug="--$(printf '%s' "''${p#/}" | tr '/' '-')--"
+              # claude slug: EVERY non-alnum -> '-' (claude's real rule;
+              # '.' and '_' included), single leading '-'.
+              claudeslug="-$(printf '%s' "''${p#/}" | sed 's/[^A-Za-z0-9]/-/g')"
+              sync_root "$HOME/.pi/agent/sessions/$pislug"
+              sync_root "$HOME/.claude/projects/$claudeslug"
+            done
+          done
+        }
+
+        # Re-enumerate on a slow loop: the SET of session roots changes as
+        # projects are created, so unison runs one-shot per root here (not
+        # -repeat watch, which binds a fixed root list at launch). ~2min
+        # latency is fine for session state (a handoff artifact).
+        while :; do
+          enumerate_once
+          sleep 120
+        done
+      '';
+    in
+    lib.nameValuePair "unison-sessions-${peer}" {
+      Unit = {
+        Description = "Unison per-project pi/claude session sync to ${peer}";
+        After = [ "network-online.target" ];
+      };
+      Service = {
+        ExecStart = "${script}";
+        Restart = "always";
+        RestartSec = 30;
+        Environment = [ "PATH=${lib.makeBinPath [ pkgs.unison pkgs.openssh pkgs.coreutils pkgs.gnused ]}" ];
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+
+  sessionServices = lib.listToAttrs (map mkSessionService allSessionPeers);
 
   # The synced project roots this host participates in (absolute paths). Used
   # by the git-ff helper below.
@@ -303,6 +411,52 @@ in
             default = [ ];
             description = "Extra unison `Name` ignore patterns for this dir.";
           };
+          sessionRoots = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = ''
+              Whether to also sync pi/claude session state keyed to this exact
+              path. true (default): sync the tree AND the ~/.pi + ~/.claude
+              session dirs for this path (single-project entries like
+              pure-lang). false: sync ONLY the tree -- use for PARENT trees
+              like ~/ws and ~/src whose own path has no meaningful session
+              dir; per-project session state under them is handled by
+              programs.ai.sync.sessionTrees instead.
+            '';
+          };
+          sshUser = lib.mkOption {
+            type = lib.types.str;
+            default = "gburd";
+            description = "SSH user on the peer.";
+          };
+        };
+      });
+    };
+    sessionTrees = lib.mkOption {
+      default = [ ];
+      description = ''
+        Parent directories (e.g. ~/ws, ~/src) whose IMMEDIATE sub-projects
+        should have their pi/claude session state synced per-project, at
+        runtime (so projects can come and go without a rebuild). The parent
+        tree itself is synced by a normal `directories` entry with
+        sessionRoots = false. maki/codex/zed session state is NOT handled
+        (not path-mappable). See the mkSessionService comment.
+      '';
+      type = lib.types.listOf (lib.types.submodule {
+        options = {
+          path = lib.mkOption {
+            type = lib.types.str;
+            description = "Parent dir (absolute or ~/-relative).";
+          };
+          hosts = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            description = "Short names of the hosts that share these sessions.";
+          };
+          exclude = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Sub-project basenames to skip (worktree repos, nix-config, etc.).";
+          };
           sshUser = lib.mkOption {
             type = lib.types.str;
             default = "gburd";
@@ -315,7 +469,7 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.unison gitFfHelper ];
-    systemd.user.services = services // {
+    systemd.user.services = services // sessionServices // {
       # Periodic safe fast-forward of each synced repo (see gitFfHelper).
       ai-sync-git-ff = {
         Unit.Description = "Fast-forward unison-synced git repos to upstream";
