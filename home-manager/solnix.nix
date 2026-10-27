@@ -44,6 +44,14 @@
       "xz"
       "gnumake"
       "home-manager"
+      # the werk/meh headless set solnix builds from source (solnix fb07fd1, pkgs/illumos/cli)
+      "file" "bc" "gnum4" "screen" "socat" "sqlite" "ncdu" "tig" "lsof" "perl" "autoconf" "automake"
+      "libtool" "gnupg" "python3" "cmake" "ccache" "quilt" "gnupatch" "getopt" "pkg-config" "lynx" "w3m"
+      "isync" "neomutt" "fortune-mod"
+      "ripgrep" "fd" "bat" "eza" "du-dust" "dua" "hexyl" "hyperfine" "tokei" "zoxide" "bottom"
+      "difftastic" "atuin" "ast-grep" "just" "sd" "git-delta" "alejandra" "statix" "deadnix" "ruff" "uv"
+      "cargo-nextest"
+      "go" "shfmt" "yq" "miller" "fzf" "glow" "lazygit" "direnv" "micro"
     ]);
 
     # vi/less, not the nvim/page of the Linux console mixin: those are what
