@@ -47,7 +47,7 @@ with lib.hm.gvariant;
         # See the matching entry in floki.nix for the git caveat.
         name = "nix-config";
         path = "~/ws/nix-config";
-        hosts = [ "floki" "meh" "arnold" ];
+        hosts = [ "floki" "meh" "arnold" "werk" ];
       }
     ];
   };

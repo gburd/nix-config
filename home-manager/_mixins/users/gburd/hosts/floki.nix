@@ -58,7 +58,7 @@ in
         # the handoff case) -- commit before switching machines to avoid it.
         name = "nix-config";
         path = "~/ws/nix-config";
-        hosts = [ "floki" "meh" "arnold" ];
+        hosts = [ "floki" "meh" "arnold" "werk" ];
       }
     ];
   };
