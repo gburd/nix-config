@@ -347,6 +347,14 @@
           platform = "x86_64-solaris";
           modules = [ ./nixos/solnix/lixi.nix ];
         };
+        # lixi-gpu1: lixi + the i915 driver bound at boot (GPU stage B, stage 1 of src/drm-port/i915/STAGED-ATTACH-PLAN.md
+        # in solnix). Only ever installed as a BOOT-ONCE BE (beadm activate -t) with the operator at the machine; the
+        # default BE stays plain lixi. Nothing opens /dev/dri/card0 in it (no desktop), so no modeset runs.
+        lixi-gpu1 = libx.mkSolnixHost {
+          hostname = "lixi";
+          platform = "x86_64-solaris";
+          modules = [ ./nixos/solnix/lixi.nix ({ lib, ... }: { hardware.graphics.i915.attachAtBoot = lib.mkForce true; }) ];
+        };
         # lixr: the Milk-V K3 board, riscv64 (was "dixr").
         lixr = libx.mkSolnixHost {
           hostname = "lixr";
