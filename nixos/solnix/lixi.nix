@@ -41,7 +41,13 @@
   };
 
   # GPUs: shipped, bound to nothing. Flip i915.attachAtBoot only after stage B of x1e-gpu-runtime-bind.md passes.
-  hardware.graphics.i915.attachAtBoot = false;
+  # i915 bound at boot: GPU stage 1 (attach, /dev/dri) and stage 2 (one card0 open: inteldrm
+  # modeset, 3840x2400) passed on lixi 2026-10-27 (solnix 25c3c18, BE solnix-10). Binding alone
+  # does not modeset: that runs on the first open of /dev/dri/card0.
+  hardware.graphics.i915 = {
+    attachAtBoot = true;
+    acceptFirmwareLicense = true;   # DMC + GuC + HuC (linux-firmware LICENSE.i915)
+  };
 
   # Build toolchain on the machine, like dixi.
   environment.systemPackages = with pkgs.solnix; [ home-manager solnix-dev-full ];
