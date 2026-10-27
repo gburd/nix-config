@@ -60,6 +60,18 @@ in
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
       }
+      {
+        # ~/src: the project checkouts shared across floki/werk/arnold. floki
+        # holds the union (its own + arnold's, merged by rsync); werk and
+        # arnold seed from floki on first sync. Same .git caveat as nix-config
+        # (working tree only). Do not add a repo here that uses `git worktree`.
+        name = "src";
+        path = "~/src";
+        hosts = [ "floki" "werk" "arnold" ];
+        # documentdb + tre use `git worktree` (absolute [core] worktree paths
+        # in .git/config that fight the sync); keep them per-host via git.
+        ignores = [ "documentdb" "tre" ];
+      }
     ];
   };
 

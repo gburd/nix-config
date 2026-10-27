@@ -51,6 +51,15 @@
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
       }
+      {
+        # ~/src: project checkouts shared with floki/arnold. werk seeds from
+        # floki's union on first sync. NB werk's ~/src is on the ephemeral
+        # instance-store stripe, so a cold stripe re-seeds from the peers.
+        name = "src";
+        path = "~/src";
+        hosts = [ "floki" "werk" "arnold" ];
+        ignores = [ "documentdb" "tre" ];
+      }
     ];
   };
 

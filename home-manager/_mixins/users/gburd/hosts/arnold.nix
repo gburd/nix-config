@@ -49,6 +49,15 @@ with lib.hm.gvariant;
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
       }
+      {
+        # ~/src: project checkouts shared with floki/werk. arnold's old ~/src
+        # was merged into floki's union (rsync) and moved aside to ~/src_;
+        # this entry re-seeds ~/src from floki. Old copy kept at ~/src_.
+        name = "src";
+        path = "~/src";
+        hosts = [ "floki" "werk" "arnold" ];
+        ignores = [ "documentdb" "tre" ];
+      }
     ];
   };
 
