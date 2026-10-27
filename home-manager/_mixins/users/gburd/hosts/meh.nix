@@ -30,6 +30,46 @@
         hosts = [ "floki" "meh" "arnold" "werk" ];
         sessionRoots = false;
       }
+      {
+        # ~/src: joins the floki/werk/arnold union. meh is the LAST host to
+        # join. Before switching meh into this, move meh's own ~/src aside to
+        # ~/_src_ so meh's tree starts EMPTY and seeds cleanly from the
+        # converged peers (an empty replica only receives; it can't propagate
+        # a stale deletion). Rescue anything unique from ~/_src_ afterward.
+        name = "src";
+        path = "~/src";
+        hosts = [ "floki" "werk" "arnold" "meh" ];
+        sessionRoots = false;
+        ignores = [ "documentdb" "tre" ];
+      }
+      {
+        # ~/ws tree -- mirror of the other hosts. meh joins LAST. Before
+        # switching, move meh's own ~/ws aside to ~/_ws_ (same empty-seed
+        # safety as ~/src above).
+        name = "ws";
+        path = "~/ws";
+        hosts = [ "floki" "arnold" "werk" "meh" ];
+        sessionRoots = false;
+        ignores = [
+          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
+          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+        ];
+      }
+    ];
+    sessionTrees = [
+      {
+        path = "~/src";
+        hosts = [ "floki" "werk" "arnold" "meh" ];
+        exclude = [ "documentdb" "tre" ];
+      }
+      {
+        path = "~/ws";
+        hosts = [ "floki" "arnold" "werk" "meh" ];
+        exclude = [
+          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
+          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+        ];
+      }
     ];
   };
 

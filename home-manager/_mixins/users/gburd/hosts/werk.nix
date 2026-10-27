@@ -62,15 +62,36 @@
         sessionRoots = false;
         ignores = [ "documentdb" "tre" ];
       }
+      {
+        # ~/ws tree -- mirror of floki/arnold's entry. werk joins AFTER
+        # floki<->arnold has converged. Before switching werk into this,
+        # move werk's own ~/ws aside to ~/_ws_ so werk's tree starts EMPTY
+        # and seeds cleanly from the converged peers (an empty replica only
+        # receives; it can't propagate a stale deletion). Rescue anything
+        # unique from ~/_ws_ afterward.
+        name = "ws";
+        path = "~/ws";
+        hosts = [ "floki" "arnold" "werk" ];
+        sessionRoots = false;
+        ignores = [
+          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
+          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+        ];
+      }
     ];
-    # werk joins the ~/ws tree sync later in the staged enable order (after
-    # arnold<->floki is consistent). For now it syncs per-project sessions
-    # under ~/src only.
     sessionTrees = [
       {
         path = "~/src";
         hosts = [ "floki" "werk" "arnold" ];
         exclude = [ "documentdb" "tre" ];
+      }
+      {
+        path = "~/ws";
+        hosts = [ "floki" "arnold" "werk" ];
+        exclude = [
+          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
+          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+        ];
       }
     ];
   };
