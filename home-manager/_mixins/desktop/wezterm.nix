@@ -103,16 +103,42 @@ _:
       -- (min/maximize/close), Gnome-style. INTEGRATED_BUTTONS makes WezTerm
       -- draw its own buttons AND skip server-side decorations, so there's a
       -- single bar (no double titlebar) that still HAS the buttons. RESIZE
-      -- keeps resize borders. The maximize bottom-row clip is handled by the
-      -- bottom padding below, not by dropping decorations.
+      -- keeps resize borders.
       config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
       config.integrated_title_button_style = "Gnome"
       config.window_background_opacity = 1.0
-      -- Belt-and-suspenders against a partial last cell when maximized: pad
-      -- the bottom by ~one line height (font 14 -> ~28px).
-      config.window_padding = { left = 2, right = 2, top = 2, bottom = 28 }
+      -- Base padding. The bottom row clip when MAXIMIZED is fixed dynamically
+      -- by the window-resized handler below (a fixed bottom pad can't cover it
+      -- because the leftover pixels depend on the exact maximized height).
+      config.window_padding = { left = 2, right = 2, top = 2, bottom = 2 }
       config.adjust_window_size_when_changing_font_size = false
       config.audible_bell = "Disabled"
+
+      -- Last-row clip fix (maximized/tiled on Wayland+GNOME). When the window
+      -- is maximized its height is NOT a multiple of the cell height, so the
+      -- bottom row is partially clipped. Recompute bottom padding on every
+      -- resize/reload: pad the bottom by the leftover pixels (window height
+      -- minus the tab bar, modulo one cell) so a whole last row always fits.
+      local function fix_bottom_padding(window)
+        local ok, dims = pcall(function() return window:get_dimensions() end)
+        if not ok or dims == nil then return end
+        local overrides = window:get_config_overrides() or {}
+        -- cell height in px; fall back to a sane value if unavailable.
+        local cell_h = dims.pixel_height
+          and dims.dpi
+          and math.max(1, math.floor(14.0 * dims.dpi / 72))
+          or 28
+        -- leftover below the last full row, plus a 1px safety margin.
+        local leftover = dims.pixel_height % cell_h
+        local bottom = 2 + leftover
+        local cur = overrides.window_padding and overrides.window_padding.bottom
+        if cur == bottom then return end
+        overrides.window_padding =
+          { left = 2, right = 2, top = 2, bottom = bottom }
+        window:set_config_overrides(overrides)
+      end
+      wezterm.on('window-resized', function(window, _) fix_bottom_padding(window) end)
+      wezterm.on('window-config-reloaded', function(window) fix_bottom_padding(window) end)
 
       -- fish is the interactive shell on these hosts.
       config.default_prog = { "fish", "-l" }
