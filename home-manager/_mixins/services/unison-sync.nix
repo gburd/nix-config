@@ -208,7 +208,9 @@ let
         Restart = "always";
         RestartSec = 30;
         # unison -repeat watch is long-lived; fsmonitor must be on PATH.
-        Environment = [ "PATH=${lib.makeBinPath [ pkgs.unison pkgs.openssh ]}" ];
+        # unison -repeat watch is long-lived; fsmonitor must be on PATH, and
+        # the seed/watch retry loops use sleep/echo (coreutils).
+        Environment = [ "PATH=${lib.makeBinPath [ pkgs.unison pkgs.openssh pkgs.coreutils ]}" ];
       };
       Install.WantedBy = [ "default.target" ];
     };
