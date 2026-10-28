@@ -355,6 +355,14 @@
           platform = "x86_64-solaris";
           modules = [ ./nixos/solnix/lixi.nix ({ lib, ... }: { hardware.graphics.i915.attachAtBoot = lib.mkForce true; }) ];
         };
+        # lixi-cosmic: lixi + the COSMIC desktop (cosmic-greeter under greetd on VT 7, seatd, the system bus).
+        # Only ever installed as a BOOT-ONCE BE (beadm activate -t) while the graphical login is brought up; the
+        # default BE stays plain lixi until it works on the panel.
+        lixi-cosmic = libx.mkSolnixHost {
+          hostname = "lixi";
+          platform = "x86_64-solaris";
+          modules = [ ./nixos/solnix/lixi.nix { services.desktopManager.cosmic.enable = true; } ];
+        };
         # lixr: the Milk-V K3 board, riscv64 (was "dixr").
         lixr = libx.mkSolnixHost {
           hostname = "lixr";
