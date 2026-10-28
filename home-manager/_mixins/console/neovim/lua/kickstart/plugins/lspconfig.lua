@@ -239,6 +239,17 @@ return {
         flake8 = {},
         sqlls = {},
         harper_ls = {
+          -- Also check prose buffers: email composition (mail -- neomutt/mutt
+          -- compose temp files), git send-email (gitsendemail), and plain
+          -- text, on top of harper's defaults (code comments, gitcommit,
+          -- markdown, etc.). vim's native spell is enabled for these too (see
+          -- options.lua prose-spell autocmd); harper adds grammar/style.
+          filetypes = {
+            'c', 'cpp', 'cs', 'gitcommit', 'go', 'html', 'java', 'javascript',
+            'lua', 'markdown', 'nix', 'python', 'ruby', 'rust', 'swift', 'toml',
+            'typescript', 'haskell', 'cmake', 'typescriptreact', 'dart', 'php',
+            'mail', 'gitsendemail', 'text',
+          };
           -- Offline grammar/prose checker (harper-ls, nix-provided). It only
           -- reads comments and strings in code, never identifiers in the code
           -- itself, but words lifted from code INTO a comment

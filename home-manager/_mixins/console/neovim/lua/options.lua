@@ -120,4 +120,22 @@ vim.filetype.add { extension = { mbox = 'gitsendemail' } }
 -- none; without this the fold code above finds no parser and no folds.
 vim.treesitter.language.register('diff', 'gitsendemail')
 
+-- Spell + grammar when composing prose (email, commit messages, markdown).
+-- neomutt/mutt open their compose temp file as filetype=mail; `git
+-- send-email`/format-patch buffers are gitsendemail (above); gitcommit is
+-- commit messages. Enable vim's native spell checker (en_us, always works,
+-- no LSP needed) and soft-wrap for these. harper-ls (lspconfig.lua) layers
+-- grammar/style on top -- it already attaches to gitcommit/markdown, and is
+-- extended to `mail` there. Together: red-underlined misspellings (vim
+-- spell, `z=` to fix, `zg` to add to the dict) plus harper's grammar hints.
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('prose-spell', { clear = true }),
+  pattern = { 'mail', 'gitsendemail', 'gitcommit', 'markdown', 'text' },
+  callback = function()
+    vim.opt_local.spell = true
+    vim.opt_local.spelllang = 'en_us'
+    vim.opt_local.linebreak = true -- wrap at word boundaries, not mid-word
+  end,
+})
+
 -- vim: ts=2 sts=2 sw=2 et
