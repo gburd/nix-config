@@ -66,7 +66,7 @@ with lib.hm.gvariant;
         # enabled first so its version seeds floki.
         name = "ws";
         path = "~/ws";
-        hosts = [ "floki" "arnold" ];
+        hosts = [ "floki" "arnold" "werk" ];
         sessionRoots = false;
         ignores = [
           "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
@@ -77,7 +77,7 @@ with lib.hm.gvariant;
     sessionTrees = [
       {
         path = "~/ws";
-        hosts = [ "floki" "arnold" ];
+        hosts = [ "floki" "arnold" "werk" ];
         exclude = [
           "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
           "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"

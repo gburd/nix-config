@@ -86,7 +86,7 @@ in
         # context); arnold is enabled first so its version propagates.
         name = "ws";
         path = "~/ws";
-        hosts = [ "floki" "arnold" ];
+        hosts = [ "floki" "arnold" "werk" ];
         sessionRoots = false;
         ignores = [
           "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
@@ -101,7 +101,7 @@ in
     sessionTrees = [
       {
         path = "~/ws";
-        hosts = [ "floki" "arnold" ];
+        hosts = [ "floki" "arnold" "werk" ];
         exclude = [
           "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
           "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
