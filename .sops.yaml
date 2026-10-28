@@ -6,6 +6,8 @@ keys:
   # User SSH keys (for home-manager secrets)
   - &user-keys:
     - &gburd-user age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
+  # The solnix dev key on floki (~/.config/sops/age/keys.txt; solnix repo's .sops.yaml key)
+  - &solnix-dev age1cgvvdnt8xp4gqn4mqwrzpl4e3sw3pgf4dr064cwglgguzntrvcnq2e6npz
   # Hosts (SSH host keys for NixOS system-level secrets)
   - &hosts:
     - &floki age1z2x0g05q2erpux006vwhul70d8akj9avrj67s9p27fm4ce32ly8qt8nllz
@@ -16,6 +18,16 @@ keys:
     - &iso-desktop age1u09jlepa0p8ul5rghgrg8n2f3ry2z7t4tnmlggsz4e2u4h7lyvmszy53hd
 
 creation_rules:
+
+  # solnix hosts' ssh host keys (dixa, dixi, lixi): the solnix.io builder identity is the host key, kept here
+  # so a reinstall restores it and a rotation can be signed with the old key.
+  - path_regex: nixos/solnix/secrets.ya?ml$
+    key_groups:
+    - age:
+      - *gburd-user
+      - *solnix-dev
+      pgp:
+      - *gburd
 
   - path_regex: nixos/workstation/floki/secrets.ya?ml$
     key_groups:
