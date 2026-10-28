@@ -51,7 +51,7 @@
       "ripgrep" "fd" "bat" "eza" "du-dust" "dua" "hexyl" "hyperfine" "tokei" "zoxide" "bottom"
       "difftastic" "atuin" "ast-grep" "just" "sd" "git-delta" "alejandra" "statix" "deadnix" "ruff" "uv"
       "cargo-nextest"
-      "go" "shfmt" "yq" "miller" "fzf" "glow" "lazygit" "direnv" "micro"
+      "go" "shfmt" "yq" "miller" "fzf" "glow" "lazygit" "direnv" "micro" "gh"
     ]);
 
     # vi/less, not the nvim/page of the Linux console mixin: those are what
