@@ -68,7 +68,7 @@ in
         # (working tree only). Do not add a repo here that uses `git worktree`.
         name = "src";
         path = "~/src";
-        hosts = [ "floki" "werk" "arnold" ];
+        hosts = [ "floki" "werk" "arnold" "meh" ];
         sessionRoots = false; # per-project sessions handled by sessionTrees below
         # documentdb + tre use `git worktree` (absolute [core] worktree paths
         # in .git/config that fight the sync); keep them per-host via git.
@@ -86,7 +86,7 @@ in
         # context); arnold is enabled first so its version propagates.
         name = "ws";
         path = "~/ws";
-        hosts = [ "floki" "arnold" "werk" ];
+        hosts = [ "floki" "arnold" "werk" "meh" ];
         sessionRoots = false;
         ignores = [
           "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
@@ -101,7 +101,7 @@ in
     sessionTrees = [
       {
         path = "~/ws";
-        hosts = [ "floki" "arnold" "werk" ];
+        hosts = [ "floki" "arnold" "werk" "meh" ];
         exclude = [
           "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
           "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
@@ -109,7 +109,7 @@ in
       }
       {
         path = "~/src";
-        hosts = [ "floki" "werk" "arnold" ];
+        hosts = [ "floki" "werk" "arnold" "meh" ];
         exclude = [ "documentdb" "tre" ];
       }
     ];

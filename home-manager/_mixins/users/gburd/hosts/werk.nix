@@ -58,7 +58,7 @@
         # instance-store stripe, so a cold stripe re-seeds from the peers.
         name = "src";
         path = "~/src";
-        hosts = [ "floki" "werk" "arnold" ];
+        hosts = [ "floki" "werk" "arnold" "meh" ];
         sessionRoots = false;
         ignores = [ "documentdb" "tre" ];
       }
@@ -71,7 +71,7 @@
         # unique from ~/_ws_ afterward.
         name = "ws";
         path = "~/ws";
-        hosts = [ "floki" "arnold" "werk" ];
+        hosts = [ "floki" "arnold" "werk" "meh" ];
         sessionRoots = false;
         ignores = [
           "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
@@ -82,12 +82,12 @@
     sessionTrees = [
       {
         path = "~/src";
-        hosts = [ "floki" "werk" "arnold" ];
+        hosts = [ "floki" "werk" "arnold" "meh" ];
         exclude = [ "documentdb" "tre" ];
       }
       {
         path = "~/ws";
-        hosts = [ "floki" "arnold" "werk" ];
+        hosts = [ "floki" "arnold" "werk" "meh" ];
         exclude = [
           "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
           "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
