@@ -26,9 +26,9 @@
     # root-equivalent; sysadmin (gid 14) is the group half.
     extraGroups = [ "sysadmin" ];
     profiles = [ "Primary Administrator" ];
-    # bash, as on the Linux hosts and lixi: base.nix ships bash and /usr/bin is the system sw/bin, so it exists
-    # from the first boot of the DP AMI.
-    shell = "/usr/bin/bash";
+    # bash, as on the Linux hosts and lixi, by the NixOS path (users.defaultUserShell is
+    # /run/current-system/sw/bin/bash there), which is what the live account already has.
+    shell = "/run/current-system/sw/bin/bash";
     # Key login only. No password hash in a git-tracked file.
     openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
   };
@@ -51,6 +51,26 @@
   solnix.coreadm.developerUsers = [ "gburd" ];
 
   environment.enableDebugInfo = true;
+
+  # NixOS gives wheel admins daemon trust (nix.settings.trusted-users = [ "root" "@wheel" ]);
+  # illumos has no wheel, so name the admin.
+  nix.settings.trusted-users = [ "root" "gburd" ];
+
+  # The two 1.3 TB instance-store NVMe disks: scratch, striped, WIPED on every stop
+  # (a reboot keeps them). solnix-ephemeral-pool recreates `data` on the next boot when
+  # both disks are blank and refuses if either holds a label. Big build trees go here
+  # (build-dir), not on the 7.5 GiB spool.
+  solnix.ephemeralPool = {
+    enable = true;
+    disks = [ "c2t1d0" "c3t1d0" ];
+    datasets = {
+      home-gburd-ws = { mountpoint = "/home/gburd/ws"; owner = "gburd:staff"; };
+      home-gburd-src = { mountpoint = "/home/gburd/src"; owner = "gburd:staff"; };
+      scratch = { mountpoint = "/scratch"; owner = "gburd:staff"; };
+      nix-tmp = { mountpoint = "/var/tmp/big"; mode = "1777"; };
+    };
+  };
+  nix.settings.build-dir = "/var/tmp/big";
 
   # ena0 + EC2's resolver come from base.nix; nothing to override on EC2.
 }
