@@ -4,6 +4,8 @@
 , nodejs
 , coreutils
 , psmisc
+, stdenvNoCC
+, cacert
 }:
 
 # memelord MCP server (persistent memory for coding agents) from npm
@@ -11,10 +13,38 @@
 # that distills memelord's flat per-project memory pile into high-signal
 # pattern summaries (see rollup.py). Both land on PATH.
 let
-  # Pinned. `npx -y memelord` with no version would pick up any new upstream
-  # release the next time an agent starts, with no build or review.
-  # 0.1.5 is the version every host has been running.
+  # Pinned. 0.1.5 is the version every host has been running.
   version = "0.1.5";
+
+  # memelord + its 4 runtime deps, installed ONCE into the Nix store (a
+  # fixed-output derivation that runs `npm install` with network access,
+  # pinned by outputHash). This replaces the old runtime `npx -y memelord`,
+  # which hit the npm registry and raced on the shared ~/.npm/_npx cache on
+  # every agent launch -- under many concurrent agents across ~/ws projects
+  # that caused intermittent "Failed to connect to memelord" errors. Now the
+  # wrapper runs `node <store>/dist/cli.mjs` directly: no network, no npx, no
+  # shared-cache race. Bump `version` + re-run to refresh outputHash.
+  memelordNodeModules = stdenvNoCC.mkDerivation {
+    pname = "memelord-node-modules";
+    inherit version;
+    dontUnpack = true;
+    nativeBuildInputs = [ nodejs cacert ];
+    buildPhase = ''
+      export HOME=$TMPDIR
+      mkdir -p $TMPDIR/app && cd $TMPDIR/app
+      npm install --no-audit --no-fund --prefix $TMPDIR/app memelord@${version}
+    '';
+    installPhase = ''
+      mkdir -p $out
+      cp -R $TMPDIR/app/node_modules $out/node_modules
+    '';
+    # Fixed-output: allows network for the npm install. The hash pins the
+    # resolved dependency closure; if npm resolves different transitive deps
+    # (a ^range float) the build fails and the hash must be refreshed.
+    outputHashMode = "recursive";
+    outputHashAlgo = "sha256";
+    outputHash = "sha256-wfhMeFNhWkWBL7Khj1wAyfcQ6ddG7/tro31rbdJzZyU=";
+  };
 
   memelord = writeShellScriptBin "memelord" ''
     # Self-heal before serving. memelord stores memory in Turso (libSQL), whose
@@ -46,7 +76,25 @@ let
       done
       echo "[memelord] repaired $d: empty WAL with a stale -tshm (moved aside as *.stale-$ts)" >&2
     fi
-    exec ${nodejs}/bin/npx -y memelord@${version} "$@"
+    # @huggingface/transformers (0.1.5's embedding dep) writes a FileCache to a
+    # `.cache` dir INSIDE its own package and ignores HF_HOME/TRANSFORMERS_CACHE
+    # for that path. That worked under the old `npx` (package lived in writable
+    # ~/.npm) but fails from the read-only Nix store (ENOENT mkdir). So stage a
+    # WRITABLE copy of the pinned store node_modules once, under the user cache,
+    # and run node from there. The store derivation stays the single pinned
+    # source (no npx, no network, no shared-cache race); the per-user copy just
+    # gives transformers.js somewhere to write. Refreshed when the store path
+    # (version) changes, detected via a stamp file.
+    stage="''${XDG_CACHE_HOME:-$HOME/.cache}/memelord-nm"
+    src=${memelordNodeModules}
+    if [ "$(${coreutils}/bin/cat "$stage/.srcpath" 2>/dev/null)" != "$src" ]; then
+      ${coreutils}/bin/rm -rf "$stage" 2>/dev/null || true
+      ${coreutils}/bin/mkdir -p "$stage"
+      ${coreutils}/bin/cp -R "$src/node_modules" "$stage/node_modules"
+      ${coreutils}/bin/chmod -R u+w "$stage/node_modules"
+      ${coreutils}/bin/echo "$src" > "$stage/.srcpath"
+    fi
+    exec ${nodejs}/bin/node "$stage/node_modules/memelord/dist/cli.mjs" "$@"
   '';
 
   # memelord-rollup: stdlib-only Python (sqlite3 + urllib), no extra deps.
