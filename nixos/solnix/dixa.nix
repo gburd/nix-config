@@ -10,7 +10,10 @@
 #     module still hard-codes x86 paths and there are no aarch64 world/kernel slices. So THIS file evaluates (it
 #     records the target: gburd, keys, the NIC, EC2's resolver), but its toplevel does not build yet, and
 #     `solnix-rebuild switch --flake .#dixa` is not possible on dixa today.
-#   * What works on dixa now: nix (single-user) and the home-manager half, gburd@dixa, built on the box.
+#   * What works on dixa now (2026-10-28, track dixa1): multi-user nix (nix-daemon, nixbld1..32, hand-applied from
+#     modules/config/nix.nix) and the home-manager half, gburd@dixa (mkSolnixHome, platform aarch64-solaris), built on the box
+#     through the daemon. The aarch64 rtld gives every shared object's static TLS the same address (solnix
+#     /scratch/solnix/dixa1/tls-finding.md), so a heavily threaded nix can still crash until the image's rtld is fixed.
 #
 # Headless deliberately: no COSMIC, nothing graphical. This is a build/test node.
 _:

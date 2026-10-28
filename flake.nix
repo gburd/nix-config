@@ -271,12 +271,13 @@
           hostname = "lixi";
           username = "gburd";
         };
-        #   * dixa -- aarch64, EC2 (permanent account), HEADLESS (no COSMIC).
-        "gburd@dixa" = libx.mkHome {
+        #   * dixa -- aarch64, EC2 (permanent account), HEADLESS (no COSMIC). Same profile on solnix's
+        #     aarch64 set (pkgs/illumos/aarch64: no Rust or Go tier, neither has an illumos/aarch64 target).
+        #     Built on dixa itself, through its nix-daemon.
+        "gburd@dixa" = libx.mkSolnixHome {
           hostname = "dixa";
           username = "gburd";
           platform = "aarch64-solaris";
-          inherit solnixReady;
         };
         #   * dixr -- riscv64 hosted SERVER (likely qemu-system-riscv64 on EC2), HEADLESS, no GPU.
         "gburd@dixr" = libx.mkHome {
