@@ -49,6 +49,9 @@ When the user asks for a patch or patch series targeting upstream PostgreSQL or 
 5. **Phase 4 — Submission**
    - Commit message: present-tense imperative, ≤72 char subject, body explains the *why* not the *what*. Include reproducer if fixing a bug.
    - For -hackers submission: cover letter explains the patch series, lists open questions, references prior threads (`postgresq` link or `[1]` style).
+   - **Attachments for the list** (the user sends; see the NEVER-send rule above):
+     - **CF-bot opt-out**: any attached file the commitfest bot should IGNORE (not try to apply/build/test -- e.g. a reproducer script, a log, a design doc, a non-patch) must have **`.nocfbot`** appended to its filename (e.g. `repro.sql.nocfbot`, `design-notes.md.nocfbot`). The bot only consumes files it is meant to apply.
+     - **1 MB moderation threshold**: if the attachment set plus the email body exceeds **1 MB**, the message is held for moderation before it reaches the list (a delay). To stay under it, **compress the attachment set** with tar + gzip into a single `<project>-<version>.tgz` (or `.tar.gz`), e.g. `undo-v7.tgz` -- `tar czf undo-v7.tgz *.patch` (or the specific files). A single compressed tarball also keeps a patch series together and is friendlier for the CF bot than many loose files.
    - For local PR against a fork: use the `github` MCP to open with full context.
 
 ## Performance Investigation Workflow
