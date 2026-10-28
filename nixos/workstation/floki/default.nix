@@ -1,12 +1,20 @@
-# Motherboard: LENOVO 21MKCTO1WW (ThinkPad X1 Carbon Gen 13 Aura Edition)
-# CPU:         Intel Core Ultra 7 258V (Lunar Lake, 4P+4E cores, 8 threads, 4.8GHz)
-# GPU:         Intel Arc 140V (Xe2/Battlemage, 8 Xe2 cores, ~67 TOPS)
-# NPU:         Intel AI Boost NPU (~48 TOPS, intel_vpu driver, /dev/accel/accel0)
-# RAM:         32GB LPDDR5X (on-package)
-# NVMe:        WD_BLACK SN850X 4TB (PCIe Gen 4)
-# WiFi:        Intel BE201 (Wi-Fi 7, 320MHz)
+# Motherboard: LENOVO 21DECTO1WW (ThinkPad X1 Extreme Gen 5 / P1 Gen 5)
+# CPU:         Intel Core i7-12800H (Alder Lake-P, 6P+8E cores, 20 threads)
+# iGPU:        Intel Iris Xe Graphics (Alder Lake-P GT2) — i915 driver
+# dGPU:        NVIDIA GeForce RTX 3070 Ti Laptop (GA104) — proprietary nvidia, PRIME offload
+# RAM:         SODIMM DDR5 (2 slots)
+# NVMe:        WD_BLACK SN850X 4TB (PCIe Gen 4) — the SSD migrated from the X1 Carbon Gen13
+# WiFi:        Intel Alder Lake-P CNVi (AX211)
+#
+# HARDWARE MIGRATION 2026-10-28: the SSD was moved from the X1 Carbon Gen13
+# (Lunar Lake, Arc 140V iGPU, Intel NPU, xe driver) into this X1 Extreme Gen5.
+# The disk/LUKS/btrfs layout (disks.nix) is unchanged — same physical SSD. What
+# changed is the GPU stack: Lunar Lake used `xe` and blacklisted `i915`; Alder
+# Lake's Iris Xe uses `i915` (so the old i915 blacklist is REMOVED, or the
+# display breaks), plus there is now an NVIDIA dGPU (PRIME offload below). The
+# NPU (intel_vpu) and its OpenVINO/NPU tooling are gone (Alder Lake has none).
 
-{ inputs, lib, pkgs, ... }:
+{ inputs, lib, pkgs, config, ... }:
 {
   imports = [
     (import ./disks.nix)
@@ -19,6 +27,7 @@
     inputs.nixos-hardware.nixosModules.common-cpu-intel
     inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-laptop-ssd
+    inputs.nixos-hardware.nixosModules.common-gpu-nvidia
 
     # Floki-specific
     ../../_mixins/desktop/daw.nix
@@ -36,34 +45,56 @@
         "sd_mod"
         "thunderbolt"
         "usb_storage"
-        "xe"
         "xhci_pci"
       ];
     };
 
-    kernelModules = [
-      "kvm-intel"
-      "intel_vpu" # Intel NPU (Neural Processing Unit) — /dev/accel/accel0
-    ];
+    kernelModules = [ "kvm-intel" ];
 
-    # i915 is unused on Lunar Lake (xe driver handles Arc 140V entirely)
-    blacklistedKernelModules = [ "i915" ];
+    # Default (stable LTS) kernel. Alder Lake-P is fully supported on any
+    # recent kernel, and the NVIDIA proprietary module must build against the
+    # running kernel -- linuxPackages_latest (7.2.x) outran the driver and the
+    # nvidia kernel module failed to compile, so do NOT use _latest here.
+    kernelPackages = pkgs.linuxPackages;
 
-    # Use latest kernel for best Lunar Lake (Core Ultra 200V) + Arc Xe2 support
-    kernelPackages = pkgs.linuxPackages_latest;
-
-    # Enable full 320MHz channels for Intel BE201 Wi-Fi 7 when connected to capable AP
+    # Keep US regdom for the AX211 Wi-Fi.
     extraModprobeConfig = ''
       options cfg80211 ieee80211_regdom=US
     '';
   };
 
+  # --- GPU: Intel Iris Xe (iGPU, primary display) + NVIDIA RTX 3070 Ti (PRIME
+  # offload). The iGPU drives everything by default; apps that want the dGPU
+  # run under `nvidia-offload <cmd>` (the helper script enabled by
+  # prime.offload below). This keeps battery life sane (the dGPU powers down
+  # when idle) while making the 3070 Ti available on demand.
+  services.xserver.videoDrivers = [ "nvidia" ];
+  hardware = {
+    nvidia = {
+      package = config.boot.kernelPackages.nvidiaPackages.stable;
+      modesetting.enable = true;
+      # Turing+ (Ampere GA104) supports runtime D3 power management, so let the
+      # dGPU fully power off when unused (the point of a hybrid laptop).
+      powerManagement.enable = true;
+      powerManagement.finegrained = true;
+      open = false; # GA104 works with either; proprietary is the safe default
+      nvidiaSettings = true;
+      prime = {
+        offload.enable = true;
+        offload.enableOffloadCmd = true; # provides the `nvidia-offload` wrapper
+        # Bus IDs from lspci: Intel iGPU 00:02.0, NVIDIA dGPU 01:00.0.
+        intelBusId = "PCI:0:2:0";
+        nvidiaBusId = "PCI:1:0:0";
+      };
+    };
+    graphics.enable = true;
+  };
+
   environment.systemPackages = with pkgs; [
-    intel-gpu-tools # intel_gpu_top, intel_reg, etc.
-    intel-npu-driver # Level Zero backend for NPU inference
+    intel-gpu-tools # intel_gpu_top, intel_reg (iGPU diagnostics)
     libva-utils # vainfo — VA-API codec diagnostics
-    nvtopPackages.intel
-    openvino # OpenVINO runtime with CPU/GPU/NPU plugins
+    nvtopPackages.full # GPU monitor (both Intel + NVIDIA)
+    vulkan-tools # vulkaninfo / vkcube for verifying both GPUs
   ];
 
   networking.hostName = "floki";
@@ -71,8 +102,6 @@
   # Laptop power management
   # power-profiles-daemon integrates with GNOME Shell to switch between
   # Power Saver / Balanced / Performance based on AC vs battery automatically.
-  # Replaces static cpuFreqGovernor + powertop.enable (which applied battery
-  # tuning unconditionally at boot regardless of power source).
   services.power-profiles-daemon.enable = true;
 
   services = {
