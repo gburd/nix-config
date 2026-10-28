@@ -9,7 +9,8 @@ Prefer these over their slower counterparts:
 | `ast-grep` | — | `ast-grep --pattern '$FUNC($$$)' --lang rust` — AST-based code search |
 | `shellcheck` | — | `shellcheck script.sh` — shell script linter |
 | `shfmt` | — | `shfmt -i 2 -w script.sh` — shell formatter |
-| `trash` | rm | `trash file` — moves to macOS Trash (recoverable). **Never use `rm -rf`** |
+| `trash` | rm | `trash file` — moves to the trash (recoverable; `trash-cli`, Linux + macOS). **Never use `rm -rf`.** Empty it when it fills with `trash-empty` (e.g. `trash-empty 30` to drop items older than 30 days). |
+| `curl` / `wget` / `fetch` | — | allowed and auto-approved for fetching files, APIs, release artifacts. The ONLY blocked form is piping a download straight into a shell (`curl … \| sh`, `wget … \| bash`) — download first, inspect, then run. |
 | `gh-axi` | github MCP / gh | `gh-axi <op>` — agent-ergonomic, low-token GitHub CLI (PRs, issues, code search). ~3x cheaper + ~2x faster than the GitHub MCP; prefer it for GitHub ops. |
 
 Prefer `ast-grep` over ripgrep when searching for code structure (function calls, class definitions, imports). Use ripgrep for literal strings and log messages.

@@ -35,6 +35,7 @@
     diffsitter # Better diff
     jq # JSON pretty printer and manipulator
     s5cmd # Fast S3/object-store client; the mc replacement (aliased to `mc`)
+    trash-cli # `trash`/`trash-empty`/`trash-list` -- the rm -rf replacement the steering mandates (Linux + darwin)
     timer # To help with my ADHD paralysis
 
     nil # Nix LSP
