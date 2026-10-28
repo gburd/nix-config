@@ -17,7 +17,7 @@
 { inputs, sshMatrix, pkgs, lib, ... }:
 
 {
-  imports = [ "${inputs.solnix}/configurations/base.nix" ];
+  imports = [ "${inputs.solnix}/configurations/base.nix" ./community.nix ];
 
   users.users.gburd = {
     uid = 1000;
