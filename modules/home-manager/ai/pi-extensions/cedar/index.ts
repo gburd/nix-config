@@ -53,12 +53,11 @@ function expandHome(src: string): string {
   return src.replaceAll('like "~/', `like "${HOME.replace(/\/$/, "")}/`);
 }
 
-/** One Cedar source text with each policy's store id as @id, so a deny names it. */
-function toSource(policies: Policy[]): string {
-  return policies
-    .map((p) => (p.content.trimStart().startsWith("@id(") ? p.content : `@id(${JSON.stringify(p.id)})\n${p.content}`))
-    .map(expandHome)
-    .join("\n");
+/** Policies keyed by store id: Cedar then reports that id as the deny reason. */
+function toSet(policies: Policy[]): Record<string, string> {
+  const set: Record<string, string> = {};
+  for (const p of policies) set[p.id] = expandHome(p.content);
+  return set;
 }
 
 /**
@@ -121,12 +120,12 @@ function mcpServerName(prefix: string): string {
 export default function (pi: ExtensionAPI) {
   if (process.env.CEDAR_DISABLE === "1") return;
 
-  let policies: { source: string; ids: string[] } | null = null;
+  let policies: Record<string, string> | null = null;
   let lastSync = 0;
   let warnedEmpty = false;
 
   const load = (list: Policy[]) => {
-    policies = { source: toSource(list), ids: list.map((p) => p.id) };
+    policies = toSet(list);
   };
   try {
     load(JSON.parse(readFileSync(CACHE, "utf8")) as Policy[]);
@@ -160,7 +159,7 @@ export default function (pi: ExtensionAPI) {
       action: { type: "Action", id: "invoke" },
       resource: { type: "Tool", id: tool },
       context: { tool, scope },
-      policies: { staticPolicies: policies.source },
+      policies: { staticPolicies: policies },
       entities: [{ uid: { type: "Tool", id: tool }, attrs: { name: tool }, parents: [] }],
     });
     if (r.type !== "success" || !r.response) return null; // evaluation error: defer
