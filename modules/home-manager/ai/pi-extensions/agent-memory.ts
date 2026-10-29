@@ -43,9 +43,10 @@ export default async function (pi: ExtensionAPI) {
   pi.on("before_agent_start", async (event, ctx) => {
     if (injected) return;
     injected = true;
-    const base = process.env.AGENT_MEMORY_URL;
-    const keyFile = process.env.AGENT_MEMORY_KEY_FILE;
-    if (!base || !keyFile) return;
+    // Defaults cover terminals opened before the switch that set these.
+    const base = process.env.AGENT_MEMORY_URL ?? "http://meh.ts.burd.me:8765";
+    const keyFile =
+      process.env.AGENT_MEMORY_KEY_FILE ?? `${homedir()}/.config/sops-nix/secrets/agent-memory/api-key`;
     let key = "";
     try {
       key = readFileSync(keyFile, "utf8").trim();
