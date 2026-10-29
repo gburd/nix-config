@@ -584,11 +584,11 @@
         "solnix-pkgs": "solnix-pkgs"
       },
       "locked": {
-        "lastModified": 1793244295,
-        "narHash": "sha256-d2hHH0UTYb72uQZqGyH2Wb2QOFT8gpnCKLw9KLW8dzI=",
+        "lastModified": 1793255459,
+        "narHash": "sha256-nIptaAgvcqHYXOJlkmAXULX0unrXmqP5bh4tqcXn5I8=",
         "ref": "main",
-        "rev": "e4528972fa0af705e79d4efe6cc0da750d4cdbf7",
-        "revCount": 1160,
+        "rev": "ae58e3faa5d939f78ba27e7e1fc294f69e2d8d89",
+        "revCount": 1163,
         "type": "git",
         "url": "https://codeberg.org/solnix/solnix.git"
       },
