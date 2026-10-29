@@ -362,7 +362,10 @@
         lixi-cosmic = libx.mkSolnixHost {
           hostname = "lixi";
           platform = "x86_64-solaris";
-          modules = [ ./nixos/solnix/lixi.nix { services.desktopManager.cosmic.enable = true; } ];
+          modules = [ ./nixos/solnix/lixi.nix {
+            services.desktopManager.cosmic.enable = true;
+            users.users.gburd.extraGroups = [ "seat" ];   # may open the seat (seatd -g seat), as on NixOS
+          } ];
         };
         # lixr: the Milk-V K3 board, riscv64 (was "dixr").
         lixr = libx.mkSolnixHost {
