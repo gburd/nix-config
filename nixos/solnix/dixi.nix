@@ -19,6 +19,7 @@
 
   users.users.gburd = {
     uid = 1000;
+    createHome = true;   # /home/gburd must be gburd's even when data's ~/ws and ~/src mount under it first
     home = "/home/gburd";
     group = "staff";
     description = "Greg Burd";
