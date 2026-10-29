@@ -15,7 +15,7 @@
 {
   # The public-AMI system: base.nix (sshd, nix-daemon, the ten CLI tools, man pages)
   # + IMDS first-boot keypair fetch + the boot-safe 1500 MTU (no self-reboot).
-  imports = [ "${inputs.solnix}/configurations/cloud-ec2.nix" ./community.nix ];
+  imports = [ "${inputs.solnix}/configurations/cloud-ec2.nix" ./community.nix ./tailscale.nix ];
 
   users.users.gburd = {
     uid = 1000;
