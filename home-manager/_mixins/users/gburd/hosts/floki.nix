@@ -223,12 +223,20 @@ in
   };
 
   # Sops secrets configuration
+  # Shared agent memory: every agent here talks to the one service on meh.
+  programs.ai.mcps.servers.agent-memory = {
+    enable = true;
+    keyFile = config.sops.secrets."agent-memory/api-key".path;
+  };
+
   sops = {
     # Use flake root to reference secrets file cleanly
     defaultSopsFile = "${inputs.self}/nixos/workstation/floki/secrets.yaml";
     # Use age key derived from SSH key for decryption
     age.sshKeyPaths = [ "${config.home.homeDirectory}/.ssh/id_ed25519" ];
     secrets = {
+      # Shared agent memory API key (mcp-memory-service on meh).
+      "agent-memory/api-key" = { };
       "aws/bearer_token_bedrock" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
       };

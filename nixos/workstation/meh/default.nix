@@ -30,6 +30,9 @@
     # hardware.graphics) is NOT imported; this module fills that gap
     # for headless GPU compute.
     ../../_mixins/hardware/gpu-compute.nix
+
+    # Shared agent memory (mcp-memory-service) for every host's agents.
+    ./agent-memory.nix
   ];
 
   boot = {
@@ -101,6 +104,12 @@
   };
 
   virtualisation.docker.storageDriver = "overlay2";
+
+  services.agentMemory = {
+    enable = true;
+    listenAddress = "100.64.0.7"; # meh's tailnet address; never the LAN
+    backupDir = "/home/gburd/.local/share/agent-memory-backup";
+  };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 }

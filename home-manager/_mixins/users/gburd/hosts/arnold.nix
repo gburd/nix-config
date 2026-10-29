@@ -69,8 +69,19 @@ with lib.hm.gvariant;
         hosts = [ "floki" "arnold" "werk" "meh" ];
         sessionRoots = false;
         ignores = [
-          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
-          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+          "improv"
+          "improv-libc"
+          "libdb"
+          "libxtc"
+          "mentat"
+          "nix-config"
+          "osv"
+          "pg_tre"
+          "pg_tre-announce"
+          "pg_weave"
+          "ra"
+          "solnix"
+          "postgres"
         ];
       }
     ];
@@ -79,8 +90,19 @@ with lib.hm.gvariant;
         path = "~/ws";
         hosts = [ "floki" "arnold" "werk" "meh" ];
         exclude = [
-          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
-          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+          "improv"
+          "improv-libc"
+          "libdb"
+          "libxtc"
+          "mentat"
+          "nix-config"
+          "osv"
+          "pg_tre"
+          "pg_tre-announce"
+          "pg_weave"
+          "ra"
+          "solnix"
+          "postgres"
         ];
       }
       {
@@ -92,10 +114,18 @@ with lib.hm.gvariant;
   };
 
   # Sops secrets — reuses floki's secrets.yaml (encrypted to gburd-user age key)
+  # Shared agent memory: every agent here talks to the one service on meh.
+  programs.ai.mcps.servers.agent-memory = {
+    enable = true;
+    keyFile = config.sops.secrets."agent-memory/api-key".path;
+  };
+
   sops = {
     defaultSopsFile = "${inputs.self}/nixos/workstation/floki/secrets.yaml";
     age.sshKeyPaths = [ "${config.home.homeDirectory}/.ssh/id_ed25519" ];
     secrets = {
+      # Shared agent memory API key (mcp-memory-service on meh).
+      "agent-memory/api-key" = { };
       "aws/bearer_token_bedrock" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
       };

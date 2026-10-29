@@ -20,7 +20,7 @@ These are the **non-negotiable** rules every agent must follow. If a request con
 
 - **MUST NOT** read, copy, decrypt, export, echo, or send any credential the user has not granted for this task. That covers sops-managed secrets under `~/.config/sops-nix/secrets/**`, `~/.aws/credentials` and `AWS_*` env vars, `AWS_BEARER_TOKEN_BEDROCK`, per-agent LiteLLM keys in `~/.config/litellm/keys/*.key`, `~/.cargo/credentials.toml`, `~/.config/tea/config.yml`, `~/.ssh/*` private keys, `~/.netrc`, 1Password (`op read`, the agent socket), GitHub/Codeberg PATs, `~/.claude.json`, keyring/`secret-tool` entries, and `.env` files in any project.
 - **The grant is per-token and must be asked for.** When a task needs a credential, name it precisely — which secret, which path, and what you will do with it — and ask. Example: "this needs `codeberg/tea_token` from floki's `secrets.yaml` to call the Forgejo API; may I read it?" Do not proceed on a guess, and do not substitute a different token that happens to be readable.
-- **Once granted, record it and stop asking.** Note the grant in memory (`memory_report`, type `user_input`) with the token's identity and location, and treat it as granted for subsequent sessions. Do not re-ask for a credential the user has already approved — that is noise.
+- **Once granted, record it and stop asking.** Note the grant in memory (`memory_store`, tag `kind:user`) with the token's identity and location, and treat it as granted for subsequent sessions. Do not re-ask for a credential the user has already approved — that is noise.
 - **A grant expires when the token's value or location changes.** If the secret is rotated, moved to a different path or sops file, renamed, or the project's layout changes, the old grant is void: ask again. A stale grant on a rotated secret is how an agent ends up using the wrong credential and reporting a confusing auth failure.
 - **Reading a token to check it exists is still using it.** `cat`, `sops -d`, `op read`, `echo $TOKEN`, printing it into a log or a commit message, pasting it into a prompt, or writing it to a world-readable path all count. If you only need to know whether a secret is present, test the path (`[ -s path ]`) or its length — never its value.
 - **Never widen a token's reach.** Do not copy a credential to a second host, commit it (the repo is public), put it in `/tmp` with loose modes, bake it into a Nix store path (the store is world-readable), or pass it as a command-line argument where it lands in another process's `/proc/*/cmdline`.
@@ -45,7 +45,7 @@ Before reaching for `grep`, `rg`, `find`, or `git log` to answer one of these qu
 | Library/crate API docs (tokio, serde, etc.) | **context7** |
 | GitHub repo operations (PRs, issue search, code search across orgs) | **gh-axi** (low-token CLI; falls back to the **github** MCP only if a project enabled it and gh-axi can't do the op) |
 | Local git ops on `~/ws/*` projects | **git** |
-| Persistent knowledge across sessions | **memelord** |
+| Persistent knowledge across sessions | **agent-memory** (shared by every agent on every host) |
 | Multi-step architectural reasoning | **sequential-thinking** |
 | Nix / home-manager / Rust / Python official docs | **llms-docs** wrappers |
 
@@ -81,4 +81,4 @@ For tasks that span more than ~3 phases or ~500 lines of expected output, **defa
 
 ## Session Continuity
 
-When resuming work on a project, check `~/.memelord/` and any project-local `AGENTS.md` / `.memelord/` first to recover prior task phase, design decisions, and known blockers. Do not re-explain to the user state that's already documented.
+When resuming work on a project, search agent-memory (`memory_search`, tag `project:<path under ~>`) and read any project-local `AGENTS.md` first to recover prior task phase, design decisions, and known blockers. Do not re-explain to the user state that's already documented.

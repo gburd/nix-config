@@ -1,6 +1,7 @@
 { config, lib, pkgs, ... }:
 let
   cfg = config.programs.ai.pi;
+  agentMemory = config.programs.ai.mcps.enable && config.programs.ai.mcps.servers.agent-memory.enable;
   inherit (lib) mkEnableOption mkOption types;
 
   settingsJson = builtins.toJSON {
@@ -174,7 +175,9 @@ in
       ".pi/agent/extensions/coccinelle.ts".source = ./pi-extensions/coccinelle.ts;
       ".pi/agent/extensions/context-monitor.ts".source = ./pi-extensions/context-monitor.ts;
       ".pi/agent/extensions/litellm.ts".source = ./pi-extensions/litellm.ts;
-      ".pi/agent/extensions/memelord.ts".source = ./pi-extensions/memelord.ts;
+      # Memory: the shared agent-memory service replaces memelord's hooks.
+      ${if agentMemory then ".pi/agent/extensions/agent-memory.ts" else ".pi/agent/extensions/memelord.ts"}.source =
+        if agentMemory then ./pi-extensions/agent-memory.ts else ./pi-extensions/memelord.ts;
       ".pi/agent/extensions/project-context.ts".source = ./pi-extensions/project-context.ts;
       ".pi/agent/extensions/safety-hooks.ts".source = ./pi-extensions/safety-hooks.ts;
     };

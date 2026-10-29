@@ -34,26 +34,26 @@
 - Diff, log, blame, branch operations on ~/ws/* projects
 - Works on repos not hosted on GitHub (aether, dbsql, openldap)
 
-### memelord — Persistent Knowledge Graph + Session Lifecycle
-**Use when** you need to store or retrieve structured knowledge across sessions:
-- Project architecture decisions
-- Cross-session state that doesn't fit in CLAUDE.md
+### agent-memory — Shared Persistent Memory (all agents, all hosts)
+**Use when** you need to store or retrieve knowledge across sessions:
+- Corrections, user-stated facts and grants, codebase insights
+- Project architecture decisions and known blockers
 
-Also automatic via hooks: handles session start/end, embedding-based memory
-search. Project-scoped (.memelord/ inside the project dir).
+One mcp-memory-service on meh (`http://meh.ts.burd.me:8765`, tailnet only),
+shared by pi, Claude Code, kiro and maki on every host. `memory_search` to
+recall, `memory_store` to save (tag it `project:<path under ~>` plus
+`kind:correction|user|insight`), `memory_update` / `memory_delete` to fix a
+wrong one. A session-start hook injects the project's newest memories.
+It replaced memelord on 2026-10-29; all 2602 unique memelord memories were
+imported, tagged `origin:memelord`.
 
-**Never open `.memelord/memory.db` with stock SQLite** (the `sqlite3` CLI,
-Python's `sqlite3`, DB Browser, `datasette`). memelord stores it in Turso,
-whose WAL is indexed by `memory.db-tshm`, a format stock SQLite does not
-know. A stock-SQLite read can checkpoint and truncate `memory.db-wal` while
-`-tshm` still points into it. Every later memelord start in that project then
-fails, which agents see as `MCP: Failed to connect to memelord: Connection
-closed (code: 'GenericFailure' ...)`. One agent's `for db in ...; do sqlite3
-...` loop broke 13 projects at once (2026-10-15). To inspect memory, use the
-memelord tools or `memelord status` / `memelord memories`. To query it
-offline, copy the `.memelord/` directory elsewhere first and query the copy.
-The memelord wrapper now repairs this state on its next start, but don't
-cause it.
+**The old `.memelord/` directories are a read-only archive.** Never open
+`.memelord/memory.db` with stock SQLite (the `sqlite3` CLI, Python's
+`sqlite3`, DB Browser, `datasette`): it is Turso, whose WAL is indexed by
+`memory.db-tshm`, and a stock-SQLite read can truncate `memory.db-wal` while
+`-tshm` still points into it, breaking the file for memelord. To read one,
+copy the `.memelord/` directory elsewhere and open the copy with memelord's
+own engine.
 
 ### sequential-thinking — Structured Reasoning
 **Use when** facing complex architectural decisions:
@@ -73,6 +73,6 @@ General-purpose file reading/writing. Prefer built-in Read/Write tools when avai
 2. **Library/crate API docs** → context7
 3. **GitHub repo operation** → github MCP
 4. **Local git repo operation** → git MCP
-5. **Store/recall structured knowledge** → memelord
+5. **Store/recall knowledge across sessions** → agent-memory
 6. **Complex multi-step reasoning** → sequential-thinking
 7. **Nix/Rust/Python official docs** → llms-docs wrappers

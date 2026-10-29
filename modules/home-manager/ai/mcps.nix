@@ -130,6 +130,26 @@ let
     }];
   };
 
+  ### Agent-memory hooks (replace memelord's when agent-memory is on) ###
+  # Only SessionStart: inject this project's memories + the usage
+  # instructions. Writing memories is the agent's job (memory_store), as it
+  # was with memelord after its PostToolUse auto-detector was dropped.
+  agentMemorySessionStart = pkgs.writeShellScript "agent-memory-session-start" ''
+    export AGENT_MEMORY_URL=${cfg.servers.agent-memory.url}
+    export AGENT_MEMORY_KEY_FILE=${cfg.servers.agent-memory.keyFile}
+    exec ${pkgs.python3}/bin/python3 ${./files/agent-memory-session-start.py}
+  '';
+  agentMemoryHooks = {
+    SessionStart = [{
+      hooks = [{
+        type = "command";
+        command = "${agentMemorySessionStart}";
+        timeout = 10;
+      }];
+    }];
+  };
+  sessionHooks = if cfg.servers.agent-memory.enable then agentMemoryHooks else memelordHooks;
+
   ### MCP Server configuration file ###
   mcpJsonText = builtins.toJSON {
     inherit mcpServers;
@@ -184,7 +204,7 @@ let
       command = "${githubMcpServer}";
     };
   })
-    // (optionalAttrs cfg.servers.memelord.enable {
+    // (optionalAttrs (cfg.servers.memelord.enable && !cfg.servers.agent-memory.enable) {
     memelord = {
       command = "${cfg.servers.memelord.pkg}/bin/memelord";
       args = [ "serve" ];
@@ -279,7 +299,25 @@ let
       env = zvecGrepEnv;
     };
   })
+    // (optionalAttrs cfg.servers.agent-memory.enable {
+    agent-memory = {
+      command = "${agentMemoryStdio}";
+      args = [ ];
+    };
+  })
     // cfg.extraServers;
+
+  # Shared agent memory (mcp-memory-service on meh, later the NAS), as a
+  # stdio shim for every client: mcp-proxy bridges stdio to the service's
+  # streamable-HTTP /mcp and reads the API key from the sops secret at spawn,
+  # so the key never appears in a generated config file and no client has to
+  # expand env vars in headers.
+  agentMemoryUrl = "${cfg.servers.agent-memory.url}/mcp";
+  agentMemoryStdio = pkgs.writeShellScript "agent-memory-mcp" ''
+    API_ACCESS_TOKEN="$(${pkgs.coreutils}/bin/cat ${cfg.servers.agent-memory.keyFile})"
+    export API_ACCESS_TOKEN
+    exec ${pkgs.mcp-proxy}/bin/mcp-proxy --transport streamablehttp ${agentMemoryUrl}
+  '';
 
   # Claude Code user-scoped format (stored in ~/.claude.json under mcpServers)
   claudeUserMcpServers = { }
@@ -299,7 +337,7 @@ let
       env = { };
     };
   })
-    // (optionalAttrs cfg.servers.memelord.enable {
+    // (optionalAttrs (cfg.servers.memelord.enable && !cfg.servers.agent-memory.enable) {
     memelord = {
       type = "stdio";
       command = "${cfg.servers.memelord.pkg}/bin/memelord";
@@ -380,6 +418,14 @@ let
         cfg.servers.zvec-grep.toolset
       ];
       env = zvecGrepEnv;
+    };
+  })
+    // (optionalAttrs cfg.servers.agent-memory.enable {
+    agent-memory = {
+      type = "stdio";
+      command = "${agentMemoryStdio}";
+      args = [ ];
+      env = { };
     };
   })
     // cfg.extraServers;
@@ -674,6 +720,19 @@ in
         enable = mkEnableOption "MCP server-memory (persistent knowledge graph)";
       };
 
+      agent-memory = {
+        enable = mkEnableOption "the shared agent memory service (mcp-memory-service over the tailnet)";
+        url = mkOption {
+          type = types.str;
+          default = "http://meh.ts.burd.me:8765";
+          description = "Base URL of the service (no trailing /mcp).";
+        };
+        keyFile = mkOption {
+          type = types.str;
+          description = "File holding the service's API key (a sops secret path).";
+        };
+      };
+
       server-git = {
         enable = mkEnableOption "MCP server-git (local Git operations)";
       };
@@ -852,7 +911,14 @@ in
     # and therefore invisible to fish (programs.fish.enable is false here, so
     # HM generates no fish translation). Emit a fish conf.d snippet from the
     # SAME attrset -- same pattern as ai/lmstudio.nix and console/cargo.nix.
-    home.sessionVariables = lib.mkIf cfg.servers.zvec-grep.enable zvecGrepEnv;
+    home.sessionVariables = lib.mkMerge [
+      (lib.mkIf cfg.servers.zvec-grep.enable zvecGrepEnv)
+      # read by the pi agent-memory extension (pi-extensions/agent-memory.ts)
+      (lib.mkIf cfg.servers.agent-memory.enable {
+        AGENT_MEMORY_URL = cfg.servers.agent-memory.url;
+        AGENT_MEMORY_KEY_FILE = cfg.servers.agent-memory.keyFile;
+      })
+    ];
 
     # project-mcp helper for adding heavy MCP servers per project (used from
     # .envrc); core servers are loaded globally, heavy ones opt-in.
@@ -952,6 +1018,7 @@ in
             "@git"
             "@github"
             "@memelord"
+            "@agent-memory"
             "@memory"
             "@postgresq"
             "@sequential-thinking"
@@ -975,6 +1042,7 @@ in
             "@git"
             "@github"
             "@memelord"
+            "@agent-memory"
             "@memory"
             "@postgresq"
             "@sequential-thinking"
@@ -1027,9 +1095,9 @@ in
           };
         };
       })
-      (lib.mkIf (cfg.targets.kiro && cfg.servers.memelord.enable) {
+      (lib.mkIf (cfg.targets.kiro && (cfg.servers.memelord.enable || cfg.servers.agent-memory.enable)) {
         ".kiro/settings/settings.json".text = builtins.toJSON {
-          hooks = memelordHooks;
+          hooks = sessionHooks;
         };
       })
       (lib.mkIf cfg.targets.maki {
@@ -1049,78 +1117,87 @@ in
     # Since ~/.claude.json is a mutable state file, we merge via activation script.
     home.activation.claudeMcpServers = lib.mkIf cfg.targets.claude (
       lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        CLAUDE_JSON="${config.home.homeDirectory}/.claude.json"
-        MCP_PAYLOAD='${coreClaudeMcpJson}'
+                CLAUDE_JSON="${config.home.homeDirectory}/.claude.json"
+                MCP_PAYLOAD='${coreClaudeMcpJson}'
 
-        if [ -f "$CLAUDE_JSON" ]; then
-          # Merge mcpServers into existing ~/.claude.json
-          ${pkgs.jq}/bin/jq --argjson servers "$MCP_PAYLOAD" \
-            '.mcpServers = $servers' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" \
-            && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
-        else
-          # Create ~/.claude.json with just mcpServers
-          echo "$MCP_PAYLOAD" | ${pkgs.jq}/bin/jq '{mcpServers: .}' > "$CLAUDE_JSON"
-        fi
+                if [ -f "$CLAUDE_JSON" ]; then
+                  # Merge mcpServers into existing ~/.claude.json
+                  ${pkgs.jq}/bin/jq --argjson servers "$MCP_PAYLOAD" \
+                    '.mcpServers = $servers' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" \
+                    && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+                else
+                  # Create ~/.claude.json with just mcpServers
+                  echo "$MCP_PAYLOAD" | ${pkgs.jq}/bin/jq '{mcpServers: .}' > "$CLAUDE_JSON"
+                fi
 
-        # Keep Claude Code's selected model in sync with claude.nix's
-        # ANTHROPIC_MODEL (both write ~/.claude/settings.json). Default is
-        # claude-opus-4-8 (routes via the LiteLLM proxy). The fast/small
-        # tier (ANTHROPIC_SMALL_FAST_MODEL) is claude-sonnet-5, set by
-        # claude.nix. Also writes CLAUDE_THINKING_EFFORT into the env
-        # block, and permissions.deny rules for destructive git/shell ops.
-        CLAUDE_SETTINGS="${config.home.homeDirectory}/.claude/settings.json"
-        if [ -f "$CLAUDE_SETTINGS" ]; then
-          ${pkgs.jq}/bin/jq '
-            .model = "claude-opus-4-8"
-            | .env.CLAUDE_THINKING_EFFORT = "high"
-            | .env.ANTHROPIC_THINKING_EFFORT = "high"
-            | .env.CLAUDE_CODE_ENABLE_TELEMETRY = "false"
-            | .env.DISABLE_TELEMETRY = "true"
-            | .env.DISABLE_ERROR_REPORTING = "true"
-            | .env.DISABLE_BUG_COMMAND = "true"
-            | .env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "true"
-            | .permissions.deny = (
-                (.permissions.deny // []) + [
-                  "Bash(rm -rf *)",
-                  "Bash(rm -fr *)",
-                  "Bash(rm -Rf *)",
-                  "Bash(rm --recursive *)",
-                  "Bash(git push --force*)",
-                  "Bash(git push --force-with-lease*)",
-                  "Bash(git push -f *)",
-                  "Bash(git push *-f *)",
-                  "Bash(git push *--force*)",
-                  "Bash(git reset --hard*)",
-                  "Bash(git filter-branch*)",
-                  "Bash(git filter-repo*)",
-                  "Bash(curl * | bash*)",
-                  "Bash(curl * | sh*)",
-                  "Bash(wget * | bash*)",
-                  "Bash(wget * | sh*)",
-                  "Bash(mkfs *)",
-                  "Bash(dd * of=/dev/*)"
-                ] | unique
-              )
-          ' "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
-            && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
-        fi
-
-        # Update kiro-cli's chat.defaultModel to opus 4.8 and force
-        # telemetry off (kiro ships with telemetry ENABLED by default — it
-        # phones home to Amazon unless telemetry.enabled is false). cli.json
-        # is a mutable state file, so create it if missing and patch it
-        # otherwise. kiro uses its own model namespace with a dot
-        # (claude-opus-4.8) which maps internally to us.anthropic.claude-opus-4-8.
-        KIRO_CLI="${config.home.homeDirectory}/.kiro/settings/cli.json"
-        ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$KIRO_CLI")"
-        if [ ! -f "$KIRO_CLI" ]; then
-          echo '{}' > "$KIRO_CLI"
-        fi
-        ${pkgs.jq}/bin/jq '
-          ."chat.defaultModel" = "claude-opus-5-5"
-          | ."telemetry.enabled" = false
-        ' "$KIRO_CLI" > "$KIRO_CLI.tmp" \
-          && mv "$KIRO_CLI.tmp" "$KIRO_CLI"
+                # Keep Claude Code's selected model in sync with claude.nix's
+                # ANTHROPIC_MODEL (both write ~/.claude/settings.json). Default is
+                # claude-opus-4-8 (routes via the LiteLLM proxy). The fast/small
+                # tier (ANTHROPIC_SMALL_FAST_MODEL) is claude-sonnet-5, set by
+                # claude.nix. Also writes CLAUDE_THINKING_EFFORT into the env
+                # block, and permissions.deny rules for destructive git/shell ops.
+                CLAUDE_SETTINGS="${config.home.homeDirectory}/.claude/settings.json"
+                if [ -f "$CLAUDE_SETTINGS" ]; then
+                  ${pkgs.jq}/bin/jq '
+                    .model = "claude-opus-4-8"
+                    | .env.CLAUDE_THINKING_EFFORT = "high"
+                    | .env.ANTHROPIC_THINKING_EFFORT = "high"
+                    | .env.CLAUDE_CODE_ENABLE_TELEMETRY = "false"
+                    | .env.DISABLE_TELEMETRY = "true"
+                    | .env.DISABLE_ERROR_REPORTING = "true"
+                    | .env.DISABLE_BUG_COMMAND = "true"
+                    | .env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "true"
+                    | .permissions.deny = (
+                        (.permissions.deny // []) + [
+                          "Bash(rm -rf *)",
+                          "Bash(rm -fr *)",
+                          "Bash(rm -Rf *)",
+                          "Bash(rm --recursive *)",
+                          "Bash(git push --force*)",
+                          "Bash(git push --force-with-lease*)",
+                          "Bash(git push -f *)",
+                          "Bash(git push *-f *)",
+                          "Bash(git push *--force*)",
+                          "Bash(git reset --hard*)",
+                          "Bash(git filter-branch*)",
+                          "Bash(git filter-repo*)",
+                          "Bash(curl * | bash*)",
+                          "Bash(curl * | sh*)",
+                          "Bash(wget * | bash*)",
+                          "Bash(wget * | sh*)",
+                          "Bash(mkfs *)",
+                          "Bash(dd * of=/dev/*)"
+                        ] | unique
+                      )
+                  ' "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
+                    && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+                fi
+        ${lib.optionalString cfg.servers.agent-memory.enable ''
+                # memelord -> agent-memory: `memelord init` wrote its SessionStart/
+                # Stop/SessionEnd hooks into this user-managed file, so a switch has
+                # to take them out. Every other hook is kept; ours is written once.
+                if [ -f "$CLAUDE_SETTINGS" ]; then
+                  ${pkgs.jq}/bin/jq --arg cmd "${agentMemorySessionStart}" ".hooks = ((.hooks // {}) | with_entries(.value |= (map(.hooks |= map(select((.command // \"\") | test(\"memelord hook|agent-memory-session-start\") | not))) | map(select((.hooks | length) > 0)))) | with_entries(select((.value | length) > 0)) | .SessionStart = ((.SessionStart // []) + [{hooks: [{type: \"command\", command: \$cmd, timeout: 10}]}]))" \
+                    "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
+                    && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+                fi
+              ''}
+                # Update kiro-cli's chat.defaultModel to opus 4.8 and force
+                # telemetry off (kiro ships with telemetry ENABLED by default — it
+                # phones home to Amazon unless telemetry.enabled is false). cli.json
+                # is a mutable state file, so create it if missing and patch it
+                # otherwise. kiro uses its own model namespace with a dot
+                # (claude-opus-4.8) which maps internally to us.anthropic.claude-opus-4-8.
+                KIRO_CLI="${config.home.homeDirectory}/.kiro/settings/cli.json"
+                ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$KIRO_CLI")"
+                if [ ! -f "$KIRO_CLI" ]; then
+                  echo '{}' > "$KIRO_CLI"
+                fi
+                ${pkgs.jq}/bin/jq '
+                  ."chat.defaultModel" = "claude-opus-5-5"
+                  | ."telemetry.enabled" = false
+                ' "$KIRO_CLI" > "$KIRO_CLI.tmp" \
+                  && mv "$KIRO_CLI.tmp" "$KIRO_CLI"
       ''
     );
   };
