@@ -33,6 +33,8 @@
 
     # Shared agent memory (mcp-memory-service) for every host's agents.
     ./agent-memory.nix
+    # Shared Cedar policy store for every host's agents.
+    ./cedar-store.nix
   ];
 
   boot = {
@@ -109,6 +111,11 @@
     enable = true;
     listenAddress = "100.64.0.7"; # meh's tailnet address; never the LAN
     backupDir = "/home/gburd/.local/share/agent-memory-backup";
+  };
+
+  services.cedarStore = {
+    enable = true;
+    listenAddress = "100.64.0.7"; # meh's tailnet address; never the LAN
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";

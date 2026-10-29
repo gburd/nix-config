@@ -111,6 +111,12 @@ let
 
         [write]
         allow = ["**"]
+  '' + lib.optionalString (cfg.cedarStoreUrl != null) ''
+
+        [cedar]
+        engine = "cedar"
+        agent_url = "${cfg.cedarStoreUrl}"
+        sync_interval_secs = 300
   '';
 in
 {
@@ -130,6 +136,18 @@ in
       type = types.package;
       default = pkgs.maki;
       description = "The maki package to wrap and install";
+    };
+
+    cedarStoreUrl = mkOption {
+      type = types.nullOr types.str;
+      default = "http://meh.ts.burd.me:8180";
+      description = ''
+        Shared cedar-store (nixos/workstation/meh/cedar-store.nix). When set,
+        maki uses Cedar: it syncs the policy set from here and evaluates it in
+        process. Cedar replaces the permissions.toml rules, so the policy set
+        (cedar-policies.nix) carries the same bash and file rules. null keeps
+        the builtin engine.
+      '';
     };
 
     litellmUrl = mkOption {

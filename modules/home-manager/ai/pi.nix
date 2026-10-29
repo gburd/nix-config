@@ -2,6 +2,19 @@
 let
   cfg = config.programs.ai.pi;
   agentMemory = config.programs.ai.mcps.enable && config.programs.ai.mcps.servers.agent-memory.enable;
+
+  # Cedar permissions extension (pi-extensions/cedar): the official Cedar 4
+  # WASM build has no dependencies, so the npm tarball is a fixed input.
+  cedarWasm = pkgs.fetchurl {
+    url = "https://registry.npmjs.org/@cedar-policy/cedar-wasm/-/cedar-wasm-4.14.0.tgz";
+    hash = "sha256-hErutxUDUL3etICluyepxWsr8XDPXljxNh0cIITophk=";
+  };
+  cedarExtension = pkgs.runCommand "pi-cedar-extension" { } ''
+    mkdir -p $out/node_modules/@cedar-policy/cedar-wasm
+    tar -xzf ${cedarWasm} -C $out/node_modules/@cedar-policy/cedar-wasm --strip-components=1
+    cp ${./pi-extensions/cedar/index.ts} $out/index.ts
+    cp ${./pi-extensions/cedar/package.json} $out/package.json
+  '';
   inherit (lib) mkEnableOption mkOption types;
 
   settingsJson = builtins.toJSON {
@@ -180,6 +193,7 @@ in
         if agentMemory then ./pi-extensions/agent-memory.ts else ./pi-extensions/memelord.ts;
       ".pi/agent/extensions/project-context.ts".source = ./pi-extensions/project-context.ts;
       ".pi/agent/extensions/safety-hooks.ts".source = ./pi-extensions/safety-hooks.ts;
+      ".pi/agent/extensions/cedar".source = cedarExtension;
     };
 
     # Refresh pi's npm-installed extension deps on every switch. Our OWN

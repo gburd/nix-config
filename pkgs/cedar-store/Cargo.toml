@@ -1,0 +1,16 @@
+[package]
+name = "cedar-store"
+version = "0.1.0"
+edition = "2024"
+description = "Minimal Cedar 4 policy store with the cedar-agent read API (for maki and the pi cedar extension)"
+license = "MIT"
+
+[dependencies]
+cedar-policy = "4.14"
+tiny_http = "0.12"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+strip = true
+lto = "thin"

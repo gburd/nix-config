@@ -1,0 +1,6 @@
+{
+  "name": "pi-cedar",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@cedar-policy/cedar-wasm": "4.14.0" }
+}

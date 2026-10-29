@@ -20,6 +20,7 @@
     inherit (pkgs.unstable) rustPlatform;
     maki-src = inputs.maki-src or null;
   };
+  cedar-store = pkgs.callPackage ./cedar-store { };
   nix-inspect = pkgs.callPackage ./nix-inspect { };
   memelord = pkgs.callPackage ./memelord { };
   tly = pkgs.callPackage ./tly { };
