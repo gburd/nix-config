@@ -89,8 +89,19 @@ in
         hosts = [ "floki" "arnold" "werk" "meh" ];
         sessionRoots = false;
         ignores = [
-          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
-          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+          "improv"
+          "improv-libc"
+          "libdb"
+          "libxtc"
+          "mentat"
+          "nix-config"
+          "osv"
+          "pg_tre"
+          "pg_tre-announce"
+          "pg_weave"
+          "ra"
+          "solnix"
+          "postgres"
         ];
       }
     ];
@@ -103,8 +114,19 @@ in
         path = "~/ws";
         hosts = [ "floki" "arnold" "werk" "meh" ];
         exclude = [
-          "improv" "improv-libc" "libdb" "libxtc" "mentat" "nix-config"
-          "osv" "pg_tre" "pg_tre-announce" "pg_weave" "ra" "solnix" "postgres"
+          "improv"
+          "improv-libc"
+          "libdb"
+          "libxtc"
+          "mentat"
+          "nix-config"
+          "osv"
+          "pg_tre"
+          "pg_tre-announce"
+          "pg_weave"
+          "ra"
+          "solnix"
+          "postgres"
         ];
       }
       {
@@ -171,6 +193,9 @@ in
 
   # Proton Drive (rclone native protondrive backend; on-demand FUSE mount).
   services.protonDrive.enable = true;
+  # floki's bridge vault lives in the GNOME login keyring; never start it
+  # before the desktop login unlocks that keyring.
+  services.protonmailBridge.requireKeyring = true;
 
   # GNOME configuration
   dconf.settings = {

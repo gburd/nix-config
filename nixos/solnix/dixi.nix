@@ -39,15 +39,10 @@
   environment.systemPackages = with pkgs.solnix; [ git home-manager solnix-dev-full ];
   system.buildCapable = true;
 
-  # Crash dumps: DISABLED by default. The dump device is pool- and size-
-  # specific (the DP AMI roots on `spool`, ~7.5 GiB, not `rpool`; an 8 GiB
-  # dump zvol doesn't fit until the pool is expanded onto the 32 GiB EBS root
-  # and/or the instance-store NVMe). Re-enable per deployment once a dump zvol
-  # exists, e.g.:
-  #   zpool set autoexpand=on spool && zpool online -e spool c1t1d0
-  #   zfs create -V 8G spool/dump
-  # then set enable = true and device = "/dev/zvol/dsk/spool/dump".
-  solnix.dumpadm.enable = false;
+  # Crash dumps: the DP image's root pool fills its EBS volume, and site/solnix-dump-size sizes spool/dump to the
+  # instance at boot (half of RAM, 1..16G, at most a quarter of the pool: 7G on 31.5G; solnix b33bdcb), so the
+  # generation only has to name it.
+  solnix.dumpadm = { enable = true; device = "/dev/zvol/dsk/spool/dump"; };
   solnix.coreadm.developerUsers = [ "gburd" ];
 
   environment.enableDebugInfo = true;
@@ -56,13 +51,12 @@
   # illumos has no wheel, so name the admin.
   nix.settings.trusted-users = [ "root" "gburd" ];
 
-  # The two 1.3 TB instance-store NVMe disks: scratch, striped, WIPED on every stop
-  # (a reboot keeps them). solnix-ephemeral-pool recreates `data` on the next boot when
-  # both disks are blank and refuses if either holds a label. Big build trees go here
-  # (build-dir), not on the 7.5 GiB spool.
+  # The instance-store NVMe: scratch, WIPED on every stop (a reboot keeps it). solnix-ephemeral-pool recreates `data`
+  # on the next boot when the disk is blank and refuses if it holds a label. Big build trees go here (build-dir).
+  # dixi is an m6idn.8xlarge since the 2026-10-29 relaunch: ONE 1.7 TB instance-store disk (the old m6idn.12xlarge had two).
   solnix.ephemeralPool = {
     enable = true;
-    disks = [ "c2t1d0" "c3t1d0" ];
+    disks = [ "c2t1d0" ];
     datasets = {
       home-gburd-ws = { mountpoint = "/home/gburd/ws"; owner = "gburd:staff"; };
       home-gburd-src = { mountpoint = "/home/gburd/src"; owner = "gburd:staff"; };
