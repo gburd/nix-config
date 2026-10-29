@@ -110,12 +110,28 @@ let
     "Path .git/config.lock"
     "Path .git/index.lock"
     "Path .git/HEAD.lock"
+    # Repos nested deeper than one level (pgesq/agora_ex, aether/_/db): `Path
+    # */.git/x` only matches ONE leading component, so their .git internals
+    # were synced and failed to apply against the peer's own .git (224 failed
+    # items and ~9k leftover .unison.*.tmp dirs on werk, 2026-10-29). Unison
+    # regexes match the whole path, so this covers every depth >= 2.
+    "Regex .+/.+/\\.git/(HEAD|index|objects|refs|logs|packed-refs|ORIG_HEAD|FETCH_HEAD|MERGE_HEAD|COMMIT_EDITMSG|hooks|worktrees|branches|modules|lfs|config\\.lock|index\\.lock|HEAD\\.lock)"
     # The repo's own .git (root of the synced dir) uses unprefixed paths too.
-    "Path .git/HEAD" "Path .git/index" "Path .git/objects" "Path .git/refs"
-    "Path .git/logs" "Path .git/packed-refs" "Path .git/ORIG_HEAD"
-    "Path .git/FETCH_HEAD" "Path .git/MERGE_HEAD" "Path .git/COMMIT_EDITMSG"
-    "Path .git/hooks" "Path .git/worktrees" "Path .git/branches"
-    "Path .git/modules" "Path .git/lfs"
+    "Path .git/HEAD"
+    "Path .git/index"
+    "Path .git/objects"
+    "Path .git/refs"
+    "Path .git/logs"
+    "Path .git/packed-refs"
+    "Path .git/ORIG_HEAD"
+    "Path .git/FETCH_HEAD"
+    "Path .git/MERGE_HEAD"
+    "Path .git/COMMIT_EDITMSG"
+    "Path .git/hooks"
+    "Path .git/worktrees"
+    "Path .git/branches"
+    "Path .git/modules"
+    "Path .git/lfs"
   ];
   baseIgnores = [
     "Name .memelord" # live SQLite DB -- see header
@@ -143,7 +159,12 @@ let
   mkPairService = entry: peer:
     let
       a = abs entry.path;
-      ignores = baseIgnores ++ (map (i: "Name ${i}") entry.ignores);
+      # `Path` (relative to the root), not `Name`: an entry's ignores name its
+      # top-level children (repos synced on their own, or not at all). `Name
+      # ra` also hid every nested `ra` -- nixpkgs-solnix/pkgs/by-name/ra (167
+      # files), osv_1/include/osv, dbsql/deps/libdb -- which never reached
+      # the peers (found 2026-10-29).
+      ignores = baseIgnores ++ (map (i: "Path ${i}") entry.ignores);
       ignoreArgs = lib.concatMapStringsSep " " (p: "-ignore ${lib.escapeShellArg p}") ignores;
       # The roots that travel together for this directory. With
       # sessionRoots = true (default) that is the project tree PLUS its pi and
@@ -153,17 +174,21 @@ let
       # handled by the separate sessionTrees mechanism (mkSessionService).
       roots = [ a ]
         ++ lib.optionals entry.sessionRoots [
-          "${config.home.homeDirectory}/.pi/agent/sessions/${piSlug a}"
-          "${config.home.homeDirectory}/.claude/projects/${claudeSlug a}"
-        ];
+        "${config.home.homeDirectory}/.pi/agent/sessions/${piSlug a}"
+        "${config.home.homeDirectory}/.claude/projects/${claudeSlug a}"
+      ];
       sshUser = entry.sshUser or "gburd";
       sshArgs = "-o IdentitiesOnly=yes -i ${config.home.homeDirectory}/.ssh/id_ed25519";
       # Common unison flags. Paths are identical on both sides (same $HOME),
+      # `-perms 0o111` syncs only the executable bits: `-perms 0` dropped +x
+      # on every script a peer received (werk: libumem showed 123 files as
+      # mode-changed after the repo was rehydrated, 2026-10-29), while full
+      # perms would fight umask differences between hosts.
       # so local root == remote root for each of the three.
       commonArgs = root: ''\
           ${lib.escapeShellArg root} \
           "ssh://${sshUser}@${peer}.ts.burd.me/${root}" \
-          -batch -prefer newer -times -perms 0 -auto \
+          -batch -prefer newer -times -perms 0o111 -auto \
           -sshargs ${lib.escapeShellArg sshArgs} \
           -servercmd ${lib.escapeShellArg "${pkgs.unison}/bin/unison"} \
           ${ignoreArgs}'';
@@ -275,7 +300,7 @@ let
           if ssh $SSHARGS "$REMOTE" "test -d '$root'" 2>/dev/null; then there=1; fi
           [ "$here" = 0 ] && [ "$there" = 0 ] && return 0
           "$UNISON" "$root" "ssh://$REMOTE/$root" \
-            -batch -prefer newer -times -perms 0 -auto \
+            -batch -prefer newer -times -perms 0o111 -auto \
             -sshargs "$SSHARGS" -servercmd "$UNISON" \
             -ignore 'Path .unison*' \
             || echo "session sync $root -> $PEER failed" >&2
