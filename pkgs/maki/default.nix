@@ -33,7 +33,7 @@ rustPlatform.buildRustPackage {
   # Vendored crates hash. When maki-src advances to a release whose
   # dependency tree changed, this must be updated (the build fails with the
   # expected value); everything else tracks the tag automatically.
-  cargoHash = "sha256-XMUu6fD9nD9ffhB7N0eWkY0w1dIdcih4vmdgudQYb3Q=";
+  cargoHash = "sha256-U6Juxa1eF9xHBvjDTZDDh0smmkK+WfmoNIPjYwC6DRY=";
 
   nativeBuildInputs = [
     pkg-config

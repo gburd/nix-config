@@ -10,20 +10,8 @@ let
 
   litellmKey = "${config.home.homeDirectory}/.config/litellm/keys/maki.key";
 
-  # Maki's dynamic-provider mechanism: drop an executable script at
-  # ~/.maki/providers/<slug>; it must answer the `info`, `models`,
-  # `resolve` subcommands as JSON. With base="anthropic" and a `resolve`
-  # that returns `base_url`, maki routes Anthropic-protocol requests to
-  # whatever URL we give it (the Anthropic provider's hardcoded
-  # `MESSAGES_URL` is overridden by `auth.base_url`).
-  #
-  # The model registry maki's `models` subcommand reports. Kept as a
-  # standalone binding so it can be hashed into the script (cache-bust marker
-  # below) and edited in one place. NOTE: each line is indented to match the
-  # provider script's body indentation -- interpolating a zero-indent line into
-  # that '' string would reset Nix's common-indent stripping to 0, leaving the
-  # heredoc `JSON` terminators indented (they must sit at column 0) and
-  # breaking the script with "here-document delimited by end-of-file".
+  # The models the LiteLLM proxy exposes to maki (litellm.nix). Edit here;
+  # providers.toml below is generated from it.
   makiModelRegistry = ''
     [
       {"id":"claude-opus-5-5", "tier":"strong", "context_window":200000, "max_output_tokens":32000},
@@ -37,68 +25,27 @@ let
       {"id":"claude-haiku-5-5", "tier":"weak",   "context_window":200000, "max_output_tokens":32000}
     ]'';
 
-  # Subcommand contract is documented at
-  # https://github.com/maki-ai/maki/blob/main/site/docs/content/providers/_index.md#dynamic-providers
-  litellmProviderScript = pkgs.writeShellScript "maki-litellm-provider" ''
-    set -eu
-    # Cache-bust marker: maki caches this script's `info`/`models` output in
-    # ~/.maki/provider-scripts.json keyed on the script's (mtime, size). Nix
-    # store files all carry a CONSTANT mtime (epoch 1), so mtime never changes
-    # between generations -- leaving size as the only discriminator. An edit
-    # that preserves byte-size (e.g. reordering two same-length model lines)
-    # was therefore invisible to maki, which kept serving a stale model list.
-    # Embedding a hash of the model list guarantees the size/content changes
-    # whenever the list does, so the cache always invalidates.
-    # model-list-hash: ${builtins.hashString "sha256" makiModelRegistry}
-    case "''${1:-}" in
-      info)
-        # has_auth=true so maki invokes `resolve` to discover base_url +
-        # x-api-key. system_prefix is empty; the system prompt comes from
-        # the agent's instructions.md.
-        cat <<'JSON'
-    { "display_name": "LiteLLM", "base": "anthropic", "has_auth": true }
-    JSON
-        ;;
-      models)
-        # Mirror the Anthropic models we expose on the LiteLLM proxy
-        # (modules/home-manager/ai/litellm.nix). Tier mapping is just
-        # cost-bracket; the first model per tier is what /new picks.
-        # Models the proxy doesn't actually expose (e.g. the dropped
-        # legacy ones) are intentionally absent. Source: makiModelRegistry.
-        cat <<'JSON'
-    ${lib.replaceStrings [ "\n" ] [ "\n    " ] makiModelRegistry}
-    JSON
-        ;;
-      resolve)
-        # Read the per-host LiteLLM virtual key fresh each time maki
-        # spawns a new agent (re-resolve on /new, retry, session load).
-        # Mode-600 file populated by litellm.service's mint-keys
-        # ExecStartPost; never logged or echoed.
-        if [ ! -r "${litellmKey}" ]; then
-          echo "litellm provider: ${litellmKey} not readable; is litellm.service running?" >&2
-          exit 78  # EX_CONFIG
-        fi
-        KEY=$(${pkgs.coreutils}/bin/cat "${litellmKey}")
-        # Maki's Anthropic provider sees `base_url` as the FULL request
-        # endpoint (it does not append /v1/messages). The proxy exposes
-        # the Anthropic protocol there.
-        ${pkgs.jq}/bin/jq -n --arg key "$KEY" '{
-          base_url: "${cfg.litellmUrl}/v1/messages",
-          headers: { "x-api-key": $key }
-        }'
-        ;;
-      login|logout|refresh)
-        # No-op: auth lives in litellm.service-managed keyfiles, not
-        # interactive flows. Maki re-runs `resolve` on every new agent
-        # spawn, so a rotated key picks up automatically.
-        echo '{}'
-        ;;
-      *)
-        echo "unknown subcommand: ''${1:-<empty>}" >&2
-        exit 64  # EX_USAGE
-        ;;
-    esac
-  '';
+  # maki 0.6 dropped provider scripts (~/.maki/providers/<slug>); a custom
+  # Anthropic-protocol provider in providers.toml replaces it. The key comes
+  # from LITELLM_API_KEY, which the wrapper below reads from the per-host
+  # LiteLLM key file at launch (maki has no key-file option).
+  makiModels = builtins.fromJSON makiModelRegistry;
+  providersToml = ''
+    [litellm]
+    display_name = "LiteLLM"
+    protocol = "anthropic"
+    base_url = "${cfg.litellmUrl}"
+    default_model = "${cfg.defaultModel}"
+  '' + lib.concatMapStrings
+    (m: ''
+
+      [[litellm.models]]
+      id = "${m.id}"
+      tier = "${m.tier}"
+      context_window = ${toString m.context_window}
+      max_output_tokens = ${toString m.max_output_tokens}
+    '')
+    makiModels;
 
   configToml = ''
     [provider]
@@ -206,6 +153,10 @@ in
               AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN \
               AWS_SDK_LOAD_CONFIG \
               LD_PRELOAD
+        if [ -z "''${LITELLM_API_KEY:-}" ] && [ -r "${litellmKey}" ]; then
+          LITELLM_API_KEY=$(${pkgs.coreutils}/bin/cat "${litellmKey}")
+          export LITELLM_API_KEY
+        fi
         exec ${cfg.package}/bin/maki "$@"
       '')
     ];
@@ -220,10 +171,7 @@ in
       # prevents a stale hand-edited copy there from shadowing the correct
       # litellm-routed config (which previously made maki talk to Bedrock
       # directly via leftover ~/.maki/.env creds).
-      ".maki/providers/litellm" = {
-        source = litellmProviderScript;
-        executable = true;
-      };
+      ".config/maki/providers.toml".text = providersToml;
       ".maki/config.toml".text = configToml;
       ".config/maki/config.toml".text = configToml;
       ".config/maki/permissions.toml".text = permissionsToml;
