@@ -194,17 +194,17 @@
     "maki-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1790019147,
-        "narHash": "sha256-gbYSO9I6BDOmG8HN9yV5YhIKZTqztaMjnPtUzD9uF0U=",
+        "lastModified": 1793283452,
+        "narHash": "sha256-L+2ndjcyytNSyJO3/7cAKfmKI+vqBEXm5j7L9gL3pgg=",
         "owner": "gburd",
         "repo": "maki",
-        "rev": "6767244a3acf2c883d111bf24b01418bb3a74c1f",
+        "rev": "13ddea010fce905506ffb9a6f1004a3bbbdec75c",
         "type": "github"
       },
       "original": {
         "owner": "gburd",
         "repo": "maki",
-        "rev": "6767244a3acf2c883d111bf24b01418bb3a74c1f",
+        "rev": "13ddea010fce905506ffb9a6f1004a3bbbdec75c",
         "type": "github"
       }
     },
@@ -584,11 +584,11 @@
         "solnix-pkgs": "solnix-pkgs"
       },
       "locked": {
-        "lastModified": 1793296381,
-        "narHash": "sha256-AWkHoXQr4IjNCd4x3SHFoNNhlamRxnTjlaqlNVeu9sU=",
+        "lastModified": 1793302693,
+        "narHash": "sha256-kkPQclqiW5yaFlEo9zb4xHk+kicwW5C/yMVDRuSzHO8=",
         "ref": "main",
-        "rev": "28a179e8334f8e952da77334349739cbd7f87a32",
-        "revCount": 1169,
+        "rev": "d98785b29ba5fbe76bff39756166520ad6dee960",
+        "revCount": 1172,
         "type": "git",
         "url": "https://codeberg.org/solnix/solnix.git"
       },
