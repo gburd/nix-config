@@ -5,9 +5,14 @@
 # ./bash-allowlist.nix and the file deny lists below.
 #
 # Model (maki-cedar): principal Agent::"<agent>", action Action::"invoke",
-# resource Tool::"<tool key>", context { tool, scope }. A forbid denies (and
-# wins), a permit allows, and no match falls back to the agent's own default.
-# `~/` in a scope pattern is expanded to $HOME by the evaluating agent.
+# resource Tool::"<tool key>", context { tool, scope, project }. A forbid
+# denies (and wins), a permit allows, and no match falls back to the agent's
+# own default. `~/` in a scope pattern is expanded to $HOME by the evaluating
+# agent. `project` is the agent's cwd relative to $HOME (ws/postgres/undo).
+#
+# Per-project rules live in `projects` below. Cedar's deny always wins, so a
+# project can only narrow a global forbid through that forbid's `unless`
+# clause (generated here), never with a permit of its own.
 let
   bashAllowlist = import ./bash-allowlist.nix { inherit lib; };
 
@@ -21,13 +26,60 @@ let
     in
     "${lib.substring 0 24 word}-${lib.substring 0 8 (builtins.hashString "sha256" s)}";
 
-  policy = { id, effect, tool, scope ? null }:
+  policy = { id, effect, tool, scope ? null, unless ? null }:
     let
       when = lib.optionalString (scope != null) " when { context.scope like \"${esc scope}\" }";
+      unl = lib.optionalString (unless != null) " unless { ${unless} }";
     in
-    "@id(\"${id}\")\n${effect}(principal, action, resource == Tool::\"${tool}\")${when};\n";
+    "@id(\"${id}\")\n${effect}(principal, action, resource == Tool::\"${tool}\")${when}${unl};\n";
 
-  bashDeny = map (p: policy { id = "bash-deny-${slug p}"; effect = "forbid"; tool = "bash"; scope = p; }) bashAllowlist.makiDeny;
+  # Per-project rules, keyed by context.project (cwd relative to $HOME).
+  projects = {
+    # Projects whose workflow rebases and re-pushes review branches (patch
+    # series, CF branches): a leased force push is allowed there and nowhere
+    # else; the bare form stays denied everywhere. Replaces the per-project
+    # `.envrc` opt-in (`use git_policy allow-force-push`), which only pi saw.
+    forcePushWithLease = [
+      "ws/dbsql"
+      "ws/improv"
+      "ws/larql"
+      "ws/libdb"
+      "ws/libdtfl"
+      "ws/libxtc"
+      "ws/lime"
+      "ws/mentat"
+      "ws/min-heap"
+      "ws/nix-config"
+      "ws/osv"
+      "ws/part_hash"
+      "ws/pcompress"
+      "ws/pgesq"
+      "ws/pure-lang"
+      "ws/queue"
+      "ws/solnix"
+      "ws/postgres/bcs"
+      "ws/postgres/bits"
+      "ws/postgres/catam"
+      "ws/postgres/catup"
+      "ws/postgres/idxam"
+      "ws/postgres/master"
+      "ws/postgres/nbtkpc"
+      "ws/postgres/ntsv"
+      "ws/postgres/tepid"
+      "ws/postgres/toast"
+      "ws/postgres/undo"
+    ];
+  };
+  # One set-membership test, not an `||` chain: Cedar's evaluator has a
+  # nesting limit, and 56 `||` terms hit "recursion limit reached", which
+  # makes the policy error and silently NOT apply (found 2026-10-30). Exact
+  # project only: a subdirectory cwd gets no carve-out (fails closed).
+  inProjects = ps: "[${lib.concatMapStringsSep ", " (p: "\"${esc p}\"") ps}].contains(context.project)";
+  leaseUnless = "context has project && (${inProjects projects.forcePushWithLease}) && context.scope like \"git push --force-with-lease*\"";
+  # Only the patterns that match a leased push get the carve-out.
+  unlessFor = p: if lib.elem p [ "git push --force*" "git push *--force*" "git push --force-with-lease*" ] then leaseUnless else null;
+
+  bashDeny = map (p: policy { id = "bash-deny-${slug p}"; effect = "forbid"; tool = "bash"; scope = p; unless = unlessFor p; }) bashAllowlist.makiDeny;
   bashAllow = map (p: policy { id = "bash-allow-${slug p}"; effect = "permit"; tool = "bash"; scope = p; }) bashAllowlist.makiAllow;
 
   # Credentials and shell init: never read or edited by an agent.
@@ -56,6 +108,7 @@ let
 in
 {
   text = header + lib.concatStrings (bashDeny ++ fileDeny ++ bashAllow);
+  inherit projects;
   counts = {
     forbid = builtins.length bashDeny + builtins.length fileDeny;
     permit = builtins.length bashAllow;

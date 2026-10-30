@@ -28,7 +28,7 @@ import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { homedir } from "node:os";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 type Policy = { id: string; content: string };
@@ -51,6 +51,17 @@ const cedar = createRequire(join(here, "index.ts"))("@cedar-policy/cedar-wasm/no
 /** maki stores `~/...` scopes; tools send absolute paths. Expand at load. */
 function expandHome(src: string): string {
   return src.replaceAll('like "~/', `like "${HOME.replace(/\/$/, "")}/`);
+}
+
+/**
+ * context.project, spelled as maki_cedar::project_of spells it: the cwd
+ * relative to $HOME, "~" at $HOME, the absolute path outside it.
+ */
+export function projectOf(cwd: string, home: string = HOME): string {
+  const rel = relative(home, cwd);
+  if (rel === "") return "~";
+  if (rel.startsWith("..") || isAbsolute(rel)) return cwd;
+  return rel.split(sep).join("/");
 }
 
 /** Policies keyed by store id: Cedar then reports that id as the deny reason. */
@@ -152,13 +163,13 @@ export default function (pi: ExtensionAPI) {
     await sync();
   });
 
-  const decide = (tool: string, scope: string): { deny: string } | null => {
+  const decide = (tool: string, scope: string, project: string): { deny: string } | null => {
     if (!policies) return null;
     const r = cedar.isAuthorized({
       principal: { type: "Agent", id: "pi" },
       action: { type: "Action", id: "invoke" },
       resource: { type: "Tool", id: tool },
-      context: { tool, scope },
+      context: { tool, scope, project },
       policies: { staticPolicies: policies },
       entities: [{ uid: { type: "Tool", id: tool }, attrs: { name: tool }, parents: [] }],
     });
@@ -196,7 +207,7 @@ export default function (pi: ExtensionAPI) {
       if (tool) checks = [[`${server}.${tool}`, "*"]];
     }
     for (const [tool, scope] of checks) {
-      const d = decide(tool, scope);
+      const d = decide(tool, scope, projectOf(ctx.cwd));
       if (d) {
         return {
           block: true,

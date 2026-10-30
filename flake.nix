@@ -155,7 +155,7 @@
     # newest tag, and refresh pkgs/maki cargoHash. Not a flake itself;
     # consumed as a source tree, threaded in via pkgs/default.nix.
     maki-src = {
-      url = "github:gburd/maki/2d13e08882dec3c04e0a311bda00e963f3102228";
+      url = "github:gburd/maki/429f03329f96ed677c79b0bb396dc2b3d7c5c123";
       flake = false;
     };
 

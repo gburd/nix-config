@@ -3,7 +3,7 @@
  *
  * Replicates Claude Code's PreToolUse safety checks:
  * - Block rm -rf (suggest trash instead)
- * - Block force push
+ * - Force push: decided by the Cedar policy set (see the cedar extension)
  * - Warn on sensitive directory edits
  * - Validate sub-agent dispatch model IDs against known-good
  *   Bedrock cross-region inference profiles
@@ -58,22 +58,13 @@ export default function (pi: ExtensionAPI) {
       // Block direct push to main/master
       // REMOVED per user request; push to main/master is permitted.
 
-      // Block force push, UNLESS this project's .envrc opted in via
-      // `use git_policy allow-force-push` (see home-manager/_mixins/cli/
-      // direnv.nix) AND the command uses --force-with-lease specifically.
-      // --force-with-lease still fails if the remote moved since your last
-      // fetch (protects against clobbering a concurrent push); bare
-      // --force has no such check and stays blocked even with the opt-in.
+      // Bare --force is always blocked here, even with no Cedar policy set
+      // loaded. Whether a leased force push is allowed is per project, in the
+      // Cedar policy set (cedar extension; nix-config cedar-policies.nix).
       if (/git\s+push.*--force\b(?!-with-lease)/.test(command)) {
         return {
           block: true,
           reason: "BLOCKED: Never use bare --force. Use --force-with-lease instead (protects against clobbering a concurrent remote push).",
-        };
-      }
-      if (/git\s+push.*--force-with-lease/.test(command) && !process.env.PI_ALLOW_FORCE_PUSH) {
-        return {
-          block: true,
-          reason: "BLOCKED: --force-with-lease not allowed in this project. Opt in via 'use git_policy allow-force-push' in .envrc if this project's workflow genuinely needs it.",
         };
       }
 

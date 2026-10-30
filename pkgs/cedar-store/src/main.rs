@@ -249,7 +249,7 @@ mod tests {
     const SCHEMA: &str = r#"
 entity Agent;
 entity Tool = { "name": String };
-action invoke appliesTo { principal: [Agent], resource: [Tool], context: { "scope": String, "tool": String } };
+action invoke appliesTo { principal: [Agent], resource: [Tool], context: { "project": String, "scope": String, "tool": String } };
 "#;
 
     fn app(policies: &[(&str, &str)]) -> App {
@@ -274,7 +274,7 @@ action invoke appliesTo { principal: [Agent], resource: [Tool], context: { "scop
                 principal: r#"Agent::"maki""#.into(),
                 action: r#"Action::"invoke""#.into(),
                 resource: format!(r#"Tool::"{tool}""#),
-                context: serde_json::json!({ "tool": tool, "scope": scope }),
+                context: serde_json::json!({ "tool": tool, "scope": scope, "project": "ws/x" }),
             })
             .unwrap();
         (v["decision"].as_str().unwrap().to_string(), v["matched"].as_bool().unwrap())
