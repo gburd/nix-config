@@ -795,7 +795,9 @@
         (setq-default eglot-workspace-configuration
                       '(:harper-ls (:isolateEnglish t
                                     :linters (:SplitWords :json-false
-                                              :SentenceCapitalization :json-false)))))
+                                              :SentenceCapitalization :json-false
+                                              ;; two spaces after a sentence is the house style
+                                              :NoFrenchSpaces :json-false)))))
     #+end_src
 
 *** Flycheck

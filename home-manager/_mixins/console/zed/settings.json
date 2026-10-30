@@ -213,7 +213,9 @@
           "isolateEnglish": true,
           "linters": {
             "SplitWords": false,
-            "SentenceCapitalization": false
+            "SentenceCapitalization": false,
+            // two spaces after a sentence ("French spaces") is the house style
+            "NoFrenchSpaces": false
           }
         }
       }

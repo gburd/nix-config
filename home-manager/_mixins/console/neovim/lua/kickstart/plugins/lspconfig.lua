@@ -292,6 +292,9 @@ return {
                 -- a genuinely lowercase sentence start is no longer
                 -- flagged. Spelling, grammar and the rest still are.
                 SentenceCapitalization = false,
+                -- Two spaces after a sentence ("French spaces") are the
+                -- house style; don't flag them.
+                NoFrenchSpaces = false,
               },
             },
           },
