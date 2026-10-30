@@ -49,7 +49,7 @@ with lib.hm.gvariant;
         name = "nix-config";
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
-        sessionRoots = false;
+        # sessionRoots (default true): its pi/claude sessions travel with it
       }
       {
         # ~/src: project checkouts shared with floki/werk. arnold's old ~/src

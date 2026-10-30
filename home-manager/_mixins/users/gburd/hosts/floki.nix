@@ -60,7 +60,7 @@ in
         name = "nix-config";
         path = "~/ws/nix-config";
         hosts = [ "floki" "meh" "arnold" "werk" ];
-        sessionRoots = false; # the ~/ws/nix-config path has no agent sessions of its own
+        # sessionRoots (default true): its pi/claude sessions travel with it
       }
       {
         # ~/src: the project checkouts shared across floki/werk/arnold. floki
