@@ -29,6 +29,7 @@
     ../../../console/khal.nix
     ../../../services/unison-sync.nix
     ../../../services/unison-ws-repos.nix
+    ../../../console/hub.nix
     # SSH key management with rotation
     (inputs.self + "/modules/home-manager/ssh-management")
   ];

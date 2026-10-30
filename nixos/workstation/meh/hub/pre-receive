@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# git hub pre-receive hook (installed in every gburd@meh:~/hub/<repo>.git).
+#
+# Each pushing host owns refs/hosts/<host>/*: it may create, force-update and
+# delete there. Everything else (shared branches, tags) is fast-forward only
+# and never deleted, so no host can rewrite another's history.
+#
+# The host is the pusher's `git push -o host=<host>` (hub-push sends it). No
+# host -> only shared, fast-forward pushes.
+# shortcut: the host name is self-declared (every host connects with the same
+# personal key), so this stops accidents, not a host spoofing another; per-host
+# keys with `environment="HUB_HOST=..."` in authorized_keys would make it
+# authenticated. Upgrade when the hub moves to the NAS under its own user.
+set -u
+host=""
+if [ "${GIT_PUSH_OPTION_COUNT:-0}" -gt 0 ]; then
+  for i in $(seq 0 $((GIT_PUSH_OPTION_COUNT - 1))); do
+    v=$(eval echo "\${GIT_PUSH_OPTION_$i}")
+    case "$v" in host=*) host=${v#host=} ;; esac
+  done
+fi
+zero=0000000000000000000000000000000000000000
+rc=0
+while read -r old new ref; do
+  case "$ref" in
+    refs/hosts/*)
+      owner=${ref#refs/hosts/}; owner=${owner%%/*}
+      if [ -z "$host" ] || [ "$owner" != "$host" ]; then
+        echo "hub: $ref belongs to host '$owner'; this push is from '${host:-unknown}'" >&2; rc=1
+      fi
+      ;;
+    *)
+      if [ "$new" = "$zero" ]; then
+        echo "hub: refusing to delete shared ref $ref" >&2; rc=1
+      elif [ "$old" != "$zero" ] && ! git merge-base --is-ancestor "$old" "$new" 2>/dev/null; then
+        echo "hub: $ref is shared and fast-forward only (push to refs/hosts/${host:-<host>}/... instead)" >&2; rc=1
+      fi
+      ;;
+  esac
+done
+exit $rc

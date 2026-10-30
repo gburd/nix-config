@@ -35,6 +35,7 @@
     ./agent-memory.nix
     # Shared Cedar policy store for every host's agents.
     ./cedar-store.nix
+    ./hub.nix
   ];
 
   boot = {

@@ -30,6 +30,7 @@ with lib.hm.gvariant;
     ../../../desktop/wezterm.nix
     ../../../services/unison-sync.nix
     ../../../services/unison-ws-repos.nix
+    ../../../console/hub.nix
   ];
 
   # Live sync of chosen project dirs + their pi/claude session state across
