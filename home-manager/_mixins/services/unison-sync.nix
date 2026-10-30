@@ -207,6 +207,9 @@ let
       # The trailing `&` MUST close the final continued line.
       watchOne = root: ''
         ( while :; do
+            # a root absent on both sides (a project with no claude sessions)
+            # seeds to nothing; wait for one instead of failing every 30s
+            until [ -e ${lib.escapeShellArg root} ]; do sleep 300; ${pkgs.unison}/bin/unison ${commonArgs root} >/dev/null 2>&1; done
             ${pkgs.unison}/bin/unison ${commonArgs root} -repeat watch -ui text
             echo "watch ${root} -> ${peer} exited ($?); restarting in 30s" >&2
             sleep 30
