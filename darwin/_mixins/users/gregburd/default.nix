@@ -6,8 +6,6 @@
   environment.systemPackages = with pkgs; [
     # Shells & terminal
     bash
-    fish
-    fishPlugins.foreign-env
     tmux
     neovim
     emacs

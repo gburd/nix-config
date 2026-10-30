@@ -53,18 +53,4 @@ in
     fi
   '';
 
-  programs.fish.interactiveShellInit = ''
-    # /scratch-backed TMPDIR (see home-manager/_mixins/console/scratch.nix).
-    if test -d /scratch/$USER -a -w /scratch/$USER
-      set -l _scratch_tmpdir (${pkgs.coreutils}/bin/mktemp -d /scratch/$USER/tmp-(date +%Y%m%d)-XXXXXX 2>/dev/null)
-      if test -n "$_scratch_tmpdir"
-        set -gx TMPDIR $_scratch_tmpdir
-        set -gx TMP $_scratch_tmpdir
-        set -gx TEMP $_scratch_tmpdir
-        function _scratch_cleanup_on_exit --on-event fish_exit
-          ${pkgs.coreutils}/bin/rmdir $TMPDIR 2>/dev/null
-        end
-      end
-    end
-  '';
 }

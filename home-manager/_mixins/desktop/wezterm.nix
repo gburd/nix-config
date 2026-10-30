@@ -140,8 +140,8 @@ _:
       wezterm.on('window-resized', function(window, _) fix_bottom_padding(window) end)
       wezterm.on('window-config-reloaded', function(window) fix_bottom_padding(window) end)
 
-      -- fish is the interactive shell on these hosts.
-      config.default_prog = { "fish", "-l" }
+      -- bash is the interactive shell on these hosts; -l so ~/.bash_profile runs.
+      config.default_prog = { "bash", "-l" }
 
       -- Behavior.
       config.max_fps = 120

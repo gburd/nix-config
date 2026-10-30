@@ -88,10 +88,6 @@ in
 
   config.environment.systemPackages = [ auto-install-system ];
 
-  programs.fish.interactiveShellInit = ''
-    auto-install-system
-  '';
-
   # allow remote deployments via root user
   users.users.root.openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
 

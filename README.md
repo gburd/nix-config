@@ -54,7 +54,7 @@ EC2 PostgreSQL perf fleet (Colmena): `colmena apply --on @perf` after setting
 each node's `deployment.targetHost`.
 
 Convenience wrappers: `task rebuild-host` / `task rebuild-all` (OS-aware; see
-`Taskfile.yml`) and the `rebuild-*` fish aliases.
+`Taskfile.yml`).
 
 Before switching, validate with `scripts/validate-config.sh` (fmt + statix +
 `nix flake check` + dry builds) or `nix flake check`. CI enforces nixpkgs-fmt,

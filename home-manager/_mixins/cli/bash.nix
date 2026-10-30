@@ -165,4 +165,13 @@ in
     historySize = 10000;
     historyFileSize = 100000;
   };
+
+  # fish was removed. Drop the links earlier generations put in ~/.config/fish
+  # (store symlinks only; user-written regular files there are kept).
+  home.activation.removeFishLinks = lib.mkIf (!config.programs.fish.enable)
+    (lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      if [ -d "$HOME/.config/fish" ]; then
+        run ${pkgs.findutils}/bin/find "$HOME/.config/fish" -type l -lname '/nix/store/*' -delete
+      fi
+    '');
 }

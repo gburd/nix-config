@@ -72,7 +72,6 @@ rustPlatform.buildRustPackage {
     if [ -f target/release/build/maki-*/out/maki.bash ]; then
       installShellCompletion --bash target/release/build/maki-*/out/maki.bash
       installShellCompletion --zsh target/release/build/maki-*/out/_maki
-      installShellCompletion --fish target/release/build/maki-*/out/maki.fish
     fi
   '';
 

@@ -1521,16 +1521,18 @@ let
     '';
   };
 
-  # Shell completion (fish: the interactive shell here).
-  fishCompletion = pkgs.writeText "agent-sandbox.fish" ''
-    complete -c agent-sandbox -f
-    complete -c agent-sandbox -l tier -x -a "firejail docker vm ec2" -d "isolation tier"
-    complete -c agent-sandbox -l mem -x -d "memory cap e.g. 8G"
-    complete -c agent-sandbox -l aws -d "direct-AWS netns (breaks gateway agents)"
-    complete -c agent-sandbox -l ssh -d "forward ssh-agent socket (SSH out; keys stay blocked)"
-    complete -c agent-sandbox -s h -l help -d "show help"
-    complete -c agent-sandbox -n "not __fish_seen_subcommand_from --tier --mem" \
-      -a "pi claude maki kiro gnhf bash" -d "command to sandbox"
+  # Bash completion (bash is the interactive shell here); bash-completion
+  # lazy-loads it from ~/.local/share/bash-completion/completions/.
+  bashCompletion = pkgs.writeText "agent-sandbox.bash" ''
+    _agent_sandbox() {
+      local cur=''${COMP_WORDS[COMP_CWORD]} prev=''${COMP_WORDS[COMP_CWORD-1]}
+      case $prev in
+        --tier) mapfile -t COMPREPLY < <(compgen -W "firejail docker vm ec2" -- "$cur"); return ;;
+        --mem|--aws-profile) return ;;
+      esac
+      mapfile -t COMPREPLY < <(compgen -W "--tier --mem --aws --aws-profile --ssh --help pi claude maki kiro gnhf bash" -- "$cur")
+    }
+    complete -F _agent_sandbox agent-sandbox
   '';
 in
 {
@@ -1645,7 +1647,7 @@ in
       ".config/firejail/agent-aws.profile".source = agentAwsProfile;
       ".config/firejail/agent-aws-creds.profile".source = agentCredsProfile;
       ".config/firejail/agent-ssh.profile".source = agentSshProfile;
-      ".config/fish/completions/agent-sandbox.fish".source = fishCompletion;
+      ".local/share/bash-completion/completions/agent-sandbox".source = bashCompletion;
     };
   };
 }

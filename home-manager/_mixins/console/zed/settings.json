@@ -120,7 +120,7 @@
   // Terminal
   "terminal": {
     "shell": {
-      "program": "fish"
+      "program": "bash"
     },
     "font_family": "JetBrainsMono Nerd Font",
     "font_size": 14,

@@ -130,7 +130,7 @@ in
         openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
 
         packages = [ pkgs.home-manager ];
-        shell = pkgs.fish;
+        shell = pkgs.bash;
       };
       groups.nixos = { };
     };

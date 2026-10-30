@@ -10,8 +10,6 @@
     bazelisk
     direnv
     dive
-    fish
-    fishPlugins.foreign-env
     guile
     jdk11
     lazydocker

@@ -38,13 +38,10 @@
     isNormalUser = true;
     description = "Greg B (secondary WSL user)";
     extraGroups = [ "wheel" "docker" ];
-    shell = pkgs.fish;
+    shell = pkgs.bash;
     # No password: WSL users log in without one (entered via `wsl --user`);
     # sudo is via wheel. Set a hashedPasswordFile here if you want a password.
   };
-
-  # WSL is headless; no desktop. fish is the default shell (matches gburd).
-  programs.fish.enable = true;
 
   # Register in the tailnet as "wix", not the OS hostname "santorini" — the
   # Windows host already owns "santorini" on the tailnet, so this WSL guest

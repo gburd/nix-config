@@ -54,13 +54,6 @@
     fi
   '';
 
-  programs.fish.interactiveShellInit = ''
-    # Initialize rustup (if using rustup)
-    if command -v rustup >/dev/null 2>&1
-      set -gx PATH $HOME/.cargo/bin $PATH
-    end
-  '';
-
   programs.zsh.initExtra = ''
     # Initialize rustup (if using rustup)
     if command -v rustup >/dev/null 2>&1; then

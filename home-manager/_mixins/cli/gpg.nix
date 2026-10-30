@@ -52,8 +52,6 @@ in
       # https://www.gnupg.org/faq/whats-new-in-2.1.html#autostart
       bash.profileExtra = fixGpg;
       bash.initExtra = updateGpgTty;
-      fish.loginShellInit = fixGpg;
-      fish.interactiveShellInit = updateGpgTty;
       zsh.loginExtra = fixGpg;
       zsh.initExtra = updateGpgTty;
 

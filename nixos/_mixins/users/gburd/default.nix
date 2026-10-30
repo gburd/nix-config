@@ -52,6 +52,5 @@ in
 
   # gburd's login shell is bash (see shell = pkgs.bash above and
   # home-manager/_mixins/cli/bash.nix for the interactive config). fish was
-  # the login shell until 2026-10-26; it is removed. programs.fish is left
-  # OFF here.
+  # the login shell until 2026-10-26; it is removed.
 }

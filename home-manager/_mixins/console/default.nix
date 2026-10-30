@@ -1,6 +1,6 @@
 { config, pkgs, inputs, platform, ... }: {
   imports = [
-    ../cli # CLI tools (git, gh, gpg, fish, etc.)
+    ../cli # CLI tools (git, gh, gpg, bash, etc.)
     ../cli/git-common.nix # git identity, aliases, push/pull policy, ignores
     ./neovim
     ./scratch.nix
@@ -189,7 +189,6 @@
     atuin = {
       enable = true;
       enableBashIntegration = true;
-      enableFishIntegration = true;
       flags = [
         "--disable-up-arrow"
       ];
@@ -232,7 +231,6 @@
     dircolors = {
       enable = true;
       enableBashIntegration = true;
-      enableFishIntegration = true;
     };
     direnv = {
       enable = true;
@@ -244,49 +242,6 @@
     eza = {
       enable = true;
       icons = "auto";
-    };
-    fish = {
-      enable = false;
-      shellAliases = {
-        glow = "glow --pager";
-        ip = "ip --color --brief";
-        neofetch = "neowofetch"; # nixpkgs removed the neofetch package in 26.05 (hyfetch's fork provides neowofetch instead)
-        top = "btm --basic --tree --hide_table_gap --dot_marker --process_memory_as_value";
-        tree = "eza --tree";
-      };
-      functions =
-        let
-          doCurl = type: url: "$(curl -L \"${url}\" 2>/dev/null | ${type}sum | awk '{print $1}')";
-          makeSriHasher = type: content: "nix-hash --type ${type} --to-sri ${content}";
-          makeSriUrlHasher = url: type: makeSriHasher type (doCurl type url);
-          makeSriUrlHasherFishFunction = makeSriUrlHasher "$argv[1]";
-        in
-        {
-          shell = ''
-            nix develop $HOME/ws/nix-config#$argv[1] || nix develop $HOME/ws/nix-config#( \
-              git remote -v \
-                | grep '(push)' \
-                | awk '{print $2}' \
-                | cut -d ':' -f 2 \
-                | rev \
-                | sed 's/tig.//' \
-                | rev \
-            )
-          '';
-          is-number = ''
-            string match --quiet --regex "^\d+\$" $argv[1]
-          '';
-          deploy-nuc = "is-number $argv[1] && nixos-rebuild --fast --flake $HOME/ws/nix-config#nuc$argv[1] --target-host root@192.168.40.20$argv[1] $argv[2..]";
-
-          sriMd5Url = makeSriUrlHasherFishFunction "md5";
-          sriSha1Url = makeSriUrlHasherFishFunction "sha1";
-          sriSha256Url = makeSriUrlHasherFishFunction "sha256";
-          sriSha512Url = makeSriUrlHasherFishFunction "sha512";
-        };
-      plugins = with pkgs.fishPlugins; [
-        { name = "foreign-env"; inherit (foreign-env) src; }
-        { name = "fzf"; inherit (fzf-fish) src; }
-      ];
     };
     gh = {
       enable = true;
@@ -352,7 +307,7 @@
         top = "btm --basic --tree --hide_table_gap --dot_marker --process_memory_as_value";
         tree = "eza --tree";
 
-        # Fish-style aliases (ported from fish.nix)
+        # Ported from the old fish config
         clear = "printf '\\033[2J\\033[3J\\033[1;1H'";
         jqless = "jq -C | less -r";
 
@@ -391,13 +346,12 @@
     # fonts, and truncated to 60 cols -- and it fought the bash prompt in
     # cli/bash.nix for PS1, so which one you got depended on PROMPT_COMMAND
     # ordering. The hand-rolled prompt there is pure builtins (no fork beyond
-    # one git call) and matches the fish prompt. Re-enable only if you also
+    # one git call). Re-enable only if you also
     # remove the PS1 assignment in cli/bash.nix.
     powerline-go.enable = false;
     zoxide = {
       enable = true;
       enableBashIntegration = true;
-      enableFishIntegration = true;
     };
   };
 }

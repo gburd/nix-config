@@ -328,7 +328,7 @@ tea issues ls  # Uses current repo
 
 **1. Set up shell aliases:**
 ```bash
-# In ~/.config/fish/config.fish
+# In ~/.bashrc
 alias tpr='tea pulls'
 alias ti='tea issues'
 alias tr='tea repos'
