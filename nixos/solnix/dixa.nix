@@ -15,6 +15,23 @@
 #     through the daemon. The aarch64 rtld gives every shared object's static TLS the same address (solnix
 #     /scratch/solnix/dixa1/tls-finding.md), so a heavily threaded nix can still crash until the image's rtld is fixed.
 #
+# THE HOST NOW (2026-10-30, track dixa3): m6gd.8xlarge (Nitro VM, 32 vCPU, 128 GB) in us-west-2, 54.201.116.95 (private
+#   172.31.16.120, the maintainer's account; not in dixi's VPC), from solnix-ami aarch64 v4 (ami-0e08aa06f629ffbac: m4 + the
+#   Nitro-VM fixes + the full minor_perm; the TLS fix is in its rtld/libc). Disks: c1t1d0 10 GiB EBS (armpool: root AND /nix/store,
+#   so watch its space), c2t1d0 1.7 TB instance store = pool `data` (ws, src, /scratch, /var/tmp, /var/tmp/big), WIPED on stop/start
+#   (kept on reboot): after a stop, `zpool destroy -f data` and redo it. Host key restored from secrets.yaml (dixa_ssh_host_ed25519_key).
+#   gburd@dixa built on dixa through its daemon and activated (needs the braich dev root + /opt/nixboot laid over /: its drvs name
+#   /usr/bin/bash, /usr/gnu, /opt/ooce, /opt/nixboot).
+# Hand-installed until an aarch64 module-system toplevel exists (then these become ./community.nix + modules/config/*):
+#   modules/config/nix.nix       -> nixbld1..32, /etc/nix/nix.conf (as evaluated here), svc:/system/nix-daemon (TMPDIR=/var/tmp/big)
+#   community/census.nix         -> site/solnix-census{,-setup} (as daemon; system aarch64-solaris, builder=true, seeding=false)
+#   community/builder.nix        -> site/solnix-builder in project solnix-builder (cpu-cap 400) + the /etc/project line; the bearer
+#                                   by hand. It plans every queue row OTHER-SYSTEM today: no aarch64 rows on recipes.tsv, and solnix's
+#                                   flake has no packages.aarch64-solaris.
+#   community/seed.nix, cache-proxy.nix: not installed (no solnix-torrent for aarch64).
+#   shell-environment.nix        -> ~/.nix-profile/bin first in /etc/profile.
+# No tailnet: tailscale has no aarch64 illumos build (GOOS=illumos is amd64 only).
+#
 # Headless deliberately: no COSMIC, nothing graphical. This is a build/test node.
 { sshMatrix, ... }:
 
