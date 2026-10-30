@@ -11,6 +11,11 @@
 # when prompted for passphrase, use the value from sops "backup/borg-passphrase"
 { config, lib, pkgs, hostname, ... }:
 let
+  rsyncNetKnownHosts = pkgs.writeText "rsync-net-known-hosts" ''
+    zh6216.rsync.net ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLR2uz+YLn2KiQK0Luu8rhfWS6LHgUfGAWB1j8rM2MKn4KZ2/LhIX1CYkPKMTPxHr6mzayeL1T1hyJIylxXv0BY=
+    zh6216.rsync.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJtclizeBy1Uo3D86HpgD3LONGVH0CJ0NT+YfZlldAJd
+    zh6216.rsync.net ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDPgHxQyaDaVxUefoUJZO/lITh0Gp0sqbP7HejQcCfZi7gAcuM6/IAuUXLHFImefCHh52x6T/cHxgL1qz26GKgdxykl06WRXlRIuE45QFSy/cd9JKr6l58fKq30ApmXRsCNwFrMlFPoEpCTqxzddZ9cLXs1Yt9dRxvFlQVEuAzw7ayvt8DE6RP9/CHYVp54wbbvUToECGwu70sxY1vFg51K+vNpvJ3J0t5j3s4c1Wls4BrIwqi2U8kqCq9Nj2CUIQqjM+93CSqEacR3qOGvG/6QMzd733wzpJ/iZee+lcyTYzA0YNMosnaF01hrv7NMwtZ6xRFLlJZtMZ7JpfySrOBr
+  '';
   # Per-host schedule — stagger the three workstations so they don't fight
   # for the repo lock. Each window is 15 min wide; gaps between hosts are
   # 90 min, enough for a fast incremental run to finish before the next
@@ -273,7 +278,12 @@ let
     #     or permissions" and closes the connection (borg exit 81). We pass
     #     an explicit -i key + all needed options, so the user config is
     #     unnecessary; -F none sidesteps the perms check entirely.
-    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -F none -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o PreferredAuthentications=publickey -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
+    #   UserKnownHostsFile           — rsync.net's host keys, pinned here. With
+    #     -F none and BatchMode a host that never connected interactively had
+    #     nothing to verify against ("Host key verification failed", borg exit
+    #     81): every werk backup failed that way (2026-10-28/29). Keys from
+    #     floki's long-trusted known_hosts, matched by a live keyscan.
+    ssh_command = "${pkgs.openssh_gssapi}/bin/ssh -F none -i ${config.home.homeDirectory}/.config/borgmatic/.rsync-key -o IdentitiesOnly=yes -o IdentityAgent=none -o BatchMode=yes -o PreferredAuthentications=publickey -o UserKnownHostsFile=${rsyncNetKnownHosts} -o StrictHostKeyChecking=yes -o LogLevel=ERROR -o ServerAliveInterval=60 -o ServerAliveCountMax=10";
   };
 in
 {
