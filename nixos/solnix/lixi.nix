@@ -17,7 +17,8 @@
 { inputs, sshMatrix, pkgs, lib, ... }:
 
 {
-  imports = [ "${inputs.solnix}/configurations/base.nix" ./community.nix ];
+  imports = [ "${inputs.solnix}/configurations/base.nix" ./community.nix ./tailscale.nix ];
+  solnix.telemetry.census.hostKind = "laptop";   # community.nix opts lixi in; the census default is "server"
 
   users.users.gburd = {
     uid = 1000;
