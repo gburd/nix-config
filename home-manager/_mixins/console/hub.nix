@@ -21,9 +21,14 @@ let
         d=''${d%/}; [ -d "$d/.git" ] && git -C "$d" rev-parse -q --verify HEAD >/dev/null 2>&1 && echo "$d"
       done)
     fi
-    ok=0; fail=0
+    ok=0; fail=0; skip=0
     for d in "$@"; do
       rel=''${d#"$HOME"/}; name=$(printf '%s' "$rel" | tr '/' '-')
+      # shallow or blobless clones of upstream projects can't be pushed
+      # (the hub refuses shallow updates) and are re-fetchable from upstream
+      if [ "$(git -C "$d" rev-parse --is-shallow-repository)" = true ] || [ -n "$(git -C "$d" config --get remote.origin.partialclonefilter)" ]; then
+        skip=$((skip+1)); continue
+      fi
       ssh -n -o BatchMode=yes meh.ts.burd.me "hub-init $name" || { echo "hub-push: $rel: hub-init failed" >&2; fail=$((fail+1)); continue; }
       refspecs=("+refs/heads/*:refs/hosts/$host/heads/*" "+refs/tags/*:refs/hosts/$host/tags/*")
       git -C "$d" rev-parse -q --verify refs/stash >/dev/null && refspecs+=("+refs/stash:refs/hosts/$host/stash")
@@ -34,7 +39,7 @@ let
       fi
     done
     rm -f /tmp/hub-push.$$
-    echo "hub-push: $ok pushed, $fail failed"
+    echo "hub-push: $ok pushed, $fail failed, $skip skipped (shallow/partial clones)"
     [ $fail -eq 0 ]
   '';
 in
