@@ -164,7 +164,8 @@ let
       # ra` also hid every nested `ra` -- nixpkgs-solnix/pkgs/by-name/ra (167
       # files), osv_1/include/osv, dbsql/deps/libdb -- which never reached
       # the peers (found 2026-10-29).
-      ignores = baseIgnores ++ (map (i: "Path ${i}") entry.ignores);
+      ignores = baseIgnores ++ (map (i: "Path ${i}") entry.ignores)
+        ++ (map (i: "Name ${i}") entry.ignoreNames);
       ignoreArgs = lib.concatMapStringsSep " " (p: "-ignore ${lib.escapeShellArg p}") ignores;
       # The roots that travel together for this directory. With
       # sessionRoots = true (default) that is the project tree PLUS its pi and
@@ -434,7 +435,12 @@ in
           ignores = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [ ];
-            description = "Extra unison `Name` ignore patterns for this dir.";
+            description = "Paths (relative to the root, unison `Path`) to leave out.";
+          };
+          ignoreNames = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Extra unison `Name` ignores: match at any depth (build output).";
           };
           sessionRoots = lib.mkOption {
             type = lib.types.bool;
