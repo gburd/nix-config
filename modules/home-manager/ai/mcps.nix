@@ -1,5 +1,14 @@
 { config, pkgs, lib, ... }:
 let
+  # Python MCP servers run from the agent's cwd environment. A project's dev
+  # shell (direnv) can export PYTHONPATH with other packages' site-packages,
+  # and the server then imports a mismatched typing-extensions and dies
+  # (pgesq, 2026-10-30: anyio 4.15.1 vs typing-extensions 4.15.0).
+  cleanPythonEnv = "unset PYTHONPATH PYTHONHOME PYTHONSTARTUP VIRTUAL_ENV NIX_PYTHONPATH";
+  uvxClean = pkgs.writeShellScript "uvx-clean" ''
+    ${cleanPythonEnv}
+    exec ${pkgs.uv}/bin/uvx "$@"
+  '';
   cfg = config.programs.ai.mcps;
   inherit (lib) mkEnableOption mkOption types;
   inherit (lib.attrsets) optionalAttrs;
@@ -61,6 +70,7 @@ let
       # `#!${runtimeShell}` shebang. Without it, kiro-cli's direct execve()
       # fails with ENOEXEC ("Exec format error (os error 8)").
     pkgs.writeShellScript "mcpdoc-wrapper-${name}" ''
+      ${cleanPythonEnv}
       exec ${pkgs.uv}/bin/uvx --from mcpdoc --with 'mcp<2' mcpdoc \
         --urls \
         ${urlArgs} \
@@ -228,7 +238,7 @@ let
   })
     // (optionalAttrs cfg.servers.server-git.enable {
     git = {
-      command = "${pkgs.uv}/bin/uvx";
+      command = "${uvxClean}";
       args = [ "--from" "mcp-server-git" "mcp-server-git" ];
     };
   })
@@ -314,6 +324,7 @@ let
   # expand env vars in headers.
   agentMemoryUrl = "${cfg.servers.agent-memory.url}/mcp";
   agentMemoryStdio = pkgs.writeShellScript "agent-memory-mcp" ''
+    ${cleanPythonEnv}
     API_ACCESS_TOKEN="$(${pkgs.coreutils}/bin/cat ${cfg.servers.agent-memory.keyFile})"
     export API_ACCESS_TOKEN
     exec ${pkgs.mcp-proxy}/bin/mcp-proxy --transport streamablehttp ${agentMemoryUrl}
@@ -362,7 +373,7 @@ let
     // (optionalAttrs cfg.servers.server-git.enable {
     git = {
       type = "stdio";
-      command = "${pkgs.uv}/bin/uvx";
+      command = "${uvxClean}";
       args = [ "--from" "mcp-server-git" "mcp-server-git" ];
       env = { };
     };

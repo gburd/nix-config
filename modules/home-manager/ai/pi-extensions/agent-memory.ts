@@ -18,7 +18,10 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { relative } from "node:path";
 
-type Hit = { memory: { content: string; content_hash: string; tags: string[]; memory_type?: string } };
+type Hit = {
+  memory: { content: string; content_hash: string; tags: string[]; memory_type?: string };
+  similarity_score?: number;
+};
 
 const INSTRUCTIONS = `# Memory system instructions
 
@@ -36,6 +39,41 @@ You share one persistent memory service with every agent on every host
 3. If a memory above is wrong, fix it: memory_update with its content_hash,
    or memory_delete it, and store the correct version.
 `;
+
+// Measured 2026-10-30 against the shared store: topic-free prompts score
+// 0.63-0.65 against unrelated memories; real matches score 0.73+.
+export const MIN_SIMILARITY = 0.7;
+export const MIN_QUERY_WORDS = 4;
+
+export const wordCount = (s: string): number => s.trim().split(/\s+/).filter(Boolean).length;
+
+// Is a memory from this project, or a parent/child of it (ws/postgres vs
+// ws/postgres/xtc)? Those outrank an unrelated project at equal relevance.
+const nearProject = (h: Hit, rel: string): boolean =>
+  h.memory.tags.some((t) => {
+    if (!t.startsWith("project:")) return false;
+    const p = t.slice("project:".length);
+    return p === rel || rel.startsWith(`${p}/`) || p.startsWith(`${rel}/`);
+  });
+
+// This project's own memories first (newest first, as by-tag returns them),
+// then relevance hits above the threshold, near projects ahead of far ones,
+// deduplicated, capped at `max`.
+export function mergeHits(proj: Hit[], relevant: Hit[], rel: string, max: number): Hit[] {
+  const ranked = relevant
+    .filter((h) => (h.similarity_score ?? 1) >= MIN_SIMILARITY)
+    .map((h, i) => ({ h, i, near: nearProject(h, rel) }))
+    .sort((a, b) => Number(b.near) - Number(a.near) || a.i - b.i)
+    .map((x) => x.h);
+  const out: Hit[] = [];
+  const seen = new Set<string>();
+  for (const h of [...proj, ...ranked]) {
+    if (seen.has(h.memory.content_hash)) continue;
+    seen.add(h.memory.content_hash);
+    out.push(h);
+  }
+  return out.slice(0, max);
+}
 
 export default async function (pi: ExtensionAPI) {
   let injected = false;
@@ -72,16 +110,18 @@ export default async function (pi: ExtensionAPI) {
       const [proj, rel2] = await Promise.all([
         // this project's newest memories
         post("/api/search/by-tag", { tags: [projectTag], limit: 8 }),
-        // the most relevant memories anywhere for this request
-        prompt ? post("/api/search", { query: prompt.slice(0, 2000), n_results: 8 }) : Promise.resolve([]),
+        // the most relevant memories anywhere for this request. A short
+        // prompt ("please continue") has no topic: every memory scores
+        // ~0.63-0.65 against it, so skip the search rather than inject noise.
+        wordCount(prompt) >= MIN_QUERY_WORDS
+          ? post("/api/search", {
+              query: prompt.slice(0, 2000),
+              n_results: 12,
+              similarity_threshold: MIN_SIMILARITY,
+            })
+          : Promise.resolve([]),
       ]);
-      const seen = new Set<string>();
-      for (const h of [...rel2, ...proj]) {
-        if (seen.has(h.memory.content_hash)) continue;
-        seen.add(h.memory.content_hash);
-        hits.push(h);
-      }
-      hits = hits.slice(0, 10);
+      hits = mergeHits(proj, rel2, rel, 10);
     } catch {
       return; // service unreachable -> no injection
     }
