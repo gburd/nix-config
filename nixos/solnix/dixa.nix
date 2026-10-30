@@ -16,18 +16,21 @@
 #     /scratch/solnix/dixa1/tls-finding.md), so a heavily threaded nix can still crash until the image's rtld is fixed.
 #
 # Headless deliberately: no COSMIC, nothing graphical. This is a build/test node.
-_:
+{ sshMatrix, ... }:
 
 {
+  # As on dixi (the maintainer's live account on dixa 2026-10-30 had exactly this: bash, Primary Administrator, his keys).
   users.users.gburd = {
     uid = 1000;
     home = "/home/gburd";
     group = "staff";
-    # illumos RBAC, not wheel -- see dixi.nix. The installer adds the
-    # "Primary Administrator" profile; there is no module option for it.
+    description = "Greg Burd";
+    # illumos RBAC, not wheel: "Primary Administrator" makes `pfexec <cmd>` root-equivalent; sysadmin is the group half.
     extraGroups = [ "sysadmin" ];
-    # ksh93, not bash: bash is not in the illumos gate proto on any architecture.
-    shell = "/usr/bin/ksh93";
+    profiles = [ "Primary Administrator" ];
+    shell = "/run/current-system/sw/bin/bash";
+    # Key login only. No password hash in a git-tracked file.
+    openssh.authorizedKeys.keys = sshMatrix.groups.privileged_users;
   };
 
   # ena0 is the EC2 Nitro NIC. The metadata nameserver is EC2's own resolver.
