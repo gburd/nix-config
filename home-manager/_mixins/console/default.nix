@@ -5,6 +5,7 @@
     ./neovim
     ./scratch.nix
     ./tmux.nix
+    ./agents.nix
     ./cargo.nix
     ./claude-code
     ./gdb
