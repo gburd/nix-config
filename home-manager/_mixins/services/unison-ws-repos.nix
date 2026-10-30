@@ -15,14 +15,16 @@
 { lib, ... }:
 let
   hosts = [ "floki" "werk" ];
-  # Build output the seeding rsync also skipped. `Name` on purpose: these
-  # are build products at any depth.
-  build = [ "build" "build-*" "builddir" "tmp_install" "result" "testrun" "results" "log" ".zvec-grep" ];
-  repo = name: extra: {
+  # Build output, at any depth (`Name`). Only names no repo tracks files
+  # under, bar the `keep` exceptions: `results` and `log` hid 947 tracked
+  # files (libdb, mentat, pg_weave ...) and were dropped (2026-10-30).
+  build = [ "build" "build-*" "builddir" "tmp_install" "result" "testrun" ".zvec-grep" ];
+  repo = name: extra: keep: {
     inherit name hosts;
     path = "~/ws/${name}";
     ignoreNames = build;
     ignores = extra;
+    ignoreNot = keep;
   };
   # postgres's linked worktrees under ~/ws/postgres (59, from `git worktree
   # list` on floki 2026-10-30). Each is a separate checkout with a `.git`
@@ -95,19 +97,21 @@ let
 in
 {
   programs.ai.sync.directories = lib.mkAfter [
-    (repo "improv" [ ])
-    (repo "libdb" [ ])
-    (repo "libxtc" [ ])
-    (repo "mentat" [ ])
-    (repo "pg_tre" [ ])
-    (repo "pg_weave" [ ])
-    (repo "ra" [ ])
-    # osv/.local (16 GB: builds, toolchains, a postgres worktree) is per host.
-    (repo "osv" [ ".local" ])
+    (repo "improv" [ ] [ ])
+    (repo "libdb" [ ] [ ])
+    (repo "libxtc" [ ] [ ])
+    (repo "mentat" [ ] [ "crates/sqlite/mentat/build" ])
+    (repo "pg_tre" [ ] [ ])
+    (repo "pg_weave" [ ] [ ])
+    (repo "ra" [ ] [ ])
+    # osv/.local holds 1761 tracked notes (7 MB) next to 18 GB of untracked
+    # runs and toolchains; only the big untracked trees stay per host, and
+    # bench24/wt is a gitlink with no .gitmodules entry (its own checkout).
+    (repo "osv" [ ".local/readiness-audit" ".local/teams" ".local/pg18" ".local/bench24/wt" ] [ ])
     # solnix/scratch (28 GB) synced, per the plan.
-    (repo "solnix" [ ])
+    (repo "solnix" [ ] [ "scratch/nix224/src-mod/src/libstore/unix/build" "scratch/nix224/src-orig/src/libstore/unix/build" "scratch/nix224/verify/src/libstore/unix/build" ])
     # postgres: its in-repo worktrees are per host (see postgresWorktrees).
-    (repo "postgres" postgresWorktrees)
+    (repo "postgres" postgresWorktrees [ ])
   ];
   # pi/claude sessions of the postgres worktrees (~/ws/postgres/undo, /xtc,
   # ...) are keyed by their own path, one level below ~/ws/postgres, so the

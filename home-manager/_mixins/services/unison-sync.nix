@@ -166,7 +166,8 @@ let
       # the peers (found 2026-10-29).
       ignores = baseIgnores ++ (map (i: "Path ${i}") entry.ignores)
         ++ (map (i: "Name ${i}") entry.ignoreNames);
-      ignoreArgs = lib.concatMapStringsSep " " (p: "-ignore ${lib.escapeShellArg p}") ignores;
+      ignoreArgs = lib.concatMapStringsSep " " (p: "-ignore ${lib.escapeShellArg p}") ignores
+        + lib.concatMapStrings (p: " -ignorenot ${lib.escapeShellArg "Path ${p}"}") entry.ignoreNot;
       # The roots that travel together for this directory. With
       # sessionRoots = true (default) that is the project tree PLUS its pi and
       # claude session state (single-project entries). With false it is JUST
@@ -439,6 +440,11 @@ in
             type = lib.types.listOf lib.types.str;
             default = [ ];
             description = "Paths (relative to the root, unison `Path`) to leave out.";
+          };
+          ignoreNot = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Paths (unison `Path`) synced even though an ignore matches them.";
           };
           ignoreNames = lib.mkOption {
             type = lib.types.listOf lib.types.str;
