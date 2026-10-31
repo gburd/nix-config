@@ -75,15 +75,16 @@ in
         RequestTTY = "yes";
         RemoteCommand = "powershell -NoProfile";
       };
-      # wix: the NixOS-WSL distro on santorini, its OWN tailnet node with its
+      # wixa: the NixOS-WSL distro on santorini (Windows NixOS, aarch64), its
+      # OWN tailnet node with its
       # own sshd (100.64.0.3). It used to be reached by ssh-ing to Windows and
       # running `wsl.exe -d NixOS`, which needs Windows' sshd, a TTY and a
-      # RemoteCommand, so `ssh wix <cmd>` failed with "Cannot execute
+      # RemoteCommand, so `ssh wixa <cmd>` failed with "Cannot execute
       # command-line and remote command". Direct now. A Windows scheduled
       # task (wix-keepalive, runs as gburd at boot) keeps the distro
-      # running, so wix stays on the tailnet with nobody logged in.
-      wix = lib.hm.dag.entryBefore [ "net" ] {
-        HostName = "wix.ts.burd.me";
+      # running, so wixa stays on the tailnet with nobody logged in.
+      wixa = lib.hm.dag.entryBefore [ "net" ] {
+        HostName = "wixa.ts.burd.me";
         IdentityFile = "~/.ssh/id_ed25519";
         ForwardAgent = true;
       };
