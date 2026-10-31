@@ -99,25 +99,10 @@
           pkg = pkgs.github-mcp-server or pkgs.unstable.github-mcp-server;
         };
 
-        memelord = {
-          enable = true;
-          # pkgs.memelord (pkgs/memelord) bundles the npm memelord MCP server
-          # + the local memelord-rollup tool (flat-pile -> pattern summaries).
-          pkg = pkgs.memelord;
-          # The weekly memelord-rollup timer is OFF (2026-10-16). It cost more
-          # than it gave:
-          #  - nothing reads its output. memelord never queries the
-          #    rollup_summaries table, and no hook, extension or steering does
-          #    either. The last six runs wrote 0 summaries 18 times and 1 summary
-          #    2 times; 44 rows exist in total, all unread.
-          #  - its other job is gone. --prune-auto deleted the "Auto-detected
-          #    correction" flood from memelord's old PostToolUse hook. That hook
-          #    is disabled, and 0 such rows remain anywhere.
-          #  - it damaged memory. It opens Turso DBs through stock sqlite3, and
-          #    the Oct 12 run left 6 project DBs with an empty WAL, so memelord
-          #    could not start there.
-          # pkgs/memelord still ships the memelord-rollup CLI for manual use.
-        };
+        # memelord is retired (2026-10-31): every memory is in the shared
+        # agent-memory service, the .memelord DBs are deleted, and an archive
+        # of them is in ~/.local/share/agent-memory-backup/ on each host.
+        memelord.enable = false;
 
         filesystem = {
           enable = true;
@@ -136,8 +121,7 @@
         # volatile npx cache dir (~/.npm/_npx/<hash>/...) that gets a fresh,
         # empty file whenever npm's resolution hash changes -- not reliably
         # persistent at all (confirmed: 1 entity, unclear survival across
-        # cache invalidation). memelord below is the real persistent-memory
-        # layer (project-scoped .memelord/, proven to survive sandbox sync).
+        # cache invalidation). agent-memory (on meh) is the persistent layer.
         server-memory.enable = false;
 
         # Local Git operations (diff, log, blame, branch) beyond GitHub MCP
