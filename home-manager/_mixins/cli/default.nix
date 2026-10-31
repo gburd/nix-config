@@ -48,8 +48,8 @@
     k9s
     kubernetes-helm
     kind
-    terraform
-    terraform-ls
+    opentofu # `tofu`; MPL-2.0 fork of terraform (BUSL-1.1, unfree in nixpkgs)
+    terraform-ls # LSP for .tf; formatting runs the CLI it finds: set its terraform.path to tofu
     nerdctl
   ]);
 }
