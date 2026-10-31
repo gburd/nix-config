@@ -99,6 +99,12 @@
 
   # Sops secrets configuration
   # Shared agent memory: every agent here talks to the one service on meh.
+  # A switch here pushes the Cedar policy set to cedar-store on meh.
+  programs.ai.cedarPush = {
+    enable = true;
+    tokenFile = config.sops.secrets."cedar-store/token".path;
+  };
+
   programs.ai.mcps.servers.agent-memory = {
     enable = true;
     keyFile = config.sops.secrets."agent-memory/api-key".path;
@@ -112,6 +118,7 @@
     secrets = {
       # Shared agent memory API key (mcp-memory-service on meh).
       "agent-memory/api-key" = { };
+      "cedar-store/token" = { };
       "aws/bearer_token_bedrock" = {
         path = "${config.home.homeDirectory}/.config/claude-code/.bearer_token";
       };

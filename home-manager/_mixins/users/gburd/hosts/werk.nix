@@ -124,6 +124,12 @@
   # the gburd-user age key derived from ~/.ssh/id_ed25519 (the same key meh/
   # floki use for HM sops).
   # Shared agent memory: every agent here talks to the one service on meh.
+  # A switch here pushes the Cedar policy set to cedar-store on meh.
+  programs.ai.cedarPush = {
+    enable = true;
+    tokenFile = config.sops.secrets."cedar-store/token".path;
+  };
+
   programs.ai.mcps.servers.agent-memory = {
     enable = true;
     keyFile = config.sops.secrets."agent-memory/api-key".path;
@@ -135,6 +141,7 @@
     secrets = {
       # Shared agent memory API key (mcp-memory-service on meh).
       "agent-memory/api-key" = { };
+      "cedar-store/token" = { };
       # AWS Bedrock bearer token -> litellm proxy (without this litellm won't
       # start; it's the reason the first HM switch left the proxy inactive).
       "aws/bearer_token_bedrock" = {

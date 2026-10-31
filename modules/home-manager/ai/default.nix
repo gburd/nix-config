@@ -12,5 +12,6 @@
     ./skills.nix
     ./kun-tools.nix
     ./agent-sandbox.nix
+    ./cedar-push.nix
   ];
 }
