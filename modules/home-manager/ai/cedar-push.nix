@@ -13,6 +13,8 @@ let
   push = pkgs.writeShellScript "cedar-store-push" ''
     set -eu
     url=${lib.escapeShellArg cfg.url}
+    # sops-nix decrypts the token in its own unit during the same switch
+    for _ in $(seq 1 30); do [ -r ${lib.escapeShellArg cfg.tokenFile} ] && break; sleep 2; done
     tok=$(cat ${lib.escapeShellArg cfg.tokenFile})
     # the store may be restarting (meh switching at the same moment)
     for i in $(seq 1 12); do
@@ -45,7 +47,8 @@ in
     systemd.user.services.cedar-store-push = {
       Unit = {
         Description = "Push the nix-config Cedar policy set to cedar-store";
-        After = [ "network-online.target" ];
+        After = [ "network-online.target" "sops-nix.service" ];
+        Wants = [ "sops-nix.service" ];
         # A changed set is a new store path, so HM restarts this on switch.
         X-Restart-Triggers = [ "${policyFile}" ];
       };
