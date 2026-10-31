@@ -50,6 +50,13 @@
     acceptFirmwareLicense = true;   # DMC + GuC + HuC (linux-firmware LICENSE.i915)
   };
 
+  # Touchpad (ELAN HID-over-I2C behind LPSS I2C0): dwiic bound to 8086:51e8, ihid linked under consms with usbms,
+  # so the pointer moves with it beside the TrackPoint (solnix hardware.touchpad.i2cHid, tpad2 2026-10-29).
+  hardware.touchpad.i2cHid.enable = true;
+
+  # The laptop lives in Boston (NixOS time.timeZone; solnix fa7305e).
+  time.timeZone = "America/New_York";
+
   # Build toolchain on the machine, like dixi.
   environment.systemPackages = with pkgs.solnix; [ home-manager solnix-dev-full ];
   system.buildCapable = true;
