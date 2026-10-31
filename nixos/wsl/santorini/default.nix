@@ -43,11 +43,12 @@
     # sudo is via wheel. Set a hashedPasswordFile here if you want a password.
   };
 
-  # Register in the tailnet as "wix", not the OS hostname "santorini" — the
-  # Windows host already owns "santorini" on the tailnet, so this WSL guest
-  # would otherwise show up as the confusing auto-suffixed "santorini-1".
-  # "wix" matches the ~/.ssh/config alias that opens this distro.
-  services.tailscaleAutoconnect.hostname = "wix";
+  # Register in the tailnet as "wixa" (Windows NixOS on aarch64), not the OS
+  # hostname "santorini": the Windows host already owns "santorini" on the
+  # tailnet, so this WSL guest would otherwise show up as "santorini-1".
+  # Host naming: wix<arch> -- wixa here, wixi for the Intel Win11 host.
+  # "wixa" matches the ~/.ssh/config alias that opens this distro.
+  services.tailscaleAutoconnect.hostname = "wixa";
 
   # smartd has nothing to monitor in WSL: the only block devices are the
   # Hyper-V virtual disks (/dev/sd{b,c,d}), which return "Bad IEC (SMART)

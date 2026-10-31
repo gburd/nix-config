@@ -107,7 +107,7 @@ it. Kill by PID.
 ### 6. Other hosts you used
 
 Repeat steps 2–5 on every host the task touched: lixr, sun, nuc, rv,
-arnold, meh, wix, EC2 boxes. Remote copies of worktrees conventionally sit
+arnold, meh, wixa, EC2 boxes. Remote copies of worktrees conventionally sit
 under `~/wt/<purpose>`. Remote cores land wherever that host's
 `core_pattern` says. If you staged a credential or key file on a host,
 remove it.

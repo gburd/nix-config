@@ -30,7 +30,7 @@ fine. On santorini's aarch64 (LSE2) the same atomic works. Code that has
 
 (Measured 2026-10-15 with an 8-byte load and an `atomic_fetch_add` at
 offsets 0, 1 and 4. sun: SIGBUS at 1 and 4. lixr: plain loads fine, atomic
-SIGSEGV at 1. santorini/wix aarch64: everything fine.)
+SIGSEGV at 1. santorini/wixa aarch64: everything fine.)
 
 ## The two-tool split (measured, not assumed)
 
@@ -159,7 +159,7 @@ shows what it actually does:
   plain loads will NOT crash. Misaligned atomics still SIGSEGV. lixr's
   value is UBSan on a non-x86 ISA, plus catching atomics, plus
   `#ifdef __riscv` paths.
-- **AArch64** (EC2 Graviton, or `santorini`'s wix WSL guest): plain loads
+- **AArch64** (EC2 Graviton, or `santorini`'s wixa WSL guest): plain loads
   are tolerated. santorini has LSE2 (`uscat` in /proc/cpuinfo) and
   tolerates misaligned atomics too, so it is the weakest of the three as a
   trap. Its value is the `__aarch64__` code paths and UBSan on a third
